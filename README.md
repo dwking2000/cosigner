@@ -1,5 +1,10 @@
 # heimdal-ethereum
 
+## WARNING
+
+Heimdal is in early stages of active development. Until we define RFCs for
+Heimdal, the API can and will likely change.
+
 ## Ownership and License
 
 Copyright information and contributors are listed in AUTHORS. This project uses
