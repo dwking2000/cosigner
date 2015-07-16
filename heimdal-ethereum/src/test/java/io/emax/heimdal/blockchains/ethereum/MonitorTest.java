@@ -1,14 +1,6 @@
 package io.emax.heimdal.blockchains.ethereum;
 
-import io.emax.heimdal.blockchains.ethereum.Client.Monitor;
 import junit.framework.TestCase;
-
-import org.junit.Assert;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 public class MonitorTest extends TestCase {
 
