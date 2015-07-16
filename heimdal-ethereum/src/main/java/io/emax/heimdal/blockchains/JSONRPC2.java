@@ -22,42 +22,44 @@ import com.google.gson.Gson;
  * @param <T>
  */
 public class JSONRPC2<T> {
-    public final String jsonrpc = "2.0";
-    public String method;
-    public List<T> params = new ArrayList<>();
-    public final String id = UUID.randomUUID().toString();
+  public final String jsonrpc = "2.0";
+  public String method;
+  public List<T> params = new ArrayList<>();
+  public final String id = UUID.randomUUID().toString();
 
-    public JSONRPC2(@NotNull String method, List<T> params) {
-        this.method = method;
-        this.params = params == null ? new ArrayList<>() : params;
-    }
+  public JSONRPC2(@NotNull String method, List<T> params) {
+    this.method = method;
+    this.params = params == null ? new ArrayList<>() : params;
+  }
 
-    /**
-     * Make a call to the RestfulMonitor RPC with a list of Map parameters
-     *
-     * @param method the method to be called
-     * @param params A list of parameters for said method; in practice either a list of strings or a singleton list containing a Map
-     * @return A string containing the RPC output (which is a JSON)
-     * @throws IOException
-     */
-    public static String Call(@NotNull URI uri, @NotNull String method, List<?> params) throws IOException {
+  /**
+   * Make a call to the RestfulMonitor RPC with a list of Map parameters
+   *
+   * @param method the method to be called
+   * @param params A list of parameters for said method; in practice either a list of strings or a
+   *        singleton list containing a Map
+   * @return A string containing the RPC output (which is a JSON)
+   * @throws IOException
+   */
+  public static String Call(@NotNull URI uri, @NotNull String method, List<?> params)
+      throws IOException {
 
-        HttpPost httpPost = new HttpPost(uri);
-        StringEntity httpPostParameters = new StringEntity(new JSONRPC2<>(method, params).toString());
-        httpPost.addHeader("content-type", "application/json");
-        httpPost.setEntity(httpPostParameters);
-        CloseableHttpResponse httpResponse = Pool.httpClient.execute(httpPost);
-        String output = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
-        httpResponse.close();
-        return output;
-    }
+    HttpPost httpPost = new HttpPost(uri);
+    StringEntity httpPostParameters = new StringEntity(new JSONRPC2<>(method, params).toString());
+    httpPost.addHeader("content-type", "application/json");
+    httpPost.setEntity(httpPostParameters);
+    CloseableHttpResponse httpResponse = Pool.httpClient.execute(httpPost);
+    String output = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
+    httpResponse.close();
+    return output;
+  }
 
-    public static String Call(@NotNull URI uri, @NotNull String method) throws IOException {
-        return Call(uri, method, null);
-    }
+  public static String Call(@NotNull URI uri, @NotNull String method) throws IOException {
+    return Call(uri, method, null);
+  }
 
-    @Override
-    public String toString() {
-        return (new Gson()).toJson(this);
-    }
+  @Override
+  public String toString() {
+    return (new Gson()).toJson(this);
+  }
 }
