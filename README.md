@@ -5,6 +5,11 @@
 Heimdal is in early stages of active development. Until we define RFCs for
 Heimdal, the API can and will likely change.
 
+## Code Style
+
+Heimdal will be following Google's
+[Java style guide](http://google.github.io/styleguide/javaguide.html).
+
 ## Ownership and License
 
 Copyright information and contributors are listed in AUTHORS. This project uses
