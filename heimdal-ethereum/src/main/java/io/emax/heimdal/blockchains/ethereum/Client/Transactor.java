@@ -43,11 +43,12 @@ public class Transactor {
    * @return The hex code for a coinbase
    */
   public String coinbase() throws IOException {
+    String coinbase = this.coinbase;
     if (coinbase == null || coinbase.trim().length() == 0)
-      coinbase =
+      this.coinbase =
           new Gson().fromJson(JSONRPC2.Call(uri, "eth_coinbase"), Properties.class).getProperty(
               "result");
-    return coinbase;
+    return this.coinbase;
   }
 
   /**
