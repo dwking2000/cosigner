@@ -23,7 +23,7 @@ import com.google.gson.Gson;
 public class Transactor {
 
   private final URI uri;
-  private AtomicReference<String> coinbase = new AtomicReference<String>("");
+  private volatile String coinbase;
 
   /**
    * Creates a new RestfulTransactor
@@ -43,10 +43,11 @@ public class Transactor {
    * @return The hex code for a coinbase
    */
   public String coinbase() throws IOException {
-    if (Objects.equals(coinbase.get(), ""))
-      coinbase.set(new Gson().fromJson(JSONRPC2.Call(uri, "eth_coinbase"), Properties.class)
-          .getProperty("result"));
-    return coinbase.get();
+    if (coinbase == null || coinbase.trim().length() == 0)
+      coinbase =
+          new Gson().fromJson(JSONRPC2.Call(uri, "eth_coinbase"), Properties.class).getProperty(
+              "result");
+    return coinbase;
   }
 
   /**
