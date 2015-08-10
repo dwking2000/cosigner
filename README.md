@@ -1,5 +1,14 @@
 # heimdal
 
+## Overview
+
+There are thousands of different block chains/distributed ledgers, each of them
+function technically in slightly different ways. As an exchange however there
+are common requirements for the general functionality of each. With Heimdal we
+aim to create an open standard for how to implement such a secure and
+transparent wallet solution, as a centralized financial institution operating in
+the block chain space.
+
 ## WARNING
 
 Heimdal is in early stages of active development. Until we define RFCs for
