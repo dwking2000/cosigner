@@ -10,49 +10,49 @@ import io.emax.heimdal.core.Application;
 import io.emax.heimdal.core.ApplicationConfiguration;
 
 public class ClusterInfo {
-	// Static resolver
-	private static ClusterInfo clusterInfo;
-	
-	public static ClusterInfo getInstance() {
-		if(clusterInfo == null)
-			clusterInfo = new ClusterInfo();
-		
-		return clusterInfo;
-	}
-	// End Static resolver, begin actual class.
-	
-	private ClusterInfo() {
-		ApplicationConfiguration config = Application.getConfig();
-		this.thisServer.setServerLocation(config.getClusterLocation());
-		this.thisServer.setServerListeningPort(config.getClusterPort());
-		this.thisServer.setServerRPCPort(config.getClusterRPCPort());
-		this.thisServer.setOriginator(true);
-		this.thisServer.setServerID(UUID.randomUUID().toString());
-		
-		servers.add(thisServer);
-	}
+  // Static resolver
+  private static ClusterInfo clusterInfo;
 
-	private List<Server> servers = new LinkedList<>();
-	
-	private Server thisServer = new Server(); 
-	
-	public List<Server> getServers() {
-		return servers;
-	}
+  public static ClusterInfo getInstance() {
+    if (clusterInfo == null)
+      clusterInfo = new ClusterInfo();
 
-	@JsonProperty
-	public void setServers(List<Server> servers) {
-		this.servers = servers;
-	}
+    return clusterInfo;
+  }
+  // End Static resolver, begin actual class.
 
-	public Server getThisServer() {
-		return thisServer;
-	}
+  private ClusterInfo() {
+    ApplicationConfiguration config = Application.getConfig();
+    this.thisServer.setServerLocation(config.getClusterLocation());
+    this.thisServer.setServerListeningPort(config.getClusterPort());
+    this.thisServer.setServerRPCPort(config.getClusterRPCPort());
+    this.thisServer.setOriginator(true);
+    this.thisServer.setServerID(UUID.randomUUID().toString());
 
-	@JsonProperty
-	public void setThisServer(Server thisServer) {
-		this.thisServer = thisServer;
-	}
+    servers.add(thisServer);
+  }
+
+  private List<Server> servers = new LinkedList<>();
+
+  private Server thisServer = new Server();
+
+  public List<Server> getServers() {
+    return servers;
+  }
+
+  @JsonProperty
+  public void setServers(List<Server> servers) {
+    this.servers = servers;
+  }
+
+  public Server getThisServer() {
+    return thisServer;
+  }
+
+  @JsonProperty
+  public void setThisServer(Server thisServer) {
+    this.thisServer = thisServer;
+  }
 
 
 }

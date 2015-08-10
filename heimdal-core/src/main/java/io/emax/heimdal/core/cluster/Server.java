@@ -3,103 +3,103 @@ package io.emax.heimdal.core.cluster;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Server {
-	@JsonProperty
-	private String serverLocation;
-	@JsonProperty
-	private int serverRPCPort;
-	@JsonProperty
-	private int serverListeningPort;
-	@JsonProperty
-	private boolean isOriginator;
-	@JsonProperty
-	private String serverID;
-	@JsonProperty
-	private long lastCommunication;
+  @JsonProperty
+  private String serverLocation;
+  @JsonProperty
+  private int serverRPCPort;
+  @JsonProperty
+  private int serverListeningPort;
+  @JsonProperty
+  private boolean isOriginator;
+  @JsonProperty
+  private String serverID;
+  @JsonProperty
+  private long lastCommunication;
 
-	public String getServerLocation() {
-		return serverLocation;
-	}
-	
-	public void setServerLocation(String serverLocation) {
-		this.serverLocation = serverLocation;
-	}
+  public String getServerLocation() {
+    return serverLocation;
+  }
 
-	public int getServerRPCPort() {
-		return serverRPCPort;
-	}
+  public void setServerLocation(String serverLocation) {
+    this.serverLocation = serverLocation;
+  }
 
-	public void setServerRPCPort(int serverRPCPort) {
-		this.serverRPCPort = serverRPCPort;
-	}
+  public int getServerRPCPort() {
+    return serverRPCPort;
+  }
 
-	public int getServerListeningPort() {
-		return serverListeningPort;
-	}
+  public void setServerRPCPort(int serverRPCPort) {
+    this.serverRPCPort = serverRPCPort;
+  }
 
-	public void setServerListeningPort(int serverListeningPort) {
-		this.serverListeningPort = serverListeningPort;
-	}
+  public int getServerListeningPort() {
+    return serverListeningPort;
+  }
 
-	public boolean isOriginator() {
-		return isOriginator;
-	}
+  public void setServerListeningPort(int serverListeningPort) {
+    this.serverListeningPort = serverListeningPort;
+  }
 
-	public void setOriginator(boolean isOriginator) {
-		this.isOriginator = isOriginator;
-	}
+  public boolean isOriginator() {
+    return isOriginator;
+  }
 
-	public String getServerID() {
-		return serverID;
-	}
+  public void setOriginator(boolean isOriginator) {
+    this.isOriginator = isOriginator;
+  }
 
-	public void setServerID(String serverID) {
-		this.serverID = serverID;
-	}
+  public String getServerID() {
+    return serverID;
+  }
 
-	public long getLastCommunication() {
-		return lastCommunication;
-	}
+  public void setServerID(String serverID) {
+    this.serverID = serverID;
+  }
 
-	public void setLastCommunication(long lastCommunication) {
-		this.lastCommunication = lastCommunication;
-	}
+  public long getLastCommunication() {
+    return lastCommunication;
+  }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + serverListeningPort;
-		result = prime * result + ((serverLocation == null) ? 0 : serverLocation.hashCode());
-		result = prime * result + serverRPCPort;
-		return result;
-	}
+  public void setLastCommunication(long lastCommunication) {
+    this.lastCommunication = lastCommunication;
+  }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Server other = (Server) obj;
-		if (serverListeningPort != other.serverListeningPort)
-			return false;
-		if (serverLocation == null) {
-			if (other.serverLocation != null)
-				return false;
-		} else if (!serverLocation.equals(other.serverLocation))
-			return false;
-		if (serverRPCPort != other.serverRPCPort)
-			return false;
-		return true;
-	}
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + serverListeningPort;
+    result = prime * result + ((serverLocation == null) ? 0 : serverLocation.hashCode());
+    result = prime * result + serverRPCPort;
+    return result;
+  }
 
-	@Override
-	public String toString() {
-		return "Server [serverLocation=" + serverLocation + ", serverRPCPort=" + serverRPCPort
-				+ ", serverListeningPort=" + serverListeningPort + ", isOriginator=" + isOriginator + ", serverID="
-				+ serverID + ", lastCommunication=" + lastCommunication + "]";
-	}
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Server other = (Server) obj;
+    if (serverListeningPort != other.serverListeningPort)
+      return false;
+    if (serverLocation == null) {
+      if (other.serverLocation != null)
+        return false;
+    } else if (!serverLocation.equals(other.serverLocation))
+      return false;
+    if (serverRPCPort != other.serverRPCPort)
+      return false;
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return "Server [serverLocation=" + serverLocation + ", serverRPCPort=" + serverRPCPort
+        + ", serverListeningPort=" + serverListeningPort + ", isOriginator=" + isOriginator
+        + ", serverID=" + serverID + ", lastCommunication=" + lastCommunication + "]";
+  }
 
 }

@@ -5,5 +5,6 @@ package io.emax.heimdal.bitcoin.bitcoind;
  * 
  * @author dquintela
  */
-public interface BitcoindRpc extends BlockChainRpc, ControlRpc, GeneratingRpc, MiningRpc, NetworkRpc, RawTransactionRpc, UtilityRpc, WalletRpc {
+public interface BitcoindRpc extends BlockChainRpc, ControlRpc, GeneratingRpc, MiningRpc,
+    NetworkRpc, RawTransactionRpc, UtilityRpc, WalletRpc {
 }

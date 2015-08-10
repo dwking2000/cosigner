@@ -11,7 +11,7 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
   @Override
   public void getSigningType() {
     // TODO Auto-generated method stub
-    
+
   }
-	
+
 }

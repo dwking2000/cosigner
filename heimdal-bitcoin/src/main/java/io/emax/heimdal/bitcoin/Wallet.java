@@ -20,202 +20,207 @@ import io.emax.heimdal.bitcoin.common.DeterministicTools;
 
 public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
-	private CurrencyConfiguration config = new CurrencyConfiguration();
-	private BitcoindResource bitcoind = BitcoindResource.getResource();
-	private BitcoindRpc bitcoindRpc = bitcoind.getBitcoindRpc();
-	
-	@Override
-	public String createAddress(String name) {
-		int rounds = 1;
-		String privateKey = DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-		String newAddress = DeterministicTools.getPublicAddress(privateKey);
-		// Hash the user's key so it's not stored in the wallet
-		String internalName = "Single-" + DeterministicTools.encodeUserKey(name);
+  private CurrencyConfiguration config = new CurrencyConfiguration();
+  private BitcoindResource bitcoind = BitcoindResource.getResource();
+  private BitcoindRpc bitcoindRpc = bitcoind.getBitcoindRpc();
 
-		String[] existingAddresses = bitcoindRpc.getaddressesbyaccount(internalName);
-		boolean oldAddress = true;
+  @Override
+  public String createAddress(String name) {
+    int rounds = 1;
+    String privateKey =
+        DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+    String newAddress = DeterministicTools.getPublicAddress(privateKey);
+    // Hash the user's key so it's not stored in the wallet
+    String internalName = "Single-" + DeterministicTools.encodeUserKey(name);
 
-		while (oldAddress && rounds <= config.getMaxDeterministicAddresses()) {
-			oldAddress = false;
-			for (int i = 0; i < existingAddresses.length; i++) {
-				if (existingAddresses[i].equalsIgnoreCase(newAddress)) {
-					oldAddress = true;
-					rounds++;
-					privateKey = DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(),
-							rounds);
-					newAddress = DeterministicTools.getPublicAddress(privateKey);
-					break;
-				}
-			}
-		}
-		bitcoindRpc.importaddress(newAddress, internalName, false);
+    String[] existingAddresses = bitcoindRpc.getaddressesbyaccount(internalName);
+    boolean oldAddress = true;
 
-		return newAddress;
-	}
+    while (oldAddress && rounds <= config.getMaxDeterministicAddresses()) {
+      oldAddress = false;
+      for (int i = 0; i < existingAddresses.length; i++) {
+        if (existingAddresses[i].equalsIgnoreCase(newAddress)) {
+          oldAddress = true;
+          rounds++;
+          privateKey = DeterministicTools.getDeterministicPrivateKey(name,
+              config.getServerPrivateKey(), rounds);
+          newAddress = DeterministicTools.getPublicAddress(privateKey);
+          break;
+        }
+      }
+    }
+    bitcoindRpc.importaddress(newAddress, internalName, false);
 
-	@Override
-	public Iterable<String> getAddresses(String name) {
-		// Hash the user's key so it's not stored in the wallet
-		String internalName = DeterministicTools.encodeUserKey(name);
+    return newAddress;
+  }
 
-		String[] addresses = bitcoindRpc.getaddressesbyaccount(internalName);
-		return Arrays.asList(addresses);
-	}
+  @Override
+  public Iterable<String> getAddresses(String name) {
+    // Hash the user's key so it's not stored in the wallet
+    String internalName = DeterministicTools.encodeUserKey(name);
 
-	@Override
-	public String getMultiSigAddress(Iterable<String> addresses, String name) {
-		// Hash the user's key so it's not stored in the wallet
-		String internalName = DeterministicTools.encodeUserKey(name);
-		String newAddress = generateMultiSigAddress(addresses, name);
-		bitcoindRpc.importaddress(newAddress, internalName, false);
+    String[] addresses = bitcoindRpc.getaddressesbyaccount(internalName);
+    return Arrays.asList(addresses);
+  }
 
-		return newAddress;
-	}
-	
-	public String generateMultiSigAddress(Iterable<String> addresses, String name) {
-		LinkedList<String> multisigAddresses = new LinkedList<>();
-		addresses.forEach((address) -> {
-			// Check if any of the addresses belong to the user
-			int rounds = 1;
-			String userPrivateKey = DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(),
-					rounds);
-			String userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
+  @Override
+  public String getMultiSigAddress(Iterable<String> addresses, String name) {
+    // Hash the user's key so it's not stored in the wallet
+    String internalName = DeterministicTools.encodeUserKey(name);
+    String newAddress = generateMultiSigAddress(addresses, name);
+    bitcoindRpc.importaddress(newAddress, internalName, false);
 
-			while (!address.equalsIgnoreCase(userAddress) && rounds <= config.getMaxDeterministicAddresses()) {
-				rounds++;
-				userPrivateKey = DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(),
-						rounds);
-				userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
-			}
+    return newAddress;
+  }
 
-			if (address.equalsIgnoreCase(userAddress)) {
-				multisigAddresses.add(DeterministicTools.getPublicKey(userPrivateKey));
-			} else {
-				multisigAddresses.add(address);
-			}
-		});
-		config.getBaseMultiSigAccounts().forEach(multisigAddresses::add);
+  public String generateMultiSigAddress(Iterable<String> addresses, String name) {
+    LinkedList<String> multisigAddresses = new LinkedList<>();
+    addresses.forEach((address) -> {
+      // Check if any of the addresses belong to the user
+      int rounds = 1;
+      String userPrivateKey =
+          DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+      String userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
 
-		String[] addressArray = new String[multisigAddresses.size()];
-		MultiSig newAddress = bitcoindRpc.createmultisig(config.getMinSignatures(),
-				multisigAddresses.toArray(addressArray));
+      while (!address.equalsIgnoreCase(userAddress)
+          && rounds <= config.getMaxDeterministicAddresses()) {
+        rounds++;
+        userPrivateKey = DeterministicTools.getDeterministicPrivateKey(name,
+            config.getServerPrivateKey(), rounds);
+        userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
+      }
 
-		return newAddress.getAddress();
-	}
+      if (address.equalsIgnoreCase(userAddress)) {
+        multisigAddresses.add(DeterministicTools.getPublicKey(userPrivateKey));
+      } else {
+        multisigAddresses.add(address);
+      }
+    });
+    config.getBaseMultiSigAccounts().forEach(multisigAddresses::add);
 
-	@Override
-	public String getBalance(String address) {
-		BigDecimal balance = BigDecimal.ZERO;
-		Output[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(), config.getMaxConfirmations(), new String[] { address });
-		for (Output output : outputs) {
-			balance = balance.add(output.getAmount());
-		}
-		return balance.toPlainString();
-	}
+    String[] addressArray = new String[multisigAddresses.size()];
+    MultiSig newAddress = bitcoindRpc.createmultisig(config.getMinSignatures(),
+        multisigAddresses.toArray(addressArray));
 
-	@Override
-	public String createTransaction(Iterable<String> fromAddress, String toAddress, BigDecimal amount) {
-		List<String> fromAddresses = new LinkedList<>();
-		fromAddress.forEach(fromAddresses::add);
-		String[] addresses = new String[fromAddresses.size()];
-		Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(), config.getMaxConfirmations(),
-				fromAddresses.toArray(addresses));
+    return newAddress.getAddress();
+  }
 
-		List<Outpoint> usedOutputs = new LinkedList<>();
-		Map<String, BigDecimal> txnOutput = new HashMap<>();
-		BigDecimal total = BigDecimal.ZERO;
-		for (Outpoint output : outputs) {
-			total = total.add(output.getAmount());
-			usedOutputs.add(output);
+  @Override
+  public String getBalance(String address) {
+    BigDecimal balance = BigDecimal.ZERO;
+    Output[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
+        config.getMaxConfirmations(), new String[] {address});
+    for (Output output : outputs) {
+      balance = balance.add(output.getAmount());
+    }
+    return balance.toPlainString();
+  }
 
-			if (total.compareTo(amount) >= 0) {
-				txnOutput.put(toAddress, amount);
-				if (total.compareTo(amount) > 0) {
-					// TODO Consider generating change address, don't just put
-					// it back in the first one
-					// TODO don't hardcode fees
-					txnOutput.put(fromAddress.iterator().next(),
-							total.subtract(amount).subtract(new BigDecimal("0.002"))); 
-				}
-				break;
-			}
-		}
+  @Override
+  public String createTransaction(Iterable<String> fromAddress, String toAddress,
+      BigDecimal amount) {
+    List<String> fromAddresses = new LinkedList<>();
+    fromAddress.forEach(fromAddresses::add);
+    String[] addresses = new String[fromAddresses.size()];
+    Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
+        config.getMaxConfirmations(), fromAddresses.toArray(addresses));
 
-		// We don't have enough to complete the transaction
-		if (txnOutput.size() == 0) {
-			return null;
-		}
+    List<Outpoint> usedOutputs = new LinkedList<>();
+    Map<String, BigDecimal> txnOutput = new HashMap<>();
+    BigDecimal total = BigDecimal.ZERO;
+    for (Outpoint output : outputs) {
+      total = total.add(output.getAmount());
+      usedOutputs.add(output);
 
-		Outpoint[] usedOutputArray = new Outpoint[usedOutputs.size()];
-		return bitcoindRpc.createrawtransaction(usedOutputs.toArray(usedOutputArray), txnOutput);
-	}
+      if (total.compareTo(amount) >= 0) {
+        txnOutput.put(toAddress, amount);
+        if (total.compareTo(amount) > 0) {
+          // TODO Consider generating change address, don't just put
+          // it back in the first one
+          // TODO don't hardcode fees
+          txnOutput.put(fromAddress.iterator().next(),
+              total.subtract(amount).subtract(new BigDecimal("0.002")));
+        }
+        break;
+      }
+    }
 
-	@Override
-	public String signTransaction(String transaction, String address) {
-		return signTransaction(transaction, address, null);
-	}
+    // We don't have enough to complete the transaction
+    if (txnOutput.size() == 0) {
+      return null;
+    }
 
-	@Override
-	public String signTransaction(String transaction, String address, String name) {
-		int rounds = 1;
-		String privateKey = "";
-		String userAddress = "";
-		SignedTransaction signedTransaction = null;
+    Outpoint[] usedOutputArray = new Outpoint[usedOutputs.size()];
+    return bitcoindRpc.createrawtransaction(usedOutputs.toArray(usedOutputArray), txnOutput);
+  }
 
-		if (name != null) {
-			privateKey = DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-			userAddress = DeterministicTools.getPublicAddress(privateKey);
-			while (!generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name).equalsIgnoreCase(address) 
-					&& !userAddress.equalsIgnoreCase(address) 
-					&& rounds < config.getMaxDeterministicAddresses()) {
-				rounds++;
-				privateKey = DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-				userAddress = DeterministicTools.getPublicAddress(privateKey);
-			}
-			
-			// If we hit max addresses/user bail out
-			if (!generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name).equalsIgnoreCase(address) 
-					&& !userAddress.equalsIgnoreCase(address)) {
-				return null;
-			}
-			
-			// We have the private key, now get all the unspent inputs so we have the redeemScripts.
-			DecodedTransaction myTx = bitcoindRpc.decoderawtransaction(transaction);
-			List<DecodedInput> inputs =  myTx.getInputs();
-			Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(), config.getMaxConfirmations(), new String[] {} );
-			List<OutpointDetails> myOutpoints = new LinkedList<>(); 
-			inputs.forEach((input) -> {
-				for (Outpoint output : outputs) {
-					if(output.getTransactionId().equalsIgnoreCase(input.getTransactionId()) &&
-							output.getOutputIndex() == input.getOutputIndex()) {
-						OutpointDetails outpoint = new OutpointDetails();
-						outpoint.setTransactionId(output.getTransactionId());
-						outpoint.setOutputIndex(output.getOutputIndex());
-						outpoint.setScriptPubKey(output.getScriptPubKey());
-						outpoint.setRedeemScript(output.getRedeemScript());
-						myOutpoints.add(outpoint);
-					}
-				}
-			});
-			
-			OutpointDetails[] outpointArray = new OutpointDetails[myOutpoints.size()];
-			outpointArray =  myOutpoints.toArray(outpointArray);
-			
-			signedTransaction = bitcoindRpc.signrawtransaction(transaction, outpointArray,
-					new String[] { privateKey }, SigHash.ALL);
-		}
-		else
-		{
-			// If we're not restricting the keystore, bitcoind knows about the redeem script
-			signedTransaction = bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[] {},
-					null, SigHash.ALL);
-		}
+  @Override
+  public String signTransaction(String transaction, String address) {
+    return signTransaction(transaction, address, null);
+  }
 
-		return signedTransaction.getTransaction();
-	}
+  @Override
+  public String signTransaction(String transaction, String address, String name) {
+    int rounds = 1;
+    String privateKey = "";
+    String userAddress = "";
+    SignedTransaction signedTransaction = null;
 
-	@Override
-	public String sendTransaction(String transaction) {
-		return bitcoindRpc.sendrawtransaction(transaction, false);
-	}	
+    if (name != null) {
+      privateKey =
+          DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+      userAddress = DeterministicTools.getPublicAddress(privateKey);
+      while (!generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
+          .equalsIgnoreCase(address) && !userAddress.equalsIgnoreCase(address)
+          && rounds < config.getMaxDeterministicAddresses()) {
+        rounds++;
+        privateKey = DeterministicTools.getDeterministicPrivateKey(name,
+            config.getServerPrivateKey(), rounds);
+        userAddress = DeterministicTools.getPublicAddress(privateKey);
+      }
+
+      // If we hit max addresses/user bail out
+      if (!generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
+          .equalsIgnoreCase(address) && !userAddress.equalsIgnoreCase(address)) {
+        return null;
+      }
+
+      // We have the private key, now get all the unspent inputs so we have the redeemScripts.
+      DecodedTransaction myTx = bitcoindRpc.decoderawtransaction(transaction);
+      List<DecodedInput> inputs = myTx.getInputs();
+      Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
+          config.getMaxConfirmations(), new String[] {});
+      List<OutpointDetails> myOutpoints = new LinkedList<>();
+      inputs.forEach((input) -> {
+        for (Outpoint output : outputs) {
+          if (output.getTransactionId().equalsIgnoreCase(input.getTransactionId())
+              && output.getOutputIndex() == input.getOutputIndex()) {
+            OutpointDetails outpoint = new OutpointDetails();
+            outpoint.setTransactionId(output.getTransactionId());
+            outpoint.setOutputIndex(output.getOutputIndex());
+            outpoint.setScriptPubKey(output.getScriptPubKey());
+            outpoint.setRedeemScript(output.getRedeemScript());
+            myOutpoints.add(outpoint);
+          }
+        }
+      });
+
+      OutpointDetails[] outpointArray = new OutpointDetails[myOutpoints.size()];
+      outpointArray = myOutpoints.toArray(outpointArray);
+
+      signedTransaction = bitcoindRpc.signrawtransaction(transaction, outpointArray,
+          new String[] {privateKey}, SigHash.ALL);
+    } else {
+      // If we're not restricting the keystore, bitcoind knows about the redeem script
+      signedTransaction =
+          bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[] {}, null, SigHash.ALL);
+    }
+
+    return signedTransaction.getTransaction();
+  }
+
+  @Override
+  public String sendTransaction(String transaction) {
+    return bitcoindRpc.sendrawtransaction(transaction, false);
+  }
 }
