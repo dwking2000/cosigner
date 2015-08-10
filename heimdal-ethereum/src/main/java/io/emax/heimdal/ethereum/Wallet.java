@@ -1,9 +1,13 @@
 package io.emax.heimdal.ethereum;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+
+import io.emax.heimdal.ethereum.gethrpc.EthereumRpc;
 
 public class Wallet implements io.emax.heimdal.api.currency.Wallet {
-
+  private EthereumRpc ethereumRpc = EthereumResource.getResource().getBitcoindRpc();
+  
   @Override
   public String createAddress(String name) {
     // TODO Auto-generated method stub
@@ -23,9 +27,8 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   }
 
   @Override
-  public String getBalance(String address) {
-    // TODO Auto-generated method stub
-    return null;
+  public String getBalance(String address) {    
+    return new BigInteger(ethereumRpc.eth_getBalance(address, "latest").substring(2), 16).toString(10);          
   }
 
   @Override

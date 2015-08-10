@@ -10,7 +10,6 @@ A bitcoin implementation for heimdal-api
 
 Unstable
   - Configuration is hard-coded, needs to be moved to a file-based solution
-  - Monitor interface is not implemented yet
   - Wallet interface does not handle errors as gracefully as it could
 
 ## Testing recommendations
