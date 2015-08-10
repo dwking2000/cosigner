@@ -1,52 +1,52 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.emax</groupId>
-  <artifactId>heimdal-parent</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <packaging>pom</packaging>
-  <name>heimdal</name>
-  <description>Heimdal - A Block Chain Agnostic Multisig Gateway</description>
-  <url>https://github.com/EMAXio/heimdal</url>
+	<groupId>io.emax</groupId>
+	<artifactId>heimdal-parent</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>heimdal</name>
+	<description>Heimdal - A Block Chain Agnostic Multisig Gateway</description>
+	<url>https://github.com/EMAXio/heimdal</url>
 
-  <organization>
-    <name>EMAX</name>
-    <url>http://www.emax.io</url>
-  </organization>
+	<organization>
+		<name>EMAX</name>
+		<url>http://www.emax.io</url>
+	</organization>
 
-  <developers>
-    <developer>
-      <name>EMAX Dev</name>
-      <email>dev@emax.io</email>
-      <timezone>-4</timezone>
-    </developer>
-  </developers>
+	<developers>
+		<developer>
+			<name>EMAX Dev</name>
+			<email>dev@emax.io</email>
+			<timezone>-4</timezone>
+		</developer>
+	</developers>
 
-  <licenses>
-    <license>
-      <name>Mozilla Public License, version 2.0</name>
-      <url>http://www.mozilla.org/MPL/2.0/</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-  
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>7</version>
-  </parent>
+	<licenses>
+		<license>
+			<name>Mozilla Public License, version 2.0</name>
+			<url>http://www.mozilla.org/MPL/2.0/</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
-  <scm>
-    <connection>scm:git:git@github.com:EMAXio/heimdal.git</connection>
-    <developerConnection>scm:git:git@github.com:EMAXio/heimdal.git</developerConnection>
-    <url>https://github.com/EMAXio/heimdal</url>
-  </scm>
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
 
-  <modules>
-    
-    <module>heimdal-api</module>
-    <module>heimdal-bitcoin</module>
-    <module>heimdal-core</module>
-  </modules>
+	<scm>
+		<connection>scm:git:git@github.com:EMAXio/heimdal.git</connection>
+		<developerConnection>scm:git:git@github.com:EMAXio/heimdal.git</developerConnection>
+		<url>https://github.com/EMAXio/heimdal</url>
+	</scm>
+
+	<modules>
+		<module>heimdal-api</module>
+		<module>heimdal-bitcoin</module>
+		<module>heimdal-core</module>
+		<module>heimdal-ethereum</module>
+	</modules>
 </project>
