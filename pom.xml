@@ -44,6 +44,9 @@
   </scm>
 
   <modules>
-    <module>heimdal-ethereum</module>
+    
+    <module>heimdal-api</module>
+    <module>heimdal-bitcoin</module>
+    <module>heimdal-core</module>
   </modules>
 </project>

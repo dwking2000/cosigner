@@ -2,9 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.emax</groupId>
     <artifactId>heimdal-ethereum</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>heimdal-ethereum</name>
     <description>Heimdal Ethereum</description>
@@ -31,11 +29,6 @@
         </license>
     </licenses>
     
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-    </parent>
 
     <scm>
         <connection>scm:git:git@github.com:EMAXio/heimdal-ethereum.git</connection>
@@ -179,4 +172,9 @@
             <version>0.9.6</version>
         </dependency>
     </dependencies>
+    <parent>
+    	<groupId>io.emax</groupId>
+    	<artifactId>heimdal-parent</artifactId>
+    	<version>0.0.1-SNAPSHOT</version>
+    </parent>
 </project>
