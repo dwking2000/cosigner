@@ -1,0 +1,128 @@
+package io.emax.heimdal.ethereum.common;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+
+import org.bouncycastle.crypto.digests.SHA3Digest;
+
+public class DeterministicTools {
+
+  private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
+  private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
+
+  /**
+   * 
+   * @param userKeyPart Expect these to be hex strings without the leading 0x identifier
+   * @param serverKeyPart Expect these to be hex strings without the leading 0x identifier
+   * @param rounds
+   * @return
+   */
+  public static String getDeterministicPrivateKey(String userKeyPart, String serverKeyPart,
+      int rounds) {
+    SecureRandom secureRandom;
+    try {
+      secureRandom =
+          SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
+    } catch (Exception E) {
+      secureRandom = new SecureRandom();
+    }
+
+    byte[] userKey = new BigInteger(userKeyPart, 16).toByteArray();
+    byte[] serverKey = new BigInteger(serverKeyPart, 16).toByteArray();
+    byte[] userSeed = new byte[Math.max(userKey.length, serverKey.length)];
+
+    // XOR the key parts to get our seed, repeating them if they lengths
+    // don't match
+    for (int i = 0; i < userSeed.length; i++) {
+      userSeed[i] = (byte) (userKey[i % userKey.length] ^ serverKey[i % serverKey.length]);
+    }
+
+    // Set up out private key variables
+    BigInteger privateKeyCheck = BigInteger.ZERO;
+    secureRandom.setSeed(userSeed);
+    // Bit of magic, move this maybe. This is the max key range.
+    BigInteger maxKey =
+        new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);
+
+    // Generate the key, skipping as many as desired.
+    byte[] privateKeyAttempt = new byte[32];
+    for (int i = 0; i < Math.max(rounds, 1); i++) {
+      secureRandom.nextBytes(privateKeyAttempt);
+      privateKeyCheck = new BigInteger(1, privateKeyAttempt);
+      while (privateKeyCheck.compareTo(BigInteger.ZERO) == 0
+          || privateKeyCheck.compareTo(maxKey) == 1) {
+        secureRandom.nextBytes(privateKeyAttempt);
+        privateKeyCheck = new BigInteger(1, privateKeyAttempt);
+      }
+    }
+    
+    return privateKeyCheck.toString(16);
+
+  }
+
+  public static String encodeUserKey(String key) {
+    try {
+      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      md.update(key.getBytes());
+      return new BigInteger(md.digest()).toString(16);
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  public static String getPublicAddress(String privateKey) {
+    try {
+      byte[] publicKeyBytes = getPublicKeyBytes(privateKey);
+
+      SHA3Digest md = new SHA3Digest(256);
+      md.reset();
+      md.update(publicKeyBytes, 0, publicKeyBytes.length);
+      byte[] publicShaKeyBytes = new byte[32];
+      md.doFinal(publicShaKeyBytes, 0);
+
+      byte[] decodedPublicKey = Arrays.copyOfRange(publicShaKeyBytes, 96/8, 256/8);
+      BigInteger publicKey = new BigInteger(1, decodedPublicKey);
+      return publicKey.toString(16);
+
+    } catch (Exception e) {
+      System.out.println("Panic!!" + e.toString());
+      e.printStackTrace(System.out);
+      return null;
+    }
+  }
+
+  public static String getPublicKey(String privateKey) {
+    return toHex(getPublicKeyBytes(privateKey));
+  }
+
+  public static byte[] getPublicKeyBytes(String privateKey) {
+    try {
+      byte[] decodedPrivateKey = new BigInteger("00"+privateKey, 16).toByteArray();
+      
+      Secp256k1 secp256k1 = new Secp256k1();
+      byte[] publicKeyBytes = secp256k1.getPublicKey(decodedPrivateKey);
+
+      return publicKeyBytes;
+
+    } catch (Exception e) {
+      System.out.println("Panic!!" + e.toString());
+      e.printStackTrace(System.out);
+      return null;
+    }
+  }
+
+  private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
+
+  public static String toHex(byte[] data) {
+    char[] chars = new char[data.length * 2];
+    for (int i = 0; i < data.length; i++) {
+      chars[i * 2] = HEX_DIGITS[(data[i] >> 4) & 0xf];
+      chars[i * 2 + 1] = HEX_DIGITS[data[i] & 0xf];
+    }
+    return new String(chars);
+  }
+}

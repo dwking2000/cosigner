@@ -32,7 +32,7 @@ For now, create the following genesis block file as private_genesis.json and loa
 ```
 
 ```bash
-geth --datadir="D:\ETHTest" --maxpeers "0" --port 30301 --rpcport 8101 --genesis ./private_genesis.json console
+geth --datadir="D:\ETHTest" --verbosity "6" --maxpeers "0" --port 30301 --rpc --rpcport 8101 --genesis ./private_genesis.json console
 ```
 
 Coin creation is done through mining. In another window create a base account
@@ -73,4 +73,3 @@ java -jar heimdal-ethereum-0.0.1-SNAPSHOT.jar getBalance <address>
 TODO
 
 ### Notes
-

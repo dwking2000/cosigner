@@ -17,5 +17,10 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
   public String getDaemonConnectionString() {
     return daemonConnectionString;
   }
+  
+  public String getServerPrivateKey() {
+    // TODO Load this somehow, don't just leave it in the code.
+    return "b0837faed56bc7c48dc29d564b1c030f03eee53b0317c53d784c8f40654821c6";
+  }
 
 }
