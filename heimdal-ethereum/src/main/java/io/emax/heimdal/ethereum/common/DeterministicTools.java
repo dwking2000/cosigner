@@ -80,7 +80,7 @@ public class DeterministicTools {
 
       SHA3Digest md = new SHA3Digest(256);
       md.reset();
-      md.update(publicKeyBytes, 0, publicKeyBytes.length);
+      md.update(publicKeyBytes, 1, publicKeyBytes.length-1);
       byte[] publicShaKeyBytes = new byte[32];
       md.doFinal(publicShaKeyBytes, 0);
 
@@ -96,7 +96,7 @@ public class DeterministicTools {
   }
 
   public static String getPublicKey(String privateKey) {
-    return toHex(getPublicKeyBytes(privateKey));
+    return toHexString(getPublicKeyBytes(privateKey));
   }
 
   public static byte[] getPublicKeyBytes(String privateKey) {
@@ -117,7 +117,7 @@ public class DeterministicTools {
 
   private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
 
-  public static String toHex(byte[] data) {
+  public static String toHexString(byte[] data) {
     char[] chars = new char[data.length * 2];
     for (int i = 0; i < data.length; i++) {
       chars[i * 2] = HEX_DIGITS[(data[i] >> 4) & 0xf];
