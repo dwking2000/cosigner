@@ -58,9 +58,19 @@ public class DeterministicTools {
         privateKeyCheck = new BigInteger(1, privateKeyAttempt);
       }
     }
-    
+
     return privateKeyCheck.toString(16);
 
+  }
+
+  public static String hashSha3(String data) {
+    byte[] dataBytes = ByteUtilities.toByteArray(data);
+    SHA3Digest md = new SHA3Digest(256);
+    md.reset();
+    md.update(dataBytes, 0, dataBytes.length);
+    byte[] hashedBytes = new byte[256 / 8];
+    md.doFinal(hashedBytes, 0);
+    return ByteUtilities.toHexString(hashedBytes);
   }
 
   public static String encodeUserKey(String key) {
@@ -80,11 +90,11 @@ public class DeterministicTools {
 
       SHA3Digest md = new SHA3Digest(256);
       md.reset();
-      md.update(publicKeyBytes, 1, publicKeyBytes.length-1);
+      md.update(publicKeyBytes, 1, publicKeyBytes.length - 1);
       byte[] publicShaKeyBytes = new byte[32];
       md.doFinal(publicShaKeyBytes, 0);
 
-      byte[] decodedPublicKey = Arrays.copyOfRange(publicShaKeyBytes, 96/8, 256/8);
+      byte[] decodedPublicKey = Arrays.copyOfRange(publicShaKeyBytes, 96 / 8, 256 / 8);
       BigInteger publicKey = new BigInteger(1, decodedPublicKey);
       return publicKey.toString(16);
 
@@ -96,15 +106,14 @@ public class DeterministicTools {
   }
 
   public static String getPublicKey(String privateKey) {
-    return toHexString(getPublicKeyBytes(privateKey));
+    return ByteUtilities.toHexString(getPublicKeyBytes(privateKey));
   }
 
   public static byte[] getPublicKeyBytes(String privateKey) {
     try {
-      byte[] decodedPrivateKey = new BigInteger("00"+privateKey, 16).toByteArray();
-      
-      Secp256k1 secp256k1 = new Secp256k1();
-      byte[] publicKeyBytes = secp256k1.getPublicKey(decodedPrivateKey);
+      byte[] decodedPrivateKey = new BigInteger("00" + privateKey, 16).toByteArray();
+
+      byte[] publicKeyBytes = Secp256k1.getPublicKey(decodedPrivateKey);
 
       return publicKeyBytes;
 
@@ -113,16 +122,5 @@ public class DeterministicTools {
       e.printStackTrace(System.out);
       return null;
     }
-  }
-
-  private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
-
-  public static String toHexString(byte[] data) {
-    char[] chars = new char[data.length * 2];
-    for (int i = 0; i < data.length; i++) {
-      chars[i * 2] = HEX_DIGITS[(data[i] >> 4) & 0xf];
-      chars[i * 2 + 1] = HEX_DIGITS[data[i] & 0xf];
-    }
-    return new String(chars);
   }
 }

@@ -31,11 +31,11 @@ public class EthereumResource {
 
       // Set up our RPC authentication
       // TODO: Remove the magic
-      //Authenticator.setDefault(new Authenticator() {
-      //  protected PasswordAuthentication getPasswordAuthentication() {
-      //    return new PasswordAuthentication("bitcoinrpc", "changeit".toCharArray());
-      //  }
-      //});
+      // Authenticator.setDefault(new Authenticator() {
+      // protected PasswordAuthentication getPasswordAuthentication() {
+      // return new PasswordAuthentication("bitcoinrpc", "changeit".toCharArray());
+      // }
+      // });
 
       this.client = new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()));
 

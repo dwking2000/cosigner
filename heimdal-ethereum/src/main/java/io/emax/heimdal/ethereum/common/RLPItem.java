@@ -6,6 +6,14 @@ public class RLPItem implements RLPEntity {
   private byte[] encodedContents;
   private byte[] decodedContents;
 
+  public RLPItem(byte[] decodedBytes) {
+    this.setDecodedContents(decodedBytes);
+  }
+
+  public RLPItem() {
+    this.setDecodedContents(new byte[] {});
+  }
+
   @Override
   public byte[] getEncodedContents() {
     return encodedContents;
