@@ -28,11 +28,11 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
   }
 
   public long getGasPrice() {
-    return 10000000000000L;
+    return 60000000000L;
   }
 
   public long getSimpleTxGas() {
-    return 100000L;
+    return 90000L;
   }
 
   public long getWeiMultiplier() {

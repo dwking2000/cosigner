@@ -76,8 +76,10 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     BigInteger confirmedBalance = new BigInteger("00" + ethereumRpc
         .eth_getBalance(address, "0x" + confirmedBlockNumber.toString(16)).substring(2), 16);
 
-    // Return the lower of the two
-    return confirmedBalance.min(latestBalance).toString(10);
+    // convert to Ether and return the lower of the two
+    confirmedBalance = confirmedBalance.min(latestBalance);
+    BigDecimal etherBalance = new BigDecimal(confirmedBalance).divide(BigDecimal.valueOf(config.getWeiMultiplier()));
+    return etherBalance.toPlainString();
   }
 
   @Override
@@ -177,8 +179,11 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     String txCount =
         ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.latest.toString());
     BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount));
-    nonce = nonce.add(BigInteger.ONE);
-    sigTx.get(0).setDecodedContents(ByteUtilities.stripLeadingNullBytes(nonce.toByteArray()));
+    if(nonce.equals(BigInteger.ZERO)) {
+      sigTx.get(0).setDecodedContents(new byte[] {});
+    } else {
+      sigTx.get(0).setDecodedContents(ByteUtilities.stripLeadingNullBytes(nonce.toByteArray()));
+    }
 
     String sigString = ByteUtilities.toHexString(sigTx.encode());
     sigString = DeterministicTools.hashSha3(sigString);
