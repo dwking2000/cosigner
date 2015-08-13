@@ -9,7 +9,8 @@ An ethereum implementation for heimdal-api
 ## Current State
 
 Unstable
-- Only stubbed out right now
+- Multi-sig/contracts still need to be implemented
+- Monitor is not implemented
 
 ## Testing recommendations
 
@@ -56,7 +57,7 @@ And to stop:
 miner.stop()
 ```
 
-Recommend that you use at most [# cpu's - 1] to avoid a slow/non-responsive console. And for a private network 1 is probably sufficient, difficulty is not high.
+Recommend that you use at most [# cpu's - 1] to avoid a slow/non-responsive console. And for a private network 1 is probably sufficient, difficulty is not high. You do need to be mining to confirm tx's when testing.
 
 Once that's working, run the JAR directly and it will provide you with command line access to the interface. 
 ```bash
@@ -66,6 +67,21 @@ java -jar heimdal-ethereum-0.0.1-SNAPSHOT.jar getNewAddress <random hex string w
 Check the account balance (before and after your transaction above)
 ```bash
 java -jar heimdal-ethereum-0.0.1-SNAPSHOT.jar getBalance <address>
+```
+
+Creating a transaction is fairly straightforward. The sender value can be whatever, ethereum doesn't use it. We may use it as extraData at some point.
+```bash
+java -jar heimdal-ethereum-0.0.1-SNAPSHOT.jar createTransaction <from> <to> <amount in Ether>
+```
+
+Sign it as appropriate. If the key is stored in geth, don't pass in the hex string for the account. If it's a deterministic account, enter the account string and heimdal will figure out which key to use.
+```bash
+java -jar heimdal-ethereum-0.0.1-SNAPSHOT.jar signTransaction <tx string> <signer> <optional account hex>
+```
+
+And finally
+```bash
+java -jar heimdal-ethereum-0.0.1-SNAPSHOT.jar sendTransaction <signed tx string>
 ```
 
 ### Multi-sig test
