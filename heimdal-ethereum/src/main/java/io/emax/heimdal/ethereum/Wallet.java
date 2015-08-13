@@ -176,7 +176,9 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
     String txCount =
         ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.latest.toString());
-    sigTx.get(0).setDecodedContents(ByteUtilities.toByteArray(txCount));
+    BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount));
+    nonce = nonce.add(BigInteger.ONE);
+    sigTx.get(0).setDecodedContents(ByteUtilities.stripLeadingNullBytes(nonce.toByteArray()));
 
     String sigString = ByteUtilities.toHexString(sigTx.encode());
     sigString = DeterministicTools.hashSha3(sigString);
