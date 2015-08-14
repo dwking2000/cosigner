@@ -130,7 +130,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     sigTx.add(((RLPList) decodedTransaction).get(5)); // data
 
     String txCount =
-        ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.latest.toString());
+        ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.LATEST.toString());
     BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount));
     nonce = nonce.add(BigInteger.ONE);
     sigTx.get(0).setDecodedContents(ByteUtilities.stripLeadingNullBytes(nonce.toByteArray()));
@@ -177,7 +177,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     sigTx.add(((RLPList) decodedTransaction).get(5)); // data
 
     String txCount =
-        ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.latest.toString());
+        ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.LATEST.toString());
     BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount));
     if(nonce.equals(BigInteger.ZERO)) {
       sigTx.get(0).setDecodedContents(new byte[] {});
