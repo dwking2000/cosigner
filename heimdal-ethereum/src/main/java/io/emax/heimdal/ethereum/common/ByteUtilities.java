@@ -42,5 +42,5 @@ public class ByteUtilities {
     }
 
     return bytes;
-  }
+  }  
 }
