@@ -66,7 +66,7 @@ public class RLP {
       System.arraycopy(item, 0, encodedItem, 1, item.length);
       return encodedItem;
     } else {
-      byte[] itemSize = new BigInteger(item.length + "").toByteArray();
+      byte[] itemSize = ByteUtilities.stripLeadingNullBytes(new BigInteger(item.length + "").toByteArray());
       byte[] encodedItem = new byte[1 + itemSize.length + item.length];
       encodedItem[0] = (byte) (LONG_ITEM + itemSize.length);
       System.arraycopy(itemSize, 0, encodedItem, 1, itemSize.length);
@@ -92,7 +92,7 @@ public class RLP {
       System.arraycopy(encodedListData, 0, encodedItem, 1, encodedListData.length);
       return encodedItem;
     } else {
-      byte[] itemSize = new BigInteger(encodedListData.length + "").toByteArray();
+      byte[] itemSize = ByteUtilities.stripLeadingNullBytes(new BigInteger(encodedListData.length + "").toByteArray());
       byte[] encodedItem = new byte[1 + itemSize.length + encodedListData.length];
       encodedItem[0] = (byte) (LONG_LIST + itemSize.length);
       System.arraycopy(itemSize, 0, encodedItem, 1, itemSize.length);
