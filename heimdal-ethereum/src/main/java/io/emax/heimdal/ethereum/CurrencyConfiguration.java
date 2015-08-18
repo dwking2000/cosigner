@@ -44,7 +44,7 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
   }
   
   public String[] getMsigAddresses(){
-    return new String[] {"4277e35876f44c159abbd17df53c0ee19947d957"};
+    return new String[] {"4839540a0ae3242fadf288622f7de1a9278a5858"};
   }
 
   public long getWeiMultiplier() {
@@ -52,6 +52,6 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
   }
   
   public String getContractAccount(){
-    return "4277e35876f44c159abbd17df53c0ee19947d957";
+    return "4839540a0ae3242fadf288622f7de1a9278a5858";
   }
 }
