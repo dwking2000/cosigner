@@ -18,5 +18,7 @@ public interface CurrencyConfiguration {
    * Experimental placeholder Will return what kind of signatures the currency needs. - Async
    * multi-sig (ETH) - Everyone signs before submitting (BTC) - 2-phase if that's different
    */
-  void getSigningType();
+  SigningType getSigningType();
+  
+  int getMinSignatures();
 }

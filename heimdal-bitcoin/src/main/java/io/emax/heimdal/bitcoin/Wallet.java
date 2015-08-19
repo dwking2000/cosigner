@@ -182,7 +182,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       // If we hit max addresses/user bail out
       if (!generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
           .equalsIgnoreCase(address) && !userAddress.equalsIgnoreCase(address)) {
-        return null;
+        return transaction;
       }
 
       // We have the private key, now get all the unspent inputs so we have the redeemScripts.

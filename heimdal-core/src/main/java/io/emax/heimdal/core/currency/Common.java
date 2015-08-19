@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import io.emax.heimdal.api.currency.SigningType;
 import io.emax.heimdal.core.Application;
 
 public class Common {
@@ -75,6 +76,7 @@ public class Common {
     CurrencyPackage currency = lookupCurrency(currencyParams);
 
     String userAccount = currency.getWallet().createAddress(currencyParams.getUserKey());
+    System.out.println("For ETH, fund this account with 1-2 ether to sign things: " + userAccount);
     LinkedList<String> accounts = new LinkedList<>();
     accounts.add(userAccount);
     String userMultiAccount =
@@ -185,14 +187,20 @@ public class Common {
         currencyParams.getReceivingAccount(), new BigDecimal(currencyParams.getAmount())));
 
     // Authorize it with the user account
+    String initalTx = currencyParams.getTransactionData();
     currencyParams.setTransactionData(
-        currency.getWallet().signTransaction(currencyParams.getTransactionData(),
+        currency.getWallet().signTransaction(initalTx,
             currencyParams.getAccount().get(0), currencyParams.getUserKey()));
 
     // If the userKey/address combo don't work then we stop here.
-    if (currencyParams.getTransactionData() == null
-        || currencyParams.getTransactionData().isEmpty()) {
+    if (currencyParams.getTransactionData().equalsIgnoreCase(initalTx)) {
       return "";
+    }
+    
+    // Send it if it's a sign-each and there's more than one signature required (we're at 1/X)
+    if(currency.getConfiguration().getMinSignatures() > 1 && 
+       currency.getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
+    	submitTransaction(stringifyObject(CurrencyParameters.class, currencyParams));
     }
 
     // TODO Validation... what's that?
@@ -202,7 +210,7 @@ public class Common {
       currencyParams.setTransactionData(currency.getWallet().signTransaction(
           currencyParams.getTransactionData(), currencyParams.getAccount().get(0)));
     }
-
+    
     response = currencyParams.getTransactionData();
     return response;
   }

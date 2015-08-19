@@ -2,6 +2,8 @@ package io.emax.heimdal.bitcoin;
 
 import java.util.LinkedList;
 
+import io.emax.heimdal.api.currency.SigningType;
+
 // TODO Make this configurable via config file. Being lazy for now.
 public class CurrencyConfiguration implements io.emax.heimdal.api.currency.CurrencyConfiguration {
 
@@ -40,9 +42,8 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
   }
 
   @Override
-  public void getSigningType() {
-    // TODO Auto-generated method stub
-
+  public SigningType getSigningType() {
+	  return SigningType.SENDALL;
   }
 
 }

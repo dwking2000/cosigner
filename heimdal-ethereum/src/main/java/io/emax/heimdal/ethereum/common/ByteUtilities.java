@@ -20,7 +20,7 @@ public class ByteUtilities {
       chars[i * 2] = HEX_DIGITS[(data[i] >> 4) & 0xf];
       chars[i * 2 + 1] = HEX_DIGITS[data[i] & 0xf];
     }
-    return new String(chars);
+    return new String(chars).toLowerCase();
   }
 
   public static byte[] toByteArray(String data) {

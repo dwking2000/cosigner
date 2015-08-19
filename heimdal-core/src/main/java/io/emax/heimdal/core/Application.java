@@ -56,6 +56,12 @@ public class Application extends io.dropwizard.Application<ApplicationConfigurat
     bitcoinPackage.setWallet(new io.emax.heimdal.bitcoin.Wallet());
     bitcoinPackage.setMonitor(new io.emax.heimdal.bitcoin.Monitor());
     getCurrencies().add(bitcoinPackage);
+    // Ethereum
+    CurrencyPackage ethereumPackage = new CurrencyPackage();
+    ethereumPackage.setConfiguration(new io.emax.heimdal.ethereum.CurrencyConfiguration());
+    ethereumPackage.setWallet(new io.emax.heimdal.ethereum.Wallet());
+    ethereumPackage.setMonitor(new io.emax.heimdal.ethereum.Monitor());
+    getCurrencies().add(ethereumPackage);
 
     // [FUTURE] Load any plugin libraries
 

@@ -56,6 +56,11 @@
 			<artifactId>jeromq</artifactId>
 			<version>0.3.5</version>
 		</dependency>
+		<dependency>
+			<groupId>io.emax</groupId>
+			<artifactId>heimdal-ethereum</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>

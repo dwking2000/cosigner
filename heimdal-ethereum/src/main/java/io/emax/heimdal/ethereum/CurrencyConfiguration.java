@@ -1,5 +1,7 @@
 package io.emax.heimdal.ethereum;
 
+import io.emax.heimdal.api.currency.SigningType;
+
 public class CurrencyConfiguration implements io.emax.heimdal.api.currency.CurrencyConfiguration {
   private String daemonConnectionString = "http://localhost:8101";
 
@@ -9,9 +11,8 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
   }
 
   @Override
-  public void getSigningType() {
-    // TODO Auto-generated method stub
-
+  public SigningType getSigningType() {
+    return SigningType.SENDEACH;
   }
 
   public String getDaemonConnectionString() {
@@ -39,8 +40,8 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
     return 3000000L;
   }
  
-  public long getMsigsRequired(){
-    return 2L;
+  public int getMinSignatures(){
+    return 2;
   }
   
   public String[] getMsigAddresses(){
