@@ -12,6 +12,9 @@ Unstable
 - Multi-sig/contracts still need to be implemented
 - Monitor is not implemented
 
+# Warning #
+heimdal-ethereum tracks addresses based on the contract creation account and the specific contract it uses. Until the contract is finalized, any software updates may break heimdal's ability to access accounts from previous versions. So you should only be using this on a test network. We will attempt to address the changing contracts issue once the library is stable.
+
 ## Testing recommendations
 
 You'll need an ethereum network. Create a local/private copy for testing with no peers. Delete the data directory to reset the network.
