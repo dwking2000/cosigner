@@ -145,7 +145,12 @@ public class Common {
           responseParms.setAccount(new LinkedList<String>());
           responseParms.getAccount().add(address);
           responseParms.setAmount(balance);
-          responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
+          if(responseSocket == null || responseSocket.destroyed()) {
+        	  System.out.println("Monitor for websocket destroyed.");
+        	  return;
+          } else {
+        	  responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
+          }
         });
       });
     } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
@@ -165,7 +170,8 @@ public class Common {
 
             HttpClients.createDefault().execute(httpPost).close();
           } catch (Exception e) {
-            e.printStackTrace();
+        	System.out.println("Monitor for REST callback destroyed.");
+            return;
           }
         });
       });
