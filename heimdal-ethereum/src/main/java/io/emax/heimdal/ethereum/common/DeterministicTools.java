@@ -83,6 +83,21 @@ public class DeterministicTools {
       return null;
     }
   }
+  
+  public static byte[] getRandomBytes(int size) {
+	  SecureRandom secureRandom;
+	    try {
+	      secureRandom =
+	          SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
+	    } catch (Exception E) {
+	      secureRandom = new SecureRandom();
+	    }
+	    
+	    byte[] randBytes = new byte[size];
+	    secureRandom.nextBytes(randBytes);
+	    
+	    return randBytes;
+  }
 
   public static String getPublicAddress(String privateKey) {
     try {

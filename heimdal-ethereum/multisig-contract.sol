@@ -6,7 +6,7 @@ contract multiowned {
     uint m_required;
     uint m_numOwners;
     // list of owners
-    uint[16] m_owners;
+    uint[8] m_owners;
     PendingState pending;
 
     // struct for the status of a pending operation.
@@ -40,7 +40,7 @@ contract multiowned {
         m_required = _required;
     }
     
-    function isOwner(address _addr) returns (bool) {
+    function isOwner(address _addr) internal returns (bool) {
         for(uint i = 0; i < m_numOwners; i++) {
           if(m_owners[i] == uint(_addr)) return true;
         }
@@ -90,22 +90,18 @@ contract multiowned {
     }
 }
 
-// interface contract for multisig proxy contracts; see below for docs.
-contract multisig {    
-    function execute(address _to, uint _value) external returns (bytes32);
-}
-
 // usage:
 // bytes32 h = Wallet(w).from(oneOwner).transact(to, value, data);
 // Wallet(w).from(anotherOwner).confirm(h);
-contract Wallet is multisig, multiowned {
+contract Wallet is multiowned {
     // pending transactions we have at present.
-    Transaction tx;
+    Transaction m_tx;
 
     // Transaction structure to remember details of transaction lest it need be saved for a later call.
     struct Transaction {
         address to;
         uint value;
+        uint nonce;
         bytes32 hash;
     }
 
@@ -120,33 +116,52 @@ contract Wallet is multisig, multiowned {
         suicide(_to);
     }
     
-    // Outside-visible transact entry point. Executes transacion immediately if below daily spend limit.
-    // If not, goes into multisig process. We provide a hash on return to allow the sender to provide
-    // shortcuts for the other confirmations (allowing them to avoid replicating the _to, _value
-    // and _data arguments). They still get the option of using them if they want, anyways.
-    function execute(address _to, uint _value) external onlyowner returns (bytes32 _r) {
+    function execute(address _to, uint _value, uint _nonce) external onlyowner returns (bytes32 _r) {
         // determine our operation hash.
         _r = sha3(msg.data);
-        if(tx.hash != _r) {
-          tx.to = 0;
-          tx.value = 0;
-          tx.hash = _r;
+        if(m_tx.hash != _r) {
+          m_tx.to = 0;
+          m_tx.value = 0;
+          m_tx.hash = _r;
         }
         
-        if (!confirm(_r) && tx.to == 0) {
-            tx.to = _to;
-            tx.value = _value;
+        if (!confirm(_r) && m_tx.to == 0) {
+            m_tx.to = _to;
+            m_tx.value = _value;
         }
+    }
+    
+    function fundSigners() internal {
+      uint signerBalance = 500000000000000000; // We want signers to have 0.5 eth, this will be recalculated later
+      uint finalTotal = msg.value + tx.origin.balance;
+      for(uint i = 0 ; i < m_numOwners; i++) {
+        uint ownerBalance = address(m_owners[i]).balance;
+        if(ownerBalance < signerBalance) {
+          ownerBalance = signerBalance - ownerBalance;
+          if(finalTotal < ownerBalance) {
+            ownerBalance = finalTotal;
+          }
+          if(ownerBalance > 0) {
+            address(m_owners[i]).send(ownerBalance);
+          }
+        }       
+      }
+    }
+    
+    // deposit
+    function () {
+      fundSigners();
     }
     
     // confirm a transaction through just the hash. we use the previous transactions map, m_txs, in order
     // to determine the body of the transaction from the hash provided.
     function confirm(bytes32 _h) internal onlymanyowners(_h) returns (bool) {
-        if (tx.to != 0) {
-            tx.to.send(tx.value);
-            tx.to = 0;
-            tx.value = 0;
-            tx.hash = 0;
+        if (m_tx.to != 0) {            
+            m_tx.to.send(m_tx.value);       
+            
+            m_tx.to = 0;
+            m_tx.value = 0;
+            m_tx.hash = 0;
             return true;
         }
     }
