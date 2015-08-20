@@ -221,7 +221,8 @@ public class Common {
 	public static String approveTransaction(String params) {
 		CurrencyParameters currencyParams = convertParams(params);
 
-		String response = "";
+		String response = "a";
+		response = "";
 		CurrencyPackage currency = lookupCurrency(currencyParams);
 
 		currencyParams.setTransactionData(currency.getWallet().signTransaction(currencyParams.getTransactionData(),

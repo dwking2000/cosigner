@@ -24,7 +24,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   private static HashMap<String, String> reverseMsigContracts = new HashMap<>();
 
   public Wallet() {
-    // TODO contract may very likely change, current one is a little on the large size
+    // TODO contract may very likely change
     String contractPayload = "0x6060604052361561002a5760e060020a6000350463c52ab77881146100c7578063cbf0b0c01461010e575b6101766101786706f05b59d3b20000600160a060020a0332163134016000805b600154821015610233576002826008811015610002570154600160a060020a0316319050838110156100bb578303808310156100835750815b60008111156100bb57600282600881101561000257604051910154600160a060020a031690600090839082818181858883f150505050505b6001919091019061004a565b61017a60043560243560443560006101a1326000805b60015481101561023957600160a060020a03831660028260088110156100025701541415610244576001915061023e565b610176600435600036604051808383808284375050509081018190039020905061018c815b600060ff81805b60015482101561016857600160a060020a0332166002836008811015610002570154141561024c5781925082505b8260ff1415610258576102bb565b005b565b60408051918252519081900360200190f35b1561019d5781600160a060020a0316ff5b5050565b1561022c57600036604051808383808284375050509081018190039020601054909250821490506101e757600d8054600160a060020a03191690556000600e5560108190555b6101f7816000816102c381610133565b15801561020f5750600d54600160a060020a03166000145b1561022c57600d8054600160a060020a03191685179055600e8390555b9392505050565b50505050565b600091505b50919050565b6001016100dd565b6001919091019061013a565b600a5485146102715760008054600c55600b55600a8590555b50600b54600283900a908116600014156102bb57600c54600190116102a8576000600c819055600b819055600a55600193506102bb565b600c8054600019019055600b8054821790555b505050919050565b1561023e57600d54600160a060020a031660001461023e57600d54600e54604051600160a060020a0392909216916000919082818181858883f15050600d8054600160a060020a031916905550600e819055601055506001939250505056";
     String txCount =
         ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(), DefaultBlock.latest.toString());    
@@ -113,7 +113,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     RLPItem gasPrice = new RLPItem(ByteUtilities
         .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
     RLPItem gasLimit = new RLPItem(ByteUtilities
-        .stripLeadingNullBytes(BigInteger.valueOf(config.getMsigTxGas()).toByteArray()));
+        .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
     RLPItem to = new RLPItem();
     RLPItem value = new RLPItem();
     
@@ -128,13 +128,13 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     String requiredSigs = ByteUtilities.toHexString(BigInteger.valueOf(config.getMinSignatures()).toByteArray());
     requiredSigs = String.format("%64s", requiredSigs).replace(' ', '0');
     // Address[] - first entry in an array parameter is how many elements there are
-    String numberOfAddresses = ByteUtilities.toHexString(BigInteger.valueOf(config.getMsigAddresses().length + 1).toByteArray());
+    String numberOfAddresses = ByteUtilities.toHexString(BigInteger.valueOf(config.getMultiSigAddresses().length + 1).toByteArray());
     numberOfAddresses = String.format("%64s", numberOfAddresses).replace(' ', '0');
     // Build the array
-    String[] addressesUsed = new String[config.getMsigAddresses().length + 1];
+    String[] addressesUsed = new String[config.getMultiSigAddresses().length + 1];
     addressesUsed[0] = String.format("%64s",  userAddress).replace(' ', '0');
-    for(int i = 0; i < config.getMsigAddresses().length; i++) {
-      addressesUsed[i+1] = String.format("%64s",  config.getMsigAddresses()[i]).replace(' ', '0');
+    for(int i = 0; i < config.getMultiSigAddresses().length; i++) {
+      addressesUsed[i+1] = String.format("%64s",  config.getMultiSigAddresses()[i]).replace(' ', '0');
     }
     // Contract code is the init code which copies the payload and constructor parameters, then runs the constructor
     // Followed by the payload, i.e. contract code that gets installed
@@ -242,7 +242,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     if(isMsigSender){
       // move things around to match the contract
       gasLimit = new RLPItem(ByteUtilities
-          .stripLeadingNullBytes(BigInteger.valueOf(config.getMsigTxGas()).toByteArray()));
+          .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
       value = new RLPItem();
       // data... c52ab778 execute(address,uint256,uint256)
       String dataString = "c52ab778000000000000000000000000";
@@ -281,8 +281,8 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     // We've been asked to sign something for the multi-sig contract without a user-key
     // Going on the assumption that the local geth wallet only has one key
     if(reverseMsigContracts.containsKey(address.toLowerCase())) {
-    	for(int i = 0; i < config.getMsigAddresses().length; i++) {
-    		String altSig = signTransaction(transaction, config.getMsigAddresses()[i]);
+    	for(int i = 0; i < config.getMultiSigAddresses().length; i++) {
+    		String altSig = signTransaction(transaction, config.getMultiSigAddresses()[i]);
     		if(!altSig.isEmpty()){
     			return altSig;
     		}
