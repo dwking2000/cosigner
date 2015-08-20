@@ -24,6 +24,14 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   private BitcoindResource bitcoind = BitcoindResource.getResource();
   private BitcoindRpc bitcoindRpc = bitcoind.getBitcoindRpc();
 
+  public Wallet(BitcoindRpc rpc) {
+    this.bitcoindRpc = rpc;
+  }
+
+  public Wallet() {
+
+  }
+
   @Override
   public String createAddress(String name) {
     int rounds = 1;

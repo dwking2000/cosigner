@@ -46,6 +46,10 @@ public class BitcoindResource {
       e.printStackTrace();
     }
   }
+  
+  public BitcoindResource(BitcoindRpc rpc){
+    this.bitcoindRpc = rpc;
+  }
 
   public BitcoindRpc getBitcoindRpc() {
     if (bitcoindRpc == null)
