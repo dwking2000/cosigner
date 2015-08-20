@@ -96,7 +96,9 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
         multisigAddresses.add(address);
       }
     });
-    config.getBaseMultiSigAccounts().forEach(multisigAddresses::add);
+    for (String account : config.getMultiSigAccounts()) {
+      multisigAddresses.add(account);
+    }
 
     String[] addressArray = new String[multisigAddresses.size()];
     MultiSig newAddress = bitcoindRpc.createmultisig(config.getMinSignatures(),
