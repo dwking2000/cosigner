@@ -19,7 +19,7 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
     Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
   }
 
-  private boolean updateBalances() {    
+  private boolean updateBalances() {
     monitoredAddresses.forEach(address -> {
       String currentBalance = wallet.getBalance(address);
       accountBalances.put(address, currentBalance);

@@ -51,12 +51,12 @@
 	</modules>
 
 	<build>
-	<resources>
-        <resource>
-            <directory>src/main/resources</directory>
-            <targetPath>../../../target</targetPath>
-        </resource>
-    </resources>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<targetPath>../../../target</targetPath>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

@@ -19,6 +19,6 @@ public interface CurrencyConfiguration {
    * multi-sig (ETH) - Everyone signs before submitting (BTC) - 2-phase if that's different
    */
   SigningType getSigningType();
-  
+
   int getMinSignatures();
 }

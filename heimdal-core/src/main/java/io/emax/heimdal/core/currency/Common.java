@@ -21,225 +21,228 @@ import io.emax.heimdal.core.Application;
 
 public class Common {
 
-	public static CurrencyParameters convertParams(String params) {
-		try {
-			JsonFactory jsonFact = new JsonFactory();
-			JsonParser jsonParser = jsonFact.createParser(params);
-			CurrencyParameters currencyParams = new ObjectMapper().readValue(jsonParser, CurrencyParameters.class);
-			return currencyParams;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
-	}
+  public static CurrencyParameters convertParams(String params) {
+    try {
+      JsonFactory jsonFact = new JsonFactory();
+      JsonParser jsonParser = jsonFact.createParser(params);
+      CurrencyParameters currencyParams =
+          new ObjectMapper().readValue(jsonParser, CurrencyParameters.class);
+      return currencyParams;
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+      return null;
+    }
+  }
 
-	public static String stringifyObject(Class<?> objectType, Object obj) {
-		try {
-			JsonFactory jsonFact = new JsonFactory();
-			ObjectMapper mapper = new ObjectMapper(jsonFact);
-			ObjectWriter writer = mapper.writerFor(objectType);
-			return writer.writeValueAsString(obj);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return "";
-		}
-	}
+  public static String stringifyObject(Class<?> objectType, Object obj) {
+    try {
+      JsonFactory jsonFact = new JsonFactory();
+      ObjectMapper mapper = new ObjectMapper(jsonFact);
+      ObjectWriter writer = mapper.writerFor(objectType);
+      return writer.writeValueAsString(obj);
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+      return "";
+    }
+  }
 
-	public static CurrencyPackage lookupCurrency(CurrencyParameters params) {
-		for (CurrencyPackage currency : Application.getCurrencies()) {
-			if (currency.getConfiguration().getCurrencySymbol().equalsIgnoreCase(params.getCurrencySymbol())) {
-				return currency;
-			}
-		}
+  public static CurrencyPackage lookupCurrency(CurrencyParameters params) {
+    for (CurrencyPackage currency : Application.getCurrencies()) {
+      if (currency.getConfiguration().getCurrencySymbol()
+          .equalsIgnoreCase(params.getCurrencySymbol())) {
+        return currency;
+      }
+    }
 
-		return null;
-	}
+    return null;
+  }
 
-	public static String getCurrencies() {
-		List<String> currencies = new LinkedList<>();
-		Application.getCurrencies().forEach((currencyPackage) -> {
-			currencies.add(currencyPackage.getConfiguration().getCurrencySymbol());
-		});
+  public static String getCurrencies() {
+    List<String> currencies = new LinkedList<>();
+    Application.getCurrencies().forEach((currencyPackage) -> {
+      currencies.add(currencyPackage.getConfiguration().getCurrencySymbol());
+    });
 
-		String currencyString = stringifyObject(LinkedList.class, currencies);
+    String currencyString = stringifyObject(LinkedList.class, currencies);
 
-		return currencyString;
-	}
+    return currencyString;
+  }
 
-	public static String getNewAccount(String params) {
-		CurrencyParameters currencyParams = convertParams(params);
+  public static String getNewAccount(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
 
-		String response = "";
-		CurrencyPackage currency = lookupCurrency(currencyParams);
+    String response = "";
+    CurrencyPackage currency = lookupCurrency(currencyParams);
 
-		String userAccount = currency.getWallet().createAddress(currencyParams.getUserKey());
-		LinkedList<String> accounts = new LinkedList<>();
-		accounts.add(userAccount);
-		String userMultiAccount = currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
-		response = userMultiAccount;
+    String userAccount = currency.getWallet().createAddress(currencyParams.getUserKey());
+    LinkedList<String> accounts = new LinkedList<>();
+    accounts.add(userAccount);
+    String userMultiAccount =
+        currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
+    response = userMultiAccount;
 
-		return response;
-	}
+    return response;
+  }
 
-	public static String listAllAccounts(String params) {
-		CurrencyParameters currencyParams = convertParams(params);
+  public static String listAllAccounts(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
 
-		String response = "";
-		CurrencyPackage currency = lookupCurrency(currencyParams);
+    String response = "";
+    CurrencyPackage currency = lookupCurrency(currencyParams);
 
-		LinkedList<String> accounts = new LinkedList<>();
-		currency.getWallet().getAddresses(currencyParams.getUserKey()).forEach(accounts::add);
-		response = stringifyObject(LinkedList.class, accounts);
+    LinkedList<String> accounts = new LinkedList<>();
+    currency.getWallet().getAddresses(currencyParams.getUserKey()).forEach(accounts::add);
+    response = stringifyObject(LinkedList.class, accounts);
 
-		return response;
-	}
+    return response;
+  }
 
-	public static String getBalance(String params) {
-		CurrencyParameters currencyParams = convertParams(params);
+  public static String getBalance(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
 
-		String response = "";
-		CurrencyPackage currency = lookupCurrency(currencyParams);
+    String response = "";
+    CurrencyPackage currency = lookupCurrency(currencyParams);
 
-		BigDecimal balance = new BigDecimal(0);
-		if (currencyParams.getAccount() == null || currencyParams.getAccount().isEmpty()) {
-			for (String account : currency.getWallet().getAddresses(currencyParams.getUserKey())) {
-				balance = balance.add(new BigDecimal(currency.getWallet().getBalance(account)));
-			}
-		} else {
-			for (String account : currencyParams.getAccount()) {
-				balance = balance.add(new BigDecimal(currency.getWallet().getBalance(account)));
-			}
-		}
+    BigDecimal balance = new BigDecimal(0);
+    if (currencyParams.getAccount() == null || currencyParams.getAccount().isEmpty()) {
+      for (String account : currency.getWallet().getAddresses(currencyParams.getUserKey())) {
+        balance = balance.add(new BigDecimal(currency.getWallet().getBalance(account)));
+      }
+    } else {
+      for (String account : currencyParams.getAccount()) {
+        balance = balance.add(new BigDecimal(currency.getWallet().getBalance(account)));
+      }
+    }
 
-		response = balance.toString();
+    response = balance.toString();
 
-		return response;
-	}
+    return response;
+  }
 
-	public static String monitorBalance(String params, AtmosphereResponse responseSocket) {
-		CurrencyParameters currencyParams = convertParams(params);
+  public static String monitorBalance(String params, AtmosphereResponse responseSocket) {
+    CurrencyParameters currencyParams = convertParams(params);
 
-		try {
-			String response = "";
-			CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      String response = "";
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-			Monitor monitor = currency.getMonitor().getClass().newInstance();
+      Monitor monitor = currency.getMonitor().getClass().newInstance();
 
-			monitor.addAddresses(currencyParams.getAccount());
+      monitor.addAddresses(currencyParams.getAccount());
 
-			CurrencyParameters returnParms = new CurrencyParameters();
-			returnParms.setAmount("0");
-			monitor.getBalances().forEach((address, balance) -> {
-				returnParms.getAccount().add(address);
-				returnParms.setAmount(
-						new BigDecimal(returnParms.getAmount()).add(new BigDecimal(balance)).toPlainString());
-			});
-			response = stringifyObject(CurrencyParameters.class, returnParms);
+      CurrencyParameters returnParms = new CurrencyParameters();
+      returnParms.setAmount("0");
+      monitor.getBalances().forEach((address, balance) -> {
+        returnParms.getAccount().add(address);
+        returnParms.setAmount(
+            new BigDecimal(returnParms.getAmount()).add(new BigDecimal(balance)).toPlainString());
+      });
+      response = stringifyObject(CurrencyParameters.class, returnParms);
 
-			// Web socket was passed to us
-			if (responseSocket != null) {
-				monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
-					balanceMap.forEach((address, balance) -> {
-						CurrencyParameters responseParms = new CurrencyParameters();
-						responseParms.setAccount(new LinkedList<String>());
-						responseParms.getAccount().add(address);
-						responseParms.setAmount(balance);
-						responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
-					});
-				});
-			} else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
-				monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
-					balanceMap.forEach((address, balance) -> {
-						try {
-							CurrencyParameters responseParms = new CurrencyParameters();
-							responseParms.setAccount(new LinkedList<String>());
-							responseParms.getAccount().add(address);
-							responseParms.setAmount(balance);
+      // Web socket was passed to us
+      if (responseSocket != null) {
+        monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
+          balanceMap.forEach((address, balance) -> {
+            CurrencyParameters responseParms = new CurrencyParameters();
+            responseParms.setAccount(new LinkedList<String>());
+            responseParms.getAccount().add(address);
+            responseParms.setAmount(balance);
+            responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
+          });
+        });
+      } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
+        monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
+          balanceMap.forEach((address, balance) -> {
+            try {
+              CurrencyParameters responseParms = new CurrencyParameters();
+              responseParms.setAccount(new LinkedList<String>());
+              responseParms.getAccount().add(address);
+              responseParms.setAmount(balance);
 
-							HttpPost httpPost = new HttpPost(currencyParams.getCallback());
-							httpPost.addHeader("content-type", "application/json");
-							StringEntity entity;
-							entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
-							httpPost.setEntity(entity);
+              HttpPost httpPost = new HttpPost(currencyParams.getCallback());
+              httpPost.addHeader("content-type", "application/json");
+              StringEntity entity;
+              entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
+              httpPost.setEntity(entity);
 
-							HttpClients.createDefault().execute(httpPost).close();
-						} catch (Exception e) {
-							System.out.println("Monitor for REST callback destroyed.");
-							return;
-						}
-					});
-				});
-			}
+              HttpClients.createDefault().execute(httpPost).close();
+            } catch (Exception e) {
+              System.out.println("Monitor for REST callback destroyed.");
+              return;
+            }
+          });
+        });
+      }
 
-			return response;
+      return response;
 
-		} catch (IllegalAccessException | InstantiationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+    } catch (IllegalAccessException | InstantiationException e1) {
+      // TODO Auto-generated catch block
+      e1.printStackTrace();
 
-		}
+    }
 
-		return "";
+    return "";
 
-	}
+  }
 
-	public static String prepareTransaction(String params) {
-		CurrencyParameters currencyParams = convertParams(params);
+  public static String prepareTransaction(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
 
-		String response = "";
-		CurrencyPackage currency = lookupCurrency(currencyParams);
+    String response = "";
+    CurrencyPackage currency = lookupCurrency(currencyParams);
 
-		// Create the transaction
-		List<String> addresses = new LinkedList<>();
-		addresses.addAll(currencyParams.getAccount());
-		currencyParams.setTransactionData(currency.getWallet().createTransaction(addresses,
-				currencyParams.getReceivingAccount(), new BigDecimal(currencyParams.getAmount())));
+    // Create the transaction
+    List<String> addresses = new LinkedList<>();
+    addresses.addAll(currencyParams.getAccount());
+    currencyParams.setTransactionData(currency.getWallet().createTransaction(addresses,
+        currencyParams.getReceivingAccount(), new BigDecimal(currencyParams.getAmount())));
 
-		// Authorize it with the user account
-		String initalTx = currencyParams.getTransactionData();
-		currencyParams.setTransactionData(currency.getWallet().signTransaction(initalTx,
-				currencyParams.getAccount().get(0), currencyParams.getUserKey()));
+    // Authorize it with the user account
+    String initalTx = currencyParams.getTransactionData();
+    currencyParams.setTransactionData(currency.getWallet().signTransaction(initalTx,
+        currencyParams.getAccount().get(0), currencyParams.getUserKey()));
 
-		// If the userKey/address combo don't work then we stop here.
-		if (currencyParams.getTransactionData().equalsIgnoreCase(initalTx)) {
-			return initalTx;
-		}
+    // If the userKey/address combo don't work then we stop here.
+    if (currencyParams.getTransactionData().equalsIgnoreCase(initalTx)) {
+      return initalTx;
+    }
 
-		// Send it if it's a sign-each and there's more than one signature
-		// required (we're at 1/X)
-		if (currency.getConfiguration().getMinSignatures() > 1
-				&& currency.getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
-			submitTransaction(stringifyObject(CurrencyParameters.class, currencyParams));
-		}
+    // Send it if it's a sign-each and there's more than one signature
+    // required (we're at 1/X)
+    if (currency.getConfiguration().getMinSignatures() > 1
+        && currency.getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
+      submitTransaction(stringifyObject(CurrencyParameters.class, currencyParams));
+    }
 
-		response = currencyParams.getTransactionData();
-		return response;
-	}
+    response = currencyParams.getTransactionData();
+    return response;
+  }
 
-	public static String approveTransaction(String params) {
-		CurrencyParameters currencyParams = convertParams(params);
+  public static String approveTransaction(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
 
-		String response = "a";
-		response = "";
-		CurrencyPackage currency = lookupCurrency(currencyParams);
+    String response = "a";
+    response = "";
+    CurrencyPackage currency = lookupCurrency(currencyParams);
 
-		currencyParams.setTransactionData(currency.getWallet().signTransaction(currencyParams.getTransactionData(),
-				currencyParams.getAccount().get(0)));
-		response = currencyParams.getTransactionData();
+    currencyParams.setTransactionData(currency.getWallet()
+        .signTransaction(currencyParams.getTransactionData(), currencyParams.getAccount().get(0)));
+    response = currencyParams.getTransactionData();
 
-		return response;
-	}
+    return response;
+  }
 
-	public static String submitTransaction(String params) {
-		CurrencyParameters currencyParams = convertParams(params);
+  public static String submitTransaction(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
 
-		String response = "";
-		CurrencyPackage currency = lookupCurrency(currencyParams);
-		response = currency.getWallet().sendTransaction(currencyParams.getTransactionData());
+    String response = "";
+    CurrencyPackage currency = lookupCurrency(currencyParams);
+    response = currency.getWallet().sendTransaction(currencyParams.getTransactionData());
 
-		return response;
-	}
+    return response;
+  }
 
 }

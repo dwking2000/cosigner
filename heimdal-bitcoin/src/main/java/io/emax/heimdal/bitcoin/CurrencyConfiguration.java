@@ -43,7 +43,7 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
 
   @Override
   public SigningType getSigningType() {
-	  return SigningType.SENDALL;
+    return SigningType.SENDALL;
   }
 
 }
