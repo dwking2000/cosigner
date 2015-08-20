@@ -98,7 +98,6 @@ public class Secp256k1 {
     }
 
     return (byte) 0x00;
-
   }
 
   public static byte[] recoverPublicKey(byte[] r, byte[] s, byte[] message, int recoveryId) {
@@ -128,7 +127,6 @@ public class Secp256k1 {
       e.printStackTrace();
 
     }
-
 
     return null;
   }
