@@ -13,13 +13,18 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   private HashMap<String, String> accountBalances = new HashMap<>();
   private Observable<Map<String, String>> observableBalances =
       Observable.interval(1, TimeUnit.MINUTES).map(tick -> accountBalances);
+  Wallet wallet = new Wallet();
 
+  public Monitor(Wallet wallet){
+    this.wallet = wallet;
+    Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
+  }
+  
   public Monitor() {
     Observable.interval(1, TimeUnit.MINUTES).map(tick -> updateBalances()).subscribe();
   }
 
-  private boolean updateBalances() {
-    Wallet wallet = new Wallet();
+  private boolean updateBalances() {    
     monitoredAddresses.forEach(address -> {
       String currentBalance = wallet.getBalance(address);
       accountBalances.put(address, currentBalance);
