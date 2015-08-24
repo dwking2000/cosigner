@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import io.emax.heimdal.bitcoin.stubrpc.BitcoinTestRpc;
 import junit.framework.TestCase;
 
 public class WalletTest extends TestCase {

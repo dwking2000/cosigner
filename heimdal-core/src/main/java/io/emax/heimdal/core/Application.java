@@ -1,7 +1,6 @@
 package io.emax.heimdal.core;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashMap;
 
 import javax.servlet.ServletRegistration;
 
@@ -17,7 +16,7 @@ import io.emax.heimdal.core.resources.CurrencyResource;
 
 public class Application extends io.dropwizard.Application<ApplicationConfiguration> {
   private static ApplicationConfiguration config;
-  private static List<CurrencyPackage> currencies = new LinkedList<>();
+  private static HashMap<String, CurrencyPackage> currencies = new HashMap<>();
 
   public static ApplicationConfiguration getConfig() {
     return config;
@@ -27,11 +26,11 @@ public class Application extends io.dropwizard.Application<ApplicationConfigurat
     Application.config = config;
   }
 
-  public static List<CurrencyPackage> getCurrencies() {
+  public static HashMap<String, CurrencyPackage> getCurrencies() {
     return currencies;
   }
 
-  public static void setCurrencies(List<CurrencyPackage> currencies) {
+  public static void setCurrencies(HashMap<String, CurrencyPackage> currencies) {
     Application.currencies = currencies;
   }
 
@@ -55,13 +54,13 @@ public class Application extends io.dropwizard.Application<ApplicationConfigurat
     bitcoinPackage.setConfiguration(new io.emax.heimdal.bitcoin.CurrencyConfiguration());
     bitcoinPackage.setWallet(new io.emax.heimdal.bitcoin.Wallet());
     bitcoinPackage.setMonitor(new io.emax.heimdal.bitcoin.Monitor());
-    getCurrencies().add(bitcoinPackage);
+    getCurrencies().put(bitcoinPackage.getConfiguration().getCurrencySymbol(), bitcoinPackage);
     // Ethereum
     CurrencyPackage ethereumPackage = new CurrencyPackage();
     ethereumPackage.setConfiguration(new io.emax.heimdal.ethereum.CurrencyConfiguration());
     ethereumPackage.setWallet(new io.emax.heimdal.ethereum.Wallet());
     ethereumPackage.setMonitor(new io.emax.heimdal.ethereum.Monitor());
-    getCurrencies().add(ethereumPackage);
+    getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(), ethereumPackage);
 
     // [FUTURE] Load any plugin libraries
 

@@ -59,4 +59,9 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   public Observable<Map<String, String>> getObservableBalances() {
     return observableBalances;
   }
+
+  @Override
+  public io.emax.heimdal.api.currency.Monitor createNewMonitor() {
+    return new Monitor(this.wallet);
+  }
 }

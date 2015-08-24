@@ -8,7 +8,7 @@ import java.net.URL;
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 
-import io.emax.heimdal.bitcoin.bitcoind.BitcoindRpc;
+import io.emax.heimdal.bitcoin.bitcoindrpc.BitcoindRpc;
 
 /**
  * Static connection to a bitcoind RPC server

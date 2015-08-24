@@ -11,6 +11,12 @@ import rx.Observable;
  *
  */
 public interface Monitor {
+  
+  /**
+   * Create a new monitor using the same RPC and wallet settings as the current one.
+   * @return
+   */
+  Monitor createNewMonitor();
 
   /**
    * Add addresses to the monitored list

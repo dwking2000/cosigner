@@ -9,6 +9,7 @@ import io.emax.heimdal.ethereum.common.ByteUtilities;
 import io.emax.heimdal.ethereum.common.DeterministicTools;
 import io.emax.heimdal.ethereum.common.Secp256k1;
 import io.emax.heimdal.ethereum.gethrpc.RawTransaction;
+import io.emax.heimdal.ethereum.stubrpc.EthereumTestRpc;
 import junit.framework.TestCase;
 
 public class WalletTest extends TestCase {

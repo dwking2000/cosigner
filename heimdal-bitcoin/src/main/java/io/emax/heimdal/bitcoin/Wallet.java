@@ -7,15 +7,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import io.emax.heimdal.bitcoin.bitcoind.BitcoindRpc;
-import io.emax.heimdal.bitcoin.bitcoind.DecodedTransaction;
-import io.emax.heimdal.bitcoin.bitcoind.DecodedTransaction.DecodedInput;
-import io.emax.heimdal.bitcoin.bitcoind.MultiSig;
-import io.emax.heimdal.bitcoin.bitcoind.Outpoint;
-import io.emax.heimdal.bitcoin.bitcoind.OutpointDetails;
-import io.emax.heimdal.bitcoin.bitcoind.Output;
-import io.emax.heimdal.bitcoin.bitcoind.SigHash;
-import io.emax.heimdal.bitcoin.bitcoind.SignedTransaction;
+import io.emax.heimdal.bitcoin.bitcoindrpc.BitcoindRpc;
+import io.emax.heimdal.bitcoin.bitcoindrpc.DecodedTransaction;
+import io.emax.heimdal.bitcoin.bitcoindrpc.MultiSig;
+import io.emax.heimdal.bitcoin.bitcoindrpc.Outpoint;
+import io.emax.heimdal.bitcoin.bitcoindrpc.OutpointDetails;
+import io.emax.heimdal.bitcoin.bitcoindrpc.Output;
+import io.emax.heimdal.bitcoin.bitcoindrpc.SigHash;
+import io.emax.heimdal.bitcoin.bitcoindrpc.SignedTransaction;
+import io.emax.heimdal.bitcoin.bitcoindrpc.DecodedTransaction.DecodedInput;
 import io.emax.heimdal.bitcoin.common.DeterministicTools;
 
 public class Wallet implements io.emax.heimdal.api.currency.Wallet {

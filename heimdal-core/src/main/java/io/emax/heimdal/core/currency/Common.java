@@ -34,6 +34,20 @@ public class Common {
       return null;
     }
   }
+  
+  public static Object objectifyString(Class<?> objectType, String str) {
+    try {
+      JsonFactory jsonFact = new JsonFactory();
+      JsonParser jsonParser = jsonFact.createParser(str);
+      Object obj =
+          new ObjectMapper().readValue(jsonParser, objectType);
+      return obj;
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+      return null;
+    }
+  }
 
   public static String stringifyObject(Class<?> objectType, Object obj) {
     try {
@@ -49,20 +63,17 @@ public class Common {
   }
 
   public static CurrencyPackage lookupCurrency(CurrencyParameters params) {
-    for (CurrencyPackage currency : Application.getCurrencies()) {
-      if (currency.getConfiguration().getCurrencySymbol()
-          .equalsIgnoreCase(params.getCurrencySymbol())) {
-        return currency;
-      }
+    if (Application.getCurrencies().containsKey(params.getCurrencySymbol())) {
+      return Application.getCurrencies().get(params.getCurrencySymbol());
+    } else {
+      return null;
     }
-
-    return null;
   }
 
   public static String getCurrencies() {
     List<String> currencies = new LinkedList<>();
-    Application.getCurrencies().forEach((currencyPackage) -> {
-      currencies.add(currencyPackage.getConfiguration().getCurrencySymbol());
+    Application.getCurrencies().keySet().forEach((currency) -> {
+      currencies.add(currency);
     });
 
     String currencyString = stringifyObject(LinkedList.class, currencies);
@@ -116,7 +127,7 @@ public class Common {
       }
     }
 
-    response = balance.toString();
+    response = balance.toPlainString();
 
     return response;
   }
@@ -124,68 +135,59 @@ public class Common {
   public static String monitorBalance(String params, AtmosphereResponse responseSocket) {
     CurrencyParameters currencyParams = convertParams(params);
 
-    try {
-      String response = "";
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+    String response = "";
+    CurrencyPackage currency = lookupCurrency(currencyParams);
 
-      Monitor monitor = currency.getMonitor().getClass().newInstance();
+    Monitor monitor = currency.getMonitor().createNewMonitor();
 
-      monitor.addAddresses(currencyParams.getAccount());
+    monitor.addAddresses(currencyParams.getAccount());
 
-      CurrencyParameters returnParms = new CurrencyParameters();
-      returnParms.setAmount("0");
-      monitor.getBalances().forEach((address, balance) -> {
-        returnParms.getAccount().add(address);
-        returnParms.setAmount(
-            new BigDecimal(returnParms.getAmount()).add(new BigDecimal(balance)).toPlainString());
+    CurrencyParameters returnParms = new CurrencyParameters();
+    returnParms.setAmount("0");
+    monitor.getBalances().forEach((address, balance) -> {
+      returnParms.getAccount().add(address);
+      returnParms.setAmount(
+          new BigDecimal(returnParms.getAmount()).add(new BigDecimal(balance)).toPlainString());
+    });
+    response = stringifyObject(CurrencyParameters.class, returnParms);
+
+    // TODO Need to unsubscribe when there's an error/exception.
+    // Web socket was passed to us
+    if (responseSocket != null) {
+      monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
+        balanceMap.forEach((address, balance) -> {
+          CurrencyParameters responseParms = new CurrencyParameters();
+          responseParms.setAccount(new LinkedList<String>());
+          responseParms.getAccount().add(address);
+          responseParms.setAmount(balance);
+          responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
+        });
       });
-      response = stringifyObject(CurrencyParameters.class, returnParms);
-
-      // Web socket was passed to us
-      if (responseSocket != null) {
-        monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
-          balanceMap.forEach((address, balance) -> {
+    } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
+      monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
+        balanceMap.forEach((address, balance) -> {
+          try {
             CurrencyParameters responseParms = new CurrencyParameters();
             responseParms.setAccount(new LinkedList<String>());
             responseParms.getAccount().add(address);
             responseParms.setAmount(balance);
-            responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
-          });
+
+            HttpPost httpPost = new HttpPost(currencyParams.getCallback());
+            httpPost.addHeader("content-type", "application/json");
+            StringEntity entity;
+            entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
+            httpPost.setEntity(entity);
+
+            HttpClients.createDefault().execute(httpPost).close();
+          } catch (Exception e) {
+            System.out.println("Monitor for REST callback destroyed.");
+            return;
+          }
         });
-      } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
-        monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
-          balanceMap.forEach((address, balance) -> {
-            try {
-              CurrencyParameters responseParms = new CurrencyParameters();
-              responseParms.setAccount(new LinkedList<String>());
-              responseParms.getAccount().add(address);
-              responseParms.setAmount(balance);
-
-              HttpPost httpPost = new HttpPost(currencyParams.getCallback());
-              httpPost.addHeader("content-type", "application/json");
-              StringEntity entity;
-              entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
-              httpPost.setEntity(entity);
-
-              HttpClients.createDefault().execute(httpPost).close();
-            } catch (Exception e) {
-              System.out.println("Monitor for REST callback destroyed.");
-              return;
-            }
-          });
-        });
-      }
-
-      return response;
-
-    } catch (IllegalAccessException | InstantiationException e1) {
-      // TODO Auto-generated catch block
-      e1.printStackTrace();
-
+      });
     }
 
-    return "";
-
+    return response;
   }
 
   public static String prepareTransaction(String params) {

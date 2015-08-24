@@ -7,6 +7,7 @@ import java.util.TimerTask;
 
 import org.junit.Test;
 
+import io.emax.heimdal.bitcoin.stubrpc.BitcoinTestRpc;
 import junit.framework.TestCase;
 import rx.Subscription;
 
