@@ -13,7 +13,7 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   private HashMap<String, String> accountBalances = new HashMap<>();
   private Observable<Map<String, String>> observableBalances =
       Observable.interval(1, TimeUnit.MINUTES).map(tick -> accountBalances);
-  Wallet wallet = new Wallet();
+  Wallet wallet;
 
   public Monitor(Wallet wallet){
     this.wallet = wallet;
@@ -21,6 +21,7 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   }
   
   public Monitor() {
+    wallet = new Wallet();
     Observable.interval(1, TimeUnit.MINUTES).map(tick -> updateBalances()).subscribe();
   }
 

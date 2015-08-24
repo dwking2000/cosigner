@@ -21,8 +21,7 @@ import io.emax.heimdal.bitcoin.common.DeterministicTools;
 public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
   private CurrencyConfiguration config = new CurrencyConfiguration();
-  private BitcoindResource bitcoind = BitcoindResource.getResource();
-  private BitcoindRpc bitcoindRpc = bitcoind.getBitcoindRpc();
+  private BitcoindRpc bitcoindRpc = BitcoindResource.getResource().getBitcoindRpc();
 
   public Wallet(BitcoindRpc rpc) {
     this.bitcoindRpc = rpc;
