@@ -41,6 +41,7 @@ public class Secp256k1 {
 
       ecdsaSigner.init(true, params);
 
+
       BigInteger[] sig = ecdsaSigner.generateSignature(data);
       String sigData = "00";
       byte[] publicKey = getPublicKey(privateKey);

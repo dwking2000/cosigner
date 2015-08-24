@@ -27,9 +27,14 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
   public Wallet(EthereumRpc rpc) {
     this.ethereumRpc = rpc;
+    syncMultiSigAddresses();
   }
 
   public Wallet() {
+    syncMultiSigAddresses();
+  }
+
+  private synchronized void syncMultiSigAddresses() {
     // TODO contract may very likely change
     String contractPayload = "0x" + MultiSigContract.getContractPayload();
     String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
@@ -54,6 +59,12 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
             DefaultBlock.LATEST.toString());
         userAddress = ByteUtilities.toHexString(
             ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(userAddress)));
+
+        // Skip it if we already know about it
+        if (reverseMsigContracts.containsKey(contract.toLowerCase())) {
+          continue;
+        }
+
         msigContracts.put(userAddress.toLowerCase(), contract.toLowerCase());
         reverseMsigContracts.put(contract.toLowerCase(), userAddress.toLowerCase());
       }
@@ -175,13 +186,19 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     contractAddress.add(contractCreator);
     contractAddress.add(tx.getNonce());
 
-    sendTransaction(signedTx);
-
     // Figure out the contract address and store it in lookup tables for future use
     String contract = DeterministicTools
         .hashSha3(ByteUtilities.toHexString(contractAddress.encode())).substring(96 / 4, 256 / 4);
+
+    // Figure out if we already created this, if so, skip it...
+    if (reverseMsigContracts.containsKey(contract.toLowerCase()))
+      return "";
+
+    // Otherwise, register it
     msigContracts.put(userAddress, contract.toLowerCase());
     reverseMsigContracts.put(contract.toLowerCase(), userAddress);
+
+    sendTransaction(signedTx);
     return contract;
   }
 
@@ -319,11 +336,15 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       } catch (Exception e) {
         return transaction;
       }
-      byte[] sigBytes = ByteUtilities.toByteArray(sig);
-      sigR = Arrays.copyOfRange(sigBytes, 0, 32);
-      sigS = Arrays.copyOfRange(sigBytes, 32, 64);
-      sigV = Arrays.copyOfRange(sigBytes, 64, 65);
-      sigV[0] += 27;
+      try {
+        byte[] sigBytes = ByteUtilities.toByteArray(sig);
+        sigR = Arrays.copyOfRange(sigBytes, 0, 32);
+        sigS = Arrays.copyOfRange(sigBytes, 32, 64);
+        sigV = Arrays.copyOfRange(sigBytes, 64, 65);
+        sigV[0] += 27;
+      } catch (Exception e) {
+        return transaction;
+      }
 
     } else {
       // Determine the private key to use
@@ -352,11 +373,23 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       // Sign and return it
       byte[] privateBytes = ByteUtilities.toByteArray(privateKey);
       byte[] sigBytes = ByteUtilities.toByteArray(sigString);
-      sigBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
+      String signingAddress = "";
 
-      sigV = Arrays.copyOfRange(sigBytes, 0, 1);
-      sigR = Arrays.copyOfRange(sigBytes, 1, 33);
-      sigS = Arrays.copyOfRange(sigBytes, 33, 65);
+      // The odd signature can't be resolved to a recoveryId, in those cases, just sign it again.
+      do {
+        byte[] signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
+
+        sigV = Arrays.copyOfRange(signedBytes, 0, 1);
+        sigR = Arrays.copyOfRange(signedBytes, 1, 33);
+        sigS = Arrays.copyOfRange(signedBytes, 33, 65);       
+        
+        if(sigV[0] != 27 && sigV[0] != 28) continue;
+        
+        signingAddress = ByteUtilities.toHexString(Secp256k1.recoverPublicKey(
+            sigR, sigS,
+            sigBytes, sigV[0] - 27));
+        signingAddress = DeterministicTools.getPublicAddress(signingAddress, false);
+      } while (!address.equalsIgnoreCase(signingAddress));
     }
 
     sigTx.getSigV().setDecodedContents(sigV);

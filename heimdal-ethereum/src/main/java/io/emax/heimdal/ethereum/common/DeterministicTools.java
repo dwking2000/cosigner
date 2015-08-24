@@ -100,8 +100,17 @@ public class DeterministicTools {
   }
 
   public static String getPublicAddress(String privateKey) {
+    return getPublicAddress(privateKey, true);
+  }
+
+  public static String getPublicAddress(String key, boolean isPrivateKey) {
     try {
-      byte[] publicKeyBytes = getPublicKeyBytes(privateKey);
+      byte[] publicKeyBytes;
+      if (isPrivateKey) {
+        publicKeyBytes = getPublicKeyBytes(key);
+      } else {
+        publicKeyBytes = ByteUtilities.toByteArray(key);
+      }
 
       SHA3Digest md = new SHA3Digest(256);
       md.reset();
