@@ -44,7 +44,7 @@ public class WebSocketResource extends OnMessage<String> {
         arg0.write(Common.prepareTransaction(arg1));
         break;
       case "/approvetransaction":
-        arg0.write(Common.approveTransaction(arg1));
+        arg0.write(Common.approveTransaction(arg1, true));
         break;
       case "/submittransaction":
         arg0.write(Common.submitTransaction(arg1));

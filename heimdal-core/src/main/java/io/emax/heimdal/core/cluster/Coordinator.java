@@ -2,9 +2,15 @@ package io.emax.heimdal.core.cluster;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.zeromq.ZBeacon;
 import org.zeromq.ZBeacon.Listener;
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
+import org.zeromq.ZMQ.Poller;
+import org.zeromq.ZMQ.Socket;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -26,6 +32,9 @@ public class Coordinator {
     return coordinator;
   }
   // End Static resolver, begin actual class.
+
+  private Timer responseTimer;
+  private Socket responder;
 
   private Coordinator() {
     try {
@@ -68,9 +77,69 @@ public class Coordinator {
 
       beacon.start();
 
+      // Register a ZMQ REP socket
+      Context context = ZMQ.context(1);
+      responder = context.socket(ZMQ.REP);
+      responder.bind("tcp://" + cluster.getThisServer().getServerLocation() + ":"
+          + cluster.getThisServer().getServerRPCPort());
+
+      System.out
+          .println("Opening REP listener on: tcp://" + cluster.getThisServer().getServerLocation()
+              + ":" + cluster.getThisServer().getServerRPCPort());
+
+      responseTimer = new Timer(true);
+      responseTimer.scheduleAtFixedRate(new TimerTask() {
+        @Override
+        public void run() {
+          String commandString = responder.recvStr();
+          // Try to decode it as one of the known command types
+          System.out.println("Got a request: " + commandString);
+
+          // CurrencyCommand
+          CurrencyCommand command = CurrencyCommand.parseCommandString(commandString);
+          if (command != null) {
+            responder.send(CurrencyCommand.handleCommand(command));
+            return;
+          }
+
+          // Catch-all
+          responder.send("Invalid command format");
+        }
+      }, 0, 5);
+
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
+  }
+
+  private final static int REQUEST_TIMEOUT = 1500;
+
+  // Expectation is that Common/etc... will loop through servers and figure out if it supports the
+  // given currency.
+  public static String BroadcastCommand(BaseCommand command, Server server) {
+    String commandString = command.toJson();
+
+    Context context = ZMQ.context(1);
+    Socket requester = context.socket(ZMQ.REQ);
+    requester.connect("tcp://" + server.getServerLocation() + ":" + server.getServerRPCPort());
+
+    requester.send(commandString);
+
+    String reply = command.toJson();
+    Poller poller = new Poller(1);
+    poller.register(requester, Poller.POLLIN);
+
+    poller.poll(REQUEST_TIMEOUT);
+
+    if (poller.pollin(0)) {
+      reply = requester.recvStr();
+    } else {
+      // TODO Timed out, consider removing server
+    }
+
+    requester.close();
+
+    return reply;
   }
 }

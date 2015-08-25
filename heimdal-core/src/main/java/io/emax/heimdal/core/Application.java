@@ -22,7 +22,7 @@ public class Application extends io.dropwizard.Application<ApplicationConfigurat
     return config;
   }
 
-  private static void setConfig(ApplicationConfiguration config) {
+  public static void setConfig(ApplicationConfiguration config) {
     Application.config = config;
   }
 

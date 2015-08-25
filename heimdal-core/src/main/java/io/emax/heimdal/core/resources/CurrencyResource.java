@@ -57,7 +57,7 @@ public class CurrencyResource {
   @Path("/ApproveTransaction")
   @Produces(MediaType.APPLICATION_JSON)
   public Response approveTransaction(String params) {
-    return Response.ok(Common.approveTransaction(params)).build();
+    return Response.ok(Common.approveTransaction(params, true)).build();
   }
 
   @POST

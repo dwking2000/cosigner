@@ -292,7 +292,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     RLPEntity decodedTransaction = RLP.parseArray(ByteUtilities.toByteArray(transaction));
     if (decodedTransaction == null || decodedTransaction.getClass() != RLPList.class
         || ((RLPList) decodedTransaction).size() < 6) {
-      return "";
+      return transaction;
     }
 
     // We've been asked to sign something for the multi-sig contract without a user-key

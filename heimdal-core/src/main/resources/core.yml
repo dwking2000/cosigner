@@ -8,4 +8,4 @@ server:
 
 clusterLocation: "localhost"
 clusterPort: 5555
-clusterRPCPort: 8080
+clusterRPCPort: 5556

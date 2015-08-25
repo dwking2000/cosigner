@@ -18,6 +18,11 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import io.emax.heimdal.api.currency.Monitor;
 import io.emax.heimdal.api.currency.SigningType;
 import io.emax.heimdal.core.Application;
+import io.emax.heimdal.core.cluster.ClusterInfo;
+import io.emax.heimdal.core.cluster.Coordinator;
+import io.emax.heimdal.core.cluster.CurrencyCommand;
+import io.emax.heimdal.core.cluster.CurrencyCommandType;
+import io.emax.heimdal.core.cluster.Server;
 
 public class Common {
 
@@ -34,13 +39,12 @@ public class Common {
       return null;
     }
   }
-  
+
   public static Object objectifyString(Class<?> objectType, String str) {
     try {
       JsonFactory jsonFact = new JsonFactory();
       JsonParser jsonParser = jsonFact.createParser(str);
-      Object obj =
-          new ObjectMapper().readValue(jsonParser, objectType);
+      Object obj = new ObjectMapper().readValue(jsonParser, objectType);
       return obj;
     } catch (IOException e) {
       // TODO Auto-generated catch block
@@ -223,15 +227,35 @@ public class Common {
     return response;
   }
 
-  public static String approveTransaction(String params) {
+  public static String approveTransaction(String params, boolean sendToRemotes) {
     CurrencyParameters currencyParams = convertParams(params);
 
     String response = "a";
     response = "";
     CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    currencyParams.setTransactionData(currency.getWallet()
-        .signTransaction(currencyParams.getTransactionData(), currencyParams.getAccount().get(0)));
+    for (Server server : ClusterInfo.getInstance().getServers()) {
+      if (server.isOriginator()) { // It's us, try to sign it locally.
+        currencyParams.setTransactionData(currency.getWallet().signTransaction(
+            currencyParams.getTransactionData(), currencyParams.getAccount().get(0)));
+      } else if (sendToRemotes) {
+        CurrencyCommand command = new CurrencyCommand();
+        command.setCurrencyParams(currencyParams);
+        command.setCommandType(CurrencyCommandType.SIGN);
+        command = CurrencyCommand.parseCommandString(Coordinator.BroadcastCommand(command, server));
+
+        if (command != null) {
+          String originalTx = currencyParams.getTransactionData();
+          currencyParams.setTransactionData(command.getCurrencyParams().getTransactionData());
+
+          // If it's send-each and the remote actually signed it, send it.
+          if (!originalTx.equalsIgnoreCase(currencyParams.getTransactionData())
+              && currency.getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
+            submitTransaction(stringifyObject(CurrencyParameters.class, currencyParams));
+          }
+        }
+      }
+    }
     response = currencyParams.getTransactionData();
 
     return response;

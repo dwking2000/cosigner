@@ -288,7 +288,7 @@ public class CommonTest extends TestCase {
         parms.setTransactionData(tx);
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         
-        tx = Common.approveTransaction(parmsString);
+        tx = Common.approveTransaction(parmsString, true);
         System.out.println(tx);        
       });
     } catch (Exception e) {
@@ -332,7 +332,7 @@ public class CommonTest extends TestCase {
         parms.setTransactionData(tx);
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         
-        tx = Common.approveTransaction(parmsString);
+        tx = Common.approveTransaction(parmsString, true);
         parms.setTransactionData(tx);
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         
