@@ -104,7 +104,9 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       }
     });
     for (String account : config.getMultiSigAccounts()) {
-      multisigAddresses.add(account);
+      if (!account.isEmpty()) {
+        multisigAddresses.add(account);
+      }
     }
 
     String[] addressArray = new String[multisigAddresses.size()];

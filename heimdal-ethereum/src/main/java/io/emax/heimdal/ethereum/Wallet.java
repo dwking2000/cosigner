@@ -147,16 +147,23 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
         ByteUtilities.toHexString(BigInteger.valueOf(config.getMinSignatures()).toByteArray());
     requiredSigs = String.format("%64s", requiredSigs).replace(' ', '0');
     // Address[] - first entry in an array parameter is how many elements there are
-    String numberOfAddresses = ByteUtilities
-        .toHexString(BigInteger.valueOf(config.getMultiSigAddresses().length + 1).toByteArray());
-    numberOfAddresses = String.format("%64s", numberOfAddresses).replace(' ', '0');
+   
     // Build the array
     String[] addressesUsed = new String[config.getMultiSigAddresses().length + 1];
     addressesUsed[0] = String.format("%64s", userAddress).replace(' ', '0');
+    int addressesSkipped = 0;
     for (int i = 0; i < config.getMultiSigAddresses().length; i++) {
+      if(config.getMultiSigAddresses()[i].isEmpty()) {
+        addressesSkipped++;
+        continue;
+      }
       addressesUsed[i + 1] =
           String.format("%64s", config.getMultiSigAddresses()[i]).replace(' ', '0');
     }
+    String numberOfAddresses = ByteUtilities
+        .toHexString(BigInteger.valueOf(config.getMultiSigAddresses().length + 1 - addressesSkipped).toByteArray());
+    numberOfAddresses = String.format("%64s", numberOfAddresses).replace(' ', '0');
+    
     // Contract code is the init code which copies the payload and constructor parameters, then runs
     // the constructor
     // Followed by the payload, i.e. contract code that gets installed

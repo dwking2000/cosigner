@@ -2,8 +2,7 @@ package io.emax.heimdal.core.cluster;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import org.zeromq.ZBeacon;
 import org.zeromq.ZBeacon.Listener;
@@ -19,6 +18,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 import io.emax.heimdal.core.Application;
 import io.emax.heimdal.core.ApplicationConfiguration;
+import rx.Observable;
+import rx.functions.Action1;
 
 public class Coordinator {
   // Static resolver
@@ -33,7 +34,6 @@ public class Coordinator {
   }
   // End Static resolver, begin actual class.
 
-  private Timer responseTimer;
   private Socket responder;
 
   private Coordinator() {
@@ -83,29 +83,23 @@ public class Coordinator {
       responder.bind("tcp://" + cluster.getThisServer().getServerLocation() + ":"
           + cluster.getThisServer().getServerRPCPort());
 
-      System.out
-          .println("Opening REP listener on: tcp://" + cluster.getThisServer().getServerLocation()
-              + ":" + cluster.getThisServer().getServerRPCPort());
+      Observable.interval(5, TimeUnit.MILLISECONDS).map(tick -> responder.recvStr())
+          .subscribe(new Action1<String>() {
+            @Override
+            public void call(String commandString) {
+              // Try to decode it as one of the known command types
 
-      responseTimer = new Timer(true);
-      responseTimer.scheduleAtFixedRate(new TimerTask() {
-        @Override
-        public void run() {
-          String commandString = responder.recvStr();
-          // Try to decode it as one of the known command types
-          System.out.println("Got a request: " + commandString);
+              // CurrencyCommand
+              CurrencyCommand command = CurrencyCommand.parseCommandString(commandString);
+              if (command != null) {
+                responder.send(CurrencyCommand.handleCommand(command));
+                return;
+              }
 
-          // CurrencyCommand
-          CurrencyCommand command = CurrencyCommand.parseCommandString(commandString);
-          if (command != null) {
-            responder.send(CurrencyCommand.handleCommand(command));
-            return;
-          }
-
-          // Catch-all
-          responder.send("Invalid command format");
-        }
-      }, 0, 5);
+              // Catch-all
+              responder.send("Invalid command format");
+            }
+          });
 
     } catch (IOException e) {
       // TODO Auto-generated catch block
