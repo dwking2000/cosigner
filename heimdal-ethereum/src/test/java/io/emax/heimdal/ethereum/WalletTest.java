@@ -63,6 +63,7 @@ public class WalletTest extends TestCase {
       String balance = wallet.getBalance(multiAddress);
       System.out.println("Balance of " + multiAddress + ": " + balance);
     } catch (Exception e) {
+      e.printStackTrace();
       fail("Simple operation test failed!");
       return;
     }
@@ -90,6 +91,7 @@ public class WalletTest extends TestCase {
       // If the key is missing the result should be the same TX string we submitted
       assertEquals(txString, signedTxString);
     } catch (Exception e) {
+      e.printStackTrace();
       fail("Missing key test should not throw exceptions!");
       return;
     }
@@ -136,6 +138,7 @@ public class WalletTest extends TestCase {
       assertEquals(signingAddress, singleAddress);
       
     } catch (Exception e) {
+      e.printStackTrace();
       fail("Missing key test should not throw exceptions!");
       return;
     }

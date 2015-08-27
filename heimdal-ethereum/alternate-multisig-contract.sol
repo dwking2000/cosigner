@@ -19,7 +19,8 @@ contract multisigwallet {
         
     Transaction transaction;
     bytes32 transactionHash;
-    SigData[] signatures;    
+    uint numSignatures;
+    SigData[8] signatures;    
     
     // Transaction and signature structures
     struct Transaction {
@@ -42,10 +43,12 @@ contract multisigwallet {
         
         signers = 0;
         numSigners = 0;
-        for (uint i = 0; i < signatures.length; i++) {
+        for (uint i = 0; i < numSignatures && i < 8; i++) {
           signer = ecrecover(transactionHash, signatures[i].sigV, signatures[i].sigR, signatures[i].sigS);
-          if(isOwner(signer) && (signers & 2**ownerIndexBit(signer) == 0)) {
-            signers |= 2**ownerIndexBit(signer);
+          uint ownerBit = ownerIndexBit(signer);
+          uint ownerValue = 2**ownerBit;
+          if(ownerBit > 0 && (signers & ownerValue == 0)) {
+            signers |= ownerValue;
             numSigners++;
           }
         }
@@ -55,19 +58,13 @@ contract multisigwallet {
         return false;
     }
     
-    function isOwner(address _addr) internal returns (bool) {
+    function ownerIndexBit(address _addr) internal returns (uint) {
         for(uint i = 0; i < m_numOwners; i++) {
-          if(m_owners[i] == uint(_addr)) return true;
+          if(m_owners[i] == uint(_addr))            
+            return i + 1;
         }
         
-        return false;
-    }
-    
-    function ownerIndexBit(address _addr) internal returns (uint) {
-      for(uint i = 0; i < m_numOwners; i++) {
-          if(m_owners[i] == uint(_addr))            
-            return i;
-        }
+        return 0;
     }
 
     // constructor is given number of sigs required to do protected "onlymanyowners" transactions
@@ -89,22 +86,15 @@ contract multisigwallet {
         transaction.value = value;
         transaction.nonce = nonce;      
         
-        delete(signatures);                  
-        for(uint i = 0; i < sigV.length; i++) {
-          signatures.length++;
-          signatures[i].sigV = sigV[i];         
+        numSignatures = sigV.length;
+        for(uint i = 0; i < sigV.length && i < 8; i++) {
+          signatures[i].sigV = sigV[i];  
+          signatures[i].sigR = sigR[i];  
+          signatures[i].sigS = sigS[i];
         }
-        for(i = 0; i < sigR.length; i++) {
-          signatures[i].sigR = sigR[i];         
-        }
-        for(i = 0; i < sigS.length; i++) {
-          signatures[i].sigS = sigS[i];         
-        }
-        
         
         if(confirmTransaction()) {
           lastNonce = transaction.nonce;
-          //delete(signatures);
           suicide(transaction.to);
          }
     }
@@ -114,22 +104,16 @@ contract multisigwallet {
         transaction.to = to;
         transaction.value = value;
         transaction.nonce = nonce;
-        
-        delete(signatures);                  
-        for(uint i = 0; i < sigV.length; i++) {
-          signatures.length++;
-          signatures[i].sigV = sigV[i];         
-        }
-        for(i = 0; i < sigR.length; i++) {
-          signatures[i].sigR = sigR[i];         
-        }
-        for(i = 0; i < sigS.length; i++) {
-          signatures[i].sigS = sigS[i];         
+             
+        numSignatures = sigV.length;
+        for(uint i = 0; i < sigV.length && i < 8; i++) {
+          signatures[i].sigV = sigV[i];  
+          signatures[i].sigR = sigR[i];  
+          signatures[i].sigS = sigS[i];
         }
         
         if(confirmTransaction()) {
           lastNonce = transaction.nonce;
-          //delete(signatures);
           transaction.to.send(value);
         }
     }
