@@ -105,7 +105,7 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
 
   @Override
   public SigningType getSigningType() {
-    return SigningType.SENDEACH;
+    return SigningType.SENDALL;
   }
 
   public String getDaemonConnectionString() {

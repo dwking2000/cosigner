@@ -275,9 +275,12 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       contractParms.setFunction(MultiSigContract.getExecuteFunctionAddress());
       contractParms.setAddress(toAddress);
       contractParms.setValue(amountWei.toBigInteger());
-      
+            
+      // For this particular contract the previous nonce is stored at 0x0a.
+      // It will only accept nonce's one greater than this.
       String txCount =
-          ethereumRpc.eth_getTransactionCount("0x" + senderAddress, DefaultBlock.LATEST.toString());
+          ethereumRpc.eth_getStorageAt("0x" + senderAddress.toLowerCase(), "0x0a",
+              DefaultBlock.LATEST.toString());
       BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);      
       contractParms.setNonce(nonce);
 
@@ -343,9 +346,10 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       MultiSigContractParameters contractParams = new MultiSigContractParameters();
       contractParams.decode(decodedTransaction.getData().getDecodedContents());
       // Generate the hash -- TODO Make sure this matches what the contract is doing
-      String hashBytes = contractParams.getAddress() 
-          + ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(contractParams.getValue().toByteArray()))
-          + ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(contractParams.getNonce().toByteArray()));
+      String hashBytes = String.format("%40s", contractParams.getAddress()).replace(' ', '0');
+      hashBytes = hashBytes.substring(hashBytes.length() - 40);
+      hashBytes += String.format("%64s", ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(contractParams.getValue().toByteArray()))).replace(' ' , '0')
+          + String.format("%64s",  ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(contractParams.getNonce().toByteArray()))).replace(' ', '0');
       hashBytes = DeterministicTools.hashSha3(hashBytes);
       
       // Sign it and rebuild the data

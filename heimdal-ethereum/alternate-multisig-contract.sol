@@ -38,7 +38,7 @@ contract multisigwallet {
     function confirmTransaction() internal returns (bool) {
         transactionHash = sha3(transaction.to, transaction.value, transaction.nonce);        
         
-        if(transaction.nonce <= lastNonce)
+        if(transaction.nonce != lastNonce + 1)
           return false;
         
         signers = 0;
