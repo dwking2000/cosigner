@@ -89,6 +89,16 @@ java -jar heimdal-ethereum-0.0.1-SNAPSHOT.jar sendTransaction <signed tx string>
 
 ### Multi-sig test
 
-TODO
+Works exactly like heimdal-bitcoin's multi-sig now. Only difference is that we don't care about signature order, order only affects who pays gas fees.
+
+Create the multi-sig address. The configuration has a "contract" address, this is the address that will pay for the contract creation. Make sure it's unlocked and funded so we can create it.
+Wait 1-2 confirmations on the test-net, listing addresses through heimdal should now show the address. If reloaded it should still show them, it does this by scanning the contract account's transactions for our contract code.
+
+Create a transaction from the multisig account and sign it using the multi-sig address and user key. 
+Sign it using the multi-sig address and no user key to sign it with any unlocked wallet/geth keys that heimdal knows about.
+Send the transaction. 
+The last account to sign it pays the gas fees, so it's recommended that you sign it with a common account last that you keep funded. 
+
+Due to the overhead involved in moving arrays around we opted for a fixed size of signers/owners to keep gas down. It's set to more than we should need for a 2-of-3 setup.
 
 ### Notes
