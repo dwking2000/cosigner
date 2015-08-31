@@ -7,22 +7,24 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
+import rx.Subscription;
 
 public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   private HashSet<String> monitoredAddresses = new HashSet<>();
   private HashMap<String, String> accountBalances = new HashMap<>();
   private Observable<Map<String, String>> observableBalances =
       Observable.interval(1, TimeUnit.MINUTES).map(tick -> accountBalances);
+  private Subscription balanceSubscription;
   Wallet wallet;
 
   public Monitor(Wallet wallet){
     this.wallet = wallet;
-    Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
+    balanceSubscription = Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
   }
   
   public Monitor() {
     wallet = new Wallet();
-    Observable.interval(1, TimeUnit.MINUTES).map(tick -> updateBalances()).subscribe();
+    balanceSubscription = Observable.interval(1, TimeUnit.MINUTES).map(tick -> updateBalances()).subscribe();
   }
 
   private boolean updateBalances() {    
@@ -63,5 +65,11 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   @Override
   public io.emax.heimdal.api.currency.Monitor createNewMonitor() {
     return new Monitor(this.wallet);
+  }
+
+  @Override
+  public void destroyMonitor() {
+    if(balanceSubscription != null)
+      balanceSubscription.unsubscribe();
   }
 }

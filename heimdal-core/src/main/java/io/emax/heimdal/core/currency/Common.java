@@ -2,6 +2,7 @@ package io.emax.heimdal.core.currency;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,6 +24,7 @@ import io.emax.heimdal.core.cluster.Coordinator;
 import io.emax.heimdal.core.cluster.CurrencyCommand;
 import io.emax.heimdal.core.cluster.CurrencyCommandType;
 import io.emax.heimdal.core.cluster.Server;
+import rx.Subscription;
 
 public class Common {
 
@@ -136,6 +138,9 @@ public class Common {
     return response;
   }
 
+  private static HashMap<String, Subscription> subscriptions = new HashMap<>();
+  private static HashMap<String, Monitor> monitors = new HashMap<>();
+
   public static String monitorBalance(String params, AtmosphereResponse responseSocket) {
     CurrencyParameters currencyParams = convertParams(params);
 
@@ -155,42 +160,90 @@ public class Common {
     });
     response = stringifyObject(CurrencyParameters.class, returnParms);
 
-    // TODO Need to unsubscribe when there's an error/exception.
     // Web socket was passed to us
     if (responseSocket != null) {
-      monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
-        balanceMap.forEach((address, balance) -> {
-          CurrencyParameters responseParms = new CurrencyParameters();
-          responseParms.setAccount(new LinkedList<String>());
-          responseParms.getAccount().add(address);
-          responseParms.setAmount(balance);
-          responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
-        });
-      });
+      
+      if (subscriptions.containsKey(responseSocket.uuid())) {
+        subscriptions.get(responseSocket.uuid()).unsubscribe();
+        subscriptions.remove(responseSocket.uuid());
+      }
+      
+      if (monitors.containsKey(responseSocket.uuid())) {
+        monitors.get(responseSocket.uuid()).destroyMonitor();
+        monitors.remove(responseSocket.uuid());
+      }
+      
+      Subscription wsSubscription =
+          monitor.getObservableBalances().subscribe((balanceMap) -> {
+            balanceMap.forEach((address, balance) -> {
+              try {
+                CurrencyParameters responseParms = new CurrencyParameters();
+                responseParms.setAccount(new LinkedList<String>());
+                responseParms.getAccount().add(address);
+                responseParms.setAmount(balance);
+                responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
+              } catch (Exception e) {
+                if (subscriptions.containsKey(responseSocket.uuid())) {
+                  subscriptions.get(responseSocket.uuid()).unsubscribe();
+                  subscriptions.remove(responseSocket.uuid());
+                }
+                if (monitors.containsKey(responseSocket.uuid())) {
+                  monitors.get(responseSocket.uuid()).destroyMonitor();
+                  monitors.remove(responseSocket.uuid());
+                }
+                return;
+              }
+            });
+          });
+      subscriptions.put(responseSocket.uuid(), wsSubscription);
+      monitors.put(responseSocket.uuid(), monitor);      
     } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
-      monitor.getObservableBalances().onErrorReturn(null).subscribe((balanceMap) -> {
-        balanceMap.forEach((address, balance) -> {
-          try {
-            CurrencyParameters responseParms = new CurrencyParameters();
-            responseParms.setAccount(new LinkedList<String>());
-            responseParms.getAccount().add(address);
-            responseParms.setAmount(balance);
+      // It's a REST callback
+      if (subscriptions.containsKey(currencyParams.getCallback())) {
+        subscriptions.get(currencyParams.getCallback()).unsubscribe();
+        subscriptions.remove(currencyParams.getCallback());
+      }
+      if (monitors.containsKey(currencyParams.getCallback())) {
+        monitors.get(currencyParams.getCallback()).destroyMonitor();
+        monitors.remove(currencyParams.getCallback());
+      }
 
-            HttpPost httpPost = new HttpPost(currencyParams.getCallback());
-            httpPost.addHeader("content-type", "application/json");
-            StringEntity entity;
-            entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
-            httpPost.setEntity(entity);
+      Subscription rsSubscription =
+          monitor.getObservableBalances().subscribe((balanceMap) -> {
+            balanceMap.forEach((address, balance) -> {
+              try {
+                CurrencyParameters responseParms = new CurrencyParameters();
+                responseParms.setAccount(new LinkedList<String>());
+                responseParms.getAccount().add(address);
+                responseParms.setAmount(balance);
 
-            HttpClients.createDefault().execute(httpPost).close();
-          } catch (Exception e) {
-            System.out.println("Monitor for REST callback destroyed.");
-            return;
-          }
-        });
-      });
+                HttpPost httpPost = new HttpPost(currencyParams.getCallback());
+                httpPost.addHeader("content-type", "application/json");
+                StringEntity entity;
+                entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
+                httpPost.setEntity(entity);
+
+                HttpClients.createDefault().execute(httpPost).close();
+              } catch (Exception e) {
+                if (subscriptions.containsKey(currencyParams.getCallback())) {
+                  subscriptions.get(currencyParams.getCallback()).unsubscribe();
+                  subscriptions.remove(currencyParams.getCallback());
+                }
+                if (monitors.containsKey(currencyParams.getCallback())) {
+                  monitors.get(currencyParams.getCallback()).destroyMonitor();
+                  monitors.remove(currencyParams.getCallback());
+                }
+                return;
+              }
+            });
+          });
+      subscriptions.put(currencyParams.getCallback(), rsSubscription);
+      monitors.put(currencyParams.getCallback(), monitor);
+    } else {
+      // We have no way to respond to the caller other than with this response.
+      monitor.destroyMonitor();
     }
-
+    
     return response;
   }
 

@@ -17,6 +17,11 @@ public interface Monitor {
    * @return
    */
   Monitor createNewMonitor();
+  
+  /**
+   * Destroys a monitor when we're done with it
+   */
+  void destroyMonitor();
 
   /**
    * Add addresses to the monitored list
