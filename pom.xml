@@ -40,9 +40,9 @@
 
 	<modules>
 		<module>heimdal-api</module>
-		<module>heimdal-bitcoin</module>
-		<module>heimdal-core</module>
+		<module>heimdal-bitcoin</module>		
 		<module>heimdal-ethereum</module>
+		<module>heimdal-core</module>
 	</modules>
 
 	<build>
@@ -51,46 +51,6 @@
 				<directory>src/main/resources</directory>
 				<targetPath>../../../target</targetPath>
 			</resource>
-		</resources>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>copy-artifact</id>
-						<phase>package</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>${project.groupId}</groupId>
-									<artifactId>heimdal-core</artifactId>
-									<version>${project.version}</version>
-									<type>${project.packaging}</type>
-								</artifactItem>
-							</artifactItems>
-							<outputDirectory>../target</outputDirectory>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>install</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>../target/lib</outputDirectory>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
+		</resources>		
 	</build>
 </project>
