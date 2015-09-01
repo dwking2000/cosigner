@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 import io.emax.heimdal.api.currency.SigningType;
+import io.emax.heimdal.ethereum.common.EnvironmentVariableParser;
 
 public class CurrencyConfiguration implements io.emax.heimdal.api.currency.CurrencyConfiguration {
   // Defaults
@@ -39,8 +40,8 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
         propertiesFile.close();
 
         // daemonConnectionString
-        daemonConnectionString =
-            heimdalProperties.getProperty("daemonConnectionString", daemonConnectionString);
+        daemonConnectionString = EnvironmentVariableParser.resolveEnvVars(
+            heimdalProperties.getProperty("daemonConnectionString", daemonConnectionString));
 
         // minConfirmations
         try {

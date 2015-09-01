@@ -1,4 +1,4 @@
-FROM docker-geth
+FROM ubuntu:trusty
 MAINTAINER Tom Robichaud <tom@emax.io>
 
 RUN apt-get update
@@ -9,6 +9,7 @@ RUN apt-get -y install bitcoind
 RUN mkdir -p /opt/emax/bin
 
 ADD privatenet.sh /opt/emax/bin/btcprivatenet.sh
+ADD bitcoin.conf /root/.bitcoin/bitcoin.conf
 
 WORKDIR /opt/emax/bin
 

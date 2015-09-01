@@ -1,4 +1,4 @@
-FROM docker.internal.emax.io/java8
+FROM ubuntu:trusty
 MAINTAINER Tom Robichaud <tom@emax.io>
 
 RUN apt-get update
@@ -6,18 +6,22 @@ RUN apt-get -y install software-properties-common
 RUN add-apt-repository -y ppa:ethereum/ethereum
 RUN apt-get update
 RUN apt-get -y install ethereum
+RUN apt-get -y install expect
+
 RUN mkdir -p /opt/emax/bin
 
 ADD private_genesis.json /opt/emax/geth/private_genesis.json
 ADD privatenet.sh /opt/emax/bin/gethprivatenet.sh
-ADD createaccount.sh /opt/emax/bin/gethcreateaccount.sh
+ADD attach.sh /opt/emax/bin/gethattach.sh
+ADD clearlicenseprompt.sh /opt/emax/bin/clearlicenseprompt.sh
+ADD createaccount.sh /opt/emax/bin/createaccount.sh
 
 WORKDIR /opt/emax/bin
 
 EXPOSE 30301
 EXPOSE 8101
 
-RUN "/opt/emax/bin/gethcreateaccount.sh"
+RUN "/opt/emax/bin/clearlicenseprompt.sh"
+RUN "/opt/emax/bin/createaccount.sh"
 
 ENTRYPOINT "/opt/emax/bin/gethprivatenet.sh"
-

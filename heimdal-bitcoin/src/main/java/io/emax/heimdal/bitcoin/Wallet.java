@@ -22,6 +22,8 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
   private CurrencyConfiguration config = new CurrencyConfiguration();
   private BitcoindRpc bitcoindRpc = BitcoindResource.getResource().getBitcoindRpc();
+  
+  private static HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
   public Wallet(BitcoindRpc rpc) {
     this.bitcoindRpc = rpc;
@@ -74,7 +76,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   public String getMultiSigAddress(Iterable<String> addresses, String name) {
     // Hash the user's key so it's not stored in the wallet
     String internalName = DeterministicTools.encodeUserKey(name);
-    String newAddress = generateMultiSigAddress(addresses, name);
+    String newAddress = generateMultiSigAddress(addresses, name);    
     bitcoindRpc.importaddress(newAddress, internalName, false);
 
     return newAddress;
@@ -112,6 +114,8 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     String[] addressArray = new String[multisigAddresses.size()];
     MultiSig newAddress = bitcoindRpc.createmultisig(config.getMinSignatures(),
         multisigAddresses.toArray(addressArray));
+    
+    multiSigRedeemScripts.put(newAddress.getAddress(), newAddress.getRedeemScript());
 
     return newAddress.getAddress();
   }
@@ -194,23 +198,25 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       if (!generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
           .equalsIgnoreCase(address) && !userAddress.equalsIgnoreCase(address)) {
         return transaction;
-      }
+      }      
 
       // We have the private key, now get all the unspent inputs so we have the redeemScripts.
       DecodedTransaction myTx = bitcoindRpc.decoderawtransaction(transaction);
       List<DecodedInput> inputs = myTx.getInputs();
+      
       Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
           config.getMaxConfirmations(), new String[] {});
       List<OutpointDetails> myOutpoints = new LinkedList<>();
+            
       inputs.forEach((input) -> {
         for (Outpoint output : outputs) {
           if (output.getTransactionId().equalsIgnoreCase(input.getTransactionId())
               && output.getOutputIndex() == input.getOutputIndex()) {
             OutpointDetails outpoint = new OutpointDetails();
             outpoint.setTransactionId(output.getTransactionId());
-            outpoint.setOutputIndex(output.getOutputIndex());
+            outpoint.setOutputIndex(output.getOutputIndex());            
             outpoint.setScriptPubKey(output.getScriptPubKey());
-            outpoint.setRedeemScript(output.getRedeemScript());
+            outpoint.setRedeemScript(multiSigRedeemScripts.get(output.getAddress()));
             myOutpoints.add(outpoint);
           }
         }
