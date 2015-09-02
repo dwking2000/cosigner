@@ -61,7 +61,6 @@ Generic parameter object has the following definition, you only need to provide 
   "userKey": "<random hex string>",
   "account":["<addresses for given currency>"],
   "callback": "",
-  "receivingAccount": "<address for given currency>",
-  "amount": "10.0",
+  "receivingAccount": [{"recipientAddress": "", "amount": ""}]
   "transactionData": ""}]
 ```
