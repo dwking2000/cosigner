@@ -240,8 +240,10 @@ public class CommonTest extends TestCase {
         
         parms.setAccount(Arrays.asList(address));
         address = Common.getNewAccount(parmsString);
-        parms.setReceivingAccount(address);
-        parms.setAmount("5.0");
+        CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+        accountData.setAmount("5.0");
+        accountData.setRecipientAddress(address);
+        parms.setReceivingAccount(Arrays.asList(accountData));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         
         String tx = Common.prepareTransaction(parmsString);
@@ -280,8 +282,10 @@ public class CommonTest extends TestCase {
         
         parms.setAccount(Arrays.asList(address));
         address = Common.getNewAccount(parmsString);
-        parms.setReceivingAccount(address);
-        parms.setAmount("5.0");
+        CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+        accountData.setAmount("5.0");
+        accountData.setRecipientAddress(address);
+        parms.setReceivingAccount(Arrays.asList(accountData));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         
         String tx = Common.prepareTransaction(parmsString);
@@ -324,8 +328,10 @@ public class CommonTest extends TestCase {
         
         parms.setAccount(Arrays.asList(address));
         address = Common.getNewAccount(parmsString);
-        parms.setReceivingAccount(address);
-        parms.setAmount("5.0");
+        CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+        accountData.setAmount("5.0");
+        accountData.setRecipientAddress(address);
+        parms.setReceivingAccount(Arrays.asList(accountData));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         
         String tx = Common.prepareTransaction(parmsString);

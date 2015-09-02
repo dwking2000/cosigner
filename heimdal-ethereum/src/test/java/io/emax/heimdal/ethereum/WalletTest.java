@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import io.emax.heimdal.api.currency.Wallet.Recipient;
 import io.emax.heimdal.ethereum.common.ByteUtilities;
 import io.emax.heimdal.ethereum.common.DeterministicTools;
 import io.emax.heimdal.ethereum.common.Secp256k1;
@@ -41,8 +42,10 @@ public class WalletTest extends TestCase {
       System.out.println("Multi Address Test: " + multiAddress);
 
       // Send some money
-      String txString = wallet.createTransaction(Arrays.asList(singleAddress), multiAddress,
-          BigDecimal.valueOf(50));
+      Recipient recipient = new Recipient();
+      recipient.setAmount(BigDecimal.valueOf(50));
+      recipient.setRecipientAddress(multiAddress);
+      String txString = wallet.createTransaction(Arrays.asList(singleAddress), Arrays.asList(recipient));
       System.out
           .println("50 ether from " + singleAddress + " to " + multiAddress + ": " + txString);
       txString = wallet.signTransaction(txString, singleAddress, userKey);
@@ -51,8 +54,10 @@ public class WalletTest extends TestCase {
       System.out.println("Tx ID: " + txString);
 
       // Send some money from the multi-sig to create the alternate tx
-      txString = wallet.createTransaction(Arrays.asList(multiAddress), singleAddress,
-          BigDecimal.valueOf(25.3));
+      recipient = new Recipient();
+      recipient.setAmount(BigDecimal.valueOf(25.3));
+      recipient.setRecipientAddress(singleAddress);
+      txString = wallet.createTransaction(Arrays.asList(multiAddress), Arrays.asList(recipient));
       System.out
           .println("25.3 ether from " + multiAddress + " to " + singleAddress + ": " + txString);
       txString = wallet.signTransaction(txString, multiAddress, userKey);
@@ -81,8 +86,10 @@ public class WalletTest extends TestCase {
       System.out.println("Multi Address Test: " + multiAddress);
 
       // Send some money from the multi-sig to create the alternate tx
-      String txString = wallet.createTransaction(Arrays.asList(multiAddress), singleAddress,
-          BigDecimal.valueOf(25.3));
+      Recipient recipient = new Recipient();
+      recipient.setAmount(BigDecimal.valueOf(25.3));
+      recipient.setRecipientAddress(singleAddress);
+      String txString = wallet.createTransaction(Arrays.asList(multiAddress), Arrays.asList(recipient));
       System.out
           .println("25.3 ether from " + multiAddress + " to " + singleAddress + ": " + txString);
       String signedTxString = wallet.signTransaction(txString, multiAddress, "bad" + userKey);
@@ -109,8 +116,10 @@ public class WalletTest extends TestCase {
       System.out.println("Multi Address Test: " + multiAddress);
 
       // Send some money from the multi-sig to create the alternate tx
-      String txString = wallet.createTransaction(Arrays.asList(multiAddress), singleAddress,
-          BigDecimal.valueOf(25.3));
+      Recipient recipient = new Recipient();
+      recipient.setAmount(BigDecimal.valueOf(25.3));
+      recipient.setRecipientAddress(singleAddress);
+      String txString = wallet.createTransaction(Arrays.asList(multiAddress), Arrays.asList(recipient));
       System.out
           .println("25.3 ether from " + multiAddress + " to " + singleAddress + ": " + txString);
       String signedTxString = wallet.signTransaction(txString, multiAddress, userKey);

@@ -2,6 +2,7 @@ package io.emax.heimdal.core.currency;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 import io.emax.heimdal.api.currency.Monitor;
 import io.emax.heimdal.api.currency.SigningType;
+import io.emax.heimdal.api.currency.Wallet.Recipient;
 import io.emax.heimdal.core.Application;
 import io.emax.heimdal.core.cluster.ClusterInfo;
 import io.emax.heimdal.core.cluster.Coordinator;
@@ -152,12 +154,6 @@ public class Common {
     monitor.addAddresses(currencyParams.getAccount());
 
     CurrencyParameters returnParms = new CurrencyParameters();
-    returnParms.setAmount("0");
-    monitor.getBalances().forEach((address, balance) -> {
-      returnParms.getAccount().add(address);
-      returnParms.setAmount(
-          new BigDecimal(returnParms.getAmount()).add(new BigDecimal(balance)).toPlainString());
-    });
     response = stringifyObject(CurrencyParameters.class, returnParms);
 
     // Web socket was passed to us
@@ -180,7 +176,10 @@ public class Common {
                 CurrencyParameters responseParms = new CurrencyParameters();
                 responseParms.setAccount(new LinkedList<String>());
                 responseParms.getAccount().add(address);
-                responseParms.setAmount(balance);
+                CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+                accountData.setAmount(balance);
+                accountData.setRecipientAddress(address);
+                responseParms.setReceivingAccount(Arrays.asList(accountData));
                 responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
               } catch (Exception e) {
                 if (subscriptions.containsKey(responseSocket.uuid())) {
@@ -215,7 +214,10 @@ public class Common {
                 CurrencyParameters responseParms = new CurrencyParameters();
                 responseParms.setAccount(new LinkedList<String>());
                 responseParms.getAccount().add(address);
-                responseParms.setAmount(balance);
+                CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+                accountData.setAmount(balance);
+                accountData.setRecipientAddress(address);
+                responseParms.setReceivingAccount(Arrays.asList(accountData));
 
                 HttpPost httpPost = new HttpPost(currencyParams.getCallback());
                 httpPost.addHeader("content-type", "application/json");
@@ -256,8 +258,14 @@ public class Common {
     // Create the transaction
     List<String> addresses = new LinkedList<>();
     addresses.addAll(currencyParams.getAccount());
-    currencyParams.setTransactionData(currency.getWallet().createTransaction(addresses,
-        currencyParams.getReceivingAccount(), new BigDecimal(currencyParams.getAmount())));
+    LinkedList<Recipient> recipients = new LinkedList<>();
+    currencyParams.getReceivingAccount().forEach(account -> {
+      Recipient recipient = new Recipient();
+      recipient.setAmount(new BigDecimal(account.getAmount()));
+      recipient.setRecipientAddress(account.getRecipientAddress());
+      recipients.add(recipient);
+    });
+    currencyParams.setTransactionData(currency.getWallet().createTransaction(addresses,recipients));
 
     // Authorize it with the user account
     String initalTx = currencyParams.getTransactionData();

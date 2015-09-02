@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import io.emax.heimdal.api.currency.Wallet.Recipient;
 import io.emax.heimdal.bitcoin.stubrpc.BitcoinTestRpc;
 import junit.framework.TestCase;
 
@@ -28,7 +29,10 @@ public class WalletTest extends TestCase {
       String multiSigAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
       System.out.println("Multi-sig Address: " + multiSigAddress);
       
-      String txString = wallet.createTransaction(Arrays.asList(singleAddress), multiSigAddress, BigDecimal.valueOf(20));
+      Recipient recipient = new Recipient();
+      recipient.setAmount(BigDecimal.valueOf(20));
+      recipient.setRecipientAddress(multiSigAddress);
+      String txString = wallet.createTransaction(Arrays.asList(singleAddress), Arrays.asList(recipient));
       System.out.println("20 BTC from " + singleAddress + " to " + multiSigAddress + ": " + txString);
       txString = wallet.signTransaction(txString, singleAddress, userKey);
       System.out.println("Signed TX: " + txString);

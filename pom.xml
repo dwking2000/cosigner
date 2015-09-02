@@ -31,6 +31,9 @@
 		</license>
 	</licenses>
 
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
 	<scm>
 		<connection>scm:git:git@github.com:EMAXio/heimdal.git</connection>
@@ -40,7 +43,7 @@
 
 	<modules>
 		<module>heimdal-api</module>
-		<module>heimdal-bitcoin</module>		
+		<module>heimdal-bitcoin</module>
 		<module>heimdal-ethereum</module>
 		<module>heimdal-core</module>
 	</modules>
@@ -51,6 +54,6 @@
 				<directory>src/main/resources</directory>
 				<targetPath>../../../target</targetPath>
 			</resource>
-		</resources>		
+		</resources>
 	</build>
 </project>

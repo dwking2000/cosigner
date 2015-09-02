@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+import io.emax.heimdal.api.currency.Wallet.Recipient;
 import io.emax.heimdal.bitcoin.Monitor;
 import io.emax.heimdal.bitcoin.Wallet;
 
@@ -73,7 +74,10 @@ public class Application {
         for (int i = 1; i < args.length - 2; i++) {
           addressList.add(args[i]);
         }
-        System.out.println(wallet.createTransaction(addressList, accountName, amount));
+        Recipient recipient = new Recipient();
+        recipient.setAmount(amount);
+        recipient.setRecipientAddress(accountName);
+        System.out.println(wallet.createTransaction(addressList, Arrays.asList(recipient)));
         break;
       case "signTransaction":
         if (args.length == 4) {

@@ -18,10 +18,7 @@ public class CurrencyParameters {
   private String callback;
 
   @JsonProperty
-  private String receivingAccount;
-
-  @JsonProperty
-  private String amount;
+  private List<CurrencyParametersRecipient> receivingAccount;
 
   @JsonProperty
   private String transactionData;
@@ -58,20 +55,12 @@ public class CurrencyParameters {
     this.callback = callback;
   }
 
-  public String getReceivingAccount() {
+  public List<CurrencyParametersRecipient> getReceivingAccount() {
     return receivingAccount;
   }
 
-  public void setReceivingAccount(String receivingAccount) {
+  public void setReceivingAccount(List<CurrencyParametersRecipient> receivingAccount) {
     this.receivingAccount = receivingAccount;
-  }
-
-  public String getAmount() {
-    return amount;
-  }
-
-  public void setAmount(String amount) {
-    this.amount = amount;
   }
 
   public String getTransactionData() {
@@ -87,7 +76,6 @@ public class CurrencyParameters {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((account == null) ? 0 : account.hashCode());
-    result = prime * result + ((amount == null) ? 0 : amount.hashCode());
     result = prime * result + ((callback == null) ? 0 : callback.hashCode());
     result = prime * result + ((currencySymbol == null) ? 0 : currencySymbol.hashCode());
     result = prime * result + ((receivingAccount == null) ? 0 : receivingAccount.hashCode());
@@ -109,11 +97,6 @@ public class CurrencyParameters {
       if (other.account != null)
         return false;
     } else if (!account.equals(other.account))
-      return false;
-    if (amount == null) {
-      if (other.amount != null)
-        return false;
-    } else if (!amount.equals(other.amount))
       return false;
     if (callback == null) {
       if (other.callback != null)
@@ -147,6 +130,10 @@ public class CurrencyParameters {
   public String toString() {
     return "CurrencyParameters [currencySymbol=" + currencySymbol + ", userKey=" + userKey
         + ", account=" + account + ", callback=" + callback + ", receivingAccount="
-        + receivingAccount + ", amount=" + amount + ", transactionData=" + transactionData + "]";
+        + receivingAccount + ", transactionData=" + transactionData + ", getCurrencySymbol()="
+        + getCurrencySymbol() + ", getUserKey()=" + getUserKey() + ", getAccount()=" + getAccount()
+        + ", getCallback()=" + getCallback() + ", getReceivingAccount()=" + getReceivingAccount()
+        + ", getTransactionData()=" + getTransactionData() + ", hashCode()=" + hashCode()
+        + ", getClass()=" + getClass() + ", toString()=" + super.toString() + "]";
   }
 }

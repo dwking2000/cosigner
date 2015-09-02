@@ -45,6 +45,27 @@ public interface Wallet {
    */
   String getBalance(String address);
 
+  public class Recipient {
+    private String recipientAddress;
+    private BigDecimal amount;
+
+    public String getRecipientAddress() {
+      return recipientAddress;
+    }
+
+    public void setRecipientAddress(String recipientAddress) {
+      this.recipientAddress = recipientAddress;
+    }
+
+    public BigDecimal getAmount() {
+      return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+      this.amount = amount;
+    }
+  }
+
   /**
    * Create an unsigned transaction transferring funds between the provided accounts.
    * 
@@ -53,7 +74,7 @@ public interface Wallet {
    * @param amount
    * @return Unsigned transaction
    */
-  String createTransaction(Iterable<String> fromAddress, String toAddress, BigDecimal amount);
+  String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses);
 
   /**
    * Sign the provided transaction with the provided address' private keys if available Any existing

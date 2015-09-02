@@ -128,11 +128,6 @@
 							<outputDirectory>../target</outputDirectory>
 						</configuration>
 					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
 					<execution>
 						<phase>install</phase>
 						<goals>

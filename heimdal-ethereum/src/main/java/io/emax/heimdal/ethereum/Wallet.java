@@ -230,8 +230,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   }
 
   @Override
-  public String createTransaction(Iterable<String> fromAddress, String toAddress,
-      BigDecimal amount) {
+  public String createTransaction(Iterable<String> fromAddress, Iterable<Recipient> toAddress) {
 
     String senderAddress = fromAddress.iterator().next();
     boolean isMsigSender = false;
@@ -244,8 +243,10 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     if (!possibleSenders.isEmpty()) {
       isMsigSender = true;
     }
+    
+    Recipient recipient = toAddress.iterator().next();    
 
-    BigDecimal amountWei = amount.multiply(BigDecimal.valueOf(config.getWeiMultiplier()));
+    BigDecimal amountWei = recipient.getAmount().multiply(BigDecimal.valueOf(config.getWeiMultiplier()));
 
     // Create the transaction structure and serialize it
     RawTransaction tx = new RawTransaction();
@@ -254,7 +255,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     tx.getGasLimit().setDecodedContents(ByteUtilities
         .stripLeadingNullBytes(BigInteger.valueOf(config.getSimpleTxGas()).toByteArray()));
     tx.getTo().setDecodedContents(
-        ByteUtilities.stripLeadingNullBytes(new BigInteger(toAddress, 16).toByteArray()));
+        ByteUtilities.stripLeadingNullBytes(new BigInteger(recipient.getRecipientAddress(), 16).toByteArray()));
     tx.getValue().setDecodedContents(
         ByteUtilities.stripLeadingNullBytes(amountWei.toBigInteger().toByteArray()));
 
@@ -273,7 +274,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       // data... caff27bb execute(address,uint256,uint256,uint8[],bytes32[],bytes32[])
       MultiSigContractParameters contractParms = new MultiSigContractParameters();
       contractParms.setFunction(MultiSigContract.getExecuteFunctionAddress());
-      contractParms.setAddress(toAddress);
+      contractParms.setAddress(recipient.getRecipientAddress());
       contractParms.setValue(amountWei.toBigInteger());
             
       // For this particular contract the previous nonce is stored at 0x0a.
