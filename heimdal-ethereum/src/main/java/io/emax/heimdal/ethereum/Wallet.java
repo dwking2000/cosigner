@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 
 import io.emax.heimdal.ethereum.common.ByteUtilities;
 import io.emax.heimdal.ethereum.common.DeterministicTools;
@@ -16,6 +17,8 @@ import io.emax.heimdal.ethereum.gethrpc.EthereumRpc;
 import io.emax.heimdal.ethereum.gethrpc.MultiSigContract;
 import io.emax.heimdal.ethereum.gethrpc.MultiSigContractParameters;
 import io.emax.heimdal.ethereum.gethrpc.RawTransaction;
+import rx.Observable;
+import rx.Subscription;
 
 public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   private EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
@@ -23,14 +26,21 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   private static HashMap<String, Integer> addressRounds = new HashMap<>();
   private static HashMap<String, String> msigContracts = new HashMap<>();
   private static HashMap<String, String> reverseMsigContracts = new HashMap<>();
+  private static Subscription multiSigSubscription;
 
   public Wallet(EthereumRpc rpc) {
     this.ethereumRpc = rpc;
-    syncMultiSigAddresses();
+    if (multiSigSubscription == null) {
+      multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> syncMultiSigAddresses());
+    }
   }
 
   public Wallet() {
-    syncMultiSigAddresses();
+    if (multiSigSubscription == null) {
+      multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> syncMultiSigAddresses());
+    }
   }
 
   private synchronized void syncMultiSigAddresses() {
@@ -145,29 +155,28 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
         ByteUtilities.toHexString(BigInteger.valueOf(config.getMinSignatures()).toByteArray());
     requiredSigs = String.format("%64s", requiredSigs).replace(' ', '0');
     // Address[] - first entry in an array parameter is how many elements there are
-   
+
     // Build the array
     String[] addressesUsed = new String[config.getMultiSigAddresses().length + 1];
     addressesUsed[0] = String.format("%64s", userAddress).replace(' ', '0');
     int addressesSkipped = 0;
     for (int i = 0; i < config.getMultiSigAddresses().length; i++) {
-      if(config.getMultiSigAddresses()[i].isEmpty()) {
+      if (config.getMultiSigAddresses()[i].isEmpty()) {
         addressesSkipped++;
         continue;
       }
       addressesUsed[i + 1] =
           String.format("%64s", config.getMultiSigAddresses()[i]).replace(' ', '0');
     }
-    String numberOfAddresses = ByteUtilities
-        .toHexString(BigInteger.valueOf(config.getMultiSigAddresses().length + 1 - addressesSkipped).toByteArray());
+    String numberOfAddresses = ByteUtilities.toHexString(BigInteger
+        .valueOf(config.getMultiSigAddresses().length + 1 - addressesSkipped).toByteArray());
     numberOfAddresses = String.format("%64s", numberOfAddresses).replace(' ', '0');
-    
+
     // Contract code is the init code which copies the payload and constructor parameters, then runs
     // the constructor
     // Followed by the payload, i.e. contract code that gets installed
     // Followed by the constructor params.
-    String contractCode =
-        contractInit + accountOffset + requiredSigs + numberOfAddresses;
+    String contractCode = contractInit + accountOffset + requiredSigs + numberOfAddresses;
     for (String addr : addressesUsed) {
       contractCode += addr;
     }
@@ -243,10 +252,11 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     if (!possibleSenders.isEmpty()) {
       isMsigSender = true;
     }
-    
-    Recipient recipient = toAddress.iterator().next();    
 
-    BigDecimal amountWei = recipient.getAmount().multiply(BigDecimal.valueOf(config.getWeiMultiplier()));
+    Recipient recipient = toAddress.iterator().next();
+
+    BigDecimal amountWei =
+        recipient.getAmount().multiply(BigDecimal.valueOf(config.getWeiMultiplier()));
 
     // Create the transaction structure and serialize it
     RawTransaction tx = new RawTransaction();
@@ -254,8 +264,8 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
         .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
     tx.getGasLimit().setDecodedContents(ByteUtilities
         .stripLeadingNullBytes(BigInteger.valueOf(config.getSimpleTxGas()).toByteArray()));
-    tx.getTo().setDecodedContents(
-        ByteUtilities.stripLeadingNullBytes(new BigInteger(recipient.getRecipientAddress(), 16).toByteArray()));
+    tx.getTo().setDecodedContents(ByteUtilities
+        .stripLeadingNullBytes(new BigInteger(recipient.getRecipientAddress(), 16).toByteArray()));
     tx.getValue().setDecodedContents(
         ByteUtilities.stripLeadingNullBytes(amountWei.toBigInteger().toByteArray()));
 
@@ -267,27 +277,26 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       // Increase gas to contract amount
       tx.getGasLimit().setDecodedContents(ByteUtilities
           .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
-      
+
       // Clear the value, it's part of the data
       tx.getValue().setDecodedContents(new byte[] {});
-      
+
       // data... caff27bb execute(address,uint256,uint256,uint8[],bytes32[],bytes32[])
       MultiSigContractParameters contractParms = new MultiSigContractParameters();
       contractParms.setFunction(MultiSigContract.getExecuteFunctionAddress());
       contractParms.setAddress(recipient.getRecipientAddress());
       contractParms.setValue(amountWei.toBigInteger());
-            
+
       // For this particular contract the previous nonce is stored at 0x0a.
       // It will only accept nonce's one greater than this.
-      String txCount =
-          ethereumRpc.eth_getStorageAt("0x" + senderAddress.toLowerCase(), "0x0a",
-              DefaultBlock.LATEST.toString());
-      BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);      
+      String txCount = ethereumRpc.eth_getStorageAt("0x" + senderAddress.toLowerCase(), "0x0a",
+          DefaultBlock.LATEST.toString());
+      BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
       contractParms.setNonce(nonce);
 
       tx.getData().setDecodedContents(contractParms.encode());
 
-      // Change the recipient 
+      // Change the recipient
       tx.getTo().setDecodedContents(
           ByteUtilities.stripLeadingNullBytes(new BigInteger(senderAddress, 16).toByteArray()));
     }
@@ -303,8 +312,9 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   @Override
   public String signTransaction(String transaction, String address, String name) {
     // Validate the transaction data
-    RawTransaction decodedTransaction = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));   
-    
+    RawTransaction decodedTransaction =
+        RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
+
     // We've been asked to sign something for the multi-sig contract without a user-key
     // Going on the assumption that the local geth wallet only has one key
     if (name == null && reverseMsigContracts.containsKey(address.toLowerCase())) {
@@ -316,27 +326,37 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
           MultiSigContractParameters contractParams = new MultiSigContractParameters();
           contractParams.decode(decodedTransaction.getData().getDecodedContents());
           // Generate the hash -- TODO Make sure this matches what the contract is doing
-          
+
           String hashBytes = String.format("%40s", contractParams.getAddress()).replace(' ', '0');
           hashBytes = hashBytes.substring(hashBytes.length() - 40);
-          hashBytes += String.format("%64s", ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(contractParams.getValue().toByteArray()))).replace(' ' , '0')
-              + String.format("%64s",  ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(contractParams.getNonce().toByteArray()))).replace(' ', '0');
+          hashBytes += String
+              .format("%64s",
+                  ByteUtilities.toHexString(
+                      ByteUtilities.stripLeadingNullBytes(contractParams.getValue().toByteArray())))
+              .replace(' ', '0')
+              + String
+                  .format("%64s",
+                      ByteUtilities.toHexString(ByteUtilities
+                          .stripLeadingNullBytes(contractParams.getNonce().toByteArray())))
+                  .replace(' ', '0');
           hashBytes = DeterministicTools.hashSha3(hashBytes);
-          
+
           // Sign it and rebuild the data
           byte[][] sigData = signData(hashBytes, config.getMultiSigAddresses()[i], name);
-          if(sigData.length < 3) return transaction;
-          
-          //sigData[2][0] = (byte)(sigData[2][0] - 27);
+          if (sigData.length < 3)
+            return transaction;
+
+          // sigData[2][0] = (byte)(sigData[2][0] - 27);
           contractParams.getSigR().add(new BigInteger(1, sigData[0]));
           contractParams.getSigS().add(new BigInteger(1, sigData[1]));
           contractParams.getSigV().add(new BigInteger(1, sigData[2]));
-          
+
           decodedTransaction.getData().setDecodedContents(contractParams.encode());
-          
-          // Sign the whole transaction again          
-          altSig = signTransaction(ByteUtilities.toHexString(decodedTransaction.encode()), config.getMultiSigAddresses()[i]);
-          
+
+          // Sign the whole transaction again
+          altSig = signTransaction(ByteUtilities.toHexString(decodedTransaction.encode()),
+              config.getMultiSigAddresses()[i]);
+
           return altSig;
         }
       }
@@ -349,20 +369,31 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       // Generate the hash -- TODO Make sure this matches what the contract is doing
       String hashBytes = String.format("%40s", contractParams.getAddress()).replace(' ', '0');
       hashBytes = hashBytes.substring(hashBytes.length() - 40);
-      hashBytes += String.format("%64s", ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(contractParams.getValue().toByteArray()))).replace(' ' , '0')
-          + String.format("%64s",  ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(contractParams.getNonce().toByteArray()))).replace(' ', '0');
+      hashBytes += String
+          .format("%64s",
+              ByteUtilities.toHexString(
+                  ByteUtilities.stripLeadingNullBytes(contractParams.getValue().toByteArray())))
+          .replace(' ',
+              '0')
+          + String
+              .format("%64s",
+                  ByteUtilities.toHexString(
+                      ByteUtilities.stripLeadingNullBytes(contractParams.getNonce().toByteArray())))
+              .replace(' ', '0');
       hashBytes = DeterministicTools.hashSha3(hashBytes);
-      
+
       // Sign it and rebuild the data
-      byte[][] sigData = signData(hashBytes, translatedAddress, name);      
-      if(sigData.length < 3) return transaction;
-      
+      byte[][] sigData = signData(hashBytes, translatedAddress, name);
+      if (sigData.length < 3)
+        return transaction;
+
       contractParams.getSigR().add(new BigInteger(1, sigData[0]));
       contractParams.getSigS().add(new BigInteger(1, sigData[1]));
       contractParams.getSigV().add(new BigInteger(1, sigData[2]));
-      
+
       decodedTransaction.getData().setDecodedContents(contractParams.encode());
-      return signTransaction(ByteUtilities.toHexString(decodedTransaction.encode()), translatedAddress, name);
+      return signTransaction(ByteUtilities.toHexString(decodedTransaction.encode()),
+          translatedAddress, name);
     }
 
     // Get the sigHash.
@@ -379,17 +410,18 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
     String sigString = ByteUtilities.toHexString(sigTx.getSigBytes());
     sigString = DeterministicTools.hashSha3(sigString);
-   
+
     byte[][] sigData = signData(sigString, address, name);
-    if(sigData.length < 3) return transaction;
-    
+    if (sigData.length < 3)
+      return transaction;
+
     sigTx.getSigR().setDecodedContents(sigData[0]);
     sigTx.getSigS().setDecodedContents(sigData[1]);
     sigTx.getSigV().setDecodedContents(sigData[2]);
 
     return ByteUtilities.toHexString(sigTx.encode());
   }
-  
+
   private byte[][] signData(String data, String address, String name) {
     if (name == null) {
       // Catch errors here
@@ -399,20 +431,19 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       } catch (Exception e) {
         return new byte[][] {};
       }
-      
+
       try {
         byte[] sigBytes = ByteUtilities.toByteArray(sig);
         byte[] sigR = Arrays.copyOfRange(sigBytes, 0, 32);
         byte[] sigS = Arrays.copyOfRange(sigBytes, 32, 64);
         byte[] sigV = Arrays.copyOfRange(sigBytes, 64, 65);
         sigV[0] += 27;
-        
+
         return new byte[][] {sigR, sigS, sigV};
       } catch (Exception e) {
         return new byte[][] {};
       }
-    }
-    else {
+    } else {
       int rounds = 1;
       if (addressRounds.containsKey(name)) {
         rounds = addressRounds.get(name);
@@ -443,21 +474,21 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       // The odd signature can't be resolved to a recoveryId, in those cases, just sign it again.
       byte[] sigV;
       byte[] sigR;
-      byte[] sigS; 
+      byte[] sigS;
       do {
         byte[] signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
         sigV = Arrays.copyOfRange(signedBytes, 0, 1);
         sigR = Arrays.copyOfRange(signedBytes, 1, 33);
-        sigS = Arrays.copyOfRange(signedBytes, 33, 65);       
-        
-        if(sigV[0] != 27 && sigV[0] != 28) continue;
-        
-        signingAddress = ByteUtilities.toHexString(Secp256k1.recoverPublicKey(
-            sigR, sigS,
-            sigBytes, sigV[0] - 27));
+        sigS = Arrays.copyOfRange(signedBytes, 33, 65);
+
+        if (sigV[0] != 27 && sigV[0] != 28)
+          continue;
+
+        signingAddress = ByteUtilities
+            .toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigBytes, sigV[0] - 27));
         signingAddress = DeterministicTools.getPublicAddress(signingAddress, false);
       } while (!address.equalsIgnoreCase(signingAddress));
-      
+
       return new byte[][] {sigR, sigS, sigV};
     }
   }
