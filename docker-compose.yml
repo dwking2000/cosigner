@@ -1,0 +1,13 @@
+bitcoind:
+  build: ./docker-builds/bitcoind 
+
+geth:
+  build: ./docker-builds/geth 
+
+heimdal:
+  build: ./
+  ports:
+    - "8080:8080"
+  links:
+    - bitcoind
+    - geth
