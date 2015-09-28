@@ -6,6 +6,21 @@ server:
     - type: http
       port: 8081
 
+logging:
+  level: INFO
+  loggers:
+    io.emax: DEBUG
+  appenders:
+    - type: console
+      threshold: WARN
+      target: stderr
+      
+    - type: file
+      threshold: DEBUG
+      currentLogFilename: ./logs/debug.log
+      archivedLogFilenamePattern: ./logs/debug-%d{yyyy-MM-dd-hh}.log.gz
+      archivedFileCount: 6
+      
 clusterLocation: "localhost"
 clusterPort: 5555
 clusterRPCPort: 5556

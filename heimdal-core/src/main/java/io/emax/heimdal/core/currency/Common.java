@@ -11,6 +11,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.atmosphere.cpr.AtmosphereResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -29,6 +31,7 @@ import io.emax.heimdal.core.cluster.Server;
 import rx.Subscription;
 
 public class Common {
+  static Logger logger = LoggerFactory.getLogger(Common.class);
 
   public static CurrencyParameters convertParams(String params) {
     try {
@@ -36,6 +39,14 @@ public class Common {
       JsonParser jsonParser = jsonFact.createParser(params);
       CurrencyParameters currencyParams =
           new ObjectMapper().readValue(jsonParser, CurrencyParameters.class);
+            
+      String userKey = currencyParams.getUserKey();
+      currencyParams.setUserKey("");
+      String sanitizedParams = stringifyObject(CurrencyParameters.class, currencyParams);
+      currencyParams.setUserKey(userKey);
+      
+      logger.debug("[CurrencyParams] " + sanitizedParams);
+      
       return currencyParams;
     } catch (IOException e) {
       // TODO Auto-generated catch block
@@ -86,6 +97,7 @@ public class Common {
 
     String currencyString = stringifyObject(LinkedList.class, currencies);
 
+    logger.debug("[Response] " + currencyString);
     return currencyString;
   }
 
@@ -102,6 +114,7 @@ public class Common {
         currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
     response = userMultiAccount;
 
+    logger.debug("[Response] " + response);
     return response;
   }
 
@@ -115,6 +128,7 @@ public class Common {
     currency.getWallet().getAddresses(currencyParams.getUserKey()).forEach(accounts::add);
     response = stringifyObject(LinkedList.class, accounts);
 
+    logger.debug("[Response] " + response);
     return response;
   }
 
@@ -137,6 +151,7 @@ public class Common {
 
     response = balance.toPlainString();
 
+    logger.debug("[Response] " + response);
     return response;
   }
 
@@ -158,44 +173,43 @@ public class Common {
 
     // Web socket was passed to us
     if (responseSocket != null) {
-      
+
       if (subscriptions.containsKey(responseSocket.uuid())) {
         subscriptions.get(responseSocket.uuid()).unsubscribe();
         subscriptions.remove(responseSocket.uuid());
       }
-      
+
       if (monitors.containsKey(responseSocket.uuid())) {
         monitors.get(responseSocket.uuid()).destroyMonitor();
         monitors.remove(responseSocket.uuid());
       }
-      
-      Subscription wsSubscription =
-          monitor.getObservableBalances().subscribe((balanceMap) -> {
-            balanceMap.forEach((address, balance) -> {
-              try {
-                CurrencyParameters responseParms = new CurrencyParameters();
-                responseParms.setAccount(new LinkedList<String>());
-                responseParms.getAccount().add(address);
-                CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
-                accountData.setAmount(balance);
-                accountData.setRecipientAddress(address);
-                responseParms.setReceivingAccount(Arrays.asList(accountData));
-                responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
-              } catch (Exception e) {
-                if (subscriptions.containsKey(responseSocket.uuid())) {
-                  subscriptions.get(responseSocket.uuid()).unsubscribe();
-                  subscriptions.remove(responseSocket.uuid());
-                }
-                if (monitors.containsKey(responseSocket.uuid())) {
-                  monitors.get(responseSocket.uuid()).destroyMonitor();
-                  monitors.remove(responseSocket.uuid());
-                }
-                return;
-              }
-            });
-          });
+
+      Subscription wsSubscription = monitor.getObservableBalances().subscribe((balanceMap) -> {
+        balanceMap.forEach((address, balance) -> {
+          try {
+            CurrencyParameters responseParms = new CurrencyParameters();
+            responseParms.setAccount(new LinkedList<String>());
+            responseParms.getAccount().add(address);
+            CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+            accountData.setAmount(balance);
+            accountData.setRecipientAddress(address);
+            responseParms.setReceivingAccount(Arrays.asList(accountData));
+            responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
+          } catch (Exception e) {
+            if (subscriptions.containsKey(responseSocket.uuid())) {
+              subscriptions.get(responseSocket.uuid()).unsubscribe();
+              subscriptions.remove(responseSocket.uuid());
+            }
+            if (monitors.containsKey(responseSocket.uuid())) {
+              monitors.get(responseSocket.uuid()).destroyMonitor();
+              monitors.remove(responseSocket.uuid());
+            }
+            return;
+          }
+        });
+      });
       subscriptions.put(responseSocket.uuid(), wsSubscription);
-      monitors.put(responseSocket.uuid(), monitor);      
+      monitors.put(responseSocket.uuid(), monitor);
     } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
       // It's a REST callback
       if (subscriptions.containsKey(currencyParams.getCallback())) {
@@ -207,45 +221,45 @@ public class Common {
         monitors.remove(currencyParams.getCallback());
       }
 
-      Subscription rsSubscription =
-          monitor.getObservableBalances().subscribe((balanceMap) -> {
-            balanceMap.forEach((address, balance) -> {
-              try {
-                CurrencyParameters responseParms = new CurrencyParameters();
-                responseParms.setAccount(new LinkedList<String>());
-                responseParms.getAccount().add(address);
-                CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
-                accountData.setAmount(balance);
-                accountData.setRecipientAddress(address);
-                responseParms.setReceivingAccount(Arrays.asList(accountData));
+      Subscription rsSubscription = monitor.getObservableBalances().subscribe((balanceMap) -> {
+        balanceMap.forEach((address, balance) -> {
+          try {
+            CurrencyParameters responseParms = new CurrencyParameters();
+            responseParms.setAccount(new LinkedList<String>());
+            responseParms.getAccount().add(address);
+            CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+            accountData.setAmount(balance);
+            accountData.setRecipientAddress(address);
+            responseParms.setReceivingAccount(Arrays.asList(accountData));
 
-                HttpPost httpPost = new HttpPost(currencyParams.getCallback());
-                httpPost.addHeader("content-type", "application/json");
-                StringEntity entity;
-                entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
-                httpPost.setEntity(entity);
+            HttpPost httpPost = new HttpPost(currencyParams.getCallback());
+            httpPost.addHeader("content-type", "application/json");
+            StringEntity entity;
+            entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
+            httpPost.setEntity(entity);
 
-                HttpClients.createDefault().execute(httpPost).close();
-              } catch (Exception e) {
-                if (subscriptions.containsKey(currencyParams.getCallback())) {
-                  subscriptions.get(currencyParams.getCallback()).unsubscribe();
-                  subscriptions.remove(currencyParams.getCallback());
-                }
-                if (monitors.containsKey(currencyParams.getCallback())) {
-                  monitors.get(currencyParams.getCallback()).destroyMonitor();
-                  monitors.remove(currencyParams.getCallback());
-                }
-                return;
-              }
-            });
-          });
+            HttpClients.createDefault().execute(httpPost).close();
+          } catch (Exception e) {
+            if (subscriptions.containsKey(currencyParams.getCallback())) {
+              subscriptions.get(currencyParams.getCallback()).unsubscribe();
+              subscriptions.remove(currencyParams.getCallback());
+            }
+            if (monitors.containsKey(currencyParams.getCallback())) {
+              monitors.get(currencyParams.getCallback()).destroyMonitor();
+              monitors.remove(currencyParams.getCallback());
+            }
+            return;
+          }
+        });
+      });
       subscriptions.put(currencyParams.getCallback(), rsSubscription);
       monitors.put(currencyParams.getCallback(), monitor);
     } else {
       // We have no way to respond to the caller other than with this response.
       monitor.destroyMonitor();
     }
-    
+
+    logger.debug("[Response] " + response);
     return response;
   }
 
@@ -265,7 +279,8 @@ public class Common {
       recipient.setRecipientAddress(account.getRecipientAddress());
       recipients.add(recipient);
     });
-    currencyParams.setTransactionData(currency.getWallet().createTransaction(addresses,recipients));
+    currencyParams
+        .setTransactionData(currency.getWallet().createTransaction(addresses, recipients));
 
     // Authorize it with the user account
     String initalTx = currencyParams.getTransactionData();
@@ -285,6 +300,7 @@ public class Common {
     }
 
     response = currencyParams.getTransactionData();
+    logger.debug("[Response] " + response);
     return response;
   }
 
@@ -319,6 +335,7 @@ public class Common {
     }
     response = currencyParams.getTransactionData();
 
+    logger.debug("[Response] " + response);
     return response;
   }
 
@@ -329,6 +346,7 @@ public class Common {
     CurrencyPackage currency = lookupCurrency(currencyParams);
     response = currency.getWallet().sendTransaction(currencyParams.getTransactionData());
 
+    logger.debug("[Response] " + response);
     return response;
   }
 
