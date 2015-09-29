@@ -174,6 +174,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       return null;
     }
 
+    // TODO - We should be able to create this without asking the daemon for it.
     Outpoint[] usedOutputArray = new Outpoint[usedOutputs.size()];
     return bitcoindRpc.createrawtransaction(usedOutputs.toArray(usedOutputArray), txnOutput);
   }
@@ -234,6 +235,8 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       OutpointDetails[] outpointArray = new OutpointDetails[myOutpoints.size()];
       outpointArray = myOutpoints.toArray(outpointArray);
 
+      // TODO - We should know how to parse and sign this, not be asking the daemon to.
+      // Opens up the possibility of a custom signer
       signedTransaction = bitcoindRpc.signrawtransaction(transaction, outpointArray,
           new String[] {privateKey}, SigHash.ALL);
     } else {
