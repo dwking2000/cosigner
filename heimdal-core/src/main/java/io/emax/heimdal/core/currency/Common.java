@@ -49,7 +49,6 @@ public class Common {
       
       return currencyParams;
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       return null;
     }
@@ -62,7 +61,6 @@ public class Common {
       Object obj = new ObjectMapper().readValue(jsonParser, objectType);
       return obj;
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       return null;
     }
@@ -75,7 +73,6 @@ public class Common {
       ObjectWriter writer = mapper.writerFor(objectType);
       return writer.writeValueAsString(obj);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       return "";
     }

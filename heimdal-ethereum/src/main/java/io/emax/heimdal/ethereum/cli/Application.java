@@ -21,7 +21,7 @@ public class Application {
       System.out.println("Available methods:");
       System.out.println("	getNewAddress(String accountName)");
       System.out.println("	getDeterministicAddresses(String accountName)");
-      System.out.println("	getMultiSigAdress(String address1, String address2, ..., accountName)");
+      System.out.println("	getMultiSigAddress(String address1, String address2, ..., accountName)");
       System.out.println("	getBalance(String address)");
       System.out.println(
           "	createTransaction(String fromAddress1, String fromAddress2, ..., String toAddress, Decimal amount)");

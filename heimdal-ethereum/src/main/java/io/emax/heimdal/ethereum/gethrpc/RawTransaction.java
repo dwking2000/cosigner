@@ -5,7 +5,7 @@ import io.emax.heimdal.ethereum.common.RLPEntity;
 import io.emax.heimdal.ethereum.common.RLPItem;
 import io.emax.heimdal.ethereum.common.RLPList;
 
-public class RawTransaction extends RLPList{
+public class RawTransaction extends RLPList {
   private static final long serialVersionUID = 1L;
 
   private RLPItem nonce = new RLPItem();
@@ -17,7 +17,7 @@ public class RawTransaction extends RLPList{
   private RLPItem sigV = new RLPItem();
   private RLPItem sigR = new RLPItem();
   private RLPItem sigS = new RLPItem();
-  
+
   public static long getSerialversionuid() {
     return serialVersionUID;
   }
@@ -69,7 +69,7 @@ public class RawTransaction extends RLPList{
     this.add(sigR);
     this.add(sigS);
   }
-  
+
   public byte[] getSigBytes() {
     RLPList sigTx = new RLPList();
     sigTx.add(nonce);
@@ -78,20 +78,20 @@ public class RawTransaction extends RLPList{
     sigTx.add(to);
     sigTx.add(value);
     sigTx.add(data);
-    
+
     return sigTx.encode();
   }
-  
-  public static RawTransaction parseBytes(byte [] bytes) {
+
+  public static RawTransaction parseBytes(byte[] bytes) {
     RLPEntity entity = RLP.parseArray(bytes);
-    if(!entity.getClass().equals(RLPList.class)) {
+    if (!entity.getClass().equals(RLPList.class)) {
       return null;
     }
-    
-    RLPList txList = (RLPList)entity;
+
+    RLPList txList = (RLPList) entity;
     RawTransaction tx = new RawTransaction();
-    for(int i = 0; i < txList.size(); i++){
-      if(i == 0) {
+    for (int i = 0; i < txList.size(); i++) {
+      if (i == 0) {
         tx.getNonce().setDecodedContents(txList.get(i).getDecodedContents());
       } else if (i == 1) {
         tx.getGasPrice().setDecodedContents(txList.get(i).getDecodedContents());
@@ -111,7 +111,7 @@ public class RawTransaction extends RLPList{
         tx.getSigS().setDecodedContents(txList.get(i).getDecodedContents());
       }
     }
-    
+
     return tx;
   }
 }

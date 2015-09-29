@@ -17,14 +17,16 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   private Subscription balanceSubscription;
   private Wallet wallet;
 
-  public Monitor(Wallet wallet){
+  public Monitor(Wallet wallet) {
     this.wallet = wallet;
-    balanceSubscription = Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
+    balanceSubscription =
+        Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
   }
-  
+
   public Monitor() {
     wallet = new Wallet();
-    balanceSubscription = Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
+    balanceSubscription =
+        Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
   }
 
   private boolean updateBalances() {
@@ -69,7 +71,7 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
 
   @Override
   public void destroyMonitor() {
-    if(balanceSubscription != null)
+    if (balanceSubscription != null)
       balanceSubscription.unsubscribe();
   }
 }

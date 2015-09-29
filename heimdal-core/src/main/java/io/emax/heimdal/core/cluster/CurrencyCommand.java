@@ -37,7 +37,6 @@ public class CurrencyCommand implements BaseCommand {
       ObjectWriter writer = mapper.writerFor(CurrencyCommand.class);
       return writer.writeValueAsString(this);
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       return "";
     }
@@ -51,7 +50,6 @@ public class CurrencyCommand implements BaseCommand {
           new ObjectMapper().readValue(jsonParser, CurrencyCommand.class);
       return currencyCommand;
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       return null;
     }

@@ -7,7 +7,6 @@ import java.util.Properties;
 import io.emax.heimdal.api.currency.SigningType;
 import io.emax.heimdal.bitcoin.common.EnvironmentVariableParser;
 
-// TODO Make this configurable via config file. Being lazy for now.
 public class CurrencyConfiguration implements io.emax.heimdal.api.currency.CurrencyConfiguration {
   private static String daemonConnectionString = "http://127.0.0.1:18332";
   private static int minConfirmations = 6;

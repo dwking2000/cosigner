@@ -30,12 +30,11 @@ public class EthereumResource {
     try {
       this.client = new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()));
     } catch (MalformedURLException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
-  
-  public EthereumResource(EthereumRpc rpc){
+
+  public EthereumResource(EthereumRpc rpc) {
     this.ethereumRpc = rpc;
   }
 

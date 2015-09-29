@@ -24,37 +24,31 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public Block getBlock(String blockHash) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public BlockChainInfo getBlockChainInfo() {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public long getBlockCount() {
-    // TODO Auto-generated method stub
     return 0;
   }
 
   @Override
   public String getBlockHash(long blockHeight) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public String help(String command) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public void addNode(String node, AddNodeCommand command) {
-    // TODO Auto-generated method stub
 
   }
 
@@ -81,7 +75,6 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public String getrawtransaction(String transactionId) {
-    // TODO Auto-generated method stub
     return null;
   }
 
@@ -109,19 +102,16 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public BigDecimal estimateFee(int blocks) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public AddressValidated validateAddress(String address) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public String addmultisigaddress(int nrequired, String[] keys, String account) {
-    // TODO Auto-generated method stub
     return null;
   }
 
@@ -135,25 +125,21 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public void backupWallet(String destination) {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public String dumpPrivateKey(String address) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public String getAccountAddress(String accountName) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public String getAccount(String address) {
-    // TODO Auto-generated method stub
     return null;
   }
 
@@ -164,39 +150,33 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public String getnewaddress(String accountName) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public void importaddress(String addressOrScript, String account, boolean rescan) {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public void importprivkey(String privateKey, String account, boolean rescan) {
-    // TODO Auto-generated method stub
 
   }
 
   @Override
   public Map<String, BigDecimal> listAccounts(int confirmations, boolean includeWatchOnly) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public AddressReceived[] listReceivedByAddress(int confirmations, boolean includeEmpty,
       boolean includeWatchOnly) {
-    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
   public LastPayments listSinceBlock(String blockHash, int confirmations,
       boolean includeWatchOnly) {
-    // TODO Auto-generated method stub
     return null;
   }
 
@@ -220,14 +200,12 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public boolean lockUnspent(boolean lockOrUnlock, Outpoint[] unspentOutpoints) {
-    // TODO Auto-generated method stub
     return false;
   }
 
   @Override
   public String sendToAddress(String address, BigDecimal amount, String comment, String commentTo)
       throws InsuficientFundsException {
-    // TODO Auto-generated method stub
     return null;
   }
 

@@ -69,7 +69,6 @@ public class Coordinator {
                   .setLastCommunication(System.currentTimeMillis());
             }
           } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
           }
         }
@@ -102,7 +101,6 @@ public class Coordinator {
           });
 
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }

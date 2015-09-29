@@ -50,7 +50,6 @@ public class EthereumTestRpc implements EthereumRpc {
 
   @Override
   public String eth_call(CallData object, String defaultBlock) {
-    // TODO Auto-generated method stub
     return null;
   }
 }

@@ -211,16 +211,18 @@ public class MultiSigContractParameters {
     BigInteger addressPointer = new BigInteger(1, addressBytes);
     addressPointer = addressPointer.add(BigInteger.valueOf(4));
     // Get the size
-    addressBytes = Arrays.copyOfRange(data, addressPointer.intValue(), addressPointer.intValue() + 32);
+    addressBytes =
+        Arrays.copyOfRange(data, addressPointer.intValue(), addressPointer.intValue() + 32);
     BigInteger addressSize = new BigInteger(1, addressBytes);
     // Loop over each entry and load it up.
     this.address.clear();
     for (int i = 0; i < addressSize.intValue(); i++) {
       int dataLocation = addressPointer.intValue() + 32 + (i * 32);
       addressBytes = Arrays.copyOfRange(data, dataLocation, dataLocation + 32);
-      this.address.add(ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(addressBytes)));
+      this.address
+          .add(ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(addressBytes)));
     }
-    
+
     // 32 for value
     byte[] valueBytes = Arrays.copyOfRange(data, buffPointer, buffPointer + 32);
     buffPointer += 32;

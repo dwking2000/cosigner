@@ -57,7 +57,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   }
 
   private synchronized void syncMultiSigAddresses() {
-    // TODO contract may very likely change
     String contractPayload = "0x" + MultiSigContract.getContractPayload();
     String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
         DefaultBlock.LATEST.toString());
@@ -357,7 +356,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
           // Parse the data
           MultiSigContractParameters contractParams = new MultiSigContractParameters();
           contractParams.decode(decodedTransaction.getData().getDecodedContents());
-          // Generate the hash -- TODO Make sure this matches what the contract is doing
 
           String hashBytes = String.format("%64s", "0").replace(' ', '0');
           for (int j = 0; j < contractParams.getAddress().size(); j++) {
@@ -404,7 +402,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       // Parse the data
       MultiSigContractParameters contractParams = new MultiSigContractParameters();
       contractParams.decode(decodedTransaction.getData().getDecodedContents());
-      // Generate the hash -- TODO Make sure this matches what the contract is doing
       String hashBytes = String.format("%64s", "0").replace(' ', '0');
       for (int j = 0; j < contractParams.getAddress().size(); j++) {
         String addressString =

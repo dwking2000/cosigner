@@ -37,10 +37,9 @@ public class Secp256k1 {
       ECDomainParameters domain = new ECDomainParameters(spec.getCurve(), spec.getG(), spec.getN());
       ECPrivateKeyParameters privateKeyParms =
           new ECPrivateKeyParameters(new BigInteger(1, privateKey), domain);
-      ParametersWithRandom params = new ParametersWithRandom(privateKeyParms); // TODO Add random
+      ParametersWithRandom params = new ParametersWithRandom(privateKeyParms);
 
       ecdsaSigner.init(true, params);
-
 
       BigInteger[] sig = ecdsaSigner.generateSignature(data);
       String sigData = "00";

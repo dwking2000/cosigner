@@ -118,7 +118,7 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
   }
 
   public int getMinConfirmations() {
-    return minConfirmations; // TODO don't use 10
+    return minConfirmations;
   }
 
   public long getGasPrice() {
