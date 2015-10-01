@@ -155,15 +155,12 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       if (subTotal.compareTo(recipient.getAmount()) > 0) {
         txnOutput.put(recipient.getRecipientAddress(), recipient.getAmount());
         subTotal = subTotal.subtract(recipient.getAmount());
-        if(recipients.hasNext()) {         
-          recipient = recipients.next();          
-        }
-        else {
-          // TODO Consider generating change address, don't just put
-          // it back in the first one
-          // TODO don't hardcode fees
-          txnOutput.put(fromAddress.iterator().next(),
-              subTotal.subtract(new BigDecimal("0.002")));
+        if (recipients.hasNext()) {
+          recipient = recipients.next();
+        } else {
+          // TODO don't hardcode fees -- 0.0001 BTC * KB suggested by spec
+          txnOutput.put(fromAddress.iterator().next(), subTotal.subtract(new BigDecimal("0.002")));
+          filledAllOutputs = true;
         }
         break;
       }

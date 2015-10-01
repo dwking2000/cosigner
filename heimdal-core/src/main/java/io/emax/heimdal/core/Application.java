@@ -48,6 +48,7 @@ public class Application extends io.dropwizard.Application<ApplicationConfigurat
     // Initialize the coordinator
     Coordinator.getInstance();
 
+    // TODO - Make each currency a toggle in the configuration, disable those not wanted.
     // Load api.currency libraries here
     // Bitcoin
     CurrencyPackage bitcoinPackage = new CurrencyPackage();

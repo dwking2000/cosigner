@@ -172,8 +172,7 @@ public class DeterministicTools {
       // Strip leading network byte and get the public key
       byte[] privateKeyBytes =
           Arrays.copyOfRange(networkPrivateKeyBytes, 1, networkPrivateKeyBytes.length);
-      Secp256k1 secp256k1 = new Secp256k1();
-      byte[] publicKeyBytes = secp256k1.getPublicKey(privateKeyBytes);
+      byte[] publicKeyBytes = Secp256k1.getPublicKey(privateKeyBytes);
 
       return publicKeyBytes;
 
