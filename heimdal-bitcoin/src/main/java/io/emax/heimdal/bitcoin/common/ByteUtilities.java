@@ -24,6 +24,12 @@ public class ByteUtilities {
   }
 
   public static byte[] toByteArray(String data) {
+    if (data.length() == 0) {
+      return new byte[] {};
+    }
+    while (data.length() < 2) {
+      data = "0" + data;
+    }
     if (data.substring(0, 2).toLowerCase().equals("0x")) {
       data = data.substring(2);
     }
@@ -73,10 +79,10 @@ public class ByteUtilities {
     if (data.length < start + size) {
       return null;
     }
-    
+
     byte[] newData = new byte[size];
-    newData = Arrays.copyOfRange(data, start, start+size);
-    
+    newData = Arrays.copyOfRange(data, start, start + size);
+
     return newData;
   }
 }

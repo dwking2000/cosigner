@@ -13,35 +13,6 @@ import io.emax.heimdal.bitcoin.common.ByteUtilities;
  *
  */
 public class RawTransaction {
-  /*
-   * https://en.bitcoin.it/wiki/Transaction
-   * 
-   * general format of a Bitcoin transaction (inside a block)
-   * 
-   * Field Description Size
-   * 
-   * Version no currently 1 4 bytes
-   * 
-   * In-counter positive integer VI = VarInt 1 - 9 bytes
-   * 
-   * list of inputs the * first input of the first transaction is also called "coinbase" (its
-   * content was ignored in earlier versions) <in-counter>-many inputs
-   * 
-   * Out-counter positive integer VI = VarInt 1 - 9 bytes
-   * 
-   * list of outputs the outputs of the first transaction spend the mined bitcoins for the block
-   * <out-counter>-many outputs
-   * 
-   * lock_time if non-zero and sequence numbers are < 0xFFFFFFFF: block height or timestamp when
-   * transaction is final 4 bytes
-   */
-
-  /*
-   * See: https://en.bitcoin.it/wiki/Script for details on how signing, scripts, etc... work.
-   * 
-   * Look at re-ordering signatures in msig script in these classes, to make order less relevant
-   */
-
   private int version;
   private long inputCount = 0;
   private LinkedList<RawInput> inputs = new LinkedList<>();
@@ -158,7 +129,7 @@ public class RawTransaction {
     // Version
     byte[] versionBytes =
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(getVersion()).toByteArray());
-    versionBytes = ByteUtilities.leftPad(versionBytes, 4, (byte)0x00);
+    versionBytes = ByteUtilities.leftPad(versionBytes, 4, (byte) 0x00);
     versionBytes = ByteUtilities.flipEndian(versionBytes);
     tx += ByteUtilities.toHexString(versionBytes);
 
@@ -185,7 +156,7 @@ public class RawTransaction {
     // Lock Time
     byte[] lockBytes =
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(getLockTime()).toByteArray());
-    lockBytes = ByteUtilities.leftPad(lockBytes, 4, (byte)0x00);
+    lockBytes = ByteUtilities.leftPad(lockBytes, 4, (byte) 0x00);
     lockBytes = ByteUtilities.flipEndian(lockBytes);
     tx += ByteUtilities.toHexString(lockBytes);
 
@@ -313,7 +284,7 @@ public class RawTransaction {
 
     byte[] intData = BigInteger.valueOf(data).toByteArray();
     intData = ByteUtilities.stripLeadingNullBytes(intData);
-    intData = ByteUtilities.leftPad(intData, newData.length - 1, (byte)0x00);
+    intData = ByteUtilities.leftPad(intData, newData.length - 1, (byte) 0x00);
     intData = ByteUtilities.flipEndian(intData);
 
     for (int i = 0; i < (newData.length - 1); i++) {
@@ -321,5 +292,91 @@ public class RawTransaction {
     }
 
     return newData;
+  }
+
+  public RawTransaction clone() {
+    RawTransaction rawTx = new RawTransaction();
+
+    rawTx.setVersion(getVersion());
+    rawTx.setInputCount(getInputCount());
+    for (RawInput input : getInputs()) {
+      rawTx.getInputs().add(input.clone());
+    }
+    rawTx.setOutputCount(getOutputCount());
+    for (RawOutput output : getOutputs()) {
+      rawTx.getOutputs().add(output.clone());
+    }
+    rawTx.setLockTime(getLockTime());
+
+    return rawTx;
+  }
+
+  public static RawTransaction stripInputScripts(RawTransaction tx) {
+    RawTransaction rawTx = tx.clone();
+
+    for (RawInput input : rawTx.getInputs()) {
+      input.setScript("");
+      input.setScriptSize(0);
+    }
+
+    return rawTx;
+  }
+
+  public static String prepareSigScript(String originalScript) {
+    String modifiedScript = "";
+    int scriptPosition;
+    int scriptSectionStart = 0;
+    boolean foundCheckSig = false;
+    byte[] scriptBytes = ByteUtilities.toByteArray(originalScript);
+    for (scriptPosition = 0; scriptPosition < scriptBytes.length; scriptPosition++) {
+      // Look for CHECKSIGs
+      if ((scriptBytes[scriptPosition] & 0xFF) >= 0xAC
+          && (scriptBytes[scriptPosition] & 0xFF) <= 0xAF && !foundCheckSig) {
+        // Found one, backtrack to find the 0xAB, set it as the start position.
+        foundCheckSig = true;
+        for (int i = (scriptPosition - 1); i >= 0; i--) {
+          if ((scriptBytes[scriptPosition] & 0xFF) == 0xAB) {
+            scriptSectionStart = i + 1; // Get the one after the CODESEP, 0 if we don't find one.
+            break;
+          }
+        }
+      } else {
+        // Check if the script contains stack arguments, skip them.
+        if ((scriptBytes[scriptPosition] & 0xFF) >= 0x01
+            && (scriptBytes[scriptPosition] & 0xFF) <= 0x4B) {
+          // This byte is the size
+          scriptPosition += (scriptBytes[scriptPosition] & 0xFF);
+        } else if ((scriptBytes[scriptPosition] & 0xFF) == 0x4C) {
+          // Next byte is the size
+          scriptPosition++;
+          scriptPosition += (scriptBytes[scriptPosition] & 0xFF);
+        } else if ((scriptBytes[scriptPosition] & 0xFF) == 0x4D) {
+          // Next 2 bytes are the size
+          scriptPosition++;
+          byte[] sizeBytes = ByteUtilities.readBytes(scriptBytes, scriptPosition, 2);
+          sizeBytes = ByteUtilities.flipEndian(sizeBytes);
+          int size = new BigInteger(1, sizeBytes).intValue();
+          scriptPosition++;
+          scriptPosition += size;
+        } else if ((scriptBytes[scriptPosition] & 0xFF) == 0x4E) {
+          // Next 4 bytes are the size
+          scriptPosition++;
+          byte[] sizeBytes = ByteUtilities.readBytes(scriptBytes, scriptPosition, 4);
+          sizeBytes = ByteUtilities.flipEndian(sizeBytes);
+          int size = new BigInteger(1, sizeBytes).intValue();
+          scriptPosition += 3;
+          scriptPosition += size;
+        } else if ((scriptBytes[scriptPosition] & 0xFF) == 0xAB) {
+          // If the CHECKSIG was found and we find any 0xAB's, remove them.
+          if (scriptSectionStart <= scriptPosition) { // If start > position then we got two 0xAB's in a row, skip the copy
+            byte[] copyArray =
+                Arrays.copyOfRange(scriptBytes, scriptSectionStart, scriptPosition - 1);
+            modifiedScript += ByteUtilities.toHexString(copyArray);
+          }
+          scriptSectionStart = scriptPosition + 1;
+        }
+      }
+    }
+    return modifiedScript;
   }
 }

@@ -15,8 +15,12 @@ import io.emax.heimdal.bitcoin.bitcoindrpc.MultiSig;
 import io.emax.heimdal.bitcoin.bitcoindrpc.Outpoint;
 import io.emax.heimdal.bitcoin.bitcoindrpc.OutpointDetails;
 import io.emax.heimdal.bitcoin.bitcoindrpc.Output;
+import io.emax.heimdal.bitcoin.bitcoindrpc.RawInput;
+import io.emax.heimdal.bitcoin.bitcoindrpc.RawOutput;
+import io.emax.heimdal.bitcoin.bitcoindrpc.RawTransaction;
 import io.emax.heimdal.bitcoin.bitcoindrpc.SigHash;
 import io.emax.heimdal.bitcoin.bitcoindrpc.SignedTransaction;
+import io.emax.heimdal.bitcoin.common.ByteUtilities;
 import io.emax.heimdal.bitcoin.common.DeterministicTools;
 
 public class Wallet implements io.emax.heimdal.api.currency.Wallet {
@@ -100,12 +104,20 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
         userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
       }
 
+      // TODO Remove this, debugging for signing code
+      String pubKey = DeterministicTools.getPublicKey(userPrivateKey);
+      System.out.println("==[DEBUG]==");
+      System.out.println("Private Key: " + userPrivateKey);
+      System.out.println("Public Key: " + pubKey);
+      System.out.println("==[DEBUG]==");
+
       if (address.equalsIgnoreCase(userAddress)) {
         multisigAddresses.add(DeterministicTools.getPublicKey(userPrivateKey));
       } else {
         multisigAddresses.add(address);
       }
     });
+
     for (String account : config.getMultiSigAccounts()) {
       if (!account.isEmpty()) {
         multisigAddresses.add(account);
@@ -171,9 +183,31 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       return null;
     }
 
-    // TODO - We should be able to create this without asking the daemon for it.
-    Outpoint[] usedOutputArray = new Outpoint[usedOutputs.size()];
-    return bitcoindRpc.createrawtransaction(usedOutputs.toArray(usedOutputArray), txnOutput);
+    RawTransaction rawTx = new RawTransaction();
+    rawTx.setVersion(1);
+    rawTx.setInputCount(usedOutputs.size());
+    usedOutputs.forEach((input) -> {
+      RawInput rawInput = new RawInput();
+      rawInput.setTxHash(input.getTransactionId());
+      rawInput.setTxIndex((int) input.getOutputIndex());
+      rawInput.setSequence(-1);
+      rawTx.getInputs().add(rawInput);
+    });
+    rawTx.setOutputCount(txnOutput.size());
+    txnOutput.forEach((address, amount) -> {
+      RawOutput rawOutput = new RawOutput();
+      rawOutput.setAmount(amount.multiply(BigDecimal.valueOf(100000000)).longValue());
+      String decodedAddress = DeterministicTools.decodeAddressTo160(address);
+      byte[] addressBytes = ByteUtilities.toByteArray(decodedAddress);
+      String scriptData = "76a914";
+      scriptData += ByteUtilities.toHexString(addressBytes);
+      scriptData += "88ac";
+      rawOutput.setScript(scriptData);
+      rawTx.getOutputs().add(rawOutput);
+    });
+    rawTx.setLockTime(0);
+
+    return rawTx.encode();
   }
 
   @Override
@@ -207,6 +241,7 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
         return transaction;
       }
 
+      // TODO This will likely be removed for the new lookup below.
       // We have the private key, now get all the unspent inputs so we have the redeemScripts.
       DecodedTransaction myTx = bitcoindRpc.decoderawtransaction(transaction);
       List<DecodedInput> inputs = myTx.getInputs();
@@ -234,6 +269,11 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
       // TODO - We should know how to parse and sign this, not be asking the daemon to.
       // Opens up the possibility of a custom signer
+      // TODO - Pull up the original script
+      // TODO Temporary lookup for testing but it will likely replace the above.
+
+      // TODO - Sign the data, get the pub key, encode it
+
       signedTransaction = bitcoindRpc.signrawtransaction(transaction, outpointArray,
           new String[] {privateKey}, SigHash.ALL);
     } else {

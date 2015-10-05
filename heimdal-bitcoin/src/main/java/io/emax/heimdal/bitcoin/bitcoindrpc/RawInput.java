@@ -6,27 +6,6 @@ import io.emax.heimdal.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.heimdal.bitcoin.common.ByteUtilities;
 
 public class RawInput {
-  /*
-   * https://en.bitcoin.it/wiki/Transaction#general_format_.28inside_a_block.
-   * 29_of_each_input_of_a_transaction_-_Txin
-   * 
-   * general format (inside a block) of each input of a transaction - Txin
-   * 
-   * Field Description Size
-   * 
-   * Previous Transaction hash doubled SHA256-hashed of a (previous) to-be-used transaction 32 bytes
-   * 
-   * Previous Txout-index non negative integer indexing an output of the to-be-used transaction 4
-   * bytes
-   * 
-   * Txin-script length non negative integer VI = VarInt 1 - 9 bytes
-   * 
-   * Txin-script / scriptSig Script <in-script length>-many bytes
-   * 
-   * sequence_no normally 0xFFFFFFFF; irrelevant unless transaction's lock_time is > 0 4 bytes
-   * 
-   */
-
   private String txHash;
   private int txIndex;
   private long scriptSize = 0;
@@ -188,5 +167,17 @@ public class RawInput {
     int sizeSize = RawTransaction.writeVariableInt(getScriptSize()).length;
     // Tx Hash + Index + scriptSize + Script + sequence
     return 32 + 4 + sizeSize + getScriptSize() + 4;
+  }
+  
+  public RawInput clone() {
+    RawInput input = new RawInput();
+    
+    input.setTxHash(getTxHash());
+    input.setTxIndex(getTxIndex());
+    input.setScriptSize(getScriptSize());
+    input.setScript(getScript());
+    input.setSequence(getSequence());
+    
+    return input;
   }
 }

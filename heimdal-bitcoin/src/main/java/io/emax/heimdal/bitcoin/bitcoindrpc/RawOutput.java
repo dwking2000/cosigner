@@ -6,22 +6,6 @@ import io.emax.heimdal.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.heimdal.bitcoin.common.ByteUtilities;
 
 public class RawOutput {
-  /*
-   * https://en.bitcoin.it/wiki/Transaction#general_format_.28inside_a_block.
-   * 29_of_each_output_of_a_transaction_-_Txout
-   * 
-   * general format (inside a block) of each output of a transaction - Txout
-   * 
-   * Field Description Size
-   * 
-   * value non negative integer giving the number of Satoshis(BTC/10^8) to be transfered 8 bytes
-   * 
-   * Txout-script length non negative integer 1 - 9 bytes
-   * 
-   * VI = VarInt Txout-script / scriptPubKey Script <out-script length>-many bytes
-   * 
-   */
-
   private long amount;
   private long scriptSize = 0;
   private String script = "";
@@ -134,5 +118,15 @@ public class RawOutput {
     int sizeSize = RawTransaction.writeVariableInt(getScriptSize()).length;
     // Satoshis + scriptSize + Script
     return 8 + sizeSize + getScriptSize();
+  }
+  
+  public RawOutput clone() {
+    RawOutput output = new RawOutput();
+    
+    output.setAmount(getAmount());
+    output.setScriptSize(getScriptSize());
+    output.setScript(getScript());
+    
+    return output;
   }
 }

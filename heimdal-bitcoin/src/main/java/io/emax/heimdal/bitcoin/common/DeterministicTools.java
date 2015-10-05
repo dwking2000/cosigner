@@ -141,6 +141,19 @@ public class DeterministicTools {
       return null;
     }
   }
+  
+  public static String decodeAddressTo160(String address) {
+    try {
+      byte[] decodedNetworkAddress = Base58.decode(address);
+      //byte[] networkBytes = ByteUtilities.readBytes(decodedNetworkAddress, 0, 1);
+      byte[] addressBytes = ByteUtilities.readBytes(decodedNetworkAddress, 1, 20);
+      //byte[] checksumBytes = ByteUtilities.readBytes(decodedNetworkAddress, 21, 4); // TODO - Verify checksum
+      
+      return ByteUtilities.toHexString(addressBytes); 
+    } catch (Exception e) {
+      return "";
+    }
+  }
 
   public static String getPublicKey(String privateKey) {
     return toHex(getPublicKeyBytes(privateKey));
