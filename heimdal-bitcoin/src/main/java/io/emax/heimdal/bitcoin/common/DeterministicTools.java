@@ -141,22 +141,52 @@ public class DeterministicTools {
       return null;
     }
   }
-  
-  public static String decodeAddressTo160(String address) {
+
+  public static String decodeAddress(String address) {
     try {
       byte[] decodedNetworkAddress = Base58.decode(address);
-      //byte[] networkBytes = ByteUtilities.readBytes(decodedNetworkAddress, 0, 1);
-      byte[] addressBytes = ByteUtilities.readBytes(decodedNetworkAddress, 1, 20);
-      //byte[] checksumBytes = ByteUtilities.readBytes(decodedNetworkAddress, 21, 4); // TODO - Verify checksum
-      
-      return ByteUtilities.toHexString(addressBytes); 
+      byte[] networkBytes = ByteUtilities.readBytes(decodedNetworkAddress, 0, 1);
+      byte[] addressBytes = new byte[] {};
+
+      if ((networkBytes[0] & 0xFF) == 0x00 || (networkBytes[0] & 0xFF) == 0x6F
+          || (networkBytes[0] & 0xFF) == 0x05 || (networkBytes[0] & 0xFF) == 0xC4) {
+        addressBytes = ByteUtilities.readBytes(decodedNetworkAddress, 1, 20);
+      } else if ((networkBytes[0] & 0xFF) == 0x80 || (networkBytes[0] & 0xFF) == 0xEF) {
+        addressBytes = ByteUtilities.readBytes(decodedNetworkAddress, 1, 32);
+      }
+
+      // byte[] checksumBytes = ByteUtilities.readBytes(decodedNetworkAddress, 21/33, 4);
+      // TODO - Verify checksum
+
+      return ByteUtilities.toHexString(addressBytes);
     } catch (Exception e) {
       return "";
     }
   }
 
+  public static boolean isMultiSigAddress(String address) {
+    try {
+      // If the address isn't valid.
+      if (decodeAddress(address).isEmpty()) {
+        return false;
+      }
+
+      byte[] decodedNetworkAddress = Base58.decode(address);
+      byte[] networkBytes = ByteUtilities.readBytes(decodedNetworkAddress, 0, 1);
+
+      if ((networkBytes[0] & 0xFF) == 0x05 || (networkBytes[0] & 0xFF) == 0xC4) {
+        return true;
+      }
+
+      return false;
+
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
   public static String getPublicKey(String privateKey) {
-    return toHex(getPublicKeyBytes(privateKey));
+    return ByteUtilities.toHexString(getPublicKeyBytes(privateKey));
   }
 
   public static byte[] getPublicKeyBytes(String privateKey) {
@@ -194,16 +224,5 @@ public class DeterministicTools {
       e.printStackTrace(System.out);
       return null;
     }
-  }
-
-  private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
-
-  public static String toHex(byte[] data) {
-    char[] chars = new char[data.length * 2];
-    for (int i = 0; i < data.length; i++) {
-      chars[i * 2] = HEX_DIGITS[(data[i] >> 4) & 0xf];
-      chars[i * 2 + 1] = HEX_DIGITS[data[i] & 0xf];
-    }
-    return new String(chars);
   }
 }

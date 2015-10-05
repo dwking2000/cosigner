@@ -1,6 +1,8 @@
 package io.emax.heimdal.bitcoin;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import io.emax.heimdal.bitcoin.bitcoindrpc.BitcoindRpc;
-import io.emax.heimdal.bitcoin.bitcoindrpc.DecodedTransaction;
-import io.emax.heimdal.bitcoin.bitcoindrpc.DecodedTransaction.DecodedInput;
 import io.emax.heimdal.bitcoin.bitcoindrpc.MultiSig;
 import io.emax.heimdal.bitcoin.bitcoindrpc.Outpoint;
 import io.emax.heimdal.bitcoin.bitcoindrpc.OutpointDetails;
@@ -22,6 +22,7 @@ import io.emax.heimdal.bitcoin.bitcoindrpc.SigHash;
 import io.emax.heimdal.bitcoin.bitcoindrpc.SignedTransaction;
 import io.emax.heimdal.bitcoin.common.ByteUtilities;
 import io.emax.heimdal.bitcoin.common.DeterministicTools;
+import io.emax.heimdal.bitcoin.common.Secp256k1;
 
 public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
@@ -103,13 +104,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
             config.getServerPrivateKey(), rounds);
         userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
       }
-
-      // TODO Remove this, debugging for signing code
-      String pubKey = DeterministicTools.getPublicKey(userPrivateKey);
-      System.out.println("==[DEBUG]==");
-      System.out.println("Private Key: " + userPrivateKey);
-      System.out.println("Public Key: " + pubKey);
-      System.out.println("==[DEBUG]==");
 
       if (address.equalsIgnoreCase(userAddress)) {
         multisigAddresses.add(DeterministicTools.getPublicKey(userPrivateKey));
@@ -197,17 +191,27 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     txnOutput.forEach((address, amount) -> {
       RawOutput rawOutput = new RawOutput();
       rawOutput.setAmount(amount.multiply(BigDecimal.valueOf(100000000)).longValue());
-      String decodedAddress = DeterministicTools.decodeAddressTo160(address);
+      String decodedAddress = DeterministicTools.decodeAddress(address);
       byte[] addressBytes = ByteUtilities.toByteArray(decodedAddress);
-      String scriptData = "76a914";
-      scriptData += ByteUtilities.toHexString(addressBytes);
-      scriptData += "88ac";
+      String scriptData = "";
+      if (!DeterministicTools.isMultiSigAddress(address)) {
+        // Regular address
+        scriptData = "76a914";
+        scriptData += ByteUtilities.toHexString(addressBytes);
+        scriptData += "88ac";
+      } else {
+        // Multi-sig address
+        scriptData = "a914";
+        scriptData += ByteUtilities.toHexString(addressBytes);
+        scriptData += "87";
+      }
       rawOutput.setScript(scriptData);
       rawTx.getOutputs().add(rawOutput);
     });
     rawTx.setLockTime(0);
 
     return rawTx.encode();
+
   }
 
   @Override
@@ -241,41 +245,86 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
         return transaction;
       }
 
-      // TODO This will likely be removed for the new lookup below.
       // We have the private key, now get all the unspent inputs so we have the redeemScripts.
-      DecodedTransaction myTx = bitcoindRpc.decoderawtransaction(transaction);
-      List<DecodedInput> inputs = myTx.getInputs();
-
       Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
           config.getMaxConfirmations(), new String[] {});
-      List<OutpointDetails> myOutpoints = new LinkedList<>();
 
-      inputs.forEach((input) -> {
+      RawTransaction rawTx = RawTransaction.parse(transaction);
+      final byte[] addressData = DeterministicTools.getPublicKeyBytes(privateKey);
+      final byte[] privateKeyBytes =
+          ByteUtilities.toByteArray(DeterministicTools.decodeAddress(privateKey));
+      rawTx.getInputs().forEach((input) -> {
         for (Outpoint output : outputs) {
-          if (output.getTransactionId().equalsIgnoreCase(input.getTransactionId())
-              && output.getOutputIndex() == input.getOutputIndex()) {
+          if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
+              && output.getOutputIndex() == input.getTxIndex()) {
             OutpointDetails outpoint = new OutpointDetails();
             outpoint.setTransactionId(output.getTransactionId());
             outpoint.setOutputIndex(output.getOutputIndex());
             outpoint.setScriptPubKey(output.getScriptPubKey());
             outpoint.setRedeemScript(multiSigRedeemScripts.get(output.getAddress()));
-            myOutpoints.add(outpoint);
+
+            if (output.getAddress().equalsIgnoreCase(address)) {
+              RawTransaction signingTx = RawTransaction.stripInputScripts(rawTx);
+              byte[] sigData = new byte[] {};
+
+              for (RawInput sigInput : signingTx.getInputs()) {
+                if (sigInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
+                    && sigInput.getTxIndex() == outpoint.getOutputIndex()) {
+                  // This is the input we're processing, fill it and sign it
+                  sigInput.setScript(outpoint.getScriptPubKey());
+                  byte[] hashTypeBytes =
+                      ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(1).toByteArray());
+                  hashTypeBytes = ByteUtilities.leftPad(hashTypeBytes, 4, (byte) 0x00);
+                  hashTypeBytes = ByteUtilities.flipEndian(hashTypeBytes);
+                  String sigString = signingTx.encode() + ByteUtilities.toHexString(hashTypeBytes);
+
+                  try {
+                    sigData = ByteUtilities.toByteArray(sigString);
+                    MessageDigest md = MessageDigest.getInstance("SHA-256");
+                    sigData = md.digest(md.digest(sigData));
+                  } catch (Exception e) {
+                    e.printStackTrace();
+                  }
+
+                  sigData = Secp256k1.signTransaction(sigData, privateKeyBytes);
+                  break;
+                }
+              }
+
+              // Determine how we need to format the sig data
+              if (DeterministicTools.isMultiSigAddress(address)) {
+                // TODO - Implement multi-sig signing
+              } else {
+                for (RawInput signedInput : rawTx.getInputs()) {
+                  if (signedInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
+                      && signedInput.getTxIndex() == outpoint.getOutputIndex()) {
+
+                    // Sig then pubkey
+                    String scriptData = "";
+                    byte[] dataSize = new byte[] {};
+
+                    dataSize = BigInteger.valueOf(sigData.length + 1).toByteArray();
+                    dataSize = ByteUtilities.stripLeadingNullBytes(dataSize);
+                    scriptData += ByteUtilities.toHexString(dataSize);
+                    scriptData += ByteUtilities.toHexString(sigData);
+                    scriptData += "01"; // SIGHASH.ALL
+
+                    dataSize = BigInteger.valueOf(addressData.length).toByteArray();
+                    dataSize = ByteUtilities.stripLeadingNullBytes(dataSize);
+                    scriptData += ByteUtilities.toHexString(dataSize);
+                    scriptData += ByteUtilities.toHexString(addressData);
+
+                    signedInput.setScript(scriptData);
+                    break;
+                  }
+                }
+              }
+            }
           }
         }
       });
-
-      OutpointDetails[] outpointArray = new OutpointDetails[myOutpoints.size()];
-      outpointArray = myOutpoints.toArray(outpointArray);
-
-      // TODO - We should know how to parse and sign this, not be asking the daemon to.
-      // Opens up the possibility of a custom signer
-      // TODO - Pull up the original script
-      // TODO Temporary lookup for testing but it will likely replace the above.
-
-      // TODO - Sign the data, get the pub key, encode it
-
-      signedTransaction = bitcoindRpc.signrawtransaction(transaction, outpointArray,
-          new String[] {privateKey}, SigHash.ALL);
+      signedTransaction = new SignedTransaction();
+      signedTransaction.setTransaction(rawTx.encode());
     } else {
       // If we're not restricting the keystore, bitcoind knows about the redeem script
       signedTransaction =

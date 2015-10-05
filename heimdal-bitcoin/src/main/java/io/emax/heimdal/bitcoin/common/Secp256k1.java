@@ -12,8 +12,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.math.ec.ECPoint;
 
-// TODO BTC uses DER encoding, so need something to implement that.
-
 public class Secp256k1 {
   public static byte[] getPublicKey(byte[] privateKey) {
     try {
@@ -28,9 +26,8 @@ public class Secp256k1 {
     }
   }
 
-  // TODO - Encode R & S to DER, BTC doesn't need the recovery ID
   public static byte[] signTransaction(byte[] data, byte[] privateKey) {
-    try {
+    try {      
       Security.addProvider(new BouncyCastleProvider());
       ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
 
@@ -42,13 +39,24 @@ public class Secp256k1 {
 
       ecdsaSigner.init(true, params);
 
+      String signature = "";
       BigInteger[] sig = ecdsaSigner.generateSignature(data);
-      String sigData = "00";
-      sigData += ByteUtilities.toHexString(new byte[] {});
-      for (BigInteger sigChunk : sig) {
-        sigData += sigChunk.toString(16);
+      for (BigInteger sigData : sig) {
+        signature += "02";
+        byte[] sigBytes = sigData.toByteArray();
+        byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
+        sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
+        signature += ByteUtilities.toHexString(sigSize);
+        signature += ByteUtilities.toHexString(sigBytes);
       }
-      return new BigInteger(sigData, 16).toByteArray();
+
+      byte[] sigBytes = ByteUtilities.toByteArray(signature);
+      byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
+      sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
+      signature = ByteUtilities.toHexString(sigSize) + signature;
+      signature = "30" + signature;
+
+      return ByteUtilities.toByteArray(signature);
 
     } catch (Exception e) {
       System.out.println("Panic!!" + e.toString());
