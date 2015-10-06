@@ -96,62 +96,6 @@ public interface WalletRpc {
   MultiSig createmultisig(int nrequired, String[] keys);
 
   /**
-   * BackupWallet Requires wallet support.
-   * 
-   * The backupwallet RPC safely copies wallet.dat to the specified file, which can be a directory
-   * or a path with filename.
-   * 
-   * @param destination A filename or directory name. If a filename, it will be created or
-   *        overwritten. If a directory name, the file wallet.dat will be created or overwritten
-   *        within that directory
-   */
-  @JsonRpcMethod("backupwallet")
-  void backupWallet(String destination);
-
-  /**
-   * DumpPrivKey Requires wallet support. Requires an unlocked wallet or an unencrypted wallet.
-   * 
-   * The dumpprivkey RPC returns the wallet-import-format (WIP) private key corresponding to an
-   * address. (But does not remove it from the wallet.)
-   * 
-   * @param address The P2PKH address corresponding to the private key you want returned. Must be
-   *        the address corresponding to a private key in this wallet
-   * @return The private key encoded as base58check using wallet import format
-   */
-  @JsonRpcMethod("dumpprivkey")
-  String dumpPrivateKey(String address);
-
-  /**
-   * GetAccountAddress Requires wallet support.
-   * 
-   * The getaccountaddress RPC returns the current Bitcoin address for receiving payments to this
-   * account. If the account doesnâ€™t exist, it creates both the account and a new address for
-   * receiving payment. Once a payment has been received to an address, future calls to this RPC for
-   * the same account will return a different address.
-   * 
-   * @param accountName The name of an account. Use an empty string ("") for the default account. If
-   *        the account doesnâ€™t exist, it will be created
-   * @return An address [string (base58)], belonging to the account specified, which has not yet
-   *         received any payments
-   */
-  @JsonRpcMethod("getaccountaddress")
-  String getAccountAddress(String accountName);
-
-  /**
-   * GetAccount Requires wallet support.
-   * 
-   * The getaccount RPC returns the name of the account associated with the given address.
-   * 
-   * NOTE: If address is not present in wallet, "" is returned though
-   * 
-   * @param address [string (base58)] A P2PKH or P2SH Bitcoin address belonging either to a specific
-   *        account or the default account (â€œâ€�)
-   * @return The name of an account, or an empty string ("", the default account)
-   */
-  @JsonRpcMethod("getaccount")
-  String getAccount(String address);
-
-  /**
    * GetAddressesByAccount Requires wallet support.
    * 
    * The getaddressesbyaccount RPC returns a list of every address assigned to a particular account.
@@ -221,7 +165,7 @@ public interface WalletRpc {
    * @return a list of accounts and their balances
    */
   @JsonRpcMethod("listaccounts")
-  Map<String, BigDecimal> listAccounts(int confirmations, boolean includeWatchOnly);
+  Map<String, BigDecimal> listaccounts(int confirmations, boolean includeWatchOnly);
 
   /**
    * ListReceivedByAddress Requires wallet support.

@@ -12,6 +12,7 @@ public class DeterministicTools {
 
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
+  public static final String NOKEY = "NOKEY";
 
   /**
    * 
@@ -30,59 +31,63 @@ public class DeterministicTools {
       secureRandom = new SecureRandom();
     }
 
-    byte[] userKey = new BigInteger(userKeyPart, 16).toByteArray();
-    byte[] serverKey = new BigInteger(serverKeyPart, 16).toByteArray();
-    byte[] userSeed = new byte[Math.max(userKey.length, serverKey.length)];
+    try {
+      byte[] userKey = new BigInteger(userKeyPart, 16).toByteArray();
+      byte[] serverKey = new BigInteger(serverKeyPart, 16).toByteArray();
+      byte[] userSeed = new byte[Math.max(userKey.length, serverKey.length)];
 
-    // XOR the key parts to get our seed, repeating them if they lengths
-    // don't match
-    for (int i = 0; i < userSeed.length; i++) {
-      userSeed[i] = (byte) (userKey[i % userKey.length] ^ serverKey[i % serverKey.length]);
-    }
+      // XOR the key parts to get our seed, repeating them if they lengths
+      // don't match
+      for (int i = 0; i < userSeed.length; i++) {
+        userSeed[i] = (byte) (userKey[i % userKey.length] ^ serverKey[i % serverKey.length]);
+      }
 
-    // Set up out private key variables
-    BigInteger privateKeyCheck = BigInteger.ZERO;
-    secureRandom.setSeed(userSeed);
-    // Bit of magic, move this maybe. This is the max key range.
-    BigInteger maxKey =
-        new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);
+      // Set up out private key variables
+      BigInteger privateKeyCheck = BigInteger.ZERO;
+      secureRandom.setSeed(userSeed);
+      // Bit of magic, move this maybe. This is the max key range.
+      BigInteger maxKey =
+          new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);
 
-    // Generate the key, skipping as many as desired.
-    byte[] privateKeyAttempt = new byte[32];
-    for (int i = 0; i < Math.max(rounds, 1); i++) {
-      secureRandom.nextBytes(privateKeyAttempt);
-      privateKeyCheck = new BigInteger(1, privateKeyAttempt);
-      while (privateKeyCheck.compareTo(BigInteger.ZERO) == 0
-          || privateKeyCheck.compareTo(maxKey) == 1) {
+      // Generate the key, skipping as many as desired.
+      byte[] privateKeyAttempt = new byte[32];
+      for (int i = 0; i < Math.max(rounds, 1); i++) {
         secureRandom.nextBytes(privateKeyAttempt);
         privateKeyCheck = new BigInteger(1, privateKeyAttempt);
+        while (privateKeyCheck.compareTo(BigInteger.ZERO) == 0
+            || privateKeyCheck.compareTo(maxKey) == 1) {
+          secureRandom.nextBytes(privateKeyAttempt);
+          privateKeyCheck = new BigInteger(1, privateKeyAttempt);
+        }
       }
-    }
 
-    // Encode in format bitcoind is expecting
-    byte[] privateKey = {(byte) 0xEF}; // TESTNET
-    // byte[] privateKey = {(byte)0x80}; // REALNET
-    byte[] privateKey2 = new byte[privateKey.length + privateKeyAttempt.length];
-    System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
-    System.arraycopy(privateKeyAttempt, 0, privateKey2, privateKey.length,
-        privateKeyAttempt.length);
-    privateKey = privateKey2.clone();
-
-    try {
-      MessageDigest md = MessageDigest.getInstance("SHA-256");
-      md.update(privateKey);
-      byte[] checksumHash = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
-
-      privateKey2 = new byte[privateKey.length + checksumHash.length];
+      // Encode in format bitcoind is expecting
+      byte[] privateKey = {(byte) 0xEF}; // TESTNET
+      // byte[] privateKey = {(byte)0x80}; // REALNET
+      byte[] privateKey2 = new byte[privateKey.length + privateKeyAttempt.length];
       System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
-      System.arraycopy(checksumHash, 0, privateKey2, privateKey.length, checksumHash.length);
+      System.arraycopy(privateKeyAttempt, 0, privateKey2, privateKey.length,
+          privateKeyAttempt.length);
       privateKey = privateKey2.clone();
 
-      return Base58.encode(privateKey);
+      try {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(privateKey);
+        byte[] checksumHash = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
 
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-      return "NOKEY";
+        privateKey2 = new byte[privateKey.length + checksumHash.length];
+        System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
+        System.arraycopy(checksumHash, 0, privateKey2, privateKey.length, checksumHash.length);
+        privateKey = privateKey2.clone();
+
+        return Base58.encode(privateKey);
+
+      } catch (NoSuchAlgorithmException e) {
+        e.printStackTrace();
+        return NOKEY;
+      }
+    } catch (Exception e) {
+      return NOKEY;
     }
   }
 

@@ -77,15 +77,15 @@ public class RawOutput {
     // Satoshis
     byte[] satoshiBytes =
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(getAmount()).toByteArray());
-    satoshiBytes = ByteUtilities.leftPad(satoshiBytes, 8, (byte)0x00);
+    satoshiBytes = ByteUtilities.leftPad(satoshiBytes, 8, (byte) 0x00);
     satoshiBytes = ByteUtilities.flipEndian(satoshiBytes);
-    tx += ByteUtilities.toHexString(satoshiBytes);    
+    tx += ByteUtilities.toHexString(satoshiBytes);
 
     // Script Size
-    setScriptSize(getScript().length()/2);
+    setScriptSize(getScript().length() / 2);
     byte[] scriptSizeBytes = RawTransaction.writeVariableInt(getScriptSize());
     tx += ByteUtilities.toHexString(scriptSizeBytes);
-    
+
     // Script
     byte[] scriptBytes = ByteUtilities.toByteArray(getScript());
     tx += ByteUtilities.toHexString(scriptBytes);
@@ -119,14 +119,14 @@ public class RawOutput {
     // Satoshis + scriptSize + Script
     return 8 + sizeSize + getScriptSize();
   }
-  
+
   public RawOutput clone() {
     RawOutput output = new RawOutput();
-    
+
     output.setAmount(getAmount());
     output.setScriptSize(getScriptSize());
     output.setScript(getScript());
-    
+
     return output;
   }
 }

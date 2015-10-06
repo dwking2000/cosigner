@@ -1,6 +1,7 @@
 package io.emax.heimdal.bitcoin.bitcoindrpc;
 
 import java.math.BigInteger;
+import java.util.LinkedList;
 
 import io.emax.heimdal.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.heimdal.bitcoin.common.ByteUtilities;
@@ -102,19 +103,19 @@ public class RawInput {
     String tx = "";
     // Tx Hash
     byte[] hashBytes = ByteUtilities.toByteArray(getTxHash());
-    hashBytes = ByteUtilities.leftPad(hashBytes, 32, (byte)0x00);
+    hashBytes = ByteUtilities.leftPad(hashBytes, 32, (byte) 0x00);
     hashBytes = ByteUtilities.flipEndian(hashBytes);
     tx += ByteUtilities.toHexString(hashBytes);
 
     // Tx Index
     byte[] indexBytes =
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(getTxIndex()).toByteArray());
-    indexBytes = ByteUtilities.leftPad(indexBytes, 4, (byte)0x00);
+    indexBytes = ByteUtilities.leftPad(indexBytes, 4, (byte) 0x00);
     indexBytes = ByteUtilities.flipEndian(indexBytes);
     tx += ByteUtilities.toHexString(indexBytes);
 
     // Script Size
-    setScriptSize(getScript().length()/2);
+    setScriptSize(getScript().length() / 2);
     byte[] scriptSizeBytes = RawTransaction.writeVariableInt(getScriptSize());
     tx += ByteUtilities.toHexString(scriptSizeBytes);
 
@@ -125,7 +126,7 @@ public class RawInput {
     // Sequence
     byte[] sequenceBytes =
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(getSequence()).toByteArray());
-    sequenceBytes = ByteUtilities.leftPad(sequenceBytes, 4, (byte)0xFF);
+    sequenceBytes = ByteUtilities.leftPad(sequenceBytes, 4, (byte) 0xFF);
     sequenceBytes = ByteUtilities.flipEndian(sequenceBytes);
     tx += ByteUtilities.toHexString(sequenceBytes);
 
@@ -168,16 +169,44 @@ public class RawInput {
     // Tx Hash + Index + scriptSize + Script + sequence
     return 32 + 4 + sizeSize + getScriptSize() + 4;
   }
-  
+
   public RawInput clone() {
     RawInput input = new RawInput();
-    
+
     input.setTxHash(getTxHash());
     input.setTxIndex(getTxIndex());
     input.setScriptSize(getScriptSize());
     input.setScript(getScript());
     input.setSequence(getSequence());
-    
+
     return input;
+  }
+
+  public void stripMultiSigRedeemScript(String redeemScript) {
+    LinkedList<String> stackItems = new LinkedList<>();
+    byte[] myScript = ByteUtilities.toByteArray(getScript());
+    int bufferPointer = 0;
+    VariableInt stackItemSize;
+    String stackItem;
+    while (bufferPointer < myScript.length) {
+      stackItemSize = RawTransaction.readVariableStackInt(myScript, bufferPointer);
+      bufferPointer += stackItemSize.getSize();
+      stackItem = ByteUtilities.toHexString(
+          ByteUtilities.readBytes(myScript, bufferPointer, (int) stackItemSize.getValue()));
+      bufferPointer += stackItemSize.getValue();
+      if (!stackItem.equalsIgnoreCase(redeemScript)) {
+        stackItems.add(stackItem);
+      }
+    }
+
+    String myScriptString = "";
+    for (String item : stackItems) {
+      byte[] itemBytes = ByteUtilities.toByteArray(item);
+      byte[] prefixBytes = RawTransaction.writeVariableStackInt(itemBytes.length);
+      myScriptString += ByteUtilities.toHexString(prefixBytes);
+      myScriptString += ByteUtilities.toHexString(itemBytes);
+    }
+
+    setScript(myScriptString);
   }
 }

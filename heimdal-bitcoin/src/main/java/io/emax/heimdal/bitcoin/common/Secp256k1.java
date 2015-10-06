@@ -27,7 +27,7 @@ public class Secp256k1 {
   }
 
   public static byte[] signTransaction(byte[] data, byte[] privateKey) {
-    try {      
+    try {
       Security.addProvider(new BouncyCastleProvider());
       ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
 
@@ -41,6 +41,16 @@ public class Secp256k1 {
 
       String signature = "";
       BigInteger[] sig = ecdsaSigner.generateSignature(data);
+      if (sig.length > 1) {
+        // Nothing went wrong, we have an S, check it.
+        final BigInteger maxS = new BigInteger(1, ByteUtilities
+            .toByteArray("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0"));
+
+        if (sig[1].compareTo(maxS) == 1) {
+          // S is too big, sign again (BIP62)
+          return signTransaction(data, privateKey);
+        }
+      }
       for (BigInteger sigData : sig) {
         signature += "02";
         byte[] sigBytes = sigData.toByteArray();

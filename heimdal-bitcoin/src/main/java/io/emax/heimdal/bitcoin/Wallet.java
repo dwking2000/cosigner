@@ -9,6 +9,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.emax.heimdal.bitcoin.bitcoindrpc.BitcoindRpc;
 import io.emax.heimdal.bitcoin.bitcoindrpc.MultiSig;
@@ -23,20 +26,32 @@ import io.emax.heimdal.bitcoin.bitcoindrpc.SignedTransaction;
 import io.emax.heimdal.bitcoin.common.ByteUtilities;
 import io.emax.heimdal.bitcoin.common.DeterministicTools;
 import io.emax.heimdal.bitcoin.common.Secp256k1;
+import rx.Observable;
+import rx.Subscription;
 
 public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
   private CurrencyConfiguration config = new CurrencyConfiguration();
   private BitcoindRpc bitcoindRpc = BitcoindResource.getResource().getBitcoindRpc();
+  private final String PUBKEY_PREFIX = "PK-";
+  private static Subscription multiSigSubscription;
 
   private static HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
   public Wallet(BitcoindRpc rpc) {
     this.bitcoindRpc = rpc;
+
+    if (multiSigSubscription == null) {
+      multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> scanForAddresses());
+    }
   }
 
   public Wallet() {
-
+    if (multiSigSubscription == null) {
+      multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> scanForAddresses());
+    }
   }
 
   @Override
@@ -45,8 +60,9 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     String privateKey =
         DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
     String newAddress = DeterministicTools.getPublicAddress(privateKey);
+    String pubKey = DeterministicTools.getPublicKey(privateKey);
     // Hash the user's key so it's not stored in the wallet
-    String internalName = "Single-" + DeterministicTools.encodeUserKey(name);
+    String internalName = PUBKEY_PREFIX + pubKey;
 
     String[] existingAddresses = bitcoindRpc.getaddressesbyaccount(internalName);
     boolean oldAddress = true;
@@ -88,6 +104,19 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     return newAddress;
   }
 
+  public void scanForAddresses() {
+    Map<String, BigDecimal> knownAccounts = bitcoindRpc.listaccounts(0, true);
+    knownAccounts.keySet().forEach(account -> {
+      // Look for any known PK/Single accounts and generate the matching multisig in memory
+      Pattern pattern = Pattern.compile("^" + PUBKEY_PREFIX + "(.*)");
+      Matcher matcher = pattern.matcher(account);
+      if (matcher.matches()) {
+        String pubKey = matcher.group(1);
+        generateMultiSigAddress(Arrays.asList(new String[] {pubKey}), null);
+      }
+    });
+  }
+
   public String generateMultiSigAddress(Iterable<String> addresses, String name) {
     LinkedList<String> multisigAddresses = new LinkedList<>();
     addresses.forEach((address) -> {
@@ -95,14 +124,19 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       int rounds = 1;
       String userPrivateKey =
           DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-      String userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
 
-      while (!address.equalsIgnoreCase(userAddress)
-          && rounds <= config.getMaxDeterministicAddresses()) {
-        rounds++;
-        userPrivateKey = DeterministicTools.getDeterministicPrivateKey(name,
-            config.getServerPrivateKey(), rounds);
+      // TODO - Fix NOKEY to a const
+      String userAddress = DeterministicTools.NOKEY;
+      if (!userPrivateKey.equalsIgnoreCase(DeterministicTools.NOKEY)) {
         userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
+
+        while (!address.equalsIgnoreCase(userAddress)
+            && rounds <= config.getMaxDeterministicAddresses()) {
+          rounds++;
+          userPrivateKey = DeterministicTools.getDeterministicPrivateKey(name,
+              config.getServerPrivateKey(), rounds);
+          userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
+        }
       }
 
       if (address.equalsIgnoreCase(userAddress)) {
@@ -121,6 +155,12 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     String[] addressArray = new String[multisigAddresses.size()];
     MultiSig newAddress = bitcoindRpc.createmultisig(config.getMinSignatures(),
         multisigAddresses.toArray(addressArray));
+    if (name != null && !name.isEmpty()) {
+      // Bitcoind refuses to connect the address it has to the p2sh script even when provided.
+      // Simplest to just load it, it still doesn't have the private keys.
+      bitcoindRpc.addmultisigaddress(config.getMinSignatures(),
+          multisigAddresses.toArray(addressArray), DeterministicTools.encodeUserKey(name));
+    }
 
     multiSigRedeemScripts.put(newAddress.getAddress(), newAddress.getRedeemScript());
 
@@ -271,7 +311,12 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
                 if (sigInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
                     && sigInput.getTxIndex() == outpoint.getOutputIndex()) {
                   // This is the input we're processing, fill it and sign it
-                  sigInput.setScript(outpoint.getScriptPubKey());
+                  if (DeterministicTools.isMultiSigAddress(address)) {
+                    sigInput.setScript(outpoint.getRedeemScript());
+                  } else {
+                    sigInput.setScript(outpoint.getScriptPubKey());
+                  }
+
                   byte[] hashTypeBytes =
                       ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(1).toByteArray());
                   hashTypeBytes = ByteUtilities.leftPad(hashTypeBytes, 4, (byte) 0x00);
@@ -293,7 +338,33 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
 
               // Determine how we need to format the sig data
               if (DeterministicTools.isMultiSigAddress(address)) {
-                // TODO - Implement multi-sig signing
+                for (RawInput signedInput : rawTx.getInputs()) {
+                  if (signedInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
+                      && signedInput.getTxIndex() == outpoint.getOutputIndex()) {
+
+                    // Merge the new signature with existing ones.
+                    signedInput.stripMultiSigRedeemScript(outpoint.getRedeemScript());
+
+                    String scriptData = signedInput.getScript();
+                    if (scriptData.isEmpty()) {
+                      scriptData += "00";
+                    }
+
+                    byte[] dataSize = RawTransaction.writeVariableStackInt(sigData.length + 1);
+                    scriptData += ByteUtilities.toHexString(dataSize);
+                    scriptData += ByteUtilities.toHexString(sigData);
+                    scriptData += "01";
+
+                    byte[] redeemScriptBytes =
+                        ByteUtilities.toByteArray(outpoint.getRedeemScript());
+                    dataSize = RawTransaction.writeVariableStackInt(redeemScriptBytes.length);
+                    scriptData += ByteUtilities.toHexString(dataSize);
+                    scriptData += ByteUtilities.toHexString(redeemScriptBytes);
+
+                    signedInput.setScript(scriptData);
+                    break;
+                  }
+                }
               } else {
                 for (RawInput signedInput : rawTx.getInputs()) {
                   if (signedInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
@@ -303,14 +374,12 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
                     String scriptData = "";
                     byte[] dataSize = new byte[] {};
 
-                    dataSize = BigInteger.valueOf(sigData.length + 1).toByteArray();
-                    dataSize = ByteUtilities.stripLeadingNullBytes(dataSize);
+                    dataSize = RawTransaction.writeVariableStackInt(sigData.length + 1);
                     scriptData += ByteUtilities.toHexString(dataSize);
                     scriptData += ByteUtilities.toHexString(sigData);
                     scriptData += "01"; // SIGHASH.ALL
 
-                    dataSize = BigInteger.valueOf(addressData.length).toByteArray();
-                    dataSize = ByteUtilities.stripLeadingNullBytes(dataSize);
+                    dataSize = RawTransaction.writeVariableStackInt(addressData.length);
                     scriptData += ByteUtilities.toHexString(dataSize);
                     scriptData += ByteUtilities.toHexString(addressData);
 
@@ -326,7 +395,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       signedTransaction = new SignedTransaction();
       signedTransaction.setTransaction(rawTx.encode());
     } else {
-      // If we're not restricting the keystore, bitcoind knows about the redeem script
       signedTransaction =
           bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[] {}, null, SigHash.ALL);
     }

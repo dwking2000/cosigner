@@ -9,9 +9,9 @@ public class EnvironmentVariableParser {
     if (input == null) {
       return null;
     }
-    
+
     Pattern pattern = Pattern.compile("\\$\\{(\\w+)\\}|\\$(\\w+)");
-    Matcher matcher = pattern.matcher(input); 
+    Matcher matcher = pattern.matcher(input);
     StringBuffer buffer = new StringBuffer();
     while (matcher.find()) {
       String envVarName = null == matcher.group(1) ? matcher.group(2) : matcher.group(1);

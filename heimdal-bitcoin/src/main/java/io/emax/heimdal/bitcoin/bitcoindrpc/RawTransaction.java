@@ -265,6 +265,40 @@ public class RawTransaction {
     return vInt;
   }
 
+  public static VariableInt readVariableStackInt(byte[] data, int start) {
+    int checkSize = 0xFF & data[start];
+    VariableInt vInt = new VariableInt();
+    vInt.setSize(0);
+
+    if (checkSize < 0x4C) {
+      vInt.setSize(1);
+      vInt.setValue(checkSize);
+      return vInt;
+    }
+
+    if (checkSize == 0x4C) {
+      vInt.setSize(2);
+    } else if (checkSize == 0x4D) {
+      vInt.setSize(3);
+    } else if (checkSize == 0x4E) {
+      vInt.setSize(5);
+    } else {
+      // Just process the byte and advance
+      vInt.setSize(1);
+      vInt.setValue(0);
+      return vInt;
+    }
+
+    if (vInt.getSize() == 0) {
+      return null;
+    }
+
+    byte[] newData = ByteUtilities.readBytes(data, start + 1, vInt.getSize() - 1);
+    newData = ByteUtilities.flipEndian(newData);
+    vInt.setValue(new BigInteger(1, newData).longValue());
+    return vInt;
+  }
+
   public static byte[] writeVariableInt(long data) {
     byte[] newData = new byte[0];
 
@@ -280,6 +314,35 @@ public class RawTransaction {
     } else {
       newData = new byte[9];
       newData[0] = (byte) 0xFF;
+    }
+
+    byte[] intData = BigInteger.valueOf(data).toByteArray();
+    intData = ByteUtilities.stripLeadingNullBytes(intData);
+    intData = ByteUtilities.leftPad(intData, newData.length - 1, (byte) 0x00);
+    intData = ByteUtilities.flipEndian(intData);
+
+    for (int i = 0; i < (newData.length - 1); i++) {
+      newData[i + 1] = intData[i];
+    }
+
+    return newData;
+  }
+
+  public static byte[] writeVariableStackInt(long data) {
+    byte[] newData = new byte[0];
+
+    if (data < 0x4C) {
+      newData = new byte[1];
+      newData[0] = (byte) (data & 0xFF);
+    } else if (data <= 0xFF) {
+      newData = new byte[2];
+      newData[0] = (byte) 0x4C;
+    } else if (data <= 0xFFFF) {
+      newData = new byte[3];
+      newData[0] = (byte) 0x4D;
+    } else {
+      newData = new byte[5];
+      newData[0] = (byte) 0x4E;
     }
 
     byte[] intData = BigInteger.valueOf(data).toByteArray();
@@ -322,6 +385,7 @@ public class RawTransaction {
     return rawTx;
   }
 
+  // TODO - Start using this in case we get an old/nonstandard client tx that we need to sign
   public static String prepareSigScript(String originalScript) {
     String modifiedScript = "";
     int scriptPosition;
@@ -368,7 +432,8 @@ public class RawTransaction {
           scriptPosition += size;
         } else if ((scriptBytes[scriptPosition] & 0xFF) == 0xAB) {
           // If the CHECKSIG was found and we find any 0xAB's, remove them.
-          if (scriptSectionStart <= scriptPosition) { // If start > position then we got two 0xAB's in a row, skip the copy
+          if (scriptSectionStart <= scriptPosition) { // If start > position then we got two 0xAB's
+                                                      // in a row, skip the copy
             byte[] copyArray =
                 Arrays.copyOfRange(scriptBytes, scriptSectionStart, scriptPosition - 1);
             modifiedScript += ByteUtilities.toHexString(copyArray);

@@ -79,7 +79,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
   }
 
   @Override
-  public String sendrawtransaction(String transaction, boolean allowHighFees) {    
+  public String sendrawtransaction(String transaction, boolean allowHighFees) {
     return "0x1234567890";
   }
 
@@ -124,26 +124,6 @@ public class BitcoinTestRpc implements BitcoindRpc {
   }
 
   @Override
-  public void backupWallet(String destination) {
-
-  }
-
-  @Override
-  public String dumpPrivateKey(String address) {
-    return null;
-  }
-
-  @Override
-  public String getAccountAddress(String accountName) {
-    return null;
-  }
-
-  @Override
-  public String getAccount(String address) {
-    return null;
-  }
-
-  @Override
   public String[] getaddressesbyaccount(String accountName) {
     return new String[] {};
   }
@@ -164,7 +144,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
   }
 
   @Override
-  public Map<String, BigDecimal> listAccounts(int confirmations, boolean includeWatchOnly) {
+  public Map<String, BigDecimal> listaccounts(int confirmations, boolean includeWatchOnly) {
     return null;
   }
 
