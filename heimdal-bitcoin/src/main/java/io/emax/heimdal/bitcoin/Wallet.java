@@ -125,7 +125,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       String userPrivateKey =
           DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
 
-      // TODO - Fix NOKEY to a const
       String userAddress = DeterministicTools.NOKEY;
       if (!userPrivateKey.equalsIgnoreCase(DeterministicTools.NOKEY)) {
         userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
