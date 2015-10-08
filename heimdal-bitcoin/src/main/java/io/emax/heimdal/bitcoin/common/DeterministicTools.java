@@ -61,6 +61,7 @@ public class DeterministicTools {
         }
       }
 
+      // TODO Get the network from RPC calls (will need to be passed to us)
       // Encode in format bitcoind is expecting
       byte[] privateKey = {(byte) 0xEF}; // TESTNET
       // byte[] privateKey = {(byte)0x80}; // REALNET
@@ -117,6 +118,7 @@ public class DeterministicTools {
       ripemd.doFinal(publicRipemdKeyBytes, 0);
 
       // Add network bytes
+      // TODO Get the network from RPC calls (will need to be passed to us)
       byte[] networkPublicKeyBytes = {(byte) 0x6F}; // TESTNET
       // byte[] networkPublicKeyBytes = { (byte)0x00 }; // REALNET
       byte[] networkPublicKeyBytes2 =
@@ -162,6 +164,7 @@ public class DeterministicTools {
 
       // byte[] checksumBytes = ByteUtilities.readBytes(decodedNetworkAddress, 21/33, 4);
       // TODO - Verify checksum
+      // TODO Get the network from RPC calls (will need to be passed to us), validate it here
 
       return ByteUtilities.toHexString(addressBytes);
     } catch (Exception e) {

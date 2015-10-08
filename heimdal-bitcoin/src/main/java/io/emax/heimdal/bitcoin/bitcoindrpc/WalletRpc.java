@@ -3,9 +3,8 @@ package io.emax.heimdal.bitcoin.bitcoindrpc;
 import java.math.BigDecimal;
 import java.util.Map;
 
-import com.googlecode.jsonrpc4j.JsonRpcError;
-import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
+
 
 /**
  * Wallet RPCs
@@ -13,64 +12,7 @@ import com.googlecode.jsonrpc4j.JsonRpcMethod;
  * Note: the wallet RPCs are only available if Bitcoin Core was built with wallet support, which is
  * the default.
  * 
- * AddMultiSigAddress: adds a P2SH multisig address to the wallet. BackupWallet: safely copies
- * wallet.dat to the specified file, which can be a directory or a path with filename. DumpPrivKey:
- * returns the wallet-import-format (WIP) private key corresponding to an address. (But does not
- * remove it from the wallet.) PENDING: DumpWallet: creates or overwrites a file with all wallet
- * keys in a human-readable format. PENDING: EncryptWallet: encrypts the wallet with a passphrase.
- * This is only to enable encryption for the first time. After encryption is enabled, you will need
- * to enter the passphrase to use private keys. GetAccountAddress: returns the current Bitcoin
- * address for receiving payments to this account. If the account doesnâ€™t exist, it creates both
- * the account and a new address for receiving payment. Once a payment has been received to an
- * address, future calls to this RPC for the same account will return a different address.
- * GetAccount: returns the name of the account associated with the given address.
- * GetAddressesByAccount: returns a list of every address assigned to a particular account. PENDING:
- * GetBalance: gets the balance in decimal bitcoins across all accounts or for a particular account.
- * GetNewAddress: returns a new Bitcoin address for receiving payments. If an account is specified,
- * payments received with the address will be credited to that account. PENDING:
- * GetRawChangeAddress: returns a new Bitcoin address for receiving change. This is for use with raw
- * transactions, not normal use. PENDING: GetReceivedByAccount: returns the total amount received by
- * addresses in a particular account from transactions with the specified number of confirmations.
- * It does not count coinbase transactions. PENDING: GetReceivedByAddress: returns the total amount
- * received by the specified address in transactions with the specified number of confirmations. It
- * does not count coinbase transactions. PENDING: GetTransaction: gets detailed information about an
- * in-wallet transaction. Updated in 0.10.0 PENDING: GetUnconfirmedBalance: returns the walletâ€™s
- * total unconfirmed balance. PENDING: GetWalletInfo: provides information about the wallet. New in
- * 0.9.2 ImportAddress: adds an address or pubkey script to the wallet without the associated
- * private key, allowing you to watch for transactions affecting that address or pubkey script
- * without being able to spend any of its outputs. New in 0.10.0 PENDING: ImportPrivKey: adds a
- * private key to your wallet. The key should be formatted in the wallet import format created by
- * the dumpprivkey RPC. PENDING: ImportWallet: imports private keys from a file in wallet dump file
- * format (see the dumpwallet RPC). These keys will be added to the keys currently in the wallet.
- * This call may need to rescan all or parts of the block chain for transactions affecting the
- * newly-added keys, which may take several minutes. PENDING: KeyPoolRefill: fills the cache of
- * unused pre-generated keys (the keypool). ListAccounts: lists accounts and their balances. Updated
- * in 0.10.0 PENDING: ListAddressGroupings: lists groups of addresses that may have had their common
- * ownership made public by common use as inputs in the same transaction or from being used as
- * change from a previous transaction. PENDING: ListLockUnspent: returns a list of temporarily
- * unspendable (locked) outputs. PENDING: ListReceivedByAccount: lists the total number of bitcoins
- * received by each account. Updated in 0.10.0 ListReceivedByAddress: lists the total number of
- * bitcoins received by each address. Updated in 0.10.0 ListSinceBlock: gets all transactions
- * affecting the wallet which have occurred since a particular block, plus the header hash of a
- * block at a particular depth. Updated in 0.10.0 PENDING: ListTransactions: returns the most recent
- * transactions that affect the wallet. Updated in 0.10.0 ListUnspent: returns an array of unspent
- * transaction outputs belonging to this wallet. Updated in 0.10.0 LockUnspent: temporarily locks or
- * unlocks specified transaction outputs. A locked transaction output will not be chosen by
- * automatic coin selection when spending bitcoins. Locks are stored in memory only, so nodes start
- * with zero locked outputs and the locked output list is always cleared when a node stops or fails.
- * PENDING: Move: moves a specified amount from one account in your wallet to another using an
- * off-block-chain transaction. PENDING: SendFrom: spends an amount from a local account to a
- * bitcoin address. PENDING: SendMany: creates and broadcasts a transaction which sends outputs to
- * multiple addresses. SendToAddress: spends an amount to a given address. PENDING: SetAccount: puts
- * the specified address in the given account. PENDING: SetTxFee: sets the transaction fee per
- * kilobyte paid by transactions created by this wallet. PENDING: SignMessage: signs a message with
- * the private key of an address. PENDING: WalletLock: removes the wallet encryption key from
- * memory, locking the wallet. After calling this method, you will need to call walletpassphrase
- * again before being able to call any methods which require the wallet to be unlocked. PENDING:
- * WalletPassphrase: stores the wallet decryption key in memory for the indicated number of seconds.
- * Issuing the walletpassphrase command while the wallet is already unlocked will set a new unlock
- * time that overrides the old one. PENDING: WalletPassphraseChange: changes the wallet passphrase
- * from â€˜old passphraseâ€™ to â€˜new passphraseâ€™
+ * https://bitcoin.org/en/developer-reference
  * 
  * @author dquintela
  */
@@ -87,13 +29,9 @@ public interface WalletRpc {
    * @return The P2SH multisig address. The address will also be added to the wallet, and outputs
    *         paying that address will be tracked by the wallet
    * 
-   *         https://bitcoin.org/en/developer-reference#addmultisigaddress
    */
   @JsonRpcMethod("addmultisigaddress")
   String addmultisigaddress(int nrequired, String[] keys, String account);
-
-  @JsonRpcMethod("createmultisig")
-  MultiSig createmultisig(int nrequired, String[] keys);
 
   /**
    * GetAddressesByAccount Requires wallet support.
@@ -144,9 +82,6 @@ public interface WalletRpc {
   @JsonRpcMethod("importaddress")
   void importaddress(String addressOrScript, String account, boolean rescan);
 
-  @JsonRpcMethod("importprivkey")
-  void importprivkey(String privateKey, String account, boolean rescan);
-
   /**
    * ListAccounts Requires wallet support.
    * 
@@ -166,49 +101,6 @@ public interface WalletRpc {
    */
   @JsonRpcMethod("listaccounts")
   Map<String, BigDecimal> listaccounts(int confirmations, boolean includeWatchOnly);
-
-  /**
-   * ListReceivedByAddress Requires wallet support.
-   * 
-   * The listreceivedbyaddress RPC lists the total number of bitcoins received by each address.
-   * 
-   * @param confirmations The minimum number of confirmations an externally-generated transaction
-   *        must have before it is counted towards the balance. Transactions generated by this node
-   *        are counted immediately. Typically, externally-generated transactions are payments to
-   *        this wallet and transactions generated by this node are payments to other wallets. Use 0
-   *        to count unconfirmed transactions. Default is 1
-   * @param includeEmpty Set to true to display accounts which have never received a payment. Set to
-   *        false (the default) to only include accounts which have received a payment. Any account
-   *        which has received a payment will be displayed even if its current balance is 0
-   * @param includeWatchOnly Added in Bitcoin Core 0.10.0 - If set to true, include watch-only
-   *        addresses in details and calculations as if they were regular addresses belonging to the
-   *        wallet. If set to false (the default), treat watch-only addresses as if they didnâ€™t
-   *        belong to this wallet
-   */
-  @JsonRpcMethod("listreceivedbyaddress")
-  AddressReceived[] listReceivedByAddress(int confirmations, boolean includeEmpty,
-      boolean includeWatchOnly);
-
-  /**
-   * ListSinceBlock Requires wallet support.
-   * 
-   * The listsinceblock RPC gets all transactions affecting the wallet which have occurred since a
-   * particular block, plus the header hash of a block at a particular depth.
-   * 
-   * @param blockHash The hash of a block header encoded as hex in RPC byte order. All transactions
-   *        affecting the wallet which are not in that block or any earlier block will be returned,
-   *        including unconfirmed transactions. Default is the hash of the genesis block, so all
-   *        transactions affecting the wallet are returned by default
-   * @param confirmations Sets the lastblock field of the results to the header hash of a block with
-   *        this many confirmations. This does not affect which transactions are returned. Default
-   *        is 1, so the hash of the most recent block on the local best block chain is returned
-   * @param includeWatchOnly If set to true, include watch-only addresses in details and
-   *        calculations as if they were regular addresses belonging to the wallet. If set to false
-   *        (the default), treat watch-only addresses as if they didnâ€™t belong to this wallet
-   *        Added in Bitcoin Core 0.10.0
-   */
-  @JsonRpcMethod("listsinceblock")
-  LastPayments listSinceBlock(String blockHash, int confirmations, boolean includeWatchOnly);
 
   /**
    * ListUnspent Requires wallet support.
@@ -231,39 +123,19 @@ public interface WalletRpc {
   Output[] listunspent(int minimumConfirmations, int maximumConfirmations, String[] addresses);
 
   /**
-   * LockUnspent Requires wallet support.
+   * The listtransactions RPC returns the most recent transactions that affect the wallet.
    * 
-   * The lockunspent RPC temporarily locks or unlocks specified transaction outputs. A locked
-   * transaction output will not be chosen by automatic coin selection when spending bitcoins. Locks
-   * are stored in memory only, so nodes start with zero locked outputs and the locked output list
-   * is always cleared when a node stops or fails.
-   * 
-   * @param lockOrUnlock Set to true to lock the outputs specified in the following parameter. Set
-   *        to false to unlock the outputs specified. If this is the only argument specified, all
-   *        outputs will be unlocked (even if this is set to false)
-   * @param unspentOutpoints the outputs to lock or unlock
-   * 
-   * @return Set to true if the outputs were successfully locked or unlocked
+   * @param account The name of an account to get transactinos from. Use an empty string (“”) to get
+   *        transactions for the default account. Default is * to get transactions for all accounts
+   * @param numberToReturn The number of the most recent transactions to list. Default is 10
+   * @param numberToSkip The number of the most recent transactions which should not be returned.
+   *        Allows for pagination of results. Default is 0
+   * @param includeWatchOnly If set to true, include watch-only addresses in details and
+   *        calculations as if they were regular addresses belonging to the wallet. If set to false
+   *        (the default), treat watch-only addresses as if they didn’t belong to this wallet
+   * @return A payment or internal accounting entry
    */
-  @JsonRpcMethod("lockunspent")
-  boolean lockUnspent(boolean lockOrUnlock, Outpoint[] unspentOutpoints);
-
-  /**
-   * SendToAddress Requires wallet support. Requires an unlocked wallet or an unencrypted wallet.
-   * 
-   * The sendtoaddress RPC spends an amount to a given address.
-   * 
-   * @param address A P2PKH or P2SH address to which the bitcoins should be sent
-   * @param amount The amount to spent in bitcoins
-   * @param comment A locally-stored (not broadcast) comment assigned to this transaction. Default
-   *        is no comment Parameter #4â€�?a comment about who the payment was sent to
-   * @param commentTo A locally-stored (not broadcast) comment assigned to this transaction. Meant
-   *        to be used for describing who the payment was sent to. Default is no comment
-   * @return The TXID of the sent transaction, encoded as hex in RPC byte order
-   */
-  @JsonRpcMethod("sendtoaddress")
-  @JsonRpcErrors(@JsonRpcError(code = -6, message = "Insufficient funds",
-      exception = InsuficientFundsException.class))
-  String sendToAddress(String address, BigDecimal amount, String comment, String commentTo)
-      throws InsuficientFundsException;
+  @JsonRpcMethod("listtransactions")
+  Payment[] listtransactions(String account, int numberToReturn, int numberToSkip,
+      boolean includeWatchOnly);
 }

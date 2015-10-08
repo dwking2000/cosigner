@@ -4,21 +4,18 @@ import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.Map;
 
-import io.emax.heimdal.bitcoin.bitcoindrpc.AddressReceived;
-import io.emax.heimdal.bitcoin.bitcoindrpc.AddressValidated;
 import io.emax.heimdal.bitcoin.bitcoindrpc.BitcoindRpc;
 import io.emax.heimdal.bitcoin.bitcoindrpc.Block;
 import io.emax.heimdal.bitcoin.bitcoindrpc.BlockChainInfo;
 import io.emax.heimdal.bitcoin.bitcoindrpc.DecodedTransaction;
-import io.emax.heimdal.bitcoin.bitcoindrpc.InsuficientFundsException;
-import io.emax.heimdal.bitcoin.bitcoindrpc.LastPayments;
+import io.emax.heimdal.bitcoin.bitcoindrpc.DecodedTransaction.DecodedInput;
 import io.emax.heimdal.bitcoin.bitcoindrpc.MultiSig;
 import io.emax.heimdal.bitcoin.bitcoindrpc.Outpoint;
 import io.emax.heimdal.bitcoin.bitcoindrpc.OutpointDetails;
 import io.emax.heimdal.bitcoin.bitcoindrpc.Output;
+import io.emax.heimdal.bitcoin.bitcoindrpc.Payment;
 import io.emax.heimdal.bitcoin.bitcoindrpc.SigHash;
 import io.emax.heimdal.bitcoin.bitcoindrpc.SignedTransaction;
-import io.emax.heimdal.bitcoin.bitcoindrpc.DecodedTransaction.DecodedInput;
 
 public class BitcoinTestRpc implements BitcoindRpc {
 
@@ -40,16 +37,6 @@ public class BitcoinTestRpc implements BitcoindRpc {
   @Override
   public String getBlockHash(long blockHeight) {
     return null;
-  }
-
-  @Override
-  public String help(String command) {
-    return null;
-  }
-
-  @Override
-  public void addNode(String node, AddNodeCommand command) {
-
   }
 
   @Override
@@ -93,24 +80,6 @@ public class BitcoinTestRpc implements BitcoindRpc {
   }
 
   @Override
-  public MultiSig createMultiSig(int nrequired, String[] keys) {
-    MultiSig mSig = new MultiSig();
-    mSig.setAddress("2sjJ8zfnqZbkYj79EBtJLN4CDNPRg4s9xn");
-    mSig.setRedeemScript("");
-    return mSig;
-  }
-
-  @Override
-  public BigDecimal estimateFee(int blocks) {
-    return null;
-  }
-
-  @Override
-  public AddressValidated validateAddress(String address) {
-    return null;
-  }
-
-  @Override
   public String addmultisigaddress(int nrequired, String[] keys, String account) {
     return null;
   }
@@ -139,24 +108,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
   }
 
   @Override
-  public void importprivkey(String privateKey, String account, boolean rescan) {
-
-  }
-
-  @Override
   public Map<String, BigDecimal> listaccounts(int confirmations, boolean includeWatchOnly) {
-    return null;
-  }
-
-  @Override
-  public AddressReceived[] listReceivedByAddress(int confirmations, boolean includeEmpty,
-      boolean includeWatchOnly) {
-    return null;
-  }
-
-  @Override
-  public LastPayments listSinceBlock(String blockHash, int confirmations,
-      boolean includeWatchOnly) {
     return null;
   }
 
@@ -179,14 +131,8 @@ public class BitcoinTestRpc implements BitcoindRpc {
   }
 
   @Override
-  public boolean lockUnspent(boolean lockOrUnlock, Outpoint[] unspentOutpoints) {
-    return false;
-  }
-
-  @Override
-  public String sendToAddress(String address, BigDecimal amount, String comment, String commentTo)
-      throws InsuficientFundsException {
+  public Payment[] listtransactions(String account, int numberToReturn, int numberToSkip,
+      boolean includeWatchOnly) {
     return null;
   }
-
 }

@@ -250,7 +250,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     rawTx.setLockTime(0);
 
     return rawTx.encode();
-
   }
 
   @Override
@@ -405,4 +404,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   public String sendTransaction(String transaction) {
     return bitcoindRpc.sendrawtransaction(transaction, false);
   }
+  
+  // TODO Come up with data structure and call for listing transactions by account
 }

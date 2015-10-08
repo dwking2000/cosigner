@@ -8,36 +8,11 @@ import com.googlecode.jsonrpc4j.JsonRpcMethod;
 /**
  * Raw Transaction RPCs
  * 
- * CreateRawTransaction: creates an unsigned serialized transaction that spends a previous output to
- * a new output with a P2PKH or P2SH address. The transaction is not stored in the wallet or
- * transmitted to the network. DecodeRawTransaction: decodes a serialized transaction hex string
- * into a JSON object describing the transaction. PENDING: DecodeScript: decodes a hex-encoded P2SH
- * redeem script. GetRawTransaction: gets a hex-encoded serialized transaction or a JSON object
- * describing the transaction. By default, Bitcoin Core only stores complete transaction data for
- * UTXOs and your own transactions, so the RPC may fail on historic transactions unless you use the
- * non-default txindex=1 in your Bitcoin Core startup settings. SendRawTransaction: validates a
- * transaction and broadcasts it to the peer-to-peer network. SignRawTransaction: signs a
- * transaction in the serialized transaction format using private keys stored in the wallet or
- * provided in the call.
- * 
- * EXTRA: To Map GetRawTransaction support with verbose parameter to also DecodeTransaction
- * GetDecodedRawTransaction
+ * https://bitcoin.org/en/developer-reference
  * 
  * @author dquintela
  */
 public interface RawTransactionRpc {
-  /**
-   * To Map GetRawTransaction support with verbose parameter to also DecodeTransaction
-   * 
-   * @param transactionId @param transactionId The TXID of the transaction to get, encoded as hex in
-   *        RPC byte order
-   * @return An object describing the decoded transaction, or JSON null if the transaction could not
-   *         be decoded
-   */
-  default DecodedTransaction getDecodedRawTransaction(String transactionId) {
-    return decoderawtransaction(getrawtransaction(transactionId));
-  }
-
   /**
    * CreateRawTransaction
    * 

@@ -5,10 +5,9 @@ import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 /**
- * An payment which did not appear in the specified block or an earlier block
+ * A payment or internal accounting entry
  * 
  * @author dquintela
  */
@@ -19,16 +18,9 @@ public class Payment {
     receive, /** if a matured and spendable coinbase */
     generate, /** if a coinbase that is not spendable yet */
     immature, /** if a coinbase from a block that’s not in the local best block chain */
-    orphan
+    orphan, /** if an off-block-chain move made with the move RPC */
+    move
   }
-
-  /**
-   * Added in Bitcoin Core 0.10.0
-   * 
-   * Set to true if the payment involves a watch-only address. Otherwise not returned
-   */
-  @JsonProperty("involvesWatchonly")
-  private boolean watchOnlyAddress;
 
   /**
    * The account which the payment was credited to or debited from. May be an empty string ("") for
@@ -59,15 +51,13 @@ public class Payment {
   private BigDecimal amount;
 
   /**
-   * txid, The TXID of the transaction, encoded as hex in RPC byte order
-   * 
-   * vout, Added in Bitcoin Core 0.10.0 For an output, the output index (vout) for this output in
-   * this transaction. For an input, the output index for the output being spent in its transaction.
-   * Because inputs list the output indexes from previous transactions, more than one entry in the
-   * details array may have the same output index
+   * For an output, the output index (vout) for this output in this transaction. For an input, the
+   * output index for the output being spent in its transaction. Because inputs list the output
+   * indexes from previous transactions, more than one entry in the details array may have the same
+   * output index. Not returned for move category payments
    */
-  @JsonUnwrapped
-  private Outpoint output;
+  @JsonProperty("vout")
+  private int vout;
 
   /**
    * If sending payment, the fee paid as a negative bitcoins value. May be 0. Not returned if
@@ -94,21 +84,28 @@ public class Payment {
    * which includes this transaction, encoded as hex in RPC byte order
    */
   @JsonProperty("blockhash")
-  private String blockHash;
+  private String blockhash;
 
   /**
    * Only returned for confirmed transactions. The block height of the block on the local best block
    * chain which includes this transaction
    */
   @JsonProperty("blockindex")
-  private Long blockHeight;
+  private Long blockindex;
 
   /**
    * Only returned for confirmed transactions. The block header time (Unix epoch time) of the block
    * on the local best block chain which includes this transaction
    */
   @JsonProperty("blocktime")
-  private Date blockTime;
+  private Date blocktime;
+
+  /**
+   * The TXID of the transaction, encoded as hex in RPC byte order. Not returned for move category
+   * payments
+   */
+  @JsonProperty("txid")
+  private String txid;
 
   /**
    * An array containing the TXIDs of other transactions that spend the same inputs (UTXOs) as this
@@ -117,7 +114,7 @@ public class Payment {
    * The TXID of a conflicting transaction, encoded as hex in RPC byte order
    */
   @JsonProperty("walletconflicts")
-  private List<String> conflictingTransactionIds;
+  private List<String> walletconflicts;
 
   /**
    * A Unix epoch time when the transaction was added to the wallet
@@ -130,7 +127,7 @@ public class Payment {
    * on the local best block chain that included the transaction
    */
   @JsonProperty("timereceived")
-  private Date received;
+  private Date timereceived;
 
   /**
    * For transaction originating with this wallet, a locally-stored comment added to the
@@ -146,251 +143,279 @@ public class Payment {
   @JsonProperty("to")
   private String to;
 
-  @Override
-  public String toString() {
-    return "Payment [watchOnlyAddress=" + watchOnlyAddress + ", account=" + account + ", address="
-        + address + ", category=" + category + ", amount=" + amount + ", output=" + output
-        + ", fee=" + fee + ", confirmations=" + confirmations + ", generated=" + generated
-        + ", blockHash=" + blockHash + ", blockHeight=" + blockHeight + ", blockTime=" + blockTime
-        + ", conflictingTransactionIds=" + conflictingTransactionIds + ", time=" + time
-        + ", received=" + received + ", comment=" + comment + ", to=" + to + "]";
-  }
-
   /**
-   * @return the watchOnlyAddress
+   * Only returned by move category payments. This is the account the bitcoins were moved from or
+   * moved to, as indicated by a negative or positive amount field in this payment
    */
-  public boolean isWatchOnlyAddress() {
-    return watchOnlyAddress;
-  }
+  @JsonProperty("otheraccount")
+  private String otheraccount;
 
-  /**
-   * @param watchOnlyAddress the watchOnlyAddress to set
-   */
-  public void setWatchOnlyAddress(boolean watchOnlyAddress) {
-    this.watchOnlyAddress = watchOnlyAddress;
-  }
-
-  /**
-   * @return the account
-   */
   public String getAccount() {
     return account;
   }
 
-  /**
-   * @param account the account to set
-   */
   public void setAccount(String account) {
     this.account = account;
   }
 
-  /**
-   * @return the address
-   */
   public String getAddress() {
     return address;
   }
 
-  /**
-   * @param address the address to set
-   */
   public void setAddress(String address) {
     this.address = address;
   }
 
-  /**
-   * @return the category
-   */
   public PaymentCategory getCategory() {
     return category;
   }
 
-  /**
-   * @param category the category to set
-   */
   public void setCategory(PaymentCategory category) {
     this.category = category;
   }
 
-  /**
-   * @return the amount
-   */
   public BigDecimal getAmount() {
     return amount;
   }
 
-  /**
-   * @param amount the amount to set
-   */
   public void setAmount(BigDecimal amount) {
     this.amount = amount;
   }
 
-  /**
-   * @return the output
-   */
-  public Outpoint getOutput() {
-    return output;
+  public int getVout() {
+    return vout;
   }
 
-  /**
-   * @param output the output to set
-   */
-  public void setOutput(Outpoint output) {
-    this.output = output;
+  public void setVout(int vout) {
+    this.vout = vout;
   }
 
-  /**
-   * @return the fee
-   */
   public BigDecimal getFee() {
     return fee;
   }
 
-  /**
-   * @param fee the fee to set
-   */
   public void setFee(BigDecimal fee) {
     this.fee = fee;
   }
 
-  /**
-   * @return the confirmations
-   */
   public long getConfirmations() {
     return confirmations;
   }
 
-  /**
-   * @param confirmations the confirmations to set
-   */
   public void setConfirmations(long confirmations) {
     this.confirmations = confirmations;
   }
 
-  /**
-   * @return the generated
-   */
   public boolean isGenerated() {
     return generated;
   }
 
-  /**
-   * @param generated the generated to set
-   */
   public void setGenerated(boolean generated) {
     this.generated = generated;
   }
 
-  /**
-   * @return the blockHash
-   */
-  public String getBlockHash() {
-    return blockHash;
+  public String getBlockhash() {
+    return blockhash;
   }
 
-  /**
-   * @param blockHash the blockHash to set
-   */
-  public void setBlockHash(String blockHash) {
-    this.blockHash = blockHash;
+  public void setBlockhash(String blockhash) {
+    this.blockhash = blockhash;
   }
 
-  /**
-   * @return the blockHeight
-   */
-  public Long getBlockHeight() {
-    return blockHeight;
+  public Long getBlockindex() {
+    return blockindex;
   }
 
-  /**
-   * @param blockHeight the blockHeight to set
-   */
-  public void setBlockHeight(Long blockHeight) {
-    this.blockHeight = blockHeight;
+  public void setBlockindex(Long blockindex) {
+    this.blockindex = blockindex;
   }
 
-  /**
-   * @return the blockTime
-   */
-  public Date getBlockTime() {
-    return blockTime;
+  public Date getBlocktime() {
+    return blocktime;
   }
 
-  /**
-   * @param blockTime the blockTime to set
-   */
-  public void setBlockTime(Date blockTime) {
-    this.blockTime = blockTime;
+  public void setBlocktime(Date blocktime) {
+    this.blocktime = blocktime;
   }
 
-  /**
-   * @return the conflictingTransactionIds
-   */
-  public List<String> getConflictingTransactionIds() {
-    return conflictingTransactionIds;
+  public String getTxid() {
+    return txid;
   }
 
-  /**
-   * @param conflictingTransactionIds the conflictingTransactionIds to set
-   */
-  public void setConflictingTransactionIds(List<String> conflictingTransactionIds) {
-    this.conflictingTransactionIds = conflictingTransactionIds;
+  public void setTxid(String txid) {
+    this.txid = txid;
   }
 
-  /**
-   * @return the time
-   */
+  public List<String> getWalletconflicts() {
+    return walletconflicts;
+  }
+
+  public void setWalletconflicts(List<String> walletconflicts) {
+    this.walletconflicts = walletconflicts;
+  }
+
   public Date getTime() {
     return time;
   }
 
-  /**
-   * @param time the time to set
-   */
   public void setTime(Date time) {
     this.time = time;
   }
 
-  /**
-   * @return the received
-   */
-  public Date getReceived() {
-    return received;
+  public Date getTimereceived() {
+    return timereceived;
   }
 
-  /**
-   * @param received the received to set
-   */
-  public void setReceived(Date received) {
-    this.received = received;
+  public void setTimereceived(Date timereceived) {
+    this.timereceived = timereceived;
   }
 
-  /**
-   * @return the comment
-   */
   public String getComment() {
     return comment;
   }
 
-  /**
-   * @param comment the comment to set
-   */
   public void setComment(String comment) {
     this.comment = comment;
   }
 
-  /**
-   * @return the to
-   */
   public String getTo() {
     return to;
   }
 
-  /**
-   * @param to the to to set
-   */
   public void setTo(String to) {
     this.to = to;
+  }
+
+  public String getOtheraccount() {
+    return otheraccount;
+  }
+
+  public void setOtheraccount(String otheraccount) {
+    this.otheraccount = otheraccount;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((account == null) ? 0 : account.hashCode());
+    result = prime * result + ((address == null) ? 0 : address.hashCode());
+    result = prime * result + ((amount == null) ? 0 : amount.hashCode());
+    result = prime * result + ((blockhash == null) ? 0 : blockhash.hashCode());
+    result = prime * result + ((blockindex == null) ? 0 : blockindex.hashCode());
+    result = prime * result + ((blocktime == null) ? 0 : blocktime.hashCode());
+    result = prime * result + ((category == null) ? 0 : category.hashCode());
+    result = prime * result + ((comment == null) ? 0 : comment.hashCode());
+    result = prime * result + (int) (confirmations ^ (confirmations >>> 32));
+    result = prime * result + ((fee == null) ? 0 : fee.hashCode());
+    result = prime * result + (generated ? 1231 : 1237);
+    result = prime * result + ((otheraccount == null) ? 0 : otheraccount.hashCode());
+    result = prime * result + ((time == null) ? 0 : time.hashCode());
+    result = prime * result + ((timereceived == null) ? 0 : timereceived.hashCode());
+    result = prime * result + ((to == null) ? 0 : to.hashCode());
+    result = prime * result + ((txid == null) ? 0 : txid.hashCode());
+    result = prime * result + vout;
+    result = prime * result + ((walletconflicts == null) ? 0 : walletconflicts.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Payment other = (Payment) obj;
+    if (account == null) {
+      if (other.account != null)
+        return false;
+    } else if (!account.equals(other.account))
+      return false;
+    if (address == null) {
+      if (other.address != null)
+        return false;
+    } else if (!address.equals(other.address))
+      return false;
+    if (amount == null) {
+      if (other.amount != null)
+        return false;
+    } else if (!amount.equals(other.amount))
+      return false;
+    if (blockhash == null) {
+      if (other.blockhash != null)
+        return false;
+    } else if (!blockhash.equals(other.blockhash))
+      return false;
+    if (blockindex == null) {
+      if (other.blockindex != null)
+        return false;
+    } else if (!blockindex.equals(other.blockindex))
+      return false;
+    if (blocktime == null) {
+      if (other.blocktime != null)
+        return false;
+    } else if (!blocktime.equals(other.blocktime))
+      return false;
+    if (category != other.category)
+      return false;
+    if (comment == null) {
+      if (other.comment != null)
+        return false;
+    } else if (!comment.equals(other.comment))
+      return false;
+    if (confirmations != other.confirmations)
+      return false;
+    if (fee == null) {
+      if (other.fee != null)
+        return false;
+    } else if (!fee.equals(other.fee))
+      return false;
+    if (generated != other.generated)
+      return false;
+    if (otheraccount == null) {
+      if (other.otheraccount != null)
+        return false;
+    } else if (!otheraccount.equals(other.otheraccount))
+      return false;
+    if (time == null) {
+      if (other.time != null)
+        return false;
+    } else if (!time.equals(other.time))
+      return false;
+    if (timereceived == null) {
+      if (other.timereceived != null)
+        return false;
+    } else if (!timereceived.equals(other.timereceived))
+      return false;
+    if (to == null) {
+      if (other.to != null)
+        return false;
+    } else if (!to.equals(other.to))
+      return false;
+    if (txid == null) {
+      if (other.txid != null)
+        return false;
+    } else if (!txid.equals(other.txid))
+      return false;
+    if (vout != other.vout)
+      return false;
+    if (walletconflicts == null) {
+      if (other.walletconflicts != null)
+        return false;
+    } else if (!walletconflicts.equals(other.walletconflicts))
+      return false;
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return "Payment [account=" + account + ", address=" + address + ", category=" + category
+        + ", amount=" + amount + ", vout=" + vout + ", fee=" + fee + ", confirmations="
+        + confirmations + ", generated=" + generated + ", blockhash=" + blockhash + ", blockindex="
+        + blockindex + ", blocktime=" + blocktime + ", txid=" + txid + ", walletconflicts="
+        + walletconflicts + ", time=" + time + ", timereceived=" + timereceived + ", comment="
+        + comment + ", to=" + to + ", otheraccount=" + otheraccount + "]";
   }
 }

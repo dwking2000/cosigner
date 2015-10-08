@@ -538,4 +538,22 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
+  // TODO Come up with data structure and call for listing transactions by account
+  /*
+   * This is going to be somewhat harder in Ethereum.
+   * 
+   * There are no RPCs that quickly provide information on tx -> address relationships. While the
+   * EVM should be aware of which addresses any given TX affects, this information doesn't seem to
+   * be tracked, or at least isn't available through the geth client or the JSON-RPC.
+   * 
+   * Scanning the entire blockchain for tx's and checking who sent them is possible, but may be a
+   * little too time consuming.
+   * 
+   * The recipient may not be obvious in some cases. Such as when a multi-sig contract forwards
+   * funds on to another account based on input data. We may have to scan balances as the block
+   * height increases and check tx's on change.
+   * 
+   * Trying to keep track of tx hash's as they're submitted has the problem of persistence. Heimdal
+   * is not supposed to persist data.
+   */
 }

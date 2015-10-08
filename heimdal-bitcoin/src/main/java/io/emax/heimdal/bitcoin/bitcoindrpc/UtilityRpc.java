@@ -1,7 +1,5 @@
 package io.emax.heimdal.bitcoin.bitcoindrpc;
 
-import java.math.BigDecimal;
-
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 
 /**
@@ -17,6 +15,7 @@ import com.googlecode.jsonrpc4j.JsonRpcMethod;
  * @author dquintela
  */
 public interface UtilityRpc {
+
   /**
    * CreateMultiSig
    * 
@@ -28,27 +27,5 @@ public interface UtilityRpc {
    * @return P2SH address and hex-encoded redeem script
    */
   @JsonRpcMethod("createmultisig")
-  MultiSig createMultiSig(int nrequired, String[] keys);
-
-  /**
-   * EstimateFee
-   * 
-   * The estimatefee RPC estimates the transaction fee per kilobyte that needs to be paid for a
-   * transaction to be included within a certain number of blocks.
-   * 
-   * @param blocks The maximum number of blocks a transaction should have to wait before it is
-   *        predicted to be included in a block
-   * @return the fee the transaction needs to pay per kilobyte, If the node doesn’t have enough
-   *         information to make an estimate, the value -1 will be returned
-   */
-  @JsonRpcMethod("estimatefee")
-  BigDecimal estimateFee(int blocks);
-
-  /**
-   * ValidateAddress
-   * 
-   * The validateaddress RPC returns information about the given Bitcoin address.
-   */
-  @JsonRpcMethod("validateaddress")
-  AddressValidated validateAddress(String address);
+  MultiSig createmultisig(int nrequired, String[] keys);
 }
