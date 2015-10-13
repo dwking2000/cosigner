@@ -1,7 +1,9 @@
 package io.emax.heimdal.api.currency;
 
 import java.util.Map;
+import java.util.Set;
 
+import io.emax.heimdal.api.currency.Wallet.TransactionDetails;
 import rx.Observable;
 
 /**
@@ -57,4 +59,16 @@ public interface Monitor {
    * @return
    */
   Observable<Map<String, String>> getObservableBalances();
+  
+  /**
+   * 
+   * @return
+   */
+  Set<TransactionDetails> getTransactions();
+  
+  /**
+   * 
+   * @return
+   */
+  Observable<Set<TransactionDetails>> getObservableTransactions();
 }

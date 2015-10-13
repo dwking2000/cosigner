@@ -24,6 +24,10 @@ public class ByteUtilities {
   }
 
   public static byte[] toByteArray(String data) {
+    if(data == null) {
+      return new byte[] {};
+    }
+    
     if (data.substring(0, 2).toLowerCase().equals("0x")) {
       data = data.substring(2);
     }

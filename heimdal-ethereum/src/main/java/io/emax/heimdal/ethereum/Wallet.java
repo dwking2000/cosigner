@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
@@ -12,6 +13,7 @@ import io.emax.heimdal.ethereum.common.DeterministicTools;
 import io.emax.heimdal.ethereum.common.RLPItem;
 import io.emax.heimdal.ethereum.common.RLPList;
 import io.emax.heimdal.ethereum.common.Secp256k1;
+import io.emax.heimdal.ethereum.gethrpc.Block;
 import io.emax.heimdal.ethereum.gethrpc.CallData;
 import io.emax.heimdal.ethereum.gethrpc.DefaultBlock;
 import io.emax.heimdal.ethereum.gethrpc.EthereumRpc;
@@ -22,12 +24,21 @@ import rx.Observable;
 import rx.Subscription;
 
 public class Wallet implements io.emax.heimdal.api.currency.Wallet {
+  // RPC and configuration
   private EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
   private CurrencyConfiguration config = new CurrencyConfiguration();
+
+  // Address generation data
   private static HashMap<String, Integer> addressRounds = new HashMap<>();
+
+  // Multi-sig data
   private static HashMap<String, String> msigContracts = new HashMap<>();
   private static HashMap<String, String> reverseMsigContracts = new HashMap<>();
   private static Subscription multiSigSubscription;
+
+  // Transaction history data
+  private static HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
+  private static Subscription txHistorySubscription;
 
   public Wallet(EthereumRpc rpc) {
     this.ethereumRpc = rpc;
@@ -41,11 +52,17 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
       multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
           .subscribe(tick -> syncMultiSigAddresses());
     }
+
+    if (txHistorySubscription == null) {
+      txHistorySubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> scanTransactions());
+    }
   }
 
   public Wallet() {
     try {
       syncMultiSigAddresses();
+      scanTransactions();
     } catch (Exception e) {
       // this is ok.
     }
@@ -53,6 +70,11 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     if (multiSigSubscription == null) {
       multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
           .subscribe(tick -> syncMultiSigAddresses());
+    }
+
+    if (txHistorySubscription == null) {
+      txHistorySubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> scanTransactions());
     }
   }
 
@@ -105,7 +127,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
         }
       }
     }
-
   }
 
   @Override
@@ -376,8 +397,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
             hashBytes = DeterministicTools.hashSha3(hashBytes);
           }
 
-          System.out.println("Signing hash: " + hashBytes);
-
           // Sign it and rebuild the data
           byte[][] sigData = signData(hashBytes, config.getMultiSigAddresses()[i], name);
           if (sigData.length < 3)
@@ -419,8 +438,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
                     .replace(' ', '0');
         hashBytes = DeterministicTools.hashSha3(hashBytes);
       }
-
-      System.out.println("Signing hash: " + hashBytes);
 
       // Sign it and rebuild the data
       byte[][] sigData = signData(hashBytes, translatedAddress, name);
@@ -538,22 +555,91 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
-  // TODO Come up with data structure and call for listing transactions by account
-  /*
-   * This is going to be somewhat harder in Ethereum.
-   * 
-   * There are no RPCs that quickly provide information on tx -> address relationships. While the
-   * EVM should be aware of which addresses any given TX affects, this information doesn't seem to
-   * be tracked, or at least isn't available through the geth client or the JSON-RPC.
-   * 
-   * Scanning the entire blockchain for tx's and checking who sent them is possible, but may be a
-   * little too time consuming.
-   * 
-   * The recipient may not be obvious in some cases. Such as when a multi-sig contract forwards
-   * funds on to another account based on input data. We may have to scan balances as the block
-   * height increases and check tx's on change.
-   * 
-   * Trying to keep track of tx hash's as they're submitted has the problem of persistence. Heimdal
-   * is not supposed to persist data.
-   */
+  private void scanTransactions() {
+    // Scan every block, look for origin and receiver.
+    // Get latest block
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+
+    for (long i = 0; i < latestBlockNumber.longValue(); i++) {
+      String blockNumber = "0x" + BigInteger.valueOf(i).toString(16);
+      Block block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
+
+      if (block.getTransactions() == null) {
+        continue;
+      }
+
+      Arrays.asList(block.getTransactions()).forEach(tx -> {
+        TransactionDetails txDetail = new TransactionDetails();
+
+        txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
+        txDetail.setFromAddress(new String[] {ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getFrom()))});
+        txDetail.setToAddress(new String[] {ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
+        BigDecimal amount = BigDecimal
+            .valueOf(new BigInteger(1, ByteUtilities.toByteArray(tx.getValue())).longValue());
+        amount = amount.divide(BigDecimal.valueOf(config.getWeiMultiplier()));
+        txDetail.setAmount(amount);
+        
+        // For each receiver that is an mSig account, parse the data, check if it's sending data to
+        // another account.
+        try {
+          byte[] inputData = ByteUtilities.toByteArray(tx.getInput());
+          MultiSigContractParameters mSig = new MultiSigContractParameters();
+          mSig.decode(inputData);
+
+          if (mSig.getFunction().equalsIgnoreCase(MultiSigContract.getExecuteFunctionAddress())) {
+            for (int j = 0; j < mSig.getAddress().size(); j++) {
+              TransactionDetails msigTx = new TransactionDetails();
+              msigTx.setFromAddress(txDetail.getToAddress());
+              msigTx.setToAddress(new String[] {mSig.getAddress().get(j)});
+              msigTx.setAmount(BigDecimal.valueOf(mSig.getValue().get(j).longValue())
+                  .divide(BigDecimal.valueOf(config.getWeiMultiplier())));
+              msigTx.setTxHash(txDetail.getTxHash());
+
+              if (!txHistory.containsKey(msigTx.getToAddress()[0])) {
+                txHistory.put(msigTx.getToAddress()[0], new HashSet<>());
+              }
+              if (!txHistory.containsKey(msigTx.getFromAddress()[0])) {
+                txHistory.put(msigTx.getFromAddress()[0], new HashSet<>());
+              }
+
+              if (reverseMsigContracts.containsKey(msigTx.getFromAddress()[0])) {
+                txHistory.get(msigTx.getFromAddress()[0]).add(msigTx);
+              }
+              if (reverseMsigContracts.containsKey(msigTx.getToAddress()[0])) {
+                txHistory.get(msigTx.getToAddress()[0]).add(msigTx);
+              }
+            }
+          }
+        } catch (Exception e) {
+          // This is OK, just means it's not a transfer command
+        }
+
+        if (!txHistory.containsKey(txDetail.getToAddress()[0])) {
+          txHistory.put(txDetail.getToAddress()[0], new HashSet<>());
+        }
+        if (!txHistory.containsKey(txDetail.getFromAddress()[0])) {
+          txHistory.put(txDetail.getFromAddress()[0], new HashSet<>());
+        }
+
+        if (reverseMsigContracts.containsKey(txDetail.getFromAddress()[0])) {
+          txHistory.get(txDetail.getFromAddress()[0]).add(txDetail);
+        }
+        if (reverseMsigContracts.containsKey(txDetail.getToAddress()[0])) {
+          txHistory.get(txDetail.getToAddress()[0]).add(txDetail);
+        }
+      });
+    }
+  }
+
+  @Override
+  public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
+    LinkedList<TransactionDetails> txDetails = new LinkedList<>();
+    if (txHistory.containsKey(address)) {
+      txHistory.get(address).forEach(detail -> {
+        txDetails.add(detail);
+      });
+    }
+    return txDetails.toArray(new TransactionDetails[] {});
+  }
 }

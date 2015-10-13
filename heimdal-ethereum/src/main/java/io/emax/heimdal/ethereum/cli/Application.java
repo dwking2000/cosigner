@@ -19,15 +19,17 @@ public class Application {
     if (args.length < 1) {
       System.out.println("Usage: <interfaceMethod> <argument> <argument> ...");
       System.out.println("Available methods:");
-      System.out.println("	getNewAddress(String accountName)");
-      System.out.println("	getDeterministicAddresses(String accountName)");
-      System.out.println("	getMultiSigAddress(String address1, String address2, ..., accountName)");
-      System.out.println("	getBalance(String address)");
+      System.out.println("\tgetNewAddress(String accountName)");
+      System.out.println("\tgetDeterministicAddresses(String accountName)");
+      System.out
+          .println("\tgetMultiSigAddress(String address1, String address2, ..., accountName)");
+      System.out.println("\tgetBalance(String address)");
       System.out.println(
-          "	createTransaction(String fromAddress1, String fromAddress2, ..., String toAddress, Decimal amount)");
-      System.out.println("	signTransaction(String transaction, String address)");
-      System.out.println("	sendTransaction(String transaction)");
-      System.out.println("	monitor(String address)");
+          "\tcreateTransaction(String fromAddress1, String fromAddress2, ..., String toAddress, Decimal amount)");
+      System.out.println("\tsignTransaction(String transaction, String address)");
+      System.out.println("\tsendTransaction(String transaction)");
+      System.out.println("\tmonitor(String address)");
+      System.out.println("\tlistTxs(String address)");
       return;
     }
 
@@ -136,6 +138,15 @@ public class Application {
         Thread.sleep(60 * 1000);
         System.out.println("60 second sleep...");
         Thread.sleep(60 * 1000);
+        break;
+      case "listTxs":
+        if (args.length >= 2)
+          accountName = args[1];
+        System.out.println("Waiting 2 minutes to let txHistory build...");
+        Thread.sleep(2 * 60 * 1000);
+        Arrays.asList(wallet.getTransactions(accountName, 100, 0)).forEach(tx -> {
+          System.out.println(tx);
+        });;
         break;
       default:
         System.out.println("Method not valid or not supported yet");

@@ -172,6 +172,24 @@ public class DeterministicTools {
     }
   }
 
+  public static String encodeAddress(String addressBytes, String networkBytes) {
+    try {
+      String encodedBytes = networkBytes + addressBytes;
+      byte[] data = ByteUtilities.toByteArray(encodedBytes);
+      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      md.reset();
+      md.update(data);
+      byte[] publicKeyChecksum = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
+      
+      encodedBytes = encodedBytes + ByteUtilities.toHexString(publicKeyChecksum);
+      encodedBytes = encodedBytes.toLowerCase();
+      encodedBytes = Base58.encode(ByteUtilities.toByteArray(encodedBytes));
+      return encodedBytes;
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
   public static boolean isMultiSigAddress(String address) {
     try {
       // If the address isn't valid.

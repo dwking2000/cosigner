@@ -1,6 +1,7 @@
 package io.emax.heimdal.api.currency;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 
 /**
  * Wallet interface
@@ -105,4 +106,97 @@ public interface Wallet {
    * @return Transaction identifier to allow for tracking
    */
   String sendTransaction(String transaction);
+
+  public class TransactionDetails {
+    private String txHash;
+    private String[] fromAddress;
+    private String[] toAddress;
+    private BigDecimal amount;
+
+    public String getTxHash() {
+      return txHash;
+    }
+
+    public void setTxHash(String txHash) {
+      this.txHash = txHash;
+    }
+
+    public String[] getFromAddress() {
+      return fromAddress;
+    }
+
+    public void setFromAddress(String[] fromAddress) {
+      this.fromAddress = fromAddress;
+    }
+
+    public String[] getToAddress() {
+      return toAddress;
+    }
+
+    public void setToAddress(String[] toAddress) {
+      this.toAddress = toAddress;
+    }
+
+    public BigDecimal getAmount() {
+      return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+      this.amount = amount;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((amount == null) ? 0 : amount.hashCode());
+      result = prime * result + Arrays.hashCode(fromAddress);
+      result = prime * result + Arrays.hashCode(toAddress);
+      result = prime * result + ((txHash == null) ? 0 : txHash.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj)
+        return true;
+      if (obj == null)
+        return false;
+      if (getClass() != obj.getClass())
+        return false;
+      TransactionDetails other = (TransactionDetails) obj;
+      if (amount == null) {
+        if (other.amount != null)
+          return false;
+      } else if (!amount.equals(other.amount))
+        return false;
+      if (!Arrays.equals(fromAddress, other.fromAddress))
+        return false;
+      if (!Arrays.equals(toAddress, other.toAddress))
+        return false;
+      if (txHash == null) {
+        if (other.txHash != null)
+          return false;
+      } else if (!txHash.equals(other.txHash))
+        return false;
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return "TransactionDetails [txHash=" + txHash + ", fromAddress="
+          + Arrays.toString(fromAddress) + ", toAddress=" + Arrays.toString(toAddress) + ", amount="
+          + amount + "]";
+    }
+  }
+
+  /**
+   * List transactions from a given address
+   * 
+   * @param address address to lookup transactions for.
+   * @param numberToReturn Number of transactions to return.
+   * @param skipNumber Skip the first skipNumber results for pagination.
+   * @return Transaction Details
+   */
+  TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber);
 }

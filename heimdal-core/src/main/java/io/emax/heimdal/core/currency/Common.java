@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import io.emax.heimdal.api.currency.Monitor;
 import io.emax.heimdal.api.currency.SigningType;
 import io.emax.heimdal.api.currency.Wallet.Recipient;
+import io.emax.heimdal.api.currency.Wallet.TransactionDetails;
 import io.emax.heimdal.core.Application;
 import io.emax.heimdal.core.cluster.ClusterInfo;
 import io.emax.heimdal.core.cluster.Coordinator;
@@ -86,7 +87,7 @@ public class Common {
     }
   }
 
-  public static String getCurrencies() {
+  public static String listCurrencies() {
     List<String> currencies = new LinkedList<>();
     Application.getCurrencies().keySet().forEach((currency) -> {
       currencies.add(currency);
@@ -98,7 +99,7 @@ public class Common {
     return currencyString;
   }
 
-  public static String getNewAccount(String params) {
+  public static String getNewAddress(String params) {
     CurrencyParameters currencyParams = convertParams(params);
 
     String response = "";
@@ -115,7 +116,7 @@ public class Common {
     return response;
   }
 
-  public static String listAllAccounts(String params) {
+  public static String listAllAddresses(String params) {
     CurrencyParameters currencyParams = convertParams(params);
 
     String response = "";
@@ -125,6 +126,23 @@ public class Common {
     currency.getWallet().getAddresses(currencyParams.getUserKey()).forEach(accounts::add);
     response = stringifyObject(LinkedList.class, accounts);
 
+    logger.debug("[Response] " + response);
+    return response;
+  }
+  
+  public static String listTransactions(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
+    
+    String response = "";
+    CurrencyPackage currency = lookupCurrency(currencyParams);
+    
+    LinkedList<TransactionDetails> txDetails = new LinkedList<>();
+    currencyParams.getAccount().forEach(account -> {
+      txDetails.addAll(Arrays.asList(currency.getWallet().getTransactions(account, 100, 0)));
+    });
+    
+    response = stringifyObject(LinkedList.class, txDetails);
+    
     logger.debug("[Response] " + response);
     return response;
   }
@@ -152,7 +170,7 @@ public class Common {
     return response;
   }
 
-  private static HashMap<String, Subscription> subscriptions = new HashMap<>();
+  private static HashMap<String, Subscription> balanceSubscriptions = new HashMap<>();
   private static HashMap<String, Monitor> monitors = new HashMap<>();
 
   public static String monitorBalance(String params, AtmosphereResponse responseSocket) {
@@ -171,9 +189,9 @@ public class Common {
     // Web socket was passed to us
     if (responseSocket != null) {
 
-      if (subscriptions.containsKey(responseSocket.uuid())) {
-        subscriptions.get(responseSocket.uuid()).unsubscribe();
-        subscriptions.remove(responseSocket.uuid());
+      if (balanceSubscriptions.containsKey(responseSocket.uuid())) {
+        balanceSubscriptions.get(responseSocket.uuid()).unsubscribe();
+        balanceSubscriptions.remove(responseSocket.uuid());
       }
 
       if (monitors.containsKey(responseSocket.uuid())) {
@@ -181,7 +199,7 @@ public class Common {
         monitors.remove(responseSocket.uuid());
       }
 
-      Subscription wsSubscription = monitor.getObservableBalances().subscribe((balanceMap) -> {
+      Subscription wsBalanceSubscription = monitor.getObservableBalances().subscribe((balanceMap) -> {
         balanceMap.forEach((address, balance) -> {
           try {
             CurrencyParameters responseParms = new CurrencyParameters();
@@ -193,9 +211,9 @@ public class Common {
             responseParms.setReceivingAccount(Arrays.asList(accountData));
             responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
           } catch (Exception e) {
-            if (subscriptions.containsKey(responseSocket.uuid())) {
-              subscriptions.get(responseSocket.uuid()).unsubscribe();
-              subscriptions.remove(responseSocket.uuid());
+            if (balanceSubscriptions.containsKey(responseSocket.uuid())) {
+              balanceSubscriptions.get(responseSocket.uuid()).unsubscribe();
+              balanceSubscriptions.remove(responseSocket.uuid());
             }
             if (monitors.containsKey(responseSocket.uuid())) {
               monitors.get(responseSocket.uuid()).destroyMonitor();
@@ -205,20 +223,20 @@ public class Common {
           }
         });
       });
-      subscriptions.put(responseSocket.uuid(), wsSubscription);
+      balanceSubscriptions.put(responseSocket.uuid(), wsBalanceSubscription);
       monitors.put(responseSocket.uuid(), monitor);
     } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
       // It's a REST callback
-      if (subscriptions.containsKey(currencyParams.getCallback())) {
-        subscriptions.get(currencyParams.getCallback()).unsubscribe();
-        subscriptions.remove(currencyParams.getCallback());
+      if (balanceSubscriptions.containsKey(currencyParams.getCallback())) {
+        balanceSubscriptions.get(currencyParams.getCallback()).unsubscribe();
+        balanceSubscriptions.remove(currencyParams.getCallback());
       }
       if (monitors.containsKey(currencyParams.getCallback())) {
         monitors.get(currencyParams.getCallback()).destroyMonitor();
         monitors.remove(currencyParams.getCallback());
       }
 
-      Subscription rsSubscription = monitor.getObservableBalances().subscribe((balanceMap) -> {
+      Subscription rsBalanceSubscription = monitor.getObservableBalances().subscribe((balanceMap) -> {
         balanceMap.forEach((address, balance) -> {
           try {
             CurrencyParameters responseParms = new CurrencyParameters();
@@ -237,9 +255,9 @@ public class Common {
 
             HttpClients.createDefault().execute(httpPost).close();
           } catch (Exception e) {
-            if (subscriptions.containsKey(currencyParams.getCallback())) {
-              subscriptions.get(currencyParams.getCallback()).unsubscribe();
-              subscriptions.remove(currencyParams.getCallback());
+            if (balanceSubscriptions.containsKey(currencyParams.getCallback())) {
+              balanceSubscriptions.get(currencyParams.getCallback()).unsubscribe();
+              balanceSubscriptions.remove(currencyParams.getCallback());
             }
             if (monitors.containsKey(currencyParams.getCallback())) {
               monitors.get(currencyParams.getCallback()).destroyMonitor();
@@ -249,7 +267,7 @@ public class Common {
           }
         });
       });
-      subscriptions.put(currencyParams.getCallback(), rsSubscription);
+      balanceSubscriptions.put(currencyParams.getCallback(), rsBalanceSubscription);
       monitors.put(currencyParams.getCallback(), monitor);
     } else {
       // We have no way to respond to the caller other than with this response.
@@ -304,8 +322,7 @@ public class Common {
   public static String approveTransaction(String params, boolean sendToRemotes) {
     CurrencyParameters currencyParams = convertParams(params);
 
-    String response = "a";
-    response = "";
+    String response = "";
     CurrencyPackage currency = lookupCurrency(currencyParams);
 
     for (Server server : ClusterInfo.getInstance().getServers()) {

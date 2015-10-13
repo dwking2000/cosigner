@@ -149,6 +149,9 @@ public class Payment {
    */
   @JsonProperty("otheraccount")
   private String otheraccount;
+  
+  @JsonProperty("involvesWatchonly")
+  private boolean involvesWatchonly;
 
   public String getAccount() {
     return account;
@@ -294,6 +297,14 @@ public class Payment {
     this.otheraccount = otheraccount;
   }
 
+  public boolean isInvolvesWatchonly() {
+    return involvesWatchonly;
+  }
+
+  public void setInvolvesWatchonly(boolean involvesWatchonly) {
+    this.involvesWatchonly = involvesWatchonly;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -309,6 +320,7 @@ public class Payment {
     result = prime * result + (int) (confirmations ^ (confirmations >>> 32));
     result = prime * result + ((fee == null) ? 0 : fee.hashCode());
     result = prime * result + (generated ? 1231 : 1237);
+    result = prime * result + (involvesWatchonly ? 1231 : 1237);
     result = prime * result + ((otheraccount == null) ? 0 : otheraccount.hashCode());
     result = prime * result + ((time == null) ? 0 : time.hashCode());
     result = prime * result + ((timereceived == null) ? 0 : timereceived.hashCode());
@@ -374,6 +386,8 @@ public class Payment {
       return false;
     if (generated != other.generated)
       return false;
+    if (involvesWatchonly != other.involvesWatchonly)
+      return false;
     if (otheraccount == null) {
       if (other.otheraccount != null)
         return false;
@@ -416,6 +430,7 @@ public class Payment {
         + confirmations + ", generated=" + generated + ", blockhash=" + blockhash + ", blockindex="
         + blockindex + ", blocktime=" + blocktime + ", txid=" + txid + ", walletconflicts="
         + walletconflicts + ", time=" + time + ", timereceived=" + timereceived + ", comment="
-        + comment + ", to=" + to + ", otheraccount=" + otheraccount + "]";
+        + comment + ", to=" + to + ", otheraccount=" + otheraccount + ", involvesWatchonly="
+        + involvesWatchonly + "]";
   }
 }

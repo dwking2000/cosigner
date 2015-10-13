@@ -29,17 +29,21 @@ public class WebSocketResource extends OnMessage<String> {
   public void onMessage(AtmosphereResponse arg0, String arg1) throws IOException {
     String functionCall = arg0.request().getRequestURI().replaceAll("/ws", "");
     switch (functionCall.toLowerCase()) {
-      case "/getcurrencies":
+      case "/listcurrencies":
         logger.debug("[GetCurrencies:WSRequest]");
-        arg0.write(Common.getCurrencies());
+        arg0.write(Common.listCurrencies());
         break;
-      case "/getnewaccount":
+      case "/getnewaddress":
         logger.debug("[GetNewAccount:WSRequest]");
-        arg0.write(Common.getNewAccount(arg1));
+        arg0.write(Common.getNewAddress(arg1));
         break;
-      case "/listallaccounts":
+      case "/listalladdresses":
         logger.debug("[ListAllAccounts:WSRequest]");
-        arg0.write(Common.listAllAccounts(arg1));
+        arg0.write(Common.listAllAddresses(arg1));
+        break;
+      case "/listtransactions":
+        logger.debug("[ListTransactions:WSRequest]");
+        arg0.write(Common.listTransactions(arg1));
         break;
       case "/getbalance":
         logger.debug("[GetBalance:WSRequest]");

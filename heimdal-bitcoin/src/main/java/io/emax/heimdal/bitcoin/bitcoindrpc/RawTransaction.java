@@ -3,8 +3,11 @@ package io.emax.heimdal.bitcoin.bitcoindrpc;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.emax.heimdal.bitcoin.common.ByteUtilities;
+import io.emax.heimdal.bitcoin.common.DeterministicTools;
 
 /**
  * Utility class to convert between a raw transaction and the data structure represented here.
@@ -443,5 +446,32 @@ public class RawTransaction {
       }
     }
     return modifiedScript;
+  }
+
+  /**
+   * Assuming standard scripts, return the address
+   * 
+   * @param script
+   * @return
+   */
+  public static String decodeRedeemScript(String script) {
+    // Regular address
+    Pattern pattern = Pattern.compile("^76a914(.{40})88ac$");
+    Matcher matcher = pattern.matcher(script);
+    if (matcher.matches()) {
+      String addressBytes = matcher.group(1);
+      // TODO - check network and adjust
+      return DeterministicTools.encodeAddress(addressBytes, "6F");
+    }
+
+    pattern = Pattern.compile("^a914(.{40})87$");
+    matcher = pattern.matcher(script);
+    if (matcher.matches()) {
+      String addressBytes = matcher.group(1);
+      // TODO - check network and adjust
+      return DeterministicTools.encodeAddress(addressBytes, "C4");
+    }
+
+    return null;
   }
 }

@@ -17,32 +17,42 @@ public class CurrencyResource {
   Logger logger = LoggerFactory.getLogger(CurrencyResource.class);
 
   @GET
-  @Path("/GetCurrencies")
+  @Path("/ListCurrencies")
   @Produces(MediaType.APPLICATION_JSON)
   public Response getCurrencies() {
     logger.debug("[GetCurrencies:Request]");
-    Response response = Response.ok(Common.getCurrencies()).build();
+    Response response = Response.ok(Common.listCurrencies()).build();
     logger.debug("[GetCurrencies:Response] " + response.toString());
     return response;
   }
 
   @POST
-  @Path("/GetNewAccount")
+  @Path("/GetNewAddress")
   @Produces(MediaType.APPLICATION_JSON)
   public Response getNewAccount(String params) {
     logger.debug("[GetNewAccount:Request]");
-    Response response = Response.ok(Common.getNewAccount(params)).build();
+    Response response = Response.ok(Common.getNewAddress(params)).build();
     logger.debug("[GetNewAccount:Response] " + response.toString());
     return response;
   }
 
   @POST
-  @Path("/ListAllAccounts")
+  @Path("/ListAllAddresses")
   @Produces(MediaType.APPLICATION_JSON)
   public Response listAllAccounts(String params) {
     logger.debug("[ListAllAccounts:Request]");
-    Response response = Response.ok(Common.listAllAccounts(params)).build();
+    Response response = Response.ok(Common.listAllAddresses(params)).build();
     logger.debug("[ListAllAccounts:Response] " + response.toString());
+    return response;
+  }
+  
+  @POST
+  @Path("/ListTransactions")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response listTransactions(String params) {
+    logger.debug("[ListTransactions:Request]");
+    Response response = Response.ok(Common.listTransactions(params)).build();
+    logger.debug("[ListTransactions:Response] " + response.toString());
     return response;
   }
 

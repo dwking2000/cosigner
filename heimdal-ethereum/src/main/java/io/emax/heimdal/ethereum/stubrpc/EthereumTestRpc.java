@@ -4,6 +4,7 @@ import java.math.BigInteger;
 
 import io.emax.heimdal.ethereum.common.ByteUtilities;
 import io.emax.heimdal.ethereum.common.DeterministicTools;
+import io.emax.heimdal.ethereum.gethrpc.Block;
 import io.emax.heimdal.ethereum.gethrpc.CallData;
 import io.emax.heimdal.ethereum.gethrpc.EthereumRpc;
 import io.emax.heimdal.ethereum.gethrpc.MultiSigContract;
@@ -50,6 +51,11 @@ public class EthereumTestRpc implements EthereumRpc {
 
   @Override
   public String eth_call(CallData object, String defaultBlock) {
+    return null;
+  }
+
+  @Override
+  public Block eth_getBlockByNumber(String number, boolean returnTxData) {
     return null;
   }
 }

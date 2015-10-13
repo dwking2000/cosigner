@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +19,8 @@ import io.emax.heimdal.bitcoin.bitcoindrpc.MultiSig;
 import io.emax.heimdal.bitcoin.bitcoindrpc.Outpoint;
 import io.emax.heimdal.bitcoin.bitcoindrpc.OutpointDetails;
 import io.emax.heimdal.bitcoin.bitcoindrpc.Output;
+import io.emax.heimdal.bitcoin.bitcoindrpc.Payment;
+import io.emax.heimdal.bitcoin.bitcoindrpc.Payment.PaymentCategory;
 import io.emax.heimdal.bitcoin.bitcoindrpc.RawInput;
 import io.emax.heimdal.bitcoin.bitcoindrpc.RawOutput;
 import io.emax.heimdal.bitcoin.bitcoindrpc.RawTransaction;
@@ -404,6 +407,96 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   public String sendTransaction(String transaction) {
     return bitcoindRpc.sendrawtransaction(transaction, false);
   }
-  
-  // TODO Come up with data structure and call for listing transactions by account
+
+  @Override
+  public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
+    LinkedList<TransactionDetails> txDetails = new LinkedList<>();
+    Payment[] payments = bitcoindRpc.listtransactions("*", 1000000, 0, true);
+    Arrays.asList(payments).forEach(payment -> {
+
+      // Lookup the txid and vout/vin based on the sign of the amount (+/-)
+      // Determine the address involved
+      try {
+        String rawTx = bitcoindRpc.getrawtransaction(payment.getTxid());
+        RawTransaction tx = RawTransaction.parse(rawTx);
+        if (payment.getCategory() == PaymentCategory.receive) {
+
+          // Paid to the account
+          if (payment.getAddress().equalsIgnoreCase(address)) {
+            TransactionDetails detail = new TransactionDetails();
+            detail.setAmount(payment.getAmount());
+
+            // Senders
+            HashSet<String> senders = new HashSet<>();
+            tx.getInputs().forEach(input -> {
+              try {
+                String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
+                RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
+                String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
+                String scriptAddress = RawTransaction.decodeRedeemScript(script);
+                senders.add(scriptAddress);
+              } catch (Exception e) {
+                senders.add(null);
+              }
+            });
+            detail.setFromAddress(senders.toArray(new String[] {}));
+
+            detail.setToAddress(new String[] {address});
+            detail.setTxHash(payment.getTxid());
+
+            txDetails.add(detail);
+          }
+        } else if (payment.getCategory() == PaymentCategory.send) {
+          // Sent from the account
+          tx.getInputs().forEach(input -> {
+            String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
+            RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
+            String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
+            String scriptAddress = RawTransaction.decodeRedeemScript(script);
+
+            if (scriptAddress.equalsIgnoreCase(address)) {
+              TransactionDetails detail = new TransactionDetails();
+
+              detail.setTxHash(payment.getTxid());
+              detail.setAmount(payment.getAmount());
+              detail.setFromAddress(new String[] {address});
+              detail.setToAddress(new String[] {payment.getAddress()});
+
+              txDetails.add(detail);
+            }
+          });
+        }
+      } catch (Exception e) {
+
+      }
+    });
+
+    LinkedList<TransactionDetails> removeThese = new LinkedList<>();
+    txDetails.forEach(detail -> {
+      boolean noMatch = false;
+      for (String from : Arrays.asList(detail.getFromAddress())) {
+        boolean subMatch = false;
+        for (String to : Arrays.asList(detail.getToAddress())) {
+          if (to.equalsIgnoreCase(from)) {
+            subMatch = true;
+            break;
+          }
+        }
+        if (!subMatch) {
+          noMatch = true;
+          break;
+        }
+      }
+
+      // If the from & to's match then it's just a return amount, simpler if we don't list it.
+      if (!noMatch) {
+        removeThese.add(detail);
+      }
+    });
+
+    removeThese.forEach(detail -> {
+      txDetails.remove(detail);
+    });
+    return txDetails.toArray(new TransactionDetails[] {});
+  }
 }

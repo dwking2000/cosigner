@@ -150,7 +150,12 @@ public class DecodedTransaction {
     @Override
     public String toString() {
       return "DecodedInput [scriptSig=" + scriptSig + ", coinbase=" + coinbase + ", sequence="
-          + sequence + "]";
+          + sequence + ", getTransactionId()=" + getTransactionId() + ", getOutputIndex()="
+          + getOutputIndex() + ", getAddress()=" + getAddress() + ", getAccount()=" + getAccount()
+          + ", getScriptPubKey()=" + getScriptPubKey() + ", getRedeemScript()=" + getRedeemScript()
+          + ", getAmount()=" + getAmount() + ", getConfirmations()=" + getConfirmations()
+          + ", isSpendable()=" + isSpendable() + ", toString()=" + super.toString()
+          + ", hashCode()=" + hashCode() + ", getClass()=" + getClass() + "]";
     }
 
     public ScriptSignature getScriptSig() {

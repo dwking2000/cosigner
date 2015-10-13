@@ -1,19 +1,32 @@
 package io.emax.heimdal.bitcoin;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import io.emax.heimdal.api.currency.Wallet.TransactionDetails;
 import rx.Observable;
 import rx.Subscription;
 
 public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   private HashSet<String> monitoredAddresses = new HashSet<>();
   private HashMap<String, String> accountBalances = new HashMap<>();
+  private HashSet<TransactionDetails> accountTransactions = new HashSet<>();
+  private HashSet<TransactionDetails> newAccountTransactions = new HashSet<>();
   private Observable<Map<String, String>> observableBalances =
       Observable.interval(1, TimeUnit.MINUTES).map(tick -> accountBalances);
+
+  private Observable<Set<TransactionDetails>> observableTransactions =
+      Observable.interval(1, TimeUnit.MINUTES).map(tick -> {
+        HashSet<TransactionDetails> txs = new HashSet<>();
+        txs.addAll(newAccountTransactions);
+        newAccountTransactions.clear();
+        return txs;
+      });
   private Subscription balanceSubscription;
   Wallet wallet;
 
@@ -34,6 +47,23 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
       String currentBalance = wallet.getBalance(address);
       accountBalances.put(address, currentBalance);
     });
+
+    updateTransactions();
+    return true;
+  }
+
+  private boolean updateTransactions() {
+    HashSet<TransactionDetails> details = new HashSet<>();
+    monitoredAddresses.forEach(address -> {
+      Arrays.asList(wallet.getTransactions(address, 100, 0)).forEach(tx -> {
+        details.add(tx);
+      });
+    });
+
+    // Remove the intersection
+    details.removeAll(accountTransactions);
+    accountTransactions.addAll(details);
+    newAccountTransactions.addAll(details);
     return true;
   }
 
@@ -73,5 +103,15 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   public void destroyMonitor() {
     if (balanceSubscription != null)
       balanceSubscription.unsubscribe();
+  }
+
+  @Override
+  public Set<TransactionDetails> getTransactions() {
+    return accountTransactions;
+  }
+
+  @Override
+  public Observable<Set<TransactionDetails>> getObservableTransactions() {
+    return observableTransactions;
   }
 }

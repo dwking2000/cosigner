@@ -59,7 +59,7 @@ public class CommonTest extends TestCase {
     System.out.println("Listing currencies");
 
     try {
-      String currenciesString = Common.getCurrencies();
+      String currenciesString = Common.listCurrencies();
       @SuppressWarnings("unchecked")
       LinkedList<String> currencies =
           (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
@@ -81,7 +81,7 @@ public class CommonTest extends TestCase {
 
     LinkedList<String> currencies = new LinkedList<>();
     try {
-      String currenciesString = Common.getCurrencies();
+      String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       e.printStackTrace();
@@ -96,7 +96,7 @@ public class CommonTest extends TestCase {
         parms.setUserKey(userKey);
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        String address = Common.getNewAccount(parmsString);
+        String address = Common.getNewAddress(parmsString);
         System.out.println(address);
       });
     } catch (Exception e) {
@@ -113,7 +113,7 @@ public class CommonTest extends TestCase {
 
     LinkedList<String> currencies = new LinkedList<>();
     try {
-      String currenciesString = Common.getCurrencies();
+      String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       e.printStackTrace();
@@ -128,7 +128,7 @@ public class CommonTest extends TestCase {
         parms.setUserKey(userKey);
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        String addressString = Common.listAllAccounts(parmsString);
+        String addressString = Common.listAllAddresses(parmsString);
         
         LinkedList<String> addresses = (LinkedList<String>) Common.objectifyString(LinkedList.class, addressString);
         addresses.forEach(address -> {
@@ -149,7 +149,7 @@ public class CommonTest extends TestCase {
 
     LinkedList<String> currencies = new LinkedList<>();
     try {
-      String currenciesString = Common.getCurrencies();
+      String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       e.printStackTrace();
@@ -164,7 +164,7 @@ public class CommonTest extends TestCase {
         parms.setUserKey(userKey);
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        String address = Common.getNewAccount(parmsString);
+        String address = Common.getNewAddress(parmsString);
         
         parms.setAccount(Arrays.asList(address));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
@@ -185,7 +185,7 @@ public class CommonTest extends TestCase {
 
     LinkedList<String> currencies = new LinkedList<>();
     try {
-      String currenciesString = Common.getCurrencies();
+      String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       e.printStackTrace();
@@ -200,7 +200,7 @@ public class CommonTest extends TestCase {
         parms.setUserKey(userKey);
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        String address = Common.getNewAccount(parmsString);
+        String address = Common.getNewAddress(parmsString);
         
         parms.setAccount(Arrays.asList(address));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
@@ -221,7 +221,7 @@ public class CommonTest extends TestCase {
 
     LinkedList<String> currencies = new LinkedList<>();
     try {
-      String currenciesString = Common.getCurrencies();
+      String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       e.printStackTrace();
@@ -236,10 +236,10 @@ public class CommonTest extends TestCase {
         parms.setUserKey(userKey);
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        String address = Common.getNewAccount(parmsString);
+        String address = Common.getNewAddress(parmsString);
         
         parms.setAccount(Arrays.asList(address));
-        address = Common.getNewAccount(parmsString);
+        address = Common.getNewAddress(parmsString);
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);
@@ -263,7 +263,7 @@ public class CommonTest extends TestCase {
 
     LinkedList<String> currencies = new LinkedList<>();
     try {
-      String currenciesString = Common.getCurrencies();
+      String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       e.printStackTrace();
@@ -278,10 +278,10 @@ public class CommonTest extends TestCase {
         parms.setUserKey(userKey);
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        String address = Common.getNewAccount(parmsString);
+        String address = Common.getNewAddress(parmsString);
         
         parms.setAccount(Arrays.asList(address));
-        address = Common.getNewAccount(parmsString);
+        address = Common.getNewAddress(parmsString);
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);
@@ -309,7 +309,7 @@ public class CommonTest extends TestCase {
 
     LinkedList<String> currencies = new LinkedList<>();
     try {
-      String currenciesString = Common.getCurrencies();
+      String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       e.printStackTrace();
@@ -324,10 +324,10 @@ public class CommonTest extends TestCase {
         parms.setUserKey(userKey);
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        String address = Common.getNewAccount(parmsString);
+        String address = Common.getNewAddress(parmsString);
         
         parms.setAccount(Arrays.asList(address));
-        address = Common.getNewAccount(parmsString);
+        address = Common.getNewAddress(parmsString);
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);

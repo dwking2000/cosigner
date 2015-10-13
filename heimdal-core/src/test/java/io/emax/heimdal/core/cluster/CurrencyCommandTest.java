@@ -32,7 +32,7 @@ public class CurrencyCommandTest extends TestCase {
     
     LinkedList<String> currencies = new LinkedList<>();
     try {
-      String currenciesString = Common.getCurrencies();
+      String currenciesString = Common.listCurrencies();
       currencies =
           (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
