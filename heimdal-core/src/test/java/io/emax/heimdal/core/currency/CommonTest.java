@@ -129,8 +129,9 @@ public class CommonTest extends TestCase {
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         String addressString = Common.listAllAddresses(parmsString);
-        
-        LinkedList<String> addresses = (LinkedList<String>) Common.objectifyString(LinkedList.class, addressString);
+
+        LinkedList<String> addresses =
+            (LinkedList<String>) Common.objectifyString(LinkedList.class, addressString);
         addresses.forEach(address -> {
           System.out.println(address);
         });
@@ -165,7 +166,7 @@ public class CommonTest extends TestCase {
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
-        
+
         parms.setAccount(Arrays.asList(address));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         String balance = Common.getBalance(parmsString);
@@ -201,7 +202,7 @@ public class CommonTest extends TestCase {
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
-        
+
         parms.setAccount(Arrays.asList(address));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         String balance = Common.monitorBalance(parmsString, null);
@@ -237,7 +238,7 @@ public class CommonTest extends TestCase {
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
-        
+
         parms.setAccount(Arrays.asList(address));
         address = Common.getNewAddress(parmsString);
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
@@ -245,7 +246,7 @@ public class CommonTest extends TestCase {
         accountData.setRecipientAddress(address);
         parms.setReceivingAccount(Arrays.asList(accountData));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        
+
         String tx = Common.prepareTransaction(parmsString);
         System.out.println(tx);
       });
@@ -279,7 +280,7 @@ public class CommonTest extends TestCase {
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
-        
+
         parms.setAccount(Arrays.asList(address));
         address = Common.getNewAddress(parmsString);
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
@@ -287,13 +288,13 @@ public class CommonTest extends TestCase {
         accountData.setRecipientAddress(address);
         parms.setReceivingAccount(Arrays.asList(accountData));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        
+
         String tx = Common.prepareTransaction(parmsString);
         parms.setTransactionData(tx);
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        
+
         tx = Common.approveTransaction(parmsString, true);
-        System.out.println(tx);        
+        System.out.println(tx);
       });
     } catch (Exception e) {
       e.printStackTrace();
@@ -325,7 +326,7 @@ public class CommonTest extends TestCase {
 
         String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
-        
+
         parms.setAccount(Arrays.asList(address));
         address = Common.getNewAddress(parmsString);
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
@@ -333,17 +334,17 @@ public class CommonTest extends TestCase {
         accountData.setRecipientAddress(address);
         parms.setReceivingAccount(Arrays.asList(accountData));
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        
+
         String tx = Common.prepareTransaction(parmsString);
         parms.setTransactionData(tx);
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        
+
         tx = Common.approveTransaction(parmsString, true);
         parms.setTransactionData(tx);
         parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
-        
+
         tx = Common.submitTransaction(parmsString);
-        System.out.println(tx);        
+        System.out.println(tx);
       });
     } catch (Exception e) {
       e.printStackTrace();

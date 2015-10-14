@@ -40,14 +40,14 @@ public class Common {
       JsonParser jsonParser = jsonFact.createParser(params);
       CurrencyParameters currencyParams =
           new ObjectMapper().readValue(jsonParser, CurrencyParameters.class);
-            
+
       String userKey = currencyParams.getUserKey();
       currencyParams.setUserKey("");
       String sanitizedParams = stringifyObject(CurrencyParameters.class, currencyParams);
       currencyParams.setUserKey(userKey);
-      
+
       logger.debug("[CurrencyParams] " + sanitizedParams);
-      
+
       return currencyParams;
     } catch (IOException e) {
       e.printStackTrace();
@@ -129,20 +129,20 @@ public class Common {
     logger.debug("[Response] " + response);
     return response;
   }
-  
+
   public static String listTransactions(String params) {
     CurrencyParameters currencyParams = convertParams(params);
-    
+
     String response = "";
     CurrencyPackage currency = lookupCurrency(currencyParams);
-    
+
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     currencyParams.getAccount().forEach(account -> {
       txDetails.addAll(Arrays.asList(currency.getWallet().getTransactions(account, 100, 0)));
     });
-    
+
     response = stringifyObject(LinkedList.class, txDetails);
-    
+
     logger.debug("[Response] " + response);
     return response;
   }
@@ -171,7 +171,25 @@ public class Common {
   }
 
   private static HashMap<String, Subscription> balanceSubscriptions = new HashMap<>();
+  private static HashMap<String, Subscription> transactionSubscriptions = new HashMap<>();
   private static HashMap<String, Monitor> monitors = new HashMap<>();
+
+  private static void cleanUpSubscriptions(String id) {
+    if (balanceSubscriptions.containsKey(id)) {
+      balanceSubscriptions.get(id).unsubscribe();
+      balanceSubscriptions.remove(id);
+    }
+
+    if (transactionSubscriptions.containsKey(id)) {
+      transactionSubscriptions.get(id).unsubscribe();
+      transactionSubscriptions.remove(id);
+    }
+
+    if (monitors.containsKey(id)) {
+      monitors.get(id).destroyMonitor();
+      monitors.remove(id);
+    }
+  }
 
   public static String monitorBalance(String params, AtmosphereResponse responseSocket) {
     CurrencyParameters currencyParams = convertParams(params);
@@ -189,85 +207,116 @@ public class Common {
     // Web socket was passed to us
     if (responseSocket != null) {
 
-      if (balanceSubscriptions.containsKey(responseSocket.uuid())) {
-        balanceSubscriptions.get(responseSocket.uuid()).unsubscribe();
-        balanceSubscriptions.remove(responseSocket.uuid());
-      }
+      cleanUpSubscriptions(responseSocket.uuid());
 
-      if (monitors.containsKey(responseSocket.uuid())) {
-        monitors.get(responseSocket.uuid()).destroyMonitor();
-        monitors.remove(responseSocket.uuid());
-      }
-
-      Subscription wsBalanceSubscription = monitor.getObservableBalances().subscribe((balanceMap) -> {
-        balanceMap.forEach((address, balance) -> {
-          try {
-            CurrencyParameters responseParms = new CurrencyParameters();
-            responseParms.setAccount(new LinkedList<String>());
-            responseParms.getAccount().add(address);
-            CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
-            accountData.setAmount(balance);
-            accountData.setRecipientAddress(address);
-            responseParms.setReceivingAccount(Arrays.asList(accountData));
-            responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
-          } catch (Exception e) {
-            if (balanceSubscriptions.containsKey(responseSocket.uuid())) {
-              balanceSubscriptions.get(responseSocket.uuid()).unsubscribe();
-              balanceSubscriptions.remove(responseSocket.uuid());
-            }
-            if (monitors.containsKey(responseSocket.uuid())) {
-              monitors.get(responseSocket.uuid()).destroyMonitor();
-              monitors.remove(responseSocket.uuid());
-            }
-            return;
-          }
-        });
-      });
+      Subscription wsBalanceSubscription =
+          monitor.getObservableBalances().subscribe((balanceMap) -> {
+            balanceMap.forEach((address, balance) -> {
+              try {
+                CurrencyParameters responseParms = new CurrencyParameters();
+                responseParms.setAccount(new LinkedList<String>());
+                responseParms.getAccount().add(address);
+                CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+                accountData.setAmount(balance);
+                accountData.setRecipientAddress(address);
+                responseParms.setReceivingAccount(Arrays.asList(accountData));
+                responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
+              } catch (Exception e) {
+                cleanUpSubscriptions(responseSocket.uuid());
+                return;
+              }
+            });
+          });
       balanceSubscriptions.put(responseSocket.uuid(), wsBalanceSubscription);
+
+      Subscription wsTransactionSubscription =
+          monitor.getObservableTransactions().subscribe((transactionSet) -> {
+            transactionSet.forEach((transaction) -> {
+              try {
+                CurrencyParameters responseParms = new CurrencyParameters();
+                responseParms.setAccount(new LinkedList<String>());
+                responseParms.getAccount().addAll(Arrays.asList(transaction.getFromAddress()));
+                LinkedList<CurrencyParametersRecipient> receivers = new LinkedList<>();
+                Arrays.asList(transaction.getToAddress()).forEach(address -> {
+                  CurrencyParametersRecipient sendData = new CurrencyParametersRecipient();
+                  sendData.setAmount(transaction.getAmount().toPlainString());
+                  sendData.setRecipientAddress(address);
+                  receivers.add(sendData);
+                });
+                responseParms.setReceivingAccount(receivers);
+                responseParms.setTransactionData(transaction.getTxHash());
+                responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
+              } catch (Exception e) {
+                cleanUpSubscriptions(responseSocket.uuid());
+                return;
+              }
+            });
+          });
+
+      transactionSubscriptions.put(responseSocket.uuid(), wsTransactionSubscription);
       monitors.put(responseSocket.uuid(), monitor);
     } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
       // It's a REST callback
-      if (balanceSubscriptions.containsKey(currencyParams.getCallback())) {
-        balanceSubscriptions.get(currencyParams.getCallback()).unsubscribe();
-        balanceSubscriptions.remove(currencyParams.getCallback());
-      }
-      if (monitors.containsKey(currencyParams.getCallback())) {
-        monitors.get(currencyParams.getCallback()).destroyMonitor();
-        monitors.remove(currencyParams.getCallback());
-      }
+      cleanUpSubscriptions(currencyParams.getCallback());
 
-      Subscription rsBalanceSubscription = monitor.getObservableBalances().subscribe((balanceMap) -> {
-        balanceMap.forEach((address, balance) -> {
-          try {
-            CurrencyParameters responseParms = new CurrencyParameters();
-            responseParms.setAccount(new LinkedList<String>());
-            responseParms.getAccount().add(address);
-            CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
-            accountData.setAmount(balance);
-            accountData.setRecipientAddress(address);
-            responseParms.setReceivingAccount(Arrays.asList(accountData));
+      Subscription rsBalanceSubscription =
+          monitor.getObservableBalances().subscribe((balanceMap) -> {
+            balanceMap.forEach((address, balance) -> {
+              try {
+                CurrencyParameters responseParms = new CurrencyParameters();
+                responseParms.setAccount(new LinkedList<String>());
+                responseParms.getAccount().add(address);
+                CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+                accountData.setAmount(balance);
+                accountData.setRecipientAddress(address);
+                responseParms.setReceivingAccount(Arrays.asList(accountData));
 
-            HttpPost httpPost = new HttpPost(currencyParams.getCallback());
-            httpPost.addHeader("content-type", "application/json");
-            StringEntity entity;
-            entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
-            httpPost.setEntity(entity);
+                HttpPost httpPost = new HttpPost(currencyParams.getCallback());
+                httpPost.addHeader("content-type", "application/json");
+                StringEntity entity;
+                entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
+                httpPost.setEntity(entity);
 
-            HttpClients.createDefault().execute(httpPost).close();
-          } catch (Exception e) {
-            if (balanceSubscriptions.containsKey(currencyParams.getCallback())) {
-              balanceSubscriptions.get(currencyParams.getCallback()).unsubscribe();
-              balanceSubscriptions.remove(currencyParams.getCallback());
-            }
-            if (monitors.containsKey(currencyParams.getCallback())) {
-              monitors.get(currencyParams.getCallback()).destroyMonitor();
-              monitors.remove(currencyParams.getCallback());
-            }
-            return;
-          }
-        });
-      });
+                HttpClients.createDefault().execute(httpPost).close();
+              } catch (Exception e) {
+                cleanUpSubscriptions(currencyParams.getCallback());
+                return;
+              }
+            });
+          });
       balanceSubscriptions.put(currencyParams.getCallback(), rsBalanceSubscription);
+
+      Subscription rsTransactionSubscription =
+          monitor.getObservableTransactions().subscribe((transactionSet) -> {
+            transactionSet.forEach((transaction) -> {
+              try {
+                CurrencyParameters responseParms = new CurrencyParameters();
+                responseParms.setAccount(new LinkedList<String>());
+                responseParms.getAccount().addAll(Arrays.asList(transaction.getFromAddress()));
+                LinkedList<CurrencyParametersRecipient> receivers = new LinkedList<>();
+                Arrays.asList(transaction.getToAddress()).forEach(address -> {
+                  CurrencyParametersRecipient sendData = new CurrencyParametersRecipient();
+                  sendData.setAmount(transaction.getAmount().toPlainString());
+                  sendData.setRecipientAddress(address);
+                  receivers.add(sendData);
+                });
+                responseParms.setReceivingAccount(receivers);
+                responseParms.setTransactionData(transaction.getTxHash());
+
+                HttpPost httpPost = new HttpPost(currencyParams.getCallback());
+                httpPost.addHeader("content-type", "application/json");
+                StringEntity entity;
+                entity = new StringEntity(stringifyObject(CurrencyParameters.class, responseParms));
+                httpPost.setEntity(entity);
+
+                HttpClients.createDefault().execute(httpPost).close();
+              } catch (Exception e) {
+                cleanUpSubscriptions(currencyParams.getCallback());
+                return;
+              }
+            });
+          });
+      transactionSubscriptions.put(currencyParams.getCallback(), rsTransactionSubscription);
       monitors.put(currencyParams.getCallback(), monitor);
     } else {
       // We have no way to respond to the caller other than with this response.

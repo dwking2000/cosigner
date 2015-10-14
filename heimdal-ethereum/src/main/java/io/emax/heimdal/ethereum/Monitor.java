@@ -17,9 +17,10 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   private HashMap<String, String> accountBalances = new HashMap<>();
   private HashSet<TransactionDetails> accountTransactions = new HashSet<>();
   private HashSet<TransactionDetails> newAccountTransactions = new HashSet<>();
+
   private Observable<Map<String, String>> observableBalances =
       Observable.interval(1, TimeUnit.MINUTES).map(tick -> accountBalances);
-  
+
   private Observable<Set<TransactionDetails>> observableTransactions =
       Observable.interval(1, TimeUnit.MINUTES).map(tick -> {
         HashSet<TransactionDetails> txs = new HashSet<>();
@@ -27,20 +28,18 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
         newAccountTransactions.clear();
         return txs;
       });
-  
-  private Subscription balanceSubscription;
+
+  private Subscription balanceSubscription =
+      Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
+
   private Wallet wallet;
 
   public Monitor(Wallet wallet) {
     this.wallet = wallet;
-    balanceSubscription =
-        Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
   }
 
   public Monitor() {
     wallet = new Wallet();
-    balanceSubscription =
-        Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
   }
 
   private boolean updateBalances() {
@@ -65,6 +64,7 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
     details.removeAll(accountTransactions);
     accountTransactions.addAll(details);
     newAccountTransactions.addAll(details);
+
     return true;
   }
 

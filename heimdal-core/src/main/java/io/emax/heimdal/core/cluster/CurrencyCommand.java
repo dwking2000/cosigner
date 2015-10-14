@@ -59,7 +59,8 @@ public class CurrencyCommand implements BaseCommand {
     // SIGN -- Attempt to sign the provided data, for off-client keys
     switch (command.commandType) {
       case SIGN:
-        String signedTx = Common.approveTransaction(Common.stringifyObject(CurrencyParameters.class, command.currencyParams), false);
+        String signedTx = Common.approveTransaction(
+            Common.stringifyObject(CurrencyParameters.class, command.currencyParams), false);
         command.currencyParams.setTransactionData(signedTx);
         return command.toJson();
       default:

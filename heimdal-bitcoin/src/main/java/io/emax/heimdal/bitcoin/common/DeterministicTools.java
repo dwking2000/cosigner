@@ -180,7 +180,7 @@ public class DeterministicTools {
       md.reset();
       md.update(data);
       byte[] publicKeyChecksum = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
-      
+
       encodedBytes = encodedBytes + ByteUtilities.toHexString(publicKeyChecksum);
       encodedBytes = encodedBytes.toLowerCase();
       encodedBytes = Base58.encode(ByteUtilities.toByteArray(encodedBytes));

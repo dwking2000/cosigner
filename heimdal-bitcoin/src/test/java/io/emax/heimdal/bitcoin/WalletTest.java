@@ -18,7 +18,7 @@ public class WalletTest extends TestCase {
     wallet = new Wallet(new BitcoinTestRpc());
     userKey = "deadbeef";
   }
-  
+
   @Test
   public void testWallet() {
     System.out.println("");
@@ -28,22 +28,24 @@ public class WalletTest extends TestCase {
       System.out.println("Single Address: " + singleAddress);
       String multiSigAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
       System.out.println("Multi-sig Address: " + multiSigAddress);
-      
+
       Recipient recipient = new Recipient();
       recipient.setAmount(BigDecimal.valueOf(20));
       recipient.setRecipientAddress(multiSigAddress);
-      String txString = wallet.createTransaction(Arrays.asList(singleAddress), Arrays.asList(recipient));
-      System.out.println("20 BTC from " + singleAddress + " to " + multiSigAddress + ": " + txString);
+      String txString =
+          wallet.createTransaction(Arrays.asList(singleAddress), Arrays.asList(recipient));
+      System.out
+          .println("20 BTC from " + singleAddress + " to " + multiSigAddress + ": " + txString);
       txString = wallet.signTransaction(txString, singleAddress, userKey);
       System.out.println("Signed TX: " + txString);
       txString = wallet.sendTransaction(txString);
       System.out.println("TX ID: " + txString);
-    } catch (Exception e) { 
+    } catch (Exception e) {
       e.printStackTrace();
-      fail("Simple wallet test failed!");      
+      fail("Simple wallet test failed!");
     }
   }
-  
+
   @Test
   public void testBalance() {
     System.out.println("");
@@ -53,11 +55,11 @@ public class WalletTest extends TestCase {
       System.out.println("Single Address: " + singleAddress);
       String multiSigAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
       System.out.println("Multi-sig Address: " + multiSigAddress);
-      
+
       String balance = wallet.getBalance(singleAddress);
       System.out.println("Balance for " + singleAddress + ": " + balance);
       balance = wallet.getBalance(multiSigAddress);
-      System.out.println("Balance for " + multiSigAddress + ": " + balance);    
+      System.out.println("Balance for " + multiSigAddress + ": " + balance);
     } catch (Exception e) {
       e.printStackTrace();
       fail("Balance test failed");

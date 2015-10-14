@@ -149,7 +149,7 @@ public class Payment {
    */
   @JsonProperty("otheraccount")
   private String otheraccount;
-  
+
   @JsonProperty("involvesWatchonly")
   private boolean involvesWatchonly;
 

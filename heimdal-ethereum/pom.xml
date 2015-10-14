@@ -49,7 +49,7 @@
 						<version>2.18.1</version>
 					</dependency>
 				</dependencies>
-			</plugin>			
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -62,7 +62,7 @@
 						</manifest>
 					</archive>
 				</configuration>
-			</plugin>			
+			</plugin>
 			<plugin>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>

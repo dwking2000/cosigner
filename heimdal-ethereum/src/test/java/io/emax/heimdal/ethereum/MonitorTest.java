@@ -41,7 +41,7 @@ public class MonitorTest extends TestCase {
     multiAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
     System.out.println("Multi Address Test: " + multiAddress);
     monitor.addAddresses(Arrays.asList(multiAddress));
-    
+
     System.out.println("Waiting for balance updates (2 minutes)... ");
     System.out.println("Time: " + new Date());
 
@@ -50,11 +50,11 @@ public class MonitorTest extends TestCase {
       addresses.forEach((address, balance) -> {
         balanceCounter++;
         System.out.println("Address: " + address + " Balance: " + balance);
-      } );
-    } );
-    
+      });
+    });
+
     Timer timer = new Timer();
-    timer.schedule(new TimerTask() {      
+    timer.schedule(new TimerTask() {
       @Override
       public void run() {
         System.out.println("Unsubscribing from monitor. Test should complete within 10 seconds.");
@@ -62,11 +62,11 @@ public class MonitorTest extends TestCase {
         monitorSub.unsubscribe();
       }
     }, 2 * 60 * 1000);
-    
-    while(!monitorSub.isUnsubscribed()) {
+
+    while (!monitorSub.isUnsubscribed()) {
       Thread.sleep(10 * 1000);
     }
-    
+
     assertTrue(balanceCounter > 0);
   }
 }

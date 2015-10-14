@@ -62,7 +62,6 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
   public Wallet() {
     try {
       syncMultiSigAddresses();
-      scanTransactions();
     } catch (Exception e) {
       // this is ok.
     }
@@ -573,13 +572,15 @@ public class Wallet implements io.emax.heimdal.api.currency.Wallet {
         TransactionDetails txDetail = new TransactionDetails();
 
         txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
-        txDetail.setFromAddress(new String[] {ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getFrom()))});
-        txDetail.setToAddress(new String[] {ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
-        BigDecimal amount = BigDecimal
-            .valueOf(new BigInteger(1, ByteUtilities.toByteArray(tx.getValue())).longValue());
+        txDetail.setFromAddress(
+            new String[] {ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getFrom()))});
+        txDetail.setToAddress(
+            new String[] {ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
+        BigDecimal amount =
+            new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(tx.getValue())));
         amount = amount.divide(BigDecimal.valueOf(config.getWeiMultiplier()));
         txDetail.setAmount(amount);
-        
+
         // For each receiver that is an mSig account, parse the data, check if it's sending data to
         // another account.
         try {

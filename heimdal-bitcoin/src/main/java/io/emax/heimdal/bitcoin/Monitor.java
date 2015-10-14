@@ -27,19 +27,18 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
         newAccountTransactions.clear();
         return txs;
       });
-  private Subscription balanceSubscription;
-  Wallet wallet;
+
+  private Subscription balanceSubscription =
+      Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
+
+  private Wallet wallet;
 
   public Monitor(Wallet wallet) {
     this.wallet = wallet;
-    balanceSubscription =
-        Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
   }
 
   public Monitor() {
     wallet = new Wallet();
-    balanceSubscription =
-        Observable.interval(1, TimeUnit.MINUTES).map(tick -> updateBalances()).subscribe();
   }
 
   private boolean updateBalances() {

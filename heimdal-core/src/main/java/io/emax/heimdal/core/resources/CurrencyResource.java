@@ -45,7 +45,7 @@ public class CurrencyResource {
     logger.debug("[ListAllAccounts:Response] " + response.toString());
     return response;
   }
-  
+
   @POST
   @Path("/ListTransactions")
   @Produces(MediaType.APPLICATION_JSON)

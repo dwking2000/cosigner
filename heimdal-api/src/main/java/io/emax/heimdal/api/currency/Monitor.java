@@ -13,13 +13,14 @@ import rx.Observable;
  *
  */
 public interface Monitor {
-  
+
   /**
    * Create a new monitor using the same RPC and wallet settings as the current one.
+   * 
    * @return
    */
   Monitor createNewMonitor();
-  
+
   /**
    * Destroys a monitor when we're done with it
    */
@@ -59,13 +60,13 @@ public interface Monitor {
    * @return
    */
   Observable<Map<String, String>> getObservableBalances();
-  
+
   /**
    * 
    * @return
    */
   Set<TransactionDetails> getTransactions();
-  
+
   /**
    * 
    * @return

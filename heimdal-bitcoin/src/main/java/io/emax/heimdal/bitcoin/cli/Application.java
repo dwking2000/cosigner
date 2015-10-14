@@ -141,7 +141,7 @@ public class Application {
         break;
       case "listTxs":
         if (args.length >= 2)
-          accountName = args[1];       
+          accountName = args[1];
         Arrays.asList(wallet.getTransactions(accountName, 100, 0)).forEach(tx -> {
           System.out.println(tx);
         });;
