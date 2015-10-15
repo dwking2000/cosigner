@@ -79,11 +79,13 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
         }
 
         // contractAccount
-        contractAccount = heimdalProperties.getProperty("contractAccount", contractAccount);
+        contractAccount = EnvironmentVariableParser
+            .resolveEnvVars(heimdalProperties.getProperty("contractAccount", contractAccount));
 
         // multiSigAccounts
         String arrayParser = "";
-        arrayParser = heimdalProperties.getProperty("multiSigAccounts");
+        arrayParser = EnvironmentVariableParser
+            .resolveEnvVars(heimdalProperties.getProperty("multiSigAccounts"));
         if (arrayParser != null) {
           multiSigAccounts = arrayParser.split("[|]");
         }

@@ -1,8 +1,12 @@
 bitcoind:
   build: ./docker-builds/bitcoind 
+  ports:
+    - "18332:18332"
 
 geth:
   build: ./docker-builds/geth 
+  ports:
+    - "30303:30303"
 
 heimdal:
   build: ./
@@ -11,3 +15,8 @@ heimdal:
   links:
     - bitcoind
     - geth
+ environment:
+    BITCOIND_MSIG_ACCOUNTS:
+    GETH_CONTRACT_ACCOUNT:
+    GETH_MSIG_ACCOUNTS:
+

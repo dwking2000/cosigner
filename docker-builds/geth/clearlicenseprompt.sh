@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/expect -f
 
-geth --genesis ../geth/private_genesis.json console <<EOF
-Y
-EOF
+spawn /opt/emax/bin/geth --testnet console
+expect "Do you accept this agreement? \\\[y/N\\\]"
+send "Y\r"
+expect ">"
+exit
 

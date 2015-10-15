@@ -63,7 +63,8 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
 
         // multiSigAccounts
         String arrayParser = "";
-        arrayParser = heimdalProperties.getProperty("multiSigAccounts");
+        arrayParser = EnvironmentVariableParser
+            .resolveEnvVars(heimdalProperties.getProperty("multiSigAccounts"));
         if (arrayParser != null) {
           multiSigAccounts = arrayParser.split("[|]");
         }
