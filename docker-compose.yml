@@ -1,7 +1,7 @@
 bitcoind:
   build: ./docker-builds/bitcoind 
   ports:
-    - "18332:18332"
+    - "18333:18333"
 
 geth:
   build: ./docker-builds/geth 

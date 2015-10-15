@@ -13,7 +13,7 @@ ADD bitcoin.conf /root/.bitcoin/bitcoin.conf
 
 WORKDIR /opt/emax/bin
 
-EXPOSE 18332
+EXPOSE 18333
 
 ENTRYPOINT "/opt/emax/bin/btcprivatenet.sh"
 
