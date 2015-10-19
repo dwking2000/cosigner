@@ -1,7 +1,7 @@
 bitcoind:
   build: ./docker-builds/bitcoind 
   ports:
-    - "18333:18333"
+    - "18332:18332"
 
 geth:
   build: ./docker-builds/geth 
@@ -15,7 +15,7 @@ cosigner:
   links:
     - bitcoind
     - geth
- environment:
+  environment:
     BITCOIND_MSIG_ACCOUNTS:
     GETH_CONTRACT_ACCOUNT:
     GETH_MSIG_ACCOUNTS:
