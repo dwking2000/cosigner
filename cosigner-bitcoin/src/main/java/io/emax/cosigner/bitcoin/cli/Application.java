@@ -1,12 +1,12 @@
-package io.emax.heimdal.bitcoin.cli;
+package io.emax.cosigner.bitcoin.cli;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import io.emax.heimdal.api.currency.Wallet.Recipient;
-import io.emax.heimdal.bitcoin.Monitor;
-import io.emax.heimdal.bitcoin.Wallet;
+import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.bitcoin.Monitor;
+import io.emax.cosigner.bitcoin.Wallet;
 
 /**
  * Command line option for running the library

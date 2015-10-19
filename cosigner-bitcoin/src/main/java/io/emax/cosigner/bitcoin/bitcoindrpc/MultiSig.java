@@ -1,4 +1,4 @@
-package io.emax.heimdal.bitcoin.bitcoindrpc;
+package io.emax.cosigner.bitcoin.bitcoindrpc;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

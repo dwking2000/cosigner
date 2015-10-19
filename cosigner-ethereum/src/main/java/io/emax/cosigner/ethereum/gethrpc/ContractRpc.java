@@ -1,4 +1,4 @@
-package io.emax.heimdal.ethereum.gethrpc;
+package io.emax.cosigner.ethereum.gethrpc;
 
 public interface ContractRpc {
   String eth_getCode(String address, String defaultBlock);

@@ -1,21 +1,21 @@
-package io.emax.heimdal.bitcoin.stubrpc;
+package io.emax.cosigner.bitcoin.stubrpc;
 
 import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.Map;
 
-import io.emax.heimdal.bitcoin.bitcoindrpc.BitcoindRpc;
-import io.emax.heimdal.bitcoin.bitcoindrpc.Block;
-import io.emax.heimdal.bitcoin.bitcoindrpc.BlockChainInfo;
-import io.emax.heimdal.bitcoin.bitcoindrpc.DecodedTransaction;
-import io.emax.heimdal.bitcoin.bitcoindrpc.DecodedTransaction.DecodedInput;
-import io.emax.heimdal.bitcoin.bitcoindrpc.MultiSig;
-import io.emax.heimdal.bitcoin.bitcoindrpc.Outpoint;
-import io.emax.heimdal.bitcoin.bitcoindrpc.OutpointDetails;
-import io.emax.heimdal.bitcoin.bitcoindrpc.Output;
-import io.emax.heimdal.bitcoin.bitcoindrpc.Payment;
-import io.emax.heimdal.bitcoin.bitcoindrpc.SigHash;
-import io.emax.heimdal.bitcoin.bitcoindrpc.SignedTransaction;
+import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
+import io.emax.cosigner.bitcoin.bitcoindrpc.Block;
+import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainInfo;
+import io.emax.cosigner.bitcoin.bitcoindrpc.DecodedTransaction;
+import io.emax.cosigner.bitcoin.bitcoindrpc.DecodedTransaction.DecodedInput;
+import io.emax.cosigner.bitcoin.bitcoindrpc.MultiSig;
+import io.emax.cosigner.bitcoin.bitcoindrpc.Outpoint;
+import io.emax.cosigner.bitcoin.bitcoindrpc.OutpointDetails;
+import io.emax.cosigner.bitcoin.bitcoindrpc.Output;
+import io.emax.cosigner.bitcoin.bitcoindrpc.Payment;
+import io.emax.cosigner.bitcoin.bitcoindrpc.SigHash;
+import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
 
 public class BitcoinTestRpc implements BitcoindRpc {
 

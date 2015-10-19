@@ -1,13 +1,13 @@
-package io.emax.heimdal.ethereum;
+package io.emax.cosigner.ethereum;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import io.emax.heimdal.api.currency.SigningType;
-import io.emax.heimdal.ethereum.common.EnvironmentVariableParser;
+import io.emax.cosigner.api.currency.SigningType;
+import io.emax.cosigner.ethereum.common.EnvironmentVariableParser;
 
-public class CurrencyConfiguration implements io.emax.heimdal.api.currency.CurrencyConfiguration {
+public class CurrencyConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
   // Defaults
   private static String daemonConnectionString = "http://localhost:8101";
   private static int minConfirmations = 10;
@@ -30,72 +30,72 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
 
   private synchronized void loadConfig() {
     if (!configLoaded) {
-      String propertiesFilePath = "./heimdal-ethereum.properties";
+      String propertiesFilePath = "./cosigner-ethereum.properties";
 
       try {
-        Properties heimdalProperties = new Properties();
+        Properties cosignerProperties = new Properties();
         FileInputStream propertiesFile = new FileInputStream(propertiesFilePath);
 
-        heimdalProperties.load(propertiesFile);
+        cosignerProperties.load(propertiesFile);
         propertiesFile.close();
 
         // daemonConnectionString
         daemonConnectionString = EnvironmentVariableParser.resolveEnvVars(
-            heimdalProperties.getProperty("daemonConnectionString", daemonConnectionString));
+            cosignerProperties.getProperty("daemonConnectionString", daemonConnectionString));
 
         // minConfirmations
         try {
-          int intParser = Integer.parseInt(heimdalProperties.getProperty("minConfirmations"));
+          int intParser = Integer.parseInt(cosignerProperties.getProperty("minConfirmations"));
           minConfirmations = intParser;
         } catch (NumberFormatException nex) {
         }
 
         // gasPrice
         try {
-          long longParser = Long.parseLong(heimdalProperties.getProperty("gasPrice"));
+          long longParser = Long.parseLong(cosignerProperties.getProperty("gasPrice"));
           gasPrice = longParser;
         } catch (NumberFormatException nex) {
         }
 
         // simpleTxGas
         try {
-          long longParser = Long.parseLong(heimdalProperties.getProperty("simpleTxGas"));
+          long longParser = Long.parseLong(cosignerProperties.getProperty("simpleTxGas"));
           simpleTxGas = longParser;
         } catch (NumberFormatException nex) {
         }
 
         // contractGas
         try {
-          long longParser = Long.parseLong(heimdalProperties.getProperty("contractGas"));
+          long longParser = Long.parseLong(cosignerProperties.getProperty("contractGas"));
           contractGas = longParser;
         } catch (NumberFormatException nex) {
         }
 
         // minSignatures
         try {
-          int intParser = Integer.parseInt(heimdalProperties.getProperty("minSignatures"));
+          int intParser = Integer.parseInt(cosignerProperties.getProperty("minSignatures"));
           minSignatures = intParser;
         } catch (NumberFormatException nex) {
         }
 
         // contractAccount
         contractAccount = EnvironmentVariableParser
-            .resolveEnvVars(heimdalProperties.getProperty("contractAccount", contractAccount));
+            .resolveEnvVars(cosignerProperties.getProperty("contractAccount", contractAccount));
 
         // multiSigAccounts
         String arrayParser = "";
         arrayParser = EnvironmentVariableParser
-            .resolveEnvVars(heimdalProperties.getProperty("multiSigAccounts"));
+            .resolveEnvVars(cosignerProperties.getProperty("multiSigAccounts"));
         if (arrayParser != null) {
           multiSigAccounts = arrayParser.split("[|]");
         }
 
         // serverPrivateKey
-        serverPrivateKey = heimdalProperties.getProperty("serverPrivateKey", serverPrivateKey);
+        serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
 
-        System.out.println("heimdal-ethereum configuration loaded.");
+        System.out.println("cosigner-ethereum configuration loaded.");
       } catch (IOException e) {
-        System.out.println("Could not load heimdal-ethereum configuration, using defaults.");
+        System.out.println("Could not load cosigner-ethereum configuration, using defaults.");
       }
       configLoaded = true;
     }

@@ -1,4 +1,4 @@
-package io.emax.heimdal.ethereum.gethrpc;
+package io.emax.cosigner.ethereum.gethrpc;
 
 public interface NetworkRpc {
   String eth_blockNumber();

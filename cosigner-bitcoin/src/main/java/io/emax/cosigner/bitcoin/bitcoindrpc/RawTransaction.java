@@ -1,4 +1,4 @@
-package io.emax.heimdal.bitcoin.bitcoindrpc;
+package io.emax.cosigner.bitcoin.bitcoindrpc;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.emax.heimdal.bitcoin.common.ByteUtilities;
-import io.emax.heimdal.bitcoin.common.DeterministicTools;
+import io.emax.cosigner.bitcoin.common.ByteUtilities;
+import io.emax.cosigner.bitcoin.common.DeterministicTools;
 
 /**
  * Utility class to convert between a raw transaction and the data structure represented here.

@@ -1,4 +1,4 @@
-package io.emax.heimdal.ethereum;
+package io.emax.cosigner.ethereum;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -7,7 +7,7 @@ import java.util.TimerTask;
 
 import org.junit.Test;
 
-import io.emax.heimdal.ethereum.stubrpc.EthereumTestRpc;
+import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 import junit.framework.TestCase;
 import rx.Subscription;
 

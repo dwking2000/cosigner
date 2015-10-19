@@ -1,4 +1,4 @@
-package io.emax.heimdal.ethereum.gethrpc;
+package io.emax.cosigner.ethereum.gethrpc;
 
 import java.util.Arrays;
 

@@ -1,4 +1,4 @@
-package io.emax.heimdal.core.cluster;
+package io.emax.cosigner.core.cluster;
 
 import java.io.IOException;
 
@@ -7,8 +7,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import io.emax.heimdal.core.currency.Common;
-import io.emax.heimdal.core.currency.CurrencyParameters;
+import io.emax.cosigner.core.currency.Common;
+import io.emax.cosigner.core.currency.CurrencyParameters;
 
 public class CurrencyCommand implements BaseCommand {
   private CurrencyCommandType commandType;

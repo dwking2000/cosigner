@@ -1,4 +1,4 @@
-package io.emax.heimdal.bitcoin;
+package io.emax.cosigner.bitcoin;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -7,7 +7,7 @@ import java.util.TimerTask;
 
 import org.junit.Test;
 
-import io.emax.heimdal.bitcoin.stubrpc.BitcoinTestRpc;
+import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 import junit.framework.TestCase;
 import rx.Subscription;
 

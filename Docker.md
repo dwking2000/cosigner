@@ -2,7 +2,7 @@
 
 ## Overview
 
-Instructions for running heimdal in docker with regtest/private networks.
+Instructions for running cosigner in docker with regtest/private networks.
 
 ## Building and running
 ```bash
@@ -10,7 +10,7 @@ docker-compose up
 ```
 
 ## Funding accounts
-Connect to the relevant docker image using exec bash, and find the wallet's coinbase account where the mining proceeds are going. Once unlocked you should be able to send funds from these by using the heimdal interface.
+Connect to the relevant docker image using exec bash, and find the wallet's coinbase account where the mining proceeds are going. Once unlocked you should be able to send funds from these by using the cosigner interface.
 
 ### Geth
 ```bash

@@ -1,4 +1,4 @@
-package io.emax.heimdal.core.cluster;
+package io.emax.cosigner.core.cluster;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -16,8 +16,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import io.emax.heimdal.core.Application;
-import io.emax.heimdal.core.ApplicationConfiguration;
+import io.emax.cosigner.core.Application;
+import io.emax.cosigner.core.ApplicationConfiguration;
 import rx.Observable;
 import rx.functions.Action1;
 

@@ -1,4 +1,4 @@
-package io.emax.heimdal.ethereum;
+package io.emax.cosigner.ethereum;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -8,22 +8,22 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
-import io.emax.heimdal.ethereum.common.ByteUtilities;
-import io.emax.heimdal.ethereum.common.DeterministicTools;
-import io.emax.heimdal.ethereum.common.RLPItem;
-import io.emax.heimdal.ethereum.common.RLPList;
-import io.emax.heimdal.ethereum.common.Secp256k1;
-import io.emax.heimdal.ethereum.gethrpc.Block;
-import io.emax.heimdal.ethereum.gethrpc.CallData;
-import io.emax.heimdal.ethereum.gethrpc.DefaultBlock;
-import io.emax.heimdal.ethereum.gethrpc.EthereumRpc;
-import io.emax.heimdal.ethereum.gethrpc.MultiSigContract;
-import io.emax.heimdal.ethereum.gethrpc.MultiSigContractParameters;
-import io.emax.heimdal.ethereum.gethrpc.RawTransaction;
+import io.emax.cosigner.ethereum.common.ByteUtilities;
+import io.emax.cosigner.ethereum.common.DeterministicTools;
+import io.emax.cosigner.ethereum.common.RLPItem;
+import io.emax.cosigner.ethereum.common.RLPList;
+import io.emax.cosigner.ethereum.common.Secp256k1;
+import io.emax.cosigner.ethereum.gethrpc.Block;
+import io.emax.cosigner.ethereum.gethrpc.CallData;
+import io.emax.cosigner.ethereum.gethrpc.DefaultBlock;
+import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
+import io.emax.cosigner.ethereum.gethrpc.MultiSigContract;
+import io.emax.cosigner.ethereum.gethrpc.MultiSigContractParameters;
+import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
 import rx.Observable;
 import rx.Subscription;
 
-public class Wallet implements io.emax.heimdal.api.currency.Wallet {
+public class Wallet implements io.emax.cosigner.api.currency.Wallet {
   // RPC and configuration
   private EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
   private CurrencyConfiguration config = new CurrencyConfiguration();

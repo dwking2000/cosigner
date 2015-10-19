@@ -1,4 +1,4 @@
-package io.emax.heimdal.bitcoin;
+package io.emax.cosigner.bitcoin;
 
 import java.net.Authenticator;
 import java.net.MalformedURLException;
@@ -8,7 +8,7 @@ import java.net.URL;
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 
-import io.emax.heimdal.bitcoin.bitcoindrpc.BitcoindRpc;
+import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 
 /**
  * Static connection to a bitcoind RPC server

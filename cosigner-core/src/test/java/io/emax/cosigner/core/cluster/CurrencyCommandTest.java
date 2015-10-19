@@ -1,15 +1,15 @@
-package io.emax.heimdal.core.cluster;
+package io.emax.cosigner.core.cluster;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 
 import org.junit.Test;
 
-import io.emax.heimdal.core.Application;
-import io.emax.heimdal.core.ApplicationConfiguration;
-import io.emax.heimdal.core.currency.Common;
-import io.emax.heimdal.core.currency.CommonTest;
-import io.emax.heimdal.core.currency.CurrencyParameters;
+import io.emax.cosigner.core.Application;
+import io.emax.cosigner.core.ApplicationConfiguration;
+import io.emax.cosigner.core.currency.Common;
+import io.emax.cosigner.core.currency.CommonTest;
+import io.emax.cosigner.core.currency.CurrencyParameters;
 import junit.framework.TestCase;
 
 public class CurrencyCommandTest extends TestCase {

@@ -1,4 +1,4 @@
-package io.emax.heimdal.ethereum;
+package io.emax.cosigner.ethereum;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -6,7 +6,7 @@ import java.net.URL;
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 
-import io.emax.heimdal.ethereum.gethrpc.EthereumRpc;
+import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 
 /**
  * Static connection to a geth RPC server

@@ -3,12 +3,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>io.emax</groupId>
-	<artifactId>heimdal-parent</artifactId>
+	<artifactId>cosigner-parent</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>heimdal</name>
-	<description>Heimdal - A Block Chain Agnostic Multisig Gateway</description>
-	<url>https://github.com/EMAXio/heimdal</url>
+	<name>Cosigner</name>
+	<description>Cosigner - A Block Chain Agnostic Multisig Gateway</description>
+	<url>https://github.com/EMAXio/cosigner</url>
 
 	<organization>
 		<name>EMAX</name>
@@ -36,16 +36,16 @@
 	</properties>
 
 	<scm>
-		<connection>scm:git:git@github.com:EMAXio/heimdal.git</connection>
-		<developerConnection>scm:git:git@github.com:EMAXio/heimdal.git</developerConnection>
-		<url>https://github.com/EMAXio/heimdal</url>
+		<connection>scm:git:git@github.com:EMAXio/cosigner.git</connection>
+		<developerConnection>scm:git:git@github.com:EMAXio/cosigner.git</developerConnection>
+		<url>https://github.com/EMAXio/cosigner</url>
 	</scm>
 
 	<modules>
-		<module>heimdal-api</module>
-		<module>heimdal-bitcoin</module>
-		<module>heimdal-ethereum</module>
-		<module>heimdal-core</module>
+		<module>cosigner-api</module>
+		<module>cosigner-bitcoin</module>
+		<module>cosigner-ethereum</module>
+		<module>cosigner-core</module>
 	</modules>
 
 	<build>

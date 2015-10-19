@@ -1,4 +1,4 @@
-package io.emax.heimdal.bitcoin;
+package io.emax.cosigner.bitcoin;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -14,25 +14,25 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.emax.heimdal.bitcoin.bitcoindrpc.BitcoindRpc;
-import io.emax.heimdal.bitcoin.bitcoindrpc.MultiSig;
-import io.emax.heimdal.bitcoin.bitcoindrpc.Outpoint;
-import io.emax.heimdal.bitcoin.bitcoindrpc.OutpointDetails;
-import io.emax.heimdal.bitcoin.bitcoindrpc.Output;
-import io.emax.heimdal.bitcoin.bitcoindrpc.Payment;
-import io.emax.heimdal.bitcoin.bitcoindrpc.Payment.PaymentCategory;
-import io.emax.heimdal.bitcoin.bitcoindrpc.RawInput;
-import io.emax.heimdal.bitcoin.bitcoindrpc.RawOutput;
-import io.emax.heimdal.bitcoin.bitcoindrpc.RawTransaction;
-import io.emax.heimdal.bitcoin.bitcoindrpc.SigHash;
-import io.emax.heimdal.bitcoin.bitcoindrpc.SignedTransaction;
-import io.emax.heimdal.bitcoin.common.ByteUtilities;
-import io.emax.heimdal.bitcoin.common.DeterministicTools;
-import io.emax.heimdal.bitcoin.common.Secp256k1;
+import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
+import io.emax.cosigner.bitcoin.bitcoindrpc.MultiSig;
+import io.emax.cosigner.bitcoin.bitcoindrpc.Outpoint;
+import io.emax.cosigner.bitcoin.bitcoindrpc.OutpointDetails;
+import io.emax.cosigner.bitcoin.bitcoindrpc.Output;
+import io.emax.cosigner.bitcoin.bitcoindrpc.Payment;
+import io.emax.cosigner.bitcoin.bitcoindrpc.Payment.PaymentCategory;
+import io.emax.cosigner.bitcoin.bitcoindrpc.RawInput;
+import io.emax.cosigner.bitcoin.bitcoindrpc.RawOutput;
+import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction;
+import io.emax.cosigner.bitcoin.bitcoindrpc.SigHash;
+import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
+import io.emax.cosigner.bitcoin.common.ByteUtilities;
+import io.emax.cosigner.bitcoin.common.DeterministicTools;
+import io.emax.cosigner.bitcoin.common.Secp256k1;
 import rx.Observable;
 import rx.Subscription;
 
-public class Wallet implements io.emax.heimdal.api.currency.Wallet {
+public class Wallet implements io.emax.cosigner.api.currency.Wallet {
 
   private CurrencyConfiguration config = new CurrencyConfiguration();
   private BitcoindRpc bitcoindRpc = BitcoindResource.getResource().getBitcoindRpc();

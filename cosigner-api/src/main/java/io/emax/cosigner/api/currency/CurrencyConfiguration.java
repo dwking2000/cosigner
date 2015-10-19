@@ -1,7 +1,7 @@
-package io.emax.heimdal.api.currency;
+package io.emax.cosigner.api.currency;
 
 /**
- * Common configuration that each currency needs to provide to heimdal-core
+ * Common configuration that each currency needs to provide to cosigner-core
  * 
  * @author Tom
  *

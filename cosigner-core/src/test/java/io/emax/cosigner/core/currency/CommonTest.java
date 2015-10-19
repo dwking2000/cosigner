@@ -1,16 +1,16 @@
-package io.emax.heimdal.core.currency;
+package io.emax.cosigner.core.currency;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 
 import org.junit.Test;
 
-import io.emax.heimdal.api.currency.CurrencyConfiguration;
-import io.emax.heimdal.api.currency.Monitor;
-import io.emax.heimdal.api.currency.Wallet;
-import io.emax.heimdal.bitcoin.stubrpc.BitcoinTestRpc;
-import io.emax.heimdal.core.Application;
-import io.emax.heimdal.ethereum.stubrpc.EthereumTestRpc;
+import io.emax.cosigner.api.currency.CurrencyConfiguration;
+import io.emax.cosigner.api.currency.Monitor;
+import io.emax.cosigner.api.currency.Wallet;
+import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
+import io.emax.cosigner.core.Application;
+import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 import junit.framework.TestCase;
 
 public class CommonTest extends TestCase {
@@ -18,18 +18,18 @@ public class CommonTest extends TestCase {
   private static String userKey;
 
   // Bitcoin
-  private static Wallet bitcoinWallet = new io.emax.heimdal.bitcoin.Wallet(new BitcoinTestRpc());
+  private static Wallet bitcoinWallet = new io.emax.cosigner.bitcoin.Wallet(new BitcoinTestRpc());
   private static Monitor bitcoinMonitor =
-      new io.emax.heimdal.bitcoin.Monitor((io.emax.heimdal.bitcoin.Wallet) bitcoinWallet);
+      new io.emax.cosigner.bitcoin.Monitor((io.emax.cosigner.bitcoin.Wallet) bitcoinWallet);
   private static CurrencyConfiguration bitcoinConfig =
-      new io.emax.heimdal.bitcoin.CurrencyConfiguration();
+      new io.emax.cosigner.bitcoin.CurrencyConfiguration();
 
   // Ethereum
-  private static Wallet ethereumWallet = new io.emax.heimdal.ethereum.Wallet(new EthereumTestRpc());
+  private static Wallet ethereumWallet = new io.emax.cosigner.ethereum.Wallet(new EthereumTestRpc());
   private static Monitor ethereumMonitor =
-      new io.emax.heimdal.ethereum.Monitor((io.emax.heimdal.ethereum.Wallet) ethereumWallet);
+      new io.emax.cosigner.ethereum.Monitor((io.emax.cosigner.ethereum.Wallet) ethereumWallet);
   private static CurrencyConfiguration ethereumConfig =
-      new io.emax.heimdal.ethereum.CurrencyConfiguration();
+      new io.emax.cosigner.ethereum.CurrencyConfiguration();
 
   @Override
   public void setUp() {

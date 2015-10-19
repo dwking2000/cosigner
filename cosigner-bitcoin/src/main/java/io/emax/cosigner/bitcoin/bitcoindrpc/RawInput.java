@@ -1,10 +1,10 @@
-package io.emax.heimdal.bitcoin.bitcoindrpc;
+package io.emax.cosigner.bitcoin.bitcoindrpc;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
 
-import io.emax.heimdal.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
-import io.emax.heimdal.bitcoin.common.ByteUtilities;
+import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
+import io.emax.cosigner.bitcoin.common.ByteUtilities;
 
 public class RawInput {
   private String txHash;

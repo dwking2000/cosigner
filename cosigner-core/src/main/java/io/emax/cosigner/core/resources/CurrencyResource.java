@@ -1,4 +1,4 @@
-package io.emax.heimdal.core.resources;
+package io.emax.cosigner.core.resources;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -10,7 +10,7 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.emax.heimdal.core.currency.Common;
+import io.emax.cosigner.core.currency.Common;
 
 @Path("/rs")
 public class CurrencyResource {

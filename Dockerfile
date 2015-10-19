@@ -7,4 +7,4 @@ WORKDIR /opt/emax
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-server", "-jar", "heimdal-core-0.0.1-SNAPSHOT.jar", "server", "core.yml"]
+ENTRYPOINT ["java", "-server", "-jar", "cosigner-core-0.0.1-SNAPSHOT.jar", "server", "core.yml"]

@@ -1,8 +1,8 @@
-package io.emax.heimdal.core.currency;
+package io.emax.cosigner.core.currency;
 
-import io.emax.heimdal.api.currency.CurrencyConfiguration;
-import io.emax.heimdal.api.currency.Monitor;
-import io.emax.heimdal.api.currency.Wallet;
+import io.emax.cosigner.api.currency.CurrencyConfiguration;
+import io.emax.cosigner.api.currency.Monitor;
+import io.emax.cosigner.api.currency.Wallet;
 
 public class CurrencyPackage {
   private CurrencyConfiguration configuration;

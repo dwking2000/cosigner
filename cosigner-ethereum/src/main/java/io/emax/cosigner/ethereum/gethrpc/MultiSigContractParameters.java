@@ -1,11 +1,11 @@
-package io.emax.heimdal.ethereum.gethrpc;
+package io.emax.cosigner.ethereum.gethrpc;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
 
 import org.bouncycastle.util.Arrays;
 
-import io.emax.heimdal.ethereum.common.ByteUtilities;
+import io.emax.cosigner.ethereum.common.ByteUtilities;
 
 public class MultiSigContractParameters {
   private String function;

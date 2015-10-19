@@ -1,4 +1,4 @@
-package io.emax.heimdal.core.currency;
+package io.emax.cosigner.core.currency;
 
 public class CurrencyParametersRecipient {
   private String recipientAddress;

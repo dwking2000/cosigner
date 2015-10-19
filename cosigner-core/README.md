@@ -1,10 +1,10 @@
-# heimdal-core
+# cosigner-core
 
 ### Ownership & License
 
 ## Overview
 
-Heimdal's core coordinator and external facing RPC server.  
+cosigner's core coordinator and external facing RPC server.  
 
 ## Current State
 - Unstable 
@@ -18,7 +18,7 @@ Heimdal's core coordinator and external facing RPC server.
     - Needs to filter or needs to be broken into instanced copies     
   - [Done] PrepareTransaction(Currency, FromUser, FromAddress, To, Amount)   
     - Needs validation
-    - Heimdal servers need to communicate with each other    
+    - cosigner servers need to communicate with each other    
   - [Done] ApproveTransaction(Currency, TransactionID)      
   - [Done] SubmitTransaction(TransactionID)
 - Authorization and logging is not implemented yet.
@@ -29,7 +29,7 @@ Heimdal's core coordinator and external facing RPC server.
 
 Run the jar with
 ```bash
-java -jar heimdal-core-0.0.1-SNAPSHOT.jar server core.yml
+java -jar cosigner-core-0.0.1-SNAPSHOT.jar server core.yml
 ```
 
 Core.yml should look like the following:
@@ -49,7 +49,7 @@ clusterRPCPort: 8080
 
 If running multiple instances on the same server make sure to update the ports to avoid conflicts. When running in this setup, your first node will know about new ones automatically but new ones will not be able to listen on the same port. Use /admin/AddNode to add them manually.  
 
-/admin/AddNode & /admin/ListNodes are administrative endpoints, will be used to add a heimdal node to the cluster. More detail to follow.
+/admin/AddNode & /admin/ListNodes are administrative endpoints, will be used to add a cosigner node to the cluster. More detail to follow.
 
 /ws/\<Function\> will access the WebSocket version of the RPC <br/>
 /rs/\<Function\> will access the REST version of the RPC <br/>

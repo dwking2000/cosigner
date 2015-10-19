@@ -8,7 +8,7 @@ geth:
   ports:
     - "30303:30303"
 
-heimdal:
+cosigner:
   build: ./
   ports:
     - "8080:8080"

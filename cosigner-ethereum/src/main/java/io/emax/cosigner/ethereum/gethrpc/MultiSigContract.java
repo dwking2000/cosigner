@@ -1,4 +1,4 @@
-package io.emax.heimdal.ethereum.gethrpc;
+package io.emax.cosigner.ethereum.gethrpc;
 
 // TODO Fix contract, check that sends are going through.
 public class MultiSigContract {

@@ -1,13 +1,13 @@
-package io.emax.heimdal.bitcoin;
+package io.emax.cosigner.bitcoin;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import io.emax.heimdal.api.currency.SigningType;
-import io.emax.heimdal.bitcoin.common.EnvironmentVariableParser;
+import io.emax.cosigner.api.currency.SigningType;
+import io.emax.cosigner.bitcoin.common.EnvironmentVariableParser;
 
-public class CurrencyConfiguration implements io.emax.heimdal.api.currency.CurrencyConfiguration {
+public class CurrencyConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
   private static String daemonConnectionString = "http://127.0.0.1:18332";
   private static int minConfirmations = 6;
   private static int maxConfirmations = 9999999;
@@ -28,35 +28,35 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
   public synchronized void loadConfig() {
     if (!configLoaded) {
       try {
-        String propertiesFilePath = "./heimdal-bitcoin.properties";
+        String propertiesFilePath = "./cosigner-bitcoin.properties";
 
-        Properties heimdalProperties = new Properties();
+        Properties cosignerProperties = new Properties();
         FileInputStream propertiesFile = new FileInputStream(propertiesFilePath);
 
-        heimdalProperties.load(propertiesFile);
+        cosignerProperties.load(propertiesFile);
         propertiesFile.close();
 
         // daemonConnectionString
         daemonConnectionString = EnvironmentVariableParser.resolveEnvVars(
-            heimdalProperties.getProperty("daemonConnectionString", daemonConnectionString));
+            cosignerProperties.getProperty("daemonConnectionString", daemonConnectionString));
 
         // minConfirmations
         try {
-          int intParser = Integer.parseInt(heimdalProperties.getProperty("minConfirmations"));
+          int intParser = Integer.parseInt(cosignerProperties.getProperty("minConfirmations"));
           minConfirmations = intParser;
         } catch (NumberFormatException nex) {
         }
 
         // minSignatures
         try {
-          int intParser = Integer.parseInt(heimdalProperties.getProperty("minSignatures"));
+          int intParser = Integer.parseInt(cosignerProperties.getProperty("minSignatures"));
           minSignatures = intParser;
         } catch (NumberFormatException nex) {
         }
 
         // maxConfirmations
         try {
-          int intParser = Integer.parseInt(heimdalProperties.getProperty("maxConfirmations"));
+          int intParser = Integer.parseInt(cosignerProperties.getProperty("maxConfirmations"));
           maxConfirmations = intParser;
         } catch (NumberFormatException nex) {
         }
@@ -64,7 +64,7 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
         // multiSigAccounts
         String arrayParser = "";
         arrayParser = EnvironmentVariableParser
-            .resolveEnvVars(heimdalProperties.getProperty("multiSigAccounts"));
+            .resolveEnvVars(cosignerProperties.getProperty("multiSigAccounts"));
         if (arrayParser != null) {
           multiSigAccounts = arrayParser.split("[|]");
         }
@@ -72,16 +72,16 @@ public class CurrencyConfiguration implements io.emax.heimdal.api.currency.Curre
         // maxDeterministicAddresses
         try {
           int intParser =
-              Integer.parseInt(heimdalProperties.getProperty("maxDeterministicAddresses"));
+              Integer.parseInt(cosignerProperties.getProperty("maxDeterministicAddresses"));
           maxDeterministicAddresses = intParser;
         } catch (NumberFormatException nex) {
         }
 
         // serverPrivateKey
-        serverPrivateKey = heimdalProperties.getProperty("serverPrivateKey", serverPrivateKey);
-        System.out.println("heimdal-bitcoin configuration loaded.");
+        serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
+        System.out.println("cosigner-bitcoin configuration loaded.");
       } catch (IOException e) {
-        System.out.println("Could not load heimdal-bitcoin configuration, using defaults.");
+        System.out.println("Could not load cosigner-bitcoin configuration, using defaults.");
       }
       configLoaded = true;
     }

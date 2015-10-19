@@ -1,16 +1,16 @@
-package io.emax.heimdal.ethereum;
+package io.emax.cosigner.ethereum;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 
 import org.junit.Test;
 
-import io.emax.heimdal.api.currency.Wallet.Recipient;
-import io.emax.heimdal.ethereum.common.ByteUtilities;
-import io.emax.heimdal.ethereum.common.DeterministicTools;
-import io.emax.heimdal.ethereum.common.Secp256k1;
-import io.emax.heimdal.ethereum.gethrpc.RawTransaction;
-import io.emax.heimdal.ethereum.stubrpc.EthereumTestRpc;
+import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.ethereum.common.ByteUtilities;
+import io.emax.cosigner.ethereum.common.DeterministicTools;
+import io.emax.cosigner.ethereum.common.Secp256k1;
+import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
+import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 import junit.framework.TestCase;
 
 public class WalletTest extends TestCase {

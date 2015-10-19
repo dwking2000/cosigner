@@ -1,4 +1,4 @@
-package io.emax.heimdal.core;
+package io.emax.cosigner.core;
 
 import java.util.HashMap;
 
@@ -8,11 +8,11 @@ import org.atmosphere.cpr.ApplicationConfig;
 import org.atmosphere.cpr.AtmosphereServlet;
 
 import io.dropwizard.setup.Environment;
-import io.emax.heimdal.core.cluster.ClusterInfo;
-import io.emax.heimdal.core.cluster.Coordinator;
-import io.emax.heimdal.core.currency.CurrencyPackage;
-import io.emax.heimdal.core.resources.AdminResource;
-import io.emax.heimdal.core.resources.CurrencyResource;
+import io.emax.cosigner.core.cluster.ClusterInfo;
+import io.emax.cosigner.core.cluster.Coordinator;
+import io.emax.cosigner.core.currency.CurrencyPackage;
+import io.emax.cosigner.core.resources.AdminResource;
+import io.emax.cosigner.core.resources.CurrencyResource;
 
 public class Application extends io.dropwizard.Application<ApplicationConfiguration> {
   private static ApplicationConfiguration config;
@@ -52,15 +52,15 @@ public class Application extends io.dropwizard.Application<ApplicationConfigurat
     // Load api.currency libraries here
     // Bitcoin
     CurrencyPackage bitcoinPackage = new CurrencyPackage();
-    bitcoinPackage.setConfiguration(new io.emax.heimdal.bitcoin.CurrencyConfiguration());
-    bitcoinPackage.setWallet(new io.emax.heimdal.bitcoin.Wallet());
-    bitcoinPackage.setMonitor(new io.emax.heimdal.bitcoin.Monitor());
+    bitcoinPackage.setConfiguration(new io.emax.cosigner.bitcoin.CurrencyConfiguration());
+    bitcoinPackage.setWallet(new io.emax.cosigner.bitcoin.Wallet());
+    bitcoinPackage.setMonitor(new io.emax.cosigner.bitcoin.Monitor());
     getCurrencies().put(bitcoinPackage.getConfiguration().getCurrencySymbol(), bitcoinPackage);
     // Ethereum
     CurrencyPackage ethereumPackage = new CurrencyPackage();
-    ethereumPackage.setConfiguration(new io.emax.heimdal.ethereum.CurrencyConfiguration());
-    ethereumPackage.setWallet(new io.emax.heimdal.ethereum.Wallet());
-    ethereumPackage.setMonitor(new io.emax.heimdal.ethereum.Monitor());
+    ethereumPackage.setConfiguration(new io.emax.cosigner.ethereum.CurrencyConfiguration());
+    ethereumPackage.setWallet(new io.emax.cosigner.ethereum.Wallet());
+    ethereumPackage.setMonitor(new io.emax.cosigner.ethereum.Monitor());
     getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(), ethereumPackage);
 
     // [FUTURE] Load any plugin libraries
@@ -68,7 +68,7 @@ public class Application extends io.dropwizard.Application<ApplicationConfigurat
     // Register WebSocket endpoints -- Everything after /ws/*
     AtmosphereServlet websocketServlet = new AtmosphereServlet();
     websocketServlet.framework().addInitParameter("com.sun.jersey.config.property.packages",
-        "io.emax.heimdal.core.resources.WebSocketResource");
+        "io.emax.cosigner.core.resources.WebSocketResource");
     websocketServlet.framework().addInitParameter(ApplicationConfig.WEBSOCKET_CONTENT_TYPE,
         "application/json");
     websocketServlet.framework().addInitParameter(ApplicationConfig.WEBSOCKET_SUPPORT, "true");

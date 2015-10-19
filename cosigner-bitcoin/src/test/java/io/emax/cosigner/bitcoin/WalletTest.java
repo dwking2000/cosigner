@@ -1,12 +1,12 @@
-package io.emax.heimdal.bitcoin;
+package io.emax.cosigner.bitcoin;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 
 import org.junit.Test;
 
-import io.emax.heimdal.api.currency.Wallet.Recipient;
-import io.emax.heimdal.bitcoin.stubrpc.BitcoinTestRpc;
+import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 import junit.framework.TestCase;
 
 public class WalletTest extends TestCase {

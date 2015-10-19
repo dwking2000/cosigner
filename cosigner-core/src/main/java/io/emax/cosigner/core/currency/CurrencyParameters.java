@@ -1,4 +1,4 @@
-package io.emax.heimdal.core.currency;
+package io.emax.cosigner.core.currency;
 
 import java.util.List;
 

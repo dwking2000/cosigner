@@ -1,9 +1,9 @@
-package io.emax.heimdal.api.currency;
+package io.emax.cosigner.api.currency;
 
 import java.util.Map;
 import java.util.Set;
 
-import io.emax.heimdal.api.currency.Wallet.TransactionDetails;
+import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
 import rx.Observable;
 
 /**

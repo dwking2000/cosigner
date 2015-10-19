@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>heimdal-api</artifactId>
-	<name>heimdal-api</name>
-	<description>Common currency logic and interfaces for use in Heimdal</description>
+	<artifactId>cosigner-api</artifactId>
+	<name>cosigner-api</name>
+	<description>Common currency logic and interfaces for use in cosigner</description>
 	<build>
 		<plugins>
 			<plugin>
@@ -62,7 +62,7 @@
 	</organization>
 	<parent>
 		<groupId>io.emax</groupId>
-		<artifactId>heimdal-parent</artifactId>
+		<artifactId>cosigner-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>

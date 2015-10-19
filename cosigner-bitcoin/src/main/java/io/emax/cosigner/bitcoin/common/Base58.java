@@ -12,7 +12,7 @@
  * the License.
  */
 
-package io.emax.heimdal.bitcoin.common;
+package io.emax.cosigner.bitcoin.common;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;

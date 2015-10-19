@@ -1,4 +1,4 @@
-package io.emax.heimdal.ethereum.common;
+package io.emax.cosigner.ethereum.common;
 
 public interface RLPEntity {
   public byte[] getEncodedContents();

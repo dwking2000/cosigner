@@ -1,4 +1,4 @@
-package io.emax.heimdal.core.cluster;
+package io.emax.cosigner.core.cluster;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -6,8 +6,8 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.emax.heimdal.core.Application;
-import io.emax.heimdal.core.ApplicationConfiguration;
+import io.emax.cosigner.core.Application;
+import io.emax.cosigner.core.ApplicationConfiguration;
 
 public class ClusterInfo {
   // Static resolver

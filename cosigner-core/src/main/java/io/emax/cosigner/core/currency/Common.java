@@ -1,4 +1,4 @@
-package io.emax.heimdal.core.currency;
+package io.emax.cosigner.core.currency;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -19,16 +19,16 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import io.emax.heimdal.api.currency.Monitor;
-import io.emax.heimdal.api.currency.SigningType;
-import io.emax.heimdal.api.currency.Wallet.Recipient;
-import io.emax.heimdal.api.currency.Wallet.TransactionDetails;
-import io.emax.heimdal.core.Application;
-import io.emax.heimdal.core.cluster.ClusterInfo;
-import io.emax.heimdal.core.cluster.Coordinator;
-import io.emax.heimdal.core.cluster.CurrencyCommand;
-import io.emax.heimdal.core.cluster.CurrencyCommandType;
-import io.emax.heimdal.core.cluster.Server;
+import io.emax.cosigner.api.currency.Monitor;
+import io.emax.cosigner.api.currency.SigningType;
+import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
+import io.emax.cosigner.core.Application;
+import io.emax.cosigner.core.cluster.ClusterInfo;
+import io.emax.cosigner.core.cluster.Coordinator;
+import io.emax.cosigner.core.cluster.CurrencyCommand;
+import io.emax.cosigner.core.cluster.CurrencyCommandType;
+import io.emax.cosigner.core.cluster.Server;
 import rx.Subscription;
 
 public class Common {

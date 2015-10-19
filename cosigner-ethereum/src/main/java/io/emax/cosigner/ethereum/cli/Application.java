@@ -1,12 +1,12 @@
-package io.emax.heimdal.ethereum.cli;
+package io.emax.cosigner.ethereum.cli;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import io.emax.heimdal.api.currency.Wallet.Recipient;
-import io.emax.heimdal.ethereum.Monitor;
-import io.emax.heimdal.ethereum.Wallet;
+import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.ethereum.Monitor;
+import io.emax.cosigner.ethereum.Wallet;
 
 /**
  * Command line option for running the library

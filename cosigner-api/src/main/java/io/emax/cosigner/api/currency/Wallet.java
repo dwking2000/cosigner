@@ -1,4 +1,4 @@
-package io.emax.heimdal.api.currency;
+package io.emax.cosigner.api.currency;
 
 import java.math.BigDecimal;
 import java.util.Arrays;

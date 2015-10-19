@@ -1,4 +1,4 @@
-package io.emax.heimdal.bitcoin.common;
+package io.emax.cosigner.bitcoin.common;
 
 import java.math.BigInteger;
 

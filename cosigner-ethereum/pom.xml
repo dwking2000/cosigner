@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>heimdal-ethereum</artifactId>
-	<name>heimdal-ethereum</name>
-	<description>Ethereum library for use in multi-currency Heimdal application</description>
+	<artifactId>cosigner-ethereum</artifactId>
+	<name>cosigner-ethereum</name>
+	<description>Ethereum library for use in multi-currency cosigner application</description>
 	<dependencies>
 		<dependency>
 			<groupId>com.github.briandilley.jsonrpc4j</groupId>
@@ -12,7 +12,7 @@
 		</dependency>
 		<dependency>
 			<groupId>io.emax</groupId>
-			<artifactId>heimdal-api</artifactId>
+			<artifactId>cosigner-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
@@ -58,7 +58,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>io.emax.heimdal.ethereum.cli.Application</mainClass>
+							<mainClass>io.emax.cosigner.ethereum.cli.Application</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -81,7 +81,7 @@
 	</build>
 	<parent>
 		<groupId>io.emax</groupId>
-		<artifactId>heimdal-parent</artifactId>
+		<artifactId>cosigner-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>

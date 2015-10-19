@@ -1,9 +1,9 @@
-package io.emax.heimdal.ethereum.gethrpc;
+package io.emax.cosigner.ethereum.gethrpc;
 
-import io.emax.heimdal.ethereum.common.RLP;
-import io.emax.heimdal.ethereum.common.RLPEntity;
-import io.emax.heimdal.ethereum.common.RLPItem;
-import io.emax.heimdal.ethereum.common.RLPList;
+import io.emax.cosigner.ethereum.common.RLP;
+import io.emax.cosigner.ethereum.common.RLPEntity;
+import io.emax.cosigner.ethereum.common.RLPItem;
+import io.emax.cosigner.ethereum.common.RLPList;
 
 public class RawTransaction extends RLPList {
   private static final long serialVersionUID = 1L;

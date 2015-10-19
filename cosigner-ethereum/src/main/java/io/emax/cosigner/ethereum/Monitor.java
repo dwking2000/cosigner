@@ -1,4 +1,4 @@
-package io.emax.heimdal.ethereum;
+package io.emax.cosigner.ethereum;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import io.emax.heimdal.api.currency.Wallet.TransactionDetails;
+import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
 import rx.Observable;
 import rx.Subscription;
 
-public class Monitor implements io.emax.heimdal.api.currency.Monitor {
+public class Monitor implements io.emax.cosigner.api.currency.Monitor {
   private HashSet<String> monitoredAddresses = new HashSet<>();
   private HashMap<String, String> accountBalances = new HashMap<>();
   private HashSet<TransactionDetails> accountTransactions = new HashSet<>();
@@ -106,7 +106,7 @@ public class Monitor implements io.emax.heimdal.api.currency.Monitor {
   }
 
   @Override
-  public io.emax.heimdal.api.currency.Monitor createNewMonitor() {
+  public io.emax.cosigner.api.currency.Monitor createNewMonitor() {
     return new Monitor(this.wallet);
   }
 
