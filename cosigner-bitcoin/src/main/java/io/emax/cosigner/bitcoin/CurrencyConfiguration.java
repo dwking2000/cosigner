@@ -14,6 +14,9 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
   private static int minSignatures = 1;
   private static String[] multiSigAccounts = {};
   private static int maxDeterministicAddresses = 100;
+  private static String daemonUser = "bitcoinrpc";
+  private static String daemonPassword = "changeit";
+  
   // Ideally we'll prompt for this or something more secure than a properties
   // file...
   private static String serverPrivateKey =
@@ -76,6 +79,12 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
           maxDeterministicAddresses = intParser;
         } catch (NumberFormatException nex) {
         }
+        
+        // daemonUser
+        daemonUser = cosignerProperties.getProperty("daemonUser", daemonUser);
+        
+        // daemonPassword
+        daemonPassword = cosignerProperties.getProperty("daemonPassword", daemonPassword);        
 
         // serverPrivateKey
         serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
@@ -119,6 +128,14 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
 
   public String getServerPrivateKey() {
     return serverPrivateKey;
+  }
+
+  public String getDaemonUser() {
+    return daemonUser;
+  }
+
+  public String getDaemonPassword() {
+    return daemonPassword;
   }
 
   public int getMaxDeterministicAddresses() {

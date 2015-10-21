@@ -32,10 +32,10 @@ public class BitcoindResource {
     try {
 
       // Set up our RPC authentication
-      // TODO: Remove the magic
       Authenticator.setDefault(new Authenticator() {
         protected PasswordAuthentication getPasswordAuthentication() {
-          return new PasswordAuthentication("bitcoinrpc", "changeit".toCharArray());
+          return new PasswordAuthentication(config.getDaemonUser(),
+              config.getDaemonPassword().toCharArray());
         }
       });
 
