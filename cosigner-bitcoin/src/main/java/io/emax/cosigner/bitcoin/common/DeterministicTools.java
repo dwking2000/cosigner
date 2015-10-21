@@ -94,6 +94,7 @@ public class DeterministicTools {
         return NOKEY;
       }
     } catch (Exception e) {
+      e.printStackTrace();
       return NOKEY;
     }
   }

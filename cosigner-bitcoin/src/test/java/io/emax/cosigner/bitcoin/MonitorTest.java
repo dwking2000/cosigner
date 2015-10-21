@@ -19,8 +19,9 @@ public class MonitorTest extends TestCase {
 
   @Override
   public void setUp() {
-    wallet = new Wallet(new BitcoinTestRpc());
-    monitor = new Monitor(wallet);
+    BitcoindResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
+    wallet = new Wallet();
+    monitor = new Monitor();
     userKey = "deadbeef";
     balanceCounter = 0;
   }

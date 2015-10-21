@@ -15,7 +15,8 @@ public class WalletTest extends TestCase {
 
   @Override
   public void setUp() {
-    wallet = new Wallet(new BitcoinTestRpc());
+    BitcoindResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
+    wallet = new Wallet();    
     userKey = "deadbeef";
   }
 

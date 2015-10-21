@@ -19,7 +19,8 @@ public class WalletTest extends TestCase {
 
   @Override
   public void setUp() {
-    wallet = new Wallet(new EthereumTestRpc());
+    EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
+    wallet = new Wallet();
     userKey = "deadbeef";
   }
 

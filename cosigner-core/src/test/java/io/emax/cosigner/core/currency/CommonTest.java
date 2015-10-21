@@ -8,8 +8,10 @@ import org.junit.Test;
 import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.Wallet;
+import io.emax.cosigner.bitcoin.BitcoindResource;
 import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 import io.emax.cosigner.core.Application;
+import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 import junit.framework.TestCase;
 
@@ -18,23 +20,31 @@ public class CommonTest extends TestCase {
   private static String userKey;
 
   // Bitcoin
-  private static Wallet bitcoinWallet = new io.emax.cosigner.bitcoin.Wallet(new BitcoinTestRpc());
-  private static Monitor bitcoinMonitor =
-      new io.emax.cosigner.bitcoin.Monitor((io.emax.cosigner.bitcoin.Wallet) bitcoinWallet);
-  private static CurrencyConfiguration bitcoinConfig =
-      new io.emax.cosigner.bitcoin.CurrencyConfiguration();
+  private static Wallet bitcoinWallet;
+  private static Monitor bitcoinMonitor;
+  private static CurrencyConfiguration bitcoinConfig;
 
   // Ethereum
-  private static Wallet ethereumWallet = new io.emax.cosigner.ethereum.Wallet(new EthereumTestRpc());
-  private static Monitor ethereumMonitor =
-      new io.emax.cosigner.ethereum.Monitor((io.emax.cosigner.ethereum.Wallet) ethereumWallet);
-  private static CurrencyConfiguration ethereumConfig =
-      new io.emax.cosigner.ethereum.CurrencyConfiguration();
+  private static Wallet ethereumWallet;
+  private static Monitor ethereumMonitor;
+  private static CurrencyConfiguration ethereumConfig;
 
   @Override
   public void setUp() {
     // General setup
     userKey = "deadbeef";
+
+    // Bitcoin
+    BitcoindResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
+    bitcoinWallet = new io.emax.cosigner.bitcoin.Wallet();
+    bitcoinMonitor = new io.emax.cosigner.bitcoin.Monitor();
+    bitcoinConfig = new io.emax.cosigner.bitcoin.CurrencyConfiguration();
+
+    // Ethereum
+    EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
+    ethereumWallet = new io.emax.cosigner.ethereum.Wallet();
+    ethereumMonitor = new io.emax.cosigner.ethereum.Monitor();
+    ethereumConfig = new io.emax.cosigner.ethereum.CurrencyConfiguration();
 
     // Register currency packages
     CurrencyPackage bitcoinPackage = new CurrencyPackage();
@@ -51,6 +61,7 @@ public class CommonTest extends TestCase {
         bitcoinPackage);
     Application.getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(),
         ethereumPackage);
+
   }
 
   @Test

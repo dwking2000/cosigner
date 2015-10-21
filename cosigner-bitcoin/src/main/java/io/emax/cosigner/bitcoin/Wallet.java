@@ -41,15 +41,6 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet {
 
   private static HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
-  public Wallet(BitcoindRpc rpc) {
-    this.bitcoindRpc = rpc;
-
-    if (multiSigSubscription == null) {
-      multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanForAddresses());
-    }
-  }
-
   public Wallet() {
     if (multiSigSubscription == null) {
       multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)

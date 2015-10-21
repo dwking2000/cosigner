@@ -49,6 +49,10 @@ public class BitcoindResource {
   public BitcoindResource(BitcoindRpc rpc) {
     this.bitcoindRpc = rpc;
   }
+  
+  public void setBitcoindRpc(BitcoindRpc rpc) {
+    this.bitcoindRpc = rpc;
+  }
 
   public BitcoindRpc getBitcoindRpc() {
     if (bitcoindRpc == null)

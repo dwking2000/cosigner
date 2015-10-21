@@ -19,8 +19,9 @@ public class MonitorTest extends TestCase {
 
   @Override
   public void setUp() {
-    wallet = new Wallet(new EthereumTestRpc());
-    monitor = new Monitor(wallet);
+    EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
+    wallet = new Wallet();
+    monitor = new Monitor();
     userKey = "deadbeef";
     balanceCounter = 0;
   }

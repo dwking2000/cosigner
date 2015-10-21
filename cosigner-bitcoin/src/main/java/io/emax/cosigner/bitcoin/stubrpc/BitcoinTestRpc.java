@@ -7,6 +7,7 @@ import java.util.Map;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 import io.emax.cosigner.bitcoin.bitcoindrpc.Block;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainInfo;
+import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
 import io.emax.cosigner.bitcoin.bitcoindrpc.DecodedTransaction;
 import io.emax.cosigner.bitcoin.bitcoindrpc.DecodedTransaction.DecodedInput;
 import io.emax.cosigner.bitcoin.bitcoindrpc.MultiSig;
@@ -26,7 +27,9 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public BlockChainInfo getblockchaininfo() {
-    return null;
+    BlockChainInfo info = new BlockChainInfo();
+    info.setChain(BlockChainName.regtest);
+    return info;
   }
 
   @Override
@@ -133,6 +136,6 @@ public class BitcoinTestRpc implements BitcoindRpc {
   @Override
   public Payment[] listtransactions(String account, int numberToReturn, int numberToSkip,
       boolean includeWatchOnly) {
-    return null;
+    return new Payment[] {};
   }
 }

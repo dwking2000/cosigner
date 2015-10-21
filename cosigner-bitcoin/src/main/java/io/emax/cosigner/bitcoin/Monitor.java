@@ -33,10 +33,6 @@ public class Monitor implements io.emax.cosigner.api.currency.Monitor {
 
   private Wallet wallet;
 
-  public Monitor(Wallet wallet) {
-    this.wallet = wallet;
-  }
-
   public Monitor() {
     wallet = new Wallet();
   }
@@ -95,7 +91,7 @@ public class Monitor implements io.emax.cosigner.api.currency.Monitor {
 
   @Override
   public io.emax.cosigner.api.currency.Monitor createNewMonitor() {
-    return new Monitor(this.wallet);
+    return new Monitor();
   }
 
   @Override

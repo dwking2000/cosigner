@@ -37,6 +37,10 @@ public class EthereumResource {
   public EthereumResource(EthereumRpc rpc) {
     this.ethereumRpc = rpc;
   }
+  
+  public void setEthereumRpc(EthereumRpc rpc) {
+    this.ethereumRpc = rpc;
+  }
 
   public EthereumRpc getGethRpc() {
     if (ethereumRpc == null)

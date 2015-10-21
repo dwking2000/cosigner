@@ -40,25 +40,6 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet {
   private static HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
   private static Subscription txHistorySubscription;
 
-  public Wallet(EthereumRpc rpc) {
-    this.ethereumRpc = rpc;
-    try {
-      syncMultiSigAddresses();
-    } catch (Exception e) {
-      // this is ok.
-    }
-
-    if (multiSigSubscription == null) {
-      multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> syncMultiSigAddresses());
-    }
-
-    if (txHistorySubscription == null) {
-      txHistorySubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanTransactions());
-    }
-  }
-
   public Wallet() {
     try {
       syncMultiSigAddresses();
