@@ -16,7 +16,7 @@ cosigner:
     - bitcoind
     - geth
   environment:
-    BITCOIND_MSIG_ACCOUNTS:
+    BITCOIND_MSIG_ACCOUNTS: 
     GETH_CONTRACT_ACCOUNT:
     GETH_MSIG_ACCOUNTS:
 

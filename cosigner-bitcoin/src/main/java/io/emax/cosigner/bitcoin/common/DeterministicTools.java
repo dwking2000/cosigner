@@ -8,6 +8,10 @@ import java.util.Arrays;
 
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
+import io.emax.cosigner.bitcoin.BitcoindResource;
+import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
+import io.emax.cosigner.bitcoin.bitcoindrpc.NetworkBytes;
+
 public class DeterministicTools {
 
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
@@ -61,10 +65,12 @@ public class DeterministicTools {
         }
       }
 
-      // TODO Get the network from RPC calls (will need to be passed to us)
+      String networkBytes = BitcoindResource.getResource().getBitcoindRpc().getblockchaininfo()
+          .getChain() == BlockChainName.main ? NetworkBytes.PRIVATEKEY.toString()
+              : NetworkBytes.PRIVATEKEY_TEST.toString();
+
       // Encode in format bitcoind is expecting
-      byte[] privateKey = {(byte) 0xEF}; // TESTNET
-      // byte[] privateKey = {(byte)0x80}; // REALNET
+      byte[] privateKey = ByteUtilities.toByteArray(networkBytes);
       byte[] privateKey2 = new byte[privateKey.length + privateKeyAttempt.length];
       System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
       System.arraycopy(privateKeyAttempt, 0, privateKey2, privateKey.length,
@@ -118,9 +124,11 @@ public class DeterministicTools {
       ripemd.doFinal(publicRipemdKeyBytes, 0);
 
       // Add network bytes
-      // TODO Get the network from RPC calls (will need to be passed to us)
-      byte[] networkPublicKeyBytes = {(byte) 0x6F}; // TESTNET
-      // byte[] networkPublicKeyBytes = { (byte)0x00 }; // REALNET
+      String networkBytes = BitcoindResource.getResource().getBitcoindRpc().getblockchaininfo()
+          .getChain() == BlockChainName.main ? NetworkBytes.P2PKH.toString()
+              : NetworkBytes.P2PKH_TEST.toString();
+
+      byte[] networkPublicKeyBytes = ByteUtilities.toByteArray(networkBytes);
       byte[] networkPublicKeyBytes2 =
           new byte[networkPublicKeyBytes.length + publicRipemdKeyBytes.length];
       System.arraycopy(networkPublicKeyBytes, 0, networkPublicKeyBytes2, 0,
@@ -155,17 +163,23 @@ public class DeterministicTools {
       byte[] networkBytes = ByteUtilities.readBytes(decodedNetworkAddress, 0, 1);
       byte[] addressBytes = new byte[] {};
 
-      if ((networkBytes[0] & 0xFF) == 0x00 || (networkBytes[0] & 0xFF) == 0x6F
-          || (networkBytes[0] & 0xFF) == 0x05 || (networkBytes[0] & 0xFF) == 0xC4) {
-        addressBytes = ByteUtilities.readBytes(decodedNetworkAddress, 1, 20);
-      } else if ((networkBytes[0] & 0xFF) == 0x80 || (networkBytes[0] & 0xFF) == 0xEF) {
-        addressBytes = ByteUtilities.readBytes(decodedNetworkAddress, 1, 32);
+      addressBytes =
+          ByteUtilities.readBytes(decodedNetworkAddress, 1, decodedNetworkAddress.length - 5);
+
+      byte[] checksumBytes =
+          ByteUtilities.readBytes(decodedNetworkAddress, decodedNetworkAddress.length - 5, 4);
+
+      String checksumString =
+          ByteUtilities.toHexString(networkBytes) + ByteUtilities.toHexString(addressBytes);
+      byte[] checksumData = ByteUtilities.toByteArray(checksumString);
+
+      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      md.reset();
+      byte[] calculatedCheckum = Arrays.copyOfRange(md.digest(md.digest(checksumData)), 0, 4);
+      if (!ByteUtilities.toHexString(calculatedCheckum)
+          .equalsIgnoreCase(ByteUtilities.toHexString(checksumBytes))) {
+        return "";
       }
-
-      // byte[] checksumBytes = ByteUtilities.readBytes(decodedNetworkAddress, 21/33, 4);
-      // TODO - Verify checksum
-      // TODO Get the network from RPC calls (will need to be passed to us), validate it here
-
       return ByteUtilities.toHexString(addressBytes);
     } catch (Exception e) {
       return "";
@@ -200,7 +214,9 @@ public class DeterministicTools {
       byte[] decodedNetworkAddress = Base58.decode(address);
       byte[] networkBytes = ByteUtilities.readBytes(decodedNetworkAddress, 0, 1);
 
-      if ((networkBytes[0] & 0xFF) == 0x05 || (networkBytes[0] & 0xFF) == 0xC4) {
+      String networkString = ByteUtilities.toHexString(networkBytes);
+      if (networkString.equalsIgnoreCase(NetworkBytes.P2SH.toString())
+          || networkString.equalsIgnoreCase(NetworkBytes.P2SH_TEST.toString())) {
         return true;
       }
 

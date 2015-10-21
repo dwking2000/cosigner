@@ -25,7 +25,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
   }
 
   @Override
-  public BlockChainInfo getBlockChainInfo() {
+  public BlockChainInfo getblockchaininfo() {
     return null;
   }
 

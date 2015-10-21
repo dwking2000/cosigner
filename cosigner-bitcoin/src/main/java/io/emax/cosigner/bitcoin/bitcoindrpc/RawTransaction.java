@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.emax.cosigner.bitcoin.BitcoindResource;
 import io.emax.cosigner.bitcoin.common.ByteUtilities;
 import io.emax.cosigner.bitcoin.common.DeterministicTools;
 
@@ -460,16 +461,24 @@ public class RawTransaction {
     Matcher matcher = pattern.matcher(script);
     if (matcher.matches()) {
       String addressBytes = matcher.group(1);
-      // TODO - check network and adjust
-      return DeterministicTools.encodeAddress(addressBytes, "6F");
+
+      String networkBytes = BitcoindResource.getResource().getBitcoindRpc().getblockchaininfo()
+          .getChain() == BlockChainName.main ? NetworkBytes.P2PKH.toString()
+              : NetworkBytes.P2PKH_TEST.toString();
+          
+      return DeterministicTools.encodeAddress(addressBytes, networkBytes);
     }
 
     pattern = Pattern.compile("^a914(.{40})87$");
     matcher = pattern.matcher(script);
     if (matcher.matches()) {
       String addressBytes = matcher.group(1);
-      // TODO - check network and adjust
-      return DeterministicTools.encodeAddress(addressBytes, "C4");
+      
+      String networkBytes = BitcoindResource.getResource().getBitcoindRpc().getblockchaininfo()
+          .getChain() == BlockChainName.main ? NetworkBytes.P2SH.toString()
+              : NetworkBytes.P2SH_TEST.toString();
+          
+      return DeterministicTools.encodeAddress(addressBytes, networkBytes);
     }
 
     return null;

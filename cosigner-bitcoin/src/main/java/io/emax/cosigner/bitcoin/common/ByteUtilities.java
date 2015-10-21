@@ -51,6 +51,9 @@ public class ByteUtilities {
   }
 
   public static byte[] flipEndian(byte[] data) {
+    if (data == null) {
+      return null;
+    }
     byte[] newData = new byte[data.length];
     for (int i = 0; i < data.length; i++) {
       newData[data.length - i - 1] = data[i];

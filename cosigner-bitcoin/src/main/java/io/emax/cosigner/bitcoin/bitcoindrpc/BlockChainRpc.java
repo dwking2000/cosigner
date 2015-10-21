@@ -43,7 +43,7 @@ public interface BlockChainRpc {
    * The getblockchaininfo RPC provides information about the current state of the block chain.
    */
   @JsonRpcMethod("getblockchaininfo")
-  BlockChainInfo getBlockChainInfo();
+  BlockChainInfo getblockchaininfo();
 
   /**
    * GetBlockCount

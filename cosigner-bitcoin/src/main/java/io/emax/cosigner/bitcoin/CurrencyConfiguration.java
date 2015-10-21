@@ -16,7 +16,7 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
   private static int maxDeterministicAddresses = 100;
   private static String daemonUser = "bitcoinrpc";
   private static String daemonPassword = "changeit";
-  
+
   // Ideally we'll prompt for this or something more secure than a properties
   // file...
   private static String serverPrivateKey =
@@ -30,11 +30,12 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
 
   public synchronized void loadConfig() {
     if (!configLoaded) {
+      FileInputStream propertiesFile = null;
       try {
         String propertiesFilePath = "./cosigner-bitcoin.properties";
 
         Properties cosignerProperties = new Properties();
-        FileInputStream propertiesFile = new FileInputStream(propertiesFilePath);
+        propertiesFile = new FileInputStream(propertiesFilePath);
 
         cosignerProperties.load(propertiesFile);
         propertiesFile.close();
@@ -79,17 +80,24 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
           maxDeterministicAddresses = intParser;
         } catch (NumberFormatException nex) {
         }
-        
+
         // daemonUser
         daemonUser = cosignerProperties.getProperty("daemonUser", daemonUser);
-        
+
         // daemonPassword
-        daemonPassword = cosignerProperties.getProperty("daemonPassword", daemonPassword);        
+        daemonPassword = cosignerProperties.getProperty("daemonPassword", daemonPassword);
 
         // serverPrivateKey
         serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
         System.out.println("cosigner-bitcoin configuration loaded.");
       } catch (IOException e) {
+        if (propertiesFile != null) {
+          try {
+            propertiesFile.close();
+          } catch (IOException e1) {
+
+          }
+        }
         System.out.println("Could not load cosigner-bitcoin configuration, using defaults.");
       }
       configLoaded = true;

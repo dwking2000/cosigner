@@ -37,7 +37,7 @@ public class BlockChainInfo {
    * in RPC byte order. This is identical to the string returned by the getbestblockhash RPC
    */
   @JsonProperty("bestblockhash")
-  private String bestBlockHash;
+  private String bestblockhash;
 
   /**
    * The difficulty of the highest-height block in the best block chain
@@ -52,7 +52,7 @@ public class BlockChainInfo {
    * block
    */
   @JsonProperty("verificationprogress")
-  private BigDecimal verificationProgress;
+  private BigDecimal verificationprogress;
 
   /**
    * The estimated number of block header hashes checked from the genesis block to this block,
@@ -62,10 +62,97 @@ public class BlockChainInfo {
   private String chainwork;
 
   @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((bestblockhash == null) ? 0 : bestblockhash.hashCode());
+    result = prime * result + (int) (blocks ^ (blocks >>> 32));
+    result = prime * result + ((chain == null) ? 0 : chain.hashCode());
+    result = prime * result + ((chainwork == null) ? 0 : chainwork.hashCode());
+    result = prime * result + ((difficulty == null) ? 0 : difficulty.hashCode());
+    result = prime * result + (int) (headers ^ (headers >>> 32));
+    result = prime * result + ((pruned == null) ? 0 : pruned.hashCode());
+    result =
+        prime * result + ((verificationprogress == null) ? 0 : verificationprogress.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    BlockChainInfo other = (BlockChainInfo) obj;
+    if (bestblockhash == null) {
+      if (other.bestblockhash != null)
+        return false;
+    } else if (!bestblockhash.equals(other.bestblockhash))
+      return false;
+    if (blocks != other.blocks)
+      return false;
+    if (chain != other.chain)
+      return false;
+    if (chainwork == null) {
+      if (other.chainwork != null)
+        return false;
+    } else if (!chainwork.equals(other.chainwork))
+      return false;
+    if (difficulty == null) {
+      if (other.difficulty != null)
+        return false;
+    } else if (!difficulty.equals(other.difficulty))
+      return false;
+    if (headers != other.headers)
+      return false;
+    if (pruned == null) {
+      if (other.pruned != null)
+        return false;
+    } else if (!pruned.equals(other.pruned))
+      return false;
+    if (verificationprogress == null) {
+      if (other.verificationprogress != null)
+        return false;
+    } else if (!verificationprogress.equals(other.verificationprogress))
+      return false;
+    return true;
+  }
+
+  @JsonProperty("pruned")
+  private String pruned;
+
+  public String getBestblockhash() {
+    return bestblockhash;
+  }
+
+  public void setBestblockhash(String bestblockhash) {
+    this.bestblockhash = bestblockhash;
+  }
+
+  public BigDecimal getVerificationprogress() {
+    return verificationprogress;
+  }
+
+  public void setVerificationprogress(BigDecimal verificationprogress) {
+    this.verificationprogress = verificationprogress;
+  }
+
+  public String getPruned() {
+    return pruned;
+  }
+
+  public void setPruned(String pruned) {
+    this.pruned = pruned;
+  }
+
+  @Override
   public String toString() {
     return "BlockChainInfo [chain=" + chain + ", blocks=" + blocks + ", headers=" + headers
-        + ", bestBlockHash=" + bestBlockHash + ", difficulty=" + difficulty
-        + ", verificationProgress=" + verificationProgress + ", chainwork=" + chainwork + "]";
+        + ", bestblockhash=" + bestblockhash + ", difficulty=" + difficulty
+        + ", verificationprogress=" + verificationprogress + ", chainwork=" + chainwork
+        + ", pruned=" + pruned + "]";
   }
 
   /**
@@ -114,14 +201,14 @@ public class BlockChainInfo {
    * @return the bestBlockHash
    */
   public String getBestBlockHash() {
-    return bestBlockHash;
+    return bestblockhash;
   }
 
   /**
    * @param bestBlockHash the bestBlockHash to set
    */
   public void setBestBlockHash(String bestBlockHash) {
-    this.bestBlockHash = bestBlockHash;
+    this.bestblockhash = bestBlockHash;
   }
 
   /**
@@ -142,14 +229,14 @@ public class BlockChainInfo {
    * @return the verificationProgress
    */
   public BigDecimal getVerificationProgress() {
-    return verificationProgress;
+    return verificationprogress;
   }
 
   /**
    * @param verificationProgress the verificationProgress to set
    */
   public void setVerificationProgress(BigDecimal verificationProgress) {
-    this.verificationProgress = verificationProgress;
+    this.verificationprogress = verificationProgress;
   }
 
   /**

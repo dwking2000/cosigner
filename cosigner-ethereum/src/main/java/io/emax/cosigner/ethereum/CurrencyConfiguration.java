@@ -30,11 +30,12 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
 
   private synchronized void loadConfig() {
     if (!configLoaded) {
+      FileInputStream propertiesFile = null;
       String propertiesFilePath = "./cosigner-ethereum.properties";
 
       try {
         Properties cosignerProperties = new Properties();
-        FileInputStream propertiesFile = new FileInputStream(propertiesFilePath);
+        propertiesFile = new FileInputStream(propertiesFilePath);
 
         cosignerProperties.load(propertiesFile);
         propertiesFile.close();
@@ -95,6 +96,12 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
 
         System.out.println("cosigner-ethereum configuration loaded.");
       } catch (IOException e) {
+        if (propertiesFile != null) {
+          try {
+            propertiesFile.close();
+          } catch (IOException e1) {
+          }
+        }
         System.out.println("Could not load cosigner-ethereum configuration, using defaults.");
       }
       configLoaded = true;
