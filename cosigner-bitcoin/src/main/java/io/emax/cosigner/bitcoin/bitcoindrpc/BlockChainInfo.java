@@ -11,10 +11,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class BlockChainInfo {
   /**
-   * The name of the block chain. One of main for mainnet, test for testnet, or regtest for regtest
+   * The hash of the header of the highest validated block in the best block chain, encoded as hex
+   * in RPC byte order. This is identical to the string returned by the getbestblockhash RPC
    */
-  @JsonProperty("chain")
-  private BlockChainName chain;
+  @JsonProperty("bestblockhash")
+  private String bestblockhash;
 
   /**
    * The number of validated blocks in the local best block chain. For a new node with just the
@@ -22,6 +23,25 @@ public class BlockChainInfo {
    */
   @JsonProperty("blocks")
   private long blocks;
+
+  /**
+   * The name of the block chain. One of main for mainnet, test for testnet, or regtest for regtest
+   */
+  @JsonProperty("chain")
+  private BlockChainName chain;
+
+  /**
+   * The estimated number of block header hashes checked from the genesis block to this block,
+   * encoded as big-endian hex
+   */
+  @JsonProperty("chainwork")
+  private String chainwork;
+
+  /**
+   * The difficulty of the highest-height block in the best block chain
+   */
+  @JsonProperty("difficulty")
+  private BigDecimal difficulty;
 
   /**
    * Added in Bitcoin Core 0.10.0
@@ -32,18 +52,8 @@ public class BlockChainInfo {
   @JsonProperty("headers")
   private long headers;
 
-  /**
-   * The hash of the header of the highest validated block in the best block chain, encoded as hex
-   * in RPC byte order. This is identical to the string returned by the getbestblockhash RPC
-   */
-  @JsonProperty("bestblockhash")
-  private String bestblockhash;
-
-  /**
-   * The difficulty of the highest-height block in the best block chain
-   */
-  @JsonProperty("difficulty")
-  private BigDecimal difficulty;
+  @JsonProperty("pruned")
+  private String pruned;
 
   /**
    * Estimate of what percentage of the block chain transactions have been verified so far, starting
@@ -53,29 +63,6 @@ public class BlockChainInfo {
    */
   @JsonProperty("verificationprogress")
   private BigDecimal verificationprogress;
-
-  /**
-   * The estimated number of block header hashes checked from the genesis block to this block,
-   * encoded as big-endian hex
-   */
-  @JsonProperty("chainwork")
-  private String chainwork;
-
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((bestblockhash == null) ? 0 : bestblockhash.hashCode());
-    result = prime * result + (int) (blocks ^ (blocks >>> 32));
-    result = prime * result + ((chain == null) ? 0 : chain.hashCode());
-    result = prime * result + ((chainwork == null) ? 0 : chainwork.hashCode());
-    result = prime * result + ((difficulty == null) ? 0 : difficulty.hashCode());
-    result = prime * result + (int) (headers ^ (headers >>> 32));
-    result = prime * result + ((pruned == null) ? 0 : pruned.hashCode());
-    result =
-        prime * result + ((verificationprogress == null) ? 0 : verificationprogress.hashCode());
-    return result;
-  }
 
   @Override
   public boolean equals(Object obj) {
@@ -120,53 +107,8 @@ public class BlockChainInfo {
     return true;
   }
 
-  @JsonProperty("pruned")
-  private String pruned;
-
   public String getBestblockhash() {
     return bestblockhash;
-  }
-
-  public void setBestblockhash(String bestblockhash) {
-    this.bestblockhash = bestblockhash;
-  }
-
-  public BigDecimal getVerificationprogress() {
-    return verificationprogress;
-  }
-
-  public void setVerificationprogress(BigDecimal verificationprogress) {
-    this.verificationprogress = verificationprogress;
-  }
-
-  public String getPruned() {
-    return pruned;
-  }
-
-  public void setPruned(String pruned) {
-    this.pruned = pruned;
-  }
-
-  @Override
-  public String toString() {
-    return "BlockChainInfo [chain=" + chain + ", blocks=" + blocks + ", headers=" + headers
-        + ", bestblockhash=" + bestblockhash + ", difficulty=" + difficulty
-        + ", verificationprogress=" + verificationprogress + ", chainwork=" + chainwork
-        + ", pruned=" + pruned + "]";
-  }
-
-  /**
-   * @return the chain
-   */
-  public BlockChainName getChain() {
-    return chain;
-  }
-
-  /**
-   * @param chain the chain to set
-   */
-  public void setChain(BlockChainName chain) {
-    this.chain = chain;
   }
 
   /**
@@ -177,66 +119,10 @@ public class BlockChainInfo {
   }
 
   /**
-   * @param blocks the blocks to set
+   * @return the chain
    */
-  public void setBlocks(long blocks) {
-    this.blocks = blocks;
-  }
-
-  /**
-   * @return the headers
-   */
-  public long getHeaders() {
-    return headers;
-  }
-
-  /**
-   * @param headers the headers to set
-   */
-  public void setHeaders(long headers) {
-    this.headers = headers;
-  }
-
-  /**
-   * @return the bestBlockHash
-   */
-  public String getBestBlockHash() {
-    return bestblockhash;
-  }
-
-  /**
-   * @param bestBlockHash the bestBlockHash to set
-   */
-  public void setBestBlockHash(String bestBlockHash) {
-    this.bestblockhash = bestBlockHash;
-  }
-
-  /**
-   * @return the difficulty
-   */
-  public BigDecimal getDifficulty() {
-    return difficulty;
-  }
-
-  /**
-   * @param difficulty the difficulty to set
-   */
-  public void setDifficulty(BigDecimal difficulty) {
-    this.difficulty = difficulty;
-  }
-
-  /**
-   * @return the verificationProgress
-   */
-  public BigDecimal getVerificationProgress() {
-    return verificationprogress;
-  }
-
-  /**
-   * @param verificationProgress the verificationProgress to set
-   */
-  public void setVerificationProgress(BigDecimal verificationProgress) {
-    this.verificationprogress = verificationProgress;
+  public BlockChainName getChain() {
+    return chain;
   }
 
   /**
@@ -247,10 +133,96 @@ public class BlockChainInfo {
   }
 
   /**
+   * @return the difficulty
+   */
+  public BigDecimal getDifficulty() {
+    return difficulty;
+  }
+
+  /**
+   * @return the headers
+   */
+  public long getHeaders() {
+    return headers;
+  }
+
+  public String getPruned() {
+    return pruned;
+  }
+
+  public BigDecimal getVerificationprogress() {
+    return verificationprogress;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((bestblockhash == null) ? 0 : bestblockhash.hashCode());
+    result = prime * result + (int) (blocks ^ (blocks >>> 32));
+    result = prime * result + ((chain == null) ? 0 : chain.hashCode());
+    result = prime * result + ((chainwork == null) ? 0 : chainwork.hashCode());
+    result = prime * result + ((difficulty == null) ? 0 : difficulty.hashCode());
+    result = prime * result + (int) (headers ^ (headers >>> 32));
+    result = prime * result + ((pruned == null) ? 0 : pruned.hashCode());
+    result =
+        prime * result + ((verificationprogress == null) ? 0 : verificationprogress.hashCode());
+    return result;
+  }
+
+  public void setBestblockhash(String bestblockhash) {
+    this.bestblockhash = bestblockhash;
+  }
+
+  /**
+   * @param blocks the blocks to set
+   */
+  public void setBlocks(long blocks) {
+    this.blocks = blocks;
+  }
+
+  /**
+   * @param chain the chain to set
+   */
+  public void setChain(BlockChainName chain) {
+    this.chain = chain;
+  }
+
+  /**
    * @param chainwork the chainwork to set
    */
   public void setChainwork(String chainwork) {
     this.chainwork = chainwork;
+  }
+
+  /**
+   * @param difficulty the difficulty to set
+   */
+  public void setDifficulty(BigDecimal difficulty) {
+    this.difficulty = difficulty;
+  }
+
+  /**
+   * @param headers the headers to set
+   */
+  public void setHeaders(long headers) {
+    this.headers = headers;
+  }
+
+  public void setPruned(String pruned) {
+    this.pruned = pruned;
+  }
+
+  public void setVerificationprogress(BigDecimal verificationprogress) {
+    this.verificationprogress = verificationprogress;
+  }
+
+  @Override
+  public String toString() {
+    return "BlockChainInfo [chain=" + chain + ", blocks=" + blocks + ", headers=" + headers
+        + ", bestblockhash=" + bestblockhash + ", difficulty=" + difficulty
+        + ", verificationprogress=" + verificationprogress + ", chainwork=" + chainwork
+        + ", pruned=" + pruned + "]";
   }
 
 }
