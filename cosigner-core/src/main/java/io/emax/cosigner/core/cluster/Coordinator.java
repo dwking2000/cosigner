@@ -16,20 +16,16 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import io.emax.cosigner.core.Application;
-import io.emax.cosigner.core.ApplicationConfiguration;
+import io.emax.cosigner.core.CosignerApplication;
+import io.emax.cosigner.core.CosignerConfiguration;
 import rx.Observable;
 import rx.functions.Action1;
 
 public class Coordinator {
   // Static resolver
-  private static Coordinator coordinator;
+  private static Coordinator coordinator = new Coordinator();
 
   public static Coordinator getInstance() {
-    if (coordinator == null) {
-      coordinator = new Coordinator();
-    }
-
     return coordinator;
   }
   // End Static resolver, begin actual class.
@@ -40,7 +36,7 @@ public class Coordinator {
     try {
       JsonFactory jsonFact = new JsonFactory();
       ClusterInfo cluster = ClusterInfo.getInstance();
-      ApplicationConfiguration config = Application.getConfig();
+      CosignerConfiguration config = CosignerApplication.getConfig();
 
 
       ObjectMapper mapper = new ObjectMapper(jsonFact);
@@ -109,7 +105,7 @@ public class Coordinator {
 
   // Expectation is that Common/etc... will loop through servers and figure out if it supports the
   // given currency.
-  public static String BroadcastCommand(BaseCommand command, Server server) {
+  public static String broadcastCommand(BaseCommand command, Server server) {
     String commandString = command.toJson();
 
     Context context = ZMQ.context(1);

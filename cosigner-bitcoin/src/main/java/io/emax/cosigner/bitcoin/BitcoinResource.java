@@ -15,20 +15,18 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
  * 
  * @author Tom
  */
-public class BitcoindResource {
-  private static BitcoindResource serverResource;
-  private CurrencyConfiguration config;
+public class BitcoinResource {
+  private static BitcoinResource serverResource = new BitcoinResource();
+  private BitcoinConfiguration config;
   private JsonRpcHttpClient client;
   private BitcoindRpc bitcoindRpc;
 
-  public static BitcoindResource getResource() {
-    if (serverResource == null)
-      serverResource = new BitcoindResource();
+  public static BitcoinResource getResource() {    
     return serverResource;
   }
 
-  private BitcoindResource() {
-    this.config = new CurrencyConfiguration();
+  private BitcoinResource() {
+    this.config = new BitcoinConfiguration();
     try {
 
       // Set up our RPC authentication
@@ -46,7 +44,7 @@ public class BitcoindResource {
     }
   }
 
-  public BitcoindResource(BitcoindRpc rpc) {
+  public BitcoinResource(BitcoindRpc rpc) {
     this.bitcoindRpc = rpc;
   }
   

@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.emax.cosigner.bitcoin.BitcoindResource;
+import io.emax.cosigner.bitcoin.BitcoinResource;
 import io.emax.cosigner.bitcoin.common.ByteUtilities;
 import io.emax.cosigner.bitcoin.common.DeterministicTools;
 
@@ -16,7 +16,7 @@ import io.emax.cosigner.bitcoin.common.DeterministicTools;
  * @author dorgky
  *
  */
-public class RawTransaction {
+public final class RawTransaction implements Cloneable {
   private int version;
   private long inputCount = 0;
   private LinkedList<RawInput> inputs = new LinkedList<>();
@@ -128,33 +128,33 @@ public class RawTransaction {
    * @return
    */
   public String encode() {
-    String tx = "";
+    StringBuilder tx = new StringBuilder();
 
     // Version
     byte[] versionBytes =
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(getVersion()).toByteArray());
     versionBytes = ByteUtilities.leftPad(versionBytes, 4, (byte) 0x00);
     versionBytes = ByteUtilities.flipEndian(versionBytes);
-    tx += ByteUtilities.toHexString(versionBytes);
+    tx.append(ByteUtilities.toHexString(versionBytes));
 
     // Number of inputs
     setInputCount(getInputs().size());
     byte[] inputSizeBytes = writeVariableInt(getInputCount());
-    tx += ByteUtilities.toHexString(inputSizeBytes);
+    tx.append(ByteUtilities.toHexString(inputSizeBytes));
 
     // Inputs
     for (int i = 0; i < getInputCount(); i++) {
-      tx += getInputs().get(i).encode();
+      tx.append(getInputs().get(i).encode());
     }
 
     // Number of outputs
     setOutputCount(getOutputs().size());
     byte[] outputSizeBytes = writeVariableInt(getOutputCount());
-    tx += ByteUtilities.toHexString(outputSizeBytes);
+    tx.append(ByteUtilities.toHexString(outputSizeBytes));
 
     // Outputs
     for (int i = 0; i < getOutputCount(); i++) {
-      tx += getOutputs().get(i).encode();
+      tx.append(getOutputs().get(i).encode());
     }
 
     // Lock Time
@@ -162,9 +162,9 @@ public class RawTransaction {
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(getLockTime()).toByteArray());
     lockBytes = ByteUtilities.leftPad(lockBytes, 4, (byte) 0x00);
     lockBytes = ByteUtilities.flipEndian(lockBytes);
-    tx += ByteUtilities.toHexString(lockBytes);
+    tx.append(ByteUtilities.toHexString(lockBytes));
 
-    return tx;
+    return tx.toString();
   }
 
   /**
@@ -462,7 +462,7 @@ public class RawTransaction {
     if (matcher.matches()) {
       String addressBytes = matcher.group(1);
 
-      String networkBytes = BitcoindResource.getResource().getBitcoindRpc().getblockchaininfo()
+      String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
           .getChain() == BlockChainName.main ? NetworkBytes.P2PKH.toString()
               : NetworkBytes.P2PKH_TEST.toString();
           
@@ -474,7 +474,7 @@ public class RawTransaction {
     if (matcher.matches()) {
       String addressBytes = matcher.group(1);
       
-      String networkBytes = BitcoindResource.getResource().getBitcoindRpc().getblockchaininfo()
+      String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
           .getChain() == BlockChainName.main ? NetworkBytes.P2SH.toString()
               : NetworkBytes.P2SH_TEST.toString();
           

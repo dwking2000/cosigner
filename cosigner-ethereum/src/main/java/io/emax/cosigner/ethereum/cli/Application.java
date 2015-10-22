@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 import io.emax.cosigner.api.currency.Wallet.Recipient;
-import io.emax.cosigner.ethereum.Monitor;
-import io.emax.cosigner.ethereum.Wallet;
+import io.emax.cosigner.ethereum.EthereumMonitor;
+import io.emax.cosigner.ethereum.EthereumWallet;
 
 /**
  * Command line option for running the library
@@ -33,8 +33,8 @@ public class Application {
       return;
     }
 
-    Wallet wallet = new Wallet();
-    Monitor monitor = new Monitor();
+    EthereumWallet wallet = new EthereumWallet();
+    EthereumMonitor monitor = new EthereumMonitor();
     String accountName = "";
     String address = "";
     String transaction = "";

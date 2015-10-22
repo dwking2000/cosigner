@@ -12,7 +12,7 @@ import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
 import rx.Observable;
 import rx.Subscription;
 
-public class Monitor implements io.emax.cosigner.api.currency.Monitor {
+public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
   private HashSet<String> monitoredAddresses = new HashSet<>();
   private HashMap<String, String> accountBalances = new HashMap<>();
   private HashSet<TransactionDetails> accountTransactions = new HashSet<>();
@@ -31,10 +31,10 @@ public class Monitor implements io.emax.cosigner.api.currency.Monitor {
   private Subscription balanceSubscription =
       Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
 
-  private Wallet wallet;
+  private BitcoinWallet wallet;
 
-  public Monitor() {
-    wallet = new Wallet();
+  public BitcoinMonitor() {
+    wallet = new BitcoinWallet();
   }
 
   private boolean updateBalances() {
@@ -91,7 +91,7 @@ public class Monitor implements io.emax.cosigner.api.currency.Monitor {
 
   @Override
   public io.emax.cosigner.api.currency.Monitor createNewMonitor() {
-    return new Monitor();
+    return new BitcoinMonitor();
   }
 
   @Override

@@ -8,9 +8,9 @@ import org.junit.Test;
 import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.Wallet;
-import io.emax.cosigner.bitcoin.BitcoindResource;
+import io.emax.cosigner.bitcoin.BitcoinResource;
 import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
-import io.emax.cosigner.core.Application;
+import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 import junit.framework.TestCase;
@@ -35,16 +35,16 @@ public class CommonTest extends TestCase {
     userKey = "deadbeef";
 
     // Bitcoin
-    BitcoindResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
-    bitcoinWallet = new io.emax.cosigner.bitcoin.Wallet();
-    bitcoinMonitor = new io.emax.cosigner.bitcoin.Monitor();
-    bitcoinConfig = new io.emax.cosigner.bitcoin.CurrencyConfiguration();
+    BitcoinResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
+    bitcoinWallet = new io.emax.cosigner.bitcoin.BitcoinWallet();
+    bitcoinMonitor = new io.emax.cosigner.bitcoin.BitcoinMonitor();
+    bitcoinConfig = new io.emax.cosigner.bitcoin.BitcoinConfiguration();
 
     // Ethereum
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    ethereumWallet = new io.emax.cosigner.ethereum.Wallet();
-    ethereumMonitor = new io.emax.cosigner.ethereum.Monitor();
-    ethereumConfig = new io.emax.cosigner.ethereum.CurrencyConfiguration();
+    ethereumWallet = new io.emax.cosigner.ethereum.EthereumWallet();
+    ethereumMonitor = new io.emax.cosigner.ethereum.EthereumMonitor();
+    ethereumConfig = new io.emax.cosigner.ethereum.EthereumConfiguration();
 
     // Register currency packages
     CurrencyPackage bitcoinPackage = new CurrencyPackage();
@@ -57,9 +57,9 @@ public class CommonTest extends TestCase {
     ethereumPackage.setMonitor(ethereumMonitor);
     ethereumPackage.setWallet(ethereumWallet);
 
-    Application.getCurrencies().put(bitcoinPackage.getConfiguration().getCurrencySymbol(),
+    CosignerApplication.getCurrencies().put(bitcoinPackage.getConfiguration().getCurrencySymbol(),
         bitcoinPackage);
-    Application.getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(),
+    CosignerApplication.getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(),
         ethereumPackage);
 
   }

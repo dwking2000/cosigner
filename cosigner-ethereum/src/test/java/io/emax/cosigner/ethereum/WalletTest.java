@@ -14,13 +14,13 @@ import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 import junit.framework.TestCase;
 
 public class WalletTest extends TestCase {
-  private static Wallet wallet;
+  private static EthereumWallet wallet;
   private static String userKey;
 
   @Override
   public void setUp() {
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    wallet = new Wallet();
+    wallet = new EthereumWallet();
     userKey = "deadbeef";
   }
 

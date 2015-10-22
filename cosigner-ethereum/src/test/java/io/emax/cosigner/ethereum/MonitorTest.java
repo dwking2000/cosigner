@@ -12,16 +12,16 @@ import junit.framework.TestCase;
 import rx.Subscription;
 
 public class MonitorTest extends TestCase {
-  private static Wallet wallet;
-  private static Monitor monitor;
+  private static EthereumWallet wallet;
+  private static EthereumMonitor monitor;
   private static String userKey;
   private static int balanceCounter;
 
   @Override
   public void setUp() {
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    wallet = new Wallet();
-    monitor = new Monitor();
+    wallet = new EthereumWallet();
+    monitor = new EthereumMonitor();
     userKey = "deadbeef";
     balanceCounter = 0;
   }

@@ -122,19 +122,19 @@ public interface Wallet {
     }
 
     public String[] getFromAddress() {
-      return fromAddress;
+      return fromAddress.clone();
     }
 
     public void setFromAddress(String[] fromAddress) {
-      this.fromAddress = fromAddress;
+      this.fromAddress = fromAddress.clone();
     }
 
     public String[] getToAddress() {
-      return toAddress;
+      return toAddress.clone();
     }
 
     public void setToAddress(String[] toAddress) {
-      this.toAddress = toAddress;
+      this.toAddress = toAddress.clone();
     }
 
     public BigDecimal getAmount() {

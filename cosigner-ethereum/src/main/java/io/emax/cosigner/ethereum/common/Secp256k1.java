@@ -42,14 +42,15 @@ public class Secp256k1 {
       ecdsaSigner.init(true, params);
 
       BigInteger[] sig = ecdsaSigner.generateSignature(data);
-      String sigData = "00";
+      StringBuilder sigData = new StringBuilder();
+      sigData.append("00");
       byte[] publicKey = getPublicKey(privateKey);
       byte recoveryId = getRecoveryId(sig[0].toByteArray(), sig[1].toByteArray(), data, publicKey);
-      sigData += ByteUtilities.toHexString(new byte[] {recoveryId});
+      sigData.append(ByteUtilities.toHexString(new byte[] {recoveryId}));
       for (BigInteger sigChunk : sig) {
-        sigData += sigChunk.toString(16);
+        sigData.append(sigChunk.toString(16));
       }
-      return new BigInteger(sigData, 16).toByteArray();
+      return new BigInteger(sigData.toString(), 16).toByteArray();
 
     } catch (Exception e) {
       System.out.println("Panic!!" + e.toString());

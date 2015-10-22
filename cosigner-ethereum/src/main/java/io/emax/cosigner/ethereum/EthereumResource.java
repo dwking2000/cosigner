@@ -14,19 +14,17 @@ import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
  * @author Tom
  */
 public class EthereumResource {
-  private static EthereumResource serverResource;
-  private CurrencyConfiguration config;
+  private static EthereumResource serverResource = new EthereumResource();
+  private EthereumConfiguration config;
   private JsonRpcHttpClient client;
   private EthereumRpc ethereumRpc;
 
-  public static EthereumResource getResource() {
-    if (serverResource == null)
-      serverResource = new EthereumResource();
+  public static EthereumResource getResource() {    
     return serverResource;
   }
 
   private EthereumResource() {
-    this.config = new CurrencyConfiguration();
+    this.config = new EthereumConfiguration();
     try {
       this.client = new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()));
     } catch (MalformedURLException e) {

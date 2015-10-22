@@ -38,11 +38,11 @@ public class SignedTransaction {
   }
 
   public Errors[] getErrors() {
-    return errors;
+    return errors.clone();
   }
 
   public void setErrors(Errors[] errors) {
-    this.errors = errors;
+    this.errors = errors.clone();
   }
 
   @Override

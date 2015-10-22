@@ -26,16 +26,6 @@ import com.googlecode.jsonrpc4j.JsonRpcMethod;
  * @author dquintela
  */
 public interface BlockChainRpc {
-  /**
-   * GetBlock
-   * 
-   * The getblock RPC gets a block with a particular header hash from the local block database
-   * either as a JSON object or as a serialized block.
-   * 
-   * @param blockHash The hash of the header of the block to get, encoded as hex in RPC byte order
-   */
-  @JsonRpcMethod("getblock")
-  Block getBlock(String blockHash);
 
   /**
    * GetBlockChainInfo Added in Bitcoin Core 0.9.2

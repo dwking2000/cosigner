@@ -7,7 +7,7 @@ import java.util.Properties;
 import io.emax.cosigner.api.currency.SigningType;
 import io.emax.cosigner.bitcoin.common.EnvironmentVariableParser;
 
-public class CurrencyConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
+public class BitcoinConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
   private static String daemonConnectionString = "http://127.0.0.1:18332";
   private static int minConfirmations = 6;
   private static int maxConfirmations = 9999999;
@@ -24,11 +24,11 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
 
   private static boolean configLoaded = false;
 
-  public CurrencyConfiguration() {
+  public BitcoinConfiguration() {
     loadConfig();
   }
 
-  public synchronized void loadConfig() {
+  public static synchronized void loadConfig() {
     if (!configLoaded) {
       FileInputStream propertiesFile = null;
       try {
@@ -131,7 +131,7 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
   }
 
   public String[] getMultiSigAccounts() {
-    return multiSigAccounts;
+    return multiSigAccounts.clone();
   }
 
   public String getServerPrivateKey() {

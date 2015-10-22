@@ -199,19 +199,19 @@ public class Block {
   }
 
   public Transaction[] getTransactions() {
-    return transactions;
+    return transactions.clone();
   }
 
   public void setTransactions(Transaction[] transactions) {
-    this.transactions = transactions;
+    this.transactions = transactions.clone();
   }
 
   public String[] getUncles() {
-    return uncles;
+    return uncles.clone();
   }
 
   public void setUncles(String[] uncles) {
-    this.uncles = uncles;
+    this.uncles = uncles.clone();
   }
 
   @Override

@@ -10,13 +10,13 @@ import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 import junit.framework.TestCase;
 
 public class WalletTest extends TestCase {
-  private static Wallet wallet;
+  private static BitcoinWallet wallet;
   private static String userKey;
 
   @Override
   public void setUp() {
-    BitcoindResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
-    wallet = new Wallet();    
+    BitcoinResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
+    wallet = new BitcoinWallet();    
     userKey = "deadbeef";
   }
 

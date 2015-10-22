@@ -23,10 +23,10 @@ import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
 import rx.Observable;
 import rx.Subscription;
 
-public class Wallet implements io.emax.cosigner.api.currency.Wallet {
+public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
   // RPC and configuration
-  private EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
-  private CurrencyConfiguration config = new CurrencyConfiguration();
+  private static EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
+  private static EthereumConfiguration config = new EthereumConfiguration();
 
   // Address generation data
   private static HashMap<String, Integer> addressRounds = new HashMap<>();
@@ -34,31 +34,25 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet {
   // Multi-sig data
   private static HashMap<String, String> msigContracts = new HashMap<>();
   private static HashMap<String, String> reverseMsigContracts = new HashMap<>();
-  private static Subscription multiSigSubscription;
+  @SuppressWarnings("unused")
+  private static Subscription multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES)
+      .onErrorReturn(null).subscribe(tick -> syncMultiSigAddresses());
 
   // Transaction history data
   private static HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
-  private static Subscription txHistorySubscription;
+  @SuppressWarnings("unused")
+  private static Subscription txHistorySubscription = Observable.interval(1, TimeUnit.MINUTES)
+      .onErrorReturn(null).subscribe(tick -> scanTransactions());;
 
-  public Wallet() {
+  public EthereumWallet() {
     try {
       syncMultiSigAddresses();
     } catch (Exception e) {
       // this is ok.
     }
-
-    if (multiSigSubscription == null) {
-      multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> syncMultiSigAddresses());
-    }
-
-    if (txHistorySubscription == null) {
-      txHistorySubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanTransactions());
-    }
   }
 
-  private synchronized void syncMultiSigAddresses() {
+  private static synchronized void syncMultiSigAddresses() {
     String contractPayload = "0x" + MultiSigContract.getContractPayload();
     String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
         DefaultBlock.LATEST.toString());
@@ -205,11 +199,12 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet {
     // the constructor
     // Followed by the payload, i.e. contract code that gets installed
     // Followed by the constructor params.
-    String contractCode = contractInit + accountOffset + requiredSigs + numberOfAddresses;
+    StringBuilder contractCode = new StringBuilder();
+    contractCode.append(contractInit + accountOffset + requiredSigs + numberOfAddresses);
     for (String addr : addressesUsed) {
-      contractCode += addr;
+      contractCode.append(addr);
     }
-    tx.getData().setDecodedContents(ByteUtilities.toByteArray(contractCode));
+    tx.getData().setDecodedContents(ByteUtilities.toByteArray(contractCode.toString()));
 
     // Sign it with our contract creator, creator needs funds to pay for the creation
     String rawTx = ByteUtilities.toHexString(tx.encode());
@@ -378,7 +373,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet {
           }
 
           // Sign it and rebuild the data
-          byte[][] sigData = signData(hashBytes, config.getMultiSigAddresses()[i], name);
+          byte[][] sigData = signData(hashBytes, config.getMultiSigAddresses()[i], null);
           if (sigData.length < 3)
             return transaction;
 
@@ -499,7 +494,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet {
           break;
         }
       }
-      if (privateKey == "") {
+      if (privateKey.isEmpty()) {
         return new byte[][] {};
       }
 
@@ -535,7 +530,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet {
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
-  private void scanTransactions() {
+  private static void scanTransactions() {
     // Scan every block, look for origin and receiver.
     // Get latest block
     BigInteger latestBlockNumber =

@@ -32,20 +32,19 @@ import io.emax.cosigner.bitcoin.common.Secp256k1;
 import rx.Observable;
 import rx.Subscription;
 
-public class Wallet implements io.emax.cosigner.api.currency.Wallet {
+public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
 
-  private CurrencyConfiguration config = new CurrencyConfiguration();
-  private BitcoindRpc bitcoindRpc = BitcoindResource.getResource().getBitcoindRpc();
-  private final String PUBKEY_PREFIX = "PK-";
-  private static Subscription multiSigSubscription;
+  private static BitcoinConfiguration config = new BitcoinConfiguration();
+  private static BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
+  private static final String PUBKEY_PREFIX = "PK-";
+  @SuppressWarnings("unused")
+  private static Subscription multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+      .subscribe(tick -> scanForAddresses());
 
   private static HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
-  public Wallet() {
-    if (multiSigSubscription == null) {
-      multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanForAddresses());
-    }
+  public BitcoinWallet() {
+    
   }
 
   @Override
@@ -98,7 +97,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet {
     return newAddress;
   }
 
-  public void scanForAddresses() {
+  public static void scanForAddresses() {
     Map<String, BigDecimal> knownAccounts = bitcoindRpc.listaccounts(0, true);
     knownAccounts.keySet().forEach(account -> {
       // Look for any known PK/Single accounts and generate the matching multisig in memory
@@ -111,7 +110,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet {
     });
   }
 
-  public String generateMultiSigAddress(Iterable<String> addresses, String name) {
+  public static String generateMultiSigAddress(Iterable<String> addresses, String name) {
     LinkedList<String> multisigAddresses = new LinkedList<>();
     addresses.forEach((address) -> {
       // Check if any of the addresses belong to the user

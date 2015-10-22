@@ -58,7 +58,7 @@ public class RLP {
   }
 
   public static byte[] encodeItem(byte[] item) {
-    if (item.length == 1 && (int) (0xFF & item[0]) > 0 && (int) (0xFF & item[0]) < SHORT_ITEM) {
+    if (item.length == 1 && (int) (0xFF & item[0]) != 0 && (int) (0xFF & item[0]) < SHORT_ITEM) {
       return item;
     } else if (item.length < THRESHOLD) {
       byte[] encodedItem = new byte[1 + item.length];

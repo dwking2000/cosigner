@@ -14,16 +14,16 @@ import io.emax.cosigner.core.currency.CurrencyPackage;
 import io.emax.cosigner.core.resources.AdminResource;
 import io.emax.cosigner.core.resources.CurrencyResource;
 
-public class Application extends io.dropwizard.Application<ApplicationConfiguration> {
-  private static ApplicationConfiguration config;
+public class CosignerApplication extends io.dropwizard.Application<CosignerConfiguration> {
+  private static CosignerConfiguration config;
   private static HashMap<String, CurrencyPackage> currencies = new HashMap<>();
 
-  public static ApplicationConfiguration getConfig() {
+  public static CosignerConfiguration getConfig() {
     return config;
   }
 
-  public static void setConfig(ApplicationConfiguration config) {
-    Application.config = config;
+  public static void setConfig(CosignerConfiguration config) {
+    CosignerApplication.config = config;
   }
 
   public static HashMap<String, CurrencyPackage> getCurrencies() {
@@ -31,16 +31,16 @@ public class Application extends io.dropwizard.Application<ApplicationConfigurat
   }
 
   public static void setCurrencies(HashMap<String, CurrencyPackage> currencies) {
-    Application.currencies = currencies;
+    CosignerApplication.currencies = currencies;
   }
 
   public static void main(String[] args) throws Exception {
-    new Application().run(args);
+    new CosignerApplication().run(args);
   }
 
   @Override
-  public void run(ApplicationConfiguration config, Environment environment) throws Exception {
-    Application.setConfig(config);
+  public void run(CosignerConfiguration config, Environment environment) throws Exception {
+    CosignerApplication.setConfig(config);
 
     // Initialize ClusterInfo
     ClusterInfo.getInstance();
@@ -52,15 +52,15 @@ public class Application extends io.dropwizard.Application<ApplicationConfigurat
     // Load api.currency libraries here
     // Bitcoin
     CurrencyPackage bitcoinPackage = new CurrencyPackage();
-    bitcoinPackage.setConfiguration(new io.emax.cosigner.bitcoin.CurrencyConfiguration());
-    bitcoinPackage.setWallet(new io.emax.cosigner.bitcoin.Wallet());
-    bitcoinPackage.setMonitor(new io.emax.cosigner.bitcoin.Monitor());
+    bitcoinPackage.setConfiguration(new io.emax.cosigner.bitcoin.BitcoinConfiguration());
+    bitcoinPackage.setWallet(new io.emax.cosigner.bitcoin.BitcoinWallet());
+    bitcoinPackage.setMonitor(new io.emax.cosigner.bitcoin.BitcoinMonitor());
     getCurrencies().put(bitcoinPackage.getConfiguration().getCurrencySymbol(), bitcoinPackage);
     // Ethereum
     CurrencyPackage ethereumPackage = new CurrencyPackage();
-    ethereumPackage.setConfiguration(new io.emax.cosigner.ethereum.CurrencyConfiguration());
-    ethereumPackage.setWallet(new io.emax.cosigner.ethereum.Wallet());
-    ethereumPackage.setMonitor(new io.emax.cosigner.ethereum.Monitor());
+    ethereumPackage.setConfiguration(new io.emax.cosigner.ethereum.EthereumConfiguration());
+    ethereumPackage.setWallet(new io.emax.cosigner.ethereum.EthereumWallet());
+    ethereumPackage.setMonitor(new io.emax.cosigner.ethereum.EthereumMonitor());
     getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(), ethereumPackage);
 
     // [FUTURE] Load any plugin libraries

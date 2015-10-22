@@ -12,16 +12,16 @@ import junit.framework.TestCase;
 import rx.Subscription;
 
 public class MonitorTest extends TestCase {
-  private static Wallet wallet;
-  private static Monitor monitor;
+  private static BitcoinWallet wallet;
+  private static BitcoinMonitor monitor;
   private static String userKey;
   private static int balanceCounter;
 
   @Override
   public void setUp() {
-    BitcoindResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
-    wallet = new Wallet();
-    monitor = new Monitor();
+    BitcoinResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
+    wallet = new BitcoinWallet();
+    monitor = new BitcoinMonitor();
     userKey = "deadbeef";
     balanceCounter = 0;
   }

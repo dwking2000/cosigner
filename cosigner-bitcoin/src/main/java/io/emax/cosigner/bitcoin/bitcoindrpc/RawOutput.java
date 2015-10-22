@@ -5,7 +5,7 @@ import java.math.BigInteger;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.cosigner.bitcoin.common.ByteUtilities;
 
-public class RawOutput {
+public final class RawOutput implements Cloneable  {
   private long amount;
   private long scriptSize = 0;
   private String script = "";

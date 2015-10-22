@@ -2,7 +2,7 @@ package io.emax.cosigner.core;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ApplicationConfiguration extends io.dropwizard.Configuration {
+public class CosignerConfiguration extends io.dropwizard.Configuration {
   private String clusterLocation = "localhost";
   private int clusterPort = 5555;
   private int clusterRPCPort = 8080;

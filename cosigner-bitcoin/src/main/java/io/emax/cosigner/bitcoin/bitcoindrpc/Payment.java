@@ -234,11 +234,11 @@ public class Payment {
   }
 
   public Date getBlocktime() {
-    return blocktime;
+    return Date.from(blocktime.toInstant());
   }
 
   public void setBlocktime(Date blocktime) {
-    this.blocktime = blocktime;
+    this.blocktime = Date.from(blocktime.toInstant());
   }
 
   public String getTxid() {
@@ -258,19 +258,19 @@ public class Payment {
   }
 
   public Date getTime() {
-    return time;
+    return Date.from(time.toInstant());
   }
 
   public void setTime(Date time) {
-    this.time = time;
+    this.time = Date.from(time.toInstant());
   }
 
   public Date getTimereceived() {
-    return timereceived;
+    return Date.from(timereceived.toInstant());
   }
 
   public void setTimereceived(Date timereceived) {
-    this.timereceived = timereceived;
+    this.timereceived = Date.from(timereceived.toInstant());
   }
 
   public String getComment() {

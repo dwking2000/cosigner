@@ -11,22 +11,22 @@ public class RLPList extends LinkedList<RLPEntity>implements RLPEntity {
 
   @Override
   public byte[] getEncodedContents() {
-    return encodedContents;
+    return encodedContents.clone();
   }
 
   @Override
   public void setEncodedContents(byte[] encodedContents) {
-    this.encodedContents = encodedContents;
+    this.encodedContents = encodedContents.clone();
   }
 
   @Override
   public byte[] getDecodedContents() {
-    return decodedContents;
+    return decodedContents.clone();
   }
 
   @Override
   public void setDecodedContents(byte[] decodedContents) {
-    this.decodedContents = decodedContents;
+    this.decodedContents = decodedContents.clone();
     int bufferPointer = 0;
     while (bufferPointer < this.decodedContents.length) {
       RLPEntity newEntity = RLP.parseArray(
@@ -42,20 +42,21 @@ public class RLPList extends LinkedList<RLPEntity>implements RLPEntity {
 
   @Override
   public String toString() {
-    String output = "RLPList [encodedContents=" + java.util.Arrays.toString(encodedContents)
-        + ", decodedContents=" + java.util.Arrays.toString(decodedContents);
+    StringBuilder output = new StringBuilder();
+    output.append("RLPList [encodedContents=" + java.util.Arrays.toString(encodedContents)
+        + ", decodedContents=" + java.util.Arrays.toString(decodedContents));
 
     for (RLPEntity entity : this) {
-      output += "\n {" + entity.toString() + "}";
+      output.append("\n {" + entity.toString() + "}");
     }
 
-    output += "]";
-    return output;
+    output.append("]");
+    return output.toString();
   }
 
   @Override
   public byte[] encode() {
     this.encodedContents = RLP.encodeList(this);
-    return this.encodedContents;
+    return this.encodedContents.clone();
   }
 }

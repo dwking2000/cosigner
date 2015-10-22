@@ -39,7 +39,7 @@ public class Secp256k1 {
 
       ecdsaSigner.init(true, params);
 
-      String signature = "";
+      StringBuilder signature = new StringBuilder();
       BigInteger[] sig = ecdsaSigner.generateSignature(data);
       if (sig.length > 1) {
         // Nothing went wrong, we have an S, check it.
@@ -52,21 +52,21 @@ public class Secp256k1 {
         }
       }
       for (BigInteger sigData : sig) {
-        signature += "02";
+        signature.append("02");
         byte[] sigBytes = sigData.toByteArray();
         byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
         sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
-        signature += ByteUtilities.toHexString(sigSize);
-        signature += ByteUtilities.toHexString(sigBytes);
+        signature.append(ByteUtilities.toHexString(sigSize));
+        signature.append(ByteUtilities.toHexString(sigBytes));
       }
 
-      byte[] sigBytes = ByteUtilities.toByteArray(signature);
+      byte[] sigBytes = ByteUtilities.toByteArray(signature.toString());
       byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
       sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
-      signature = ByteUtilities.toHexString(sigSize) + signature;
-      signature = "30" + signature;
+      String signatureString = ByteUtilities.toHexString(sigSize) + signature.toString();
+      signatureString = "30" + signatureString;
 
-      return ByteUtilities.toByteArray(signature);
+      return ByteUtilities.toByteArray(signatureString);
 
     } catch (Exception e) {
       System.out.println("Panic!!" + e.toString());

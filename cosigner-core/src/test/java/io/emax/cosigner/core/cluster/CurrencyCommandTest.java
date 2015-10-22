@@ -5,8 +5,8 @@ import java.util.LinkedList;
 
 import org.junit.Test;
 
-import io.emax.cosigner.core.Application;
-import io.emax.cosigner.core.ApplicationConfiguration;
+import io.emax.cosigner.core.CosignerApplication;
+import io.emax.cosigner.core.CosignerConfiguration;
 import io.emax.cosigner.core.currency.Common;
 import io.emax.cosigner.core.currency.CommonTest;
 import io.emax.cosigner.core.currency.CurrencyParameters;
@@ -18,7 +18,7 @@ public class CurrencyCommandTest extends TestCase {
 
   @Override
   public void setUp() {
-    Application.setConfig(new ApplicationConfiguration());
+    CosignerApplication.setConfig(new CosignerConfiguration());
     // Register currencies in case this is run before CommonTest
     CommonTest currencyTest = new CommonTest();
     currencyTest.setUp();

@@ -10,7 +10,7 @@ import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.gethrpc.MultiSigContract;
 
 public class EthereumTestRpc implements EthereumRpc {
-  private static int txCounter = 1;
+  private int txCounter = 1;
 
   @Override
   public String eth_getBalance(String address, String defaultBlock) {

@@ -6,23 +6,20 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.emax.cosigner.core.Application;
-import io.emax.cosigner.core.ApplicationConfiguration;
+import io.emax.cosigner.core.CosignerApplication;
+import io.emax.cosigner.core.CosignerConfiguration;
 
 public class ClusterInfo {
   // Static resolver
-  private static ClusterInfo clusterInfo;
+  private static ClusterInfo clusterInfo = new ClusterInfo();
 
   public static ClusterInfo getInstance() {
-    if (clusterInfo == null)
-      clusterInfo = new ClusterInfo();
-
     return clusterInfo;
   }
   // End Static resolver, begin actual class.
 
   private ClusterInfo() {
-    ApplicationConfiguration config = Application.getConfig();
+    CosignerConfiguration config = CosignerApplication.getConfig();
     this.thisServer.setServerLocation(config.getClusterLocation());
     this.thisServer.setServerListeningPort(config.getClusterPort());
     this.thisServer.setServerRPCPort(config.getClusterRPCPort());

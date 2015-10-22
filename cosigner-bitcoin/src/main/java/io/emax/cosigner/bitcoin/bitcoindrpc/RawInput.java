@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.cosigner.bitcoin.common.ByteUtilities;
 
-public class RawInput {
+public final class RawInput implements Cloneable {
   private String txHash;
   private int txIndex;
   private long scriptSize = 0;
@@ -199,14 +199,14 @@ public class RawInput {
       }
     }
 
-    String myScriptString = "";
+    StringBuilder myScriptString = new StringBuilder();
     for (String item : stackItems) {
       byte[] itemBytes = ByteUtilities.toByteArray(item);
       byte[] prefixBytes = RawTransaction.writeVariableStackInt(itemBytes.length);
-      myScriptString += ByteUtilities.toHexString(prefixBytes);
-      myScriptString += ByteUtilities.toHexString(itemBytes);
+      myScriptString.append(ByteUtilities.toHexString(prefixBytes));
+      myScriptString.append(ByteUtilities.toHexString(itemBytes));
     }
 
-    setScript(myScriptString);
+    setScript(myScriptString.toString());
   }
 }

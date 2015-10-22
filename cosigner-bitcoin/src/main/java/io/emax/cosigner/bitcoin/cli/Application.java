@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 import io.emax.cosigner.api.currency.Wallet.Recipient;
-import io.emax.cosigner.bitcoin.Monitor;
-import io.emax.cosigner.bitcoin.Wallet;
+import io.emax.cosigner.bitcoin.BitcoinMonitor;
+import io.emax.cosigner.bitcoin.BitcoinWallet;
 
 /**
  * Command line option for running the library
@@ -33,8 +33,8 @@ public class Application {
       return;
     }
 
-    Wallet wallet = new Wallet();
-    Monitor monitor = new Monitor();
+    BitcoinWallet wallet = new BitcoinWallet();
+    BitcoinMonitor monitor = new BitcoinMonitor();
     String accountName = "";
     String address = "";
     String transaction = "";

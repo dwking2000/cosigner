@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
-import io.emax.cosigner.bitcoin.BitcoindResource;
+import io.emax.cosigner.bitcoin.BitcoinResource;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
 import io.emax.cosigner.bitcoin.bitcoindrpc.NetworkBytes;
 
@@ -65,7 +65,7 @@ public class DeterministicTools {
         }
       }
 
-      String networkBytes = BitcoindResource.getResource().getBitcoindRpc().getblockchaininfo()
+      String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
           .getChain() == BlockChainName.main ? NetworkBytes.PRIVATEKEY.toString()
               : NetworkBytes.PRIVATEKEY_TEST.toString();
 
@@ -125,7 +125,7 @@ public class DeterministicTools {
       ripemd.doFinal(publicRipemdKeyBytes, 0);
 
       // Add network bytes
-      String networkBytes = BitcoindResource.getResource().getBitcoindRpc().getblockchaininfo()
+      String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
           .getChain() == BlockChainName.main ? NetworkBytes.P2PKH.toString()
               : NetworkBytes.P2PKH_TEST.toString();
 

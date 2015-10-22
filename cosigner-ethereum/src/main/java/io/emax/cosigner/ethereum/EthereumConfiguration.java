@@ -7,7 +7,7 @@ import java.util.Properties;
 import io.emax.cosigner.api.currency.SigningType;
 import io.emax.cosigner.ethereum.common.EnvironmentVariableParser;
 
-public class CurrencyConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
+public class EthereumConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
   // Defaults
   private static String daemonConnectionString = "http://localhost:8101";
   private static int minConfirmations = 10;
@@ -24,7 +24,7 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
 
   private static boolean configLoaded = false;
 
-  public CurrencyConfiguration() {
+  public EthereumConfiguration() {
     loadConfig();
   }
 
@@ -147,7 +147,7 @@ public class CurrencyConfiguration implements io.emax.cosigner.api.currency.Curr
   }
 
   public String[] getMultiSigAddresses() {
-    return multiSigAccounts;
+    return multiSigAccounts.clone();
   }
 
   public long getWeiMultiplier() {

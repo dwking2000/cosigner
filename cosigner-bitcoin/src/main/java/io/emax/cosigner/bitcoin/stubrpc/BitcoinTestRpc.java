@@ -5,7 +5,6 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
-import io.emax.cosigner.bitcoin.bitcoindrpc.Block;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainInfo;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
 import io.emax.cosigner.bitcoin.bitcoindrpc.DecodedTransaction;
@@ -18,12 +17,7 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.Payment;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SigHash;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
 
-public class BitcoinTestRpc implements BitcoindRpc {
-
-  @Override
-  public Block getBlock(String blockHash) {
-    return null;
-  }
+public class BitcoinTestRpc implements BitcoindRpc {  
 
   @Override
   public BlockChainInfo getblockchaininfo() {

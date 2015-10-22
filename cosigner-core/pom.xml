@@ -104,7 +104,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>io.emax.cosigner.core.Application</mainClass>
+							<mainClass>io.emax.cosigner.core.CosignerApplication</mainClass>
 							<classpathPrefix>lib/</classpathPrefix>
 						</manifest>
 					</archive>

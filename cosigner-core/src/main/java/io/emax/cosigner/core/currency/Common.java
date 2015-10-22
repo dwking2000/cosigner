@@ -23,7 +23,7 @@ import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.SigningType;
 import io.emax.cosigner.api.currency.Wallet.Recipient;
 import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
-import io.emax.cosigner.core.Application;
+import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
 import io.emax.cosigner.core.cluster.CurrencyCommand;
@@ -80,8 +80,8 @@ public class Common {
   }
 
   public static CurrencyPackage lookupCurrency(CurrencyParameters params) {
-    if (Application.getCurrencies().containsKey(params.getCurrencySymbol())) {
-      return Application.getCurrencies().get(params.getCurrencySymbol());
+    if (CosignerApplication.getCurrencies().containsKey(params.getCurrencySymbol())) {
+      return CosignerApplication.getCurrencies().get(params.getCurrencySymbol());
     } else {
       return null;
     }
@@ -89,7 +89,7 @@ public class Common {
 
   public static String listCurrencies() {
     List<String> currencies = new LinkedList<>();
-    Application.getCurrencies().keySet().forEach((currency) -> {
+    CosignerApplication.getCurrencies().keySet().forEach((currency) -> {
       currencies.add(currency);
     });
 
@@ -382,7 +382,7 @@ public class Common {
         CurrencyCommand command = new CurrencyCommand();
         command.setCurrencyParams(currencyParams);
         command.setCommandType(CurrencyCommandType.SIGN);
-        command = CurrencyCommand.parseCommandString(Coordinator.BroadcastCommand(command, server));
+        command = CurrencyCommand.parseCommandString(Coordinator.broadcastCommand(command, server));
 
         if (command != null) {
           String originalTx = currencyParams.getTransactionData();
