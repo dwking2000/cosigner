@@ -1,6 +1,7 @@
 package io.emax.cosigner.core.resources.websocket;
 
 import java.io.IOException;
+import java.util.Locale;
 
 import javax.ws.rs.Path;
 
@@ -28,7 +29,7 @@ public class WebSocketResource extends OnMessage<String> {
   @Override
   public void onMessage(AtmosphereResponse arg0, String arg1) throws IOException {
     String functionCall = arg0.request().getRequestURI().replaceAll("/ws", "");
-    switch (functionCall.toLowerCase()) {
+    switch (functionCall.toLowerCase(Locale.US)) {
       case "/listcurrencies":
         logger.debug("[GetCurrencies:WSRequest]");
         arg0.write(Common.listCurrencies());

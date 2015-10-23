@@ -19,7 +19,7 @@ public class SignedTransaction {
   private boolean complete;
 
   @JsonProperty("errors")
-  private Errors[] errors;
+  private Errors[] errors = new Errors[0];
 
   public String getTransaction() {
     return transaction;
@@ -38,11 +38,14 @@ public class SignedTransaction {
   }
 
   public Errors[] getErrors() {
-    return errors.clone();
+    Errors[] retArray = new Errors[errors.length];
+    System.arraycopy(errors, 0, retArray, 0, errors.length);
+    return retArray;
   }
 
   public void setErrors(Errors[] errors) {
-    this.errors = errors.clone();
+    this.errors = new Errors[errors.length];
+    System.arraycopy(errors, 0, this.errors, 0, errors.length);
   }
 
   @Override

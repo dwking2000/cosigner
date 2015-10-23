@@ -40,11 +40,11 @@ public class CallData {
     this.gas = gas;
   }
 
-  public String getGasprice() {
+  public String getGasPrice() {
     return gasprice;
   }
 
-  public void setGasprice(String gasprice) {
+  public void setGasPrice(String gasprice) {
     this.gasprice = gasprice;
   }
 

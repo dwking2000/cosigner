@@ -16,7 +16,7 @@ import io.emax.cosigner.bitcoin.common.DeterministicTools;
  * @author dorgky
  *
  */
-public final class RawTransaction implements Cloneable {
+public final class RawTransaction {
   private int version;
   private long inputCount = 0;
   private LinkedList<RawInput> inputs = new LinkedList<>();
@@ -304,15 +304,15 @@ public final class RawTransaction implements Cloneable {
   }
 
   public static byte[] writeVariableInt(long data) {
-    byte[] newData = new byte[0];
+    byte[] newData;
 
-    if (data < 0xFD) {
+    if (data < 0x00FD) {
       newData = new byte[1];
       newData[0] = (byte) (data & 0xFF);
     } else if (data <= 0xFFFF) {
       newData = new byte[3];
       newData[0] = (byte) 0xFD;
-    } else if (data <= 0xFFFFFFFF) {
+    } else if (data <= 4294967295L /*0xFFFFFFFF*/) {
       newData = new byte[5];
       newData[0] = (byte) 0xFE;
     } else {
@@ -333,7 +333,7 @@ public final class RawTransaction implements Cloneable {
   }
 
   public static byte[] writeVariableStackInt(long data) {
-    byte[] newData = new byte[0];
+    byte[] newData;
 
     if (data < 0x4C) {
       newData = new byte[1];
@@ -361,17 +361,17 @@ public final class RawTransaction implements Cloneable {
     return newData;
   }
 
-  public RawTransaction clone() {
+  public RawTransaction copy() {
     RawTransaction rawTx = new RawTransaction();
 
     rawTx.setVersion(getVersion());
     rawTx.setInputCount(getInputCount());
     for (RawInput input : getInputs()) {
-      rawTx.getInputs().add(input.clone());
+      rawTx.getInputs().add(input.copy());
     }
     rawTx.setOutputCount(getOutputCount());
     for (RawOutput output : getOutputs()) {
-      rawTx.getOutputs().add(output.clone());
+      rawTx.getOutputs().add(output.copy());
     }
     rawTx.setLockTime(getLockTime());
 
@@ -379,7 +379,7 @@ public final class RawTransaction implements Cloneable {
   }
 
   public static RawTransaction stripInputScripts(RawTransaction tx) {
-    RawTransaction rawTx = tx.clone();
+    RawTransaction rawTx = tx.copy();
 
     for (RawInput input : rawTx.getInputs()) {
       input.setScript("");

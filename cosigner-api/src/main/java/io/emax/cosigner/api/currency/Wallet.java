@@ -108,9 +108,9 @@ public interface Wallet {
   String sendTransaction(String transaction);
 
   public class TransactionDetails {
-    private String txHash;
-    private String[] fromAddress;
-    private String[] toAddress;
+    private String txHash = "";
+    private String[] fromAddress = new String[0];
+    private String[] toAddress = new String[0];
     private BigDecimal amount;
 
     public String getTxHash() {
@@ -122,19 +122,25 @@ public interface Wallet {
     }
 
     public String[] getFromAddress() {
-      return fromAddress.clone();
+      String[] retArray = new String[fromAddress.length];
+      System.arraycopy(fromAddress, 0, retArray, 0, fromAddress.length);
+      return retArray;
     }
 
     public void setFromAddress(String[] fromAddress) {
-      this.fromAddress = fromAddress.clone();
+      this.fromAddress = new String[fromAddress.length];
+      System.arraycopy(fromAddress, 0, this.fromAddress, 0, fromAddress.length);
     }
 
     public String[] getToAddress() {
-      return toAddress.clone();
+      String[] retArray = new String[toAddress.length];
+      System.arraycopy(toAddress, 0, retArray, 0, toAddress.length);
+      return retArray;
     }
 
     public void setToAddress(String[] toAddress) {
-      this.toAddress = toAddress.clone();
+      this.toAddress = new String[toAddress.length];
+      System.arraycopy(toAddress, 0, this.toAddress, 0, toAddress.length);
     }
 
     public BigDecimal getAmount() {

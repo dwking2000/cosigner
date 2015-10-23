@@ -7,8 +7,6 @@ import java.util.Map;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainInfo;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
-import io.emax.cosigner.bitcoin.bitcoindrpc.DecodedTransaction;
-import io.emax.cosigner.bitcoin.bitcoindrpc.DecodedTransaction.DecodedInput;
 import io.emax.cosigner.bitcoin.bitcoindrpc.MultiSig;
 import io.emax.cosigner.bitcoin.bitcoindrpc.Outpoint;
 import io.emax.cosigner.bitcoin.bitcoindrpc.OutpointDetails;
@@ -17,7 +15,7 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.Payment;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SigHash;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
 
-public class BitcoinTestRpc implements BitcoindRpc {  
+public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public BlockChainInfo getblockchaininfo() {
@@ -40,21 +38,6 @@ public class BitcoinTestRpc implements BitcoindRpc {
   public String createrawtransaction(Outpoint[] unspentOutputs,
       Map<String, BigDecimal> addressAmounts) {
     return "deadbeefdeadbeefdeadbeefdeadbeef";
-  }
-
-  @Override
-  public DecodedTransaction decoderawtransaction(String transaction) {
-    DecodedTransaction tx = new DecodedTransaction();
-    tx.setTransactionId("deadbeef");
-    LinkedList<DecodedInput> inputs = new LinkedList<>();
-    DecodedInput input = new DecodedInput();
-    input.setAmount(BigDecimal.valueOf(150));
-    input.setTransactionId("deadbeef");
-    input.setOutputIndex(1);
-    inputs.add(input);
-    tx.setInputs(inputs);
-
-    return tx;
   }
 
   @Override

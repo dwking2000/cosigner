@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import io.emax.cosigner.ethereum.common.ByteUtilities;
@@ -68,7 +69,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
       String contract = DeterministicTools
           .hashSha3(ByteUtilities.toHexString(contractAddress.encode())).substring(96 / 4, 256 / 4);
       String contractCode =
-          ethereumRpc.eth_getCode("0x" + contract.toLowerCase(), DefaultBlock.LATEST.toString());
+          ethereumRpc.eth_getCode("0x" + contract.toLowerCase(Locale.US), DefaultBlock.LATEST.toString());
 
       if (contractCode.equalsIgnoreCase(contractPayload)) {
         // We found an existing contract
@@ -76,7 +77,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
         callData.setTo("0x" + contract);
         callData.setData("0x" + MultiSigContract.getGetOwnersFunctionAddress());
         callData.setGas("100000"); // Doesn't matter, just can't be nil
-        callData.setGasprice("100000"); // Doesn't matter, just can't be nil
+        callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
         String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
 
         byte[] callBytes = ByteUtilities.toByteArray(response);
@@ -92,12 +93,12 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
           userAddress = String.format("%40s", userAddress).replace(' ', '0');
 
           // Skip it if we already know about it
-          if (reverseMsigContracts.containsKey(contract.toLowerCase())) {
+          if (reverseMsigContracts.containsKey(contract.toLowerCase(Locale.US))) {
             continue;
           }
 
-          msigContracts.put(userAddress.toLowerCase(), contract.toLowerCase());
-          reverseMsigContracts.put(contract.toLowerCase(), userAddress.toLowerCase());
+          msigContracts.put(userAddress.toLowerCase(Locale.US), contract.toLowerCase(Locale.US));
+          reverseMsigContracts.put(contract.toLowerCase(Locale.US), userAddress.toLowerCase(Locale.US));
         }
       }
     }
@@ -113,7 +114,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     // Convert to an Ethereum address
     String publicAddress = DeterministicTools.getPublicAddress(privateKey);
 
-    while (msigContracts.containsKey(publicAddress.toLowerCase())) {
+    while (msigContracts.containsKey(publicAddress.toLowerCase(Locale.US))) {
       rounds++;
       privateKey =
           DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
@@ -143,8 +144,8 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
     LinkedList<String> contracts = new LinkedList<>();
     for (String address : addresses) {
-      if (msigContracts.containsKey(address.toLowerCase())) {
-        contracts.add(msigContracts.get(address.toLowerCase()));
+      if (msigContracts.containsKey(address.toLowerCase(Locale.US))) {
+        contracts.add(msigContracts.get(address.toLowerCase(Locale.US)));
       }
     }
 
@@ -154,9 +155,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
   @Override
   public String getMultiSigAddress(Iterable<String> addresses, String name) {
     // Look for existing msig account for this address.
-    String userAddress = addresses.iterator().next().toLowerCase();
-    if (msigContracts.containsKey(userAddress.toLowerCase())) {
-      return msigContracts.get(userAddress).toLowerCase();
+    String userAddress = addresses.iterator().next().toLowerCase(Locale.US);
+    if (msigContracts.containsKey(userAddress.toLowerCase(Locale.US))) {
+      return msigContracts.get(userAddress).toLowerCase(Locale.US);
     }
 
     // Create the TX data structure
@@ -229,12 +230,12 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
         .hashSha3(ByteUtilities.toHexString(contractAddress.encode())).substring(96 / 4, 256 / 4);
 
     // Figure out if we already created this, if so, skip it...
-    if (reverseMsigContracts.containsKey(contract.toLowerCase()))
+    if (reverseMsigContracts.containsKey(contract.toLowerCase(Locale.US)))
       return "";
 
     // Otherwise, register it
-    msigContracts.put(userAddress, contract.toLowerCase());
-    reverseMsigContracts.put(contract.toLowerCase(), userAddress);
+    msigContracts.put(userAddress, contract.toLowerCase(Locale.US));
+    reverseMsigContracts.put(contract.toLowerCase(Locale.US), userAddress);
 
     sendTransaction(signedTx);
     return contract;
@@ -316,7 +317,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
       // For this particular contract the previous nonce is stored at 0x0a.
       // It will only accept nonce's one greater than this.
-      String txCount = ethereumRpc.eth_getStorageAt("0x" + senderAddress.toLowerCase(), "0x1",
+      String txCount = ethereumRpc.eth_getStorageAt("0x" + senderAddress.toLowerCase(Locale.US), "0x1",
           DefaultBlock.LATEST.toString());
       BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
       contractParms.setNonce(nonce);
@@ -344,7 +345,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
     // We've been asked to sign something for the multi-sig contract without a user-key
     // Going on the assumption that the local geth wallet only has one key
-    if (name == null && reverseMsigContracts.containsKey(address.toLowerCase())) {
+    if (name == null && reverseMsigContracts.containsKey(address.toLowerCase(Locale.US))) {
       for (int i = 0; i < config.getMultiSigAddresses().length; i++) {
         String altSig = signTransaction(transaction, config.getMultiSigAddresses()[i]);
         if (!altSig.isEmpty()) {
@@ -390,8 +391,8 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
           return altSig;
         }
       }
-    } else if (name != null && reverseMsigContracts.containsKey(address.toLowerCase())) {
-      String translatedAddress = reverseMsigContracts.get(address.toLowerCase());
+    } else if (name != null && reverseMsigContracts.containsKey(address.toLowerCase(Locale.US))) {
+      String translatedAddress = reverseMsigContracts.get(address.toLowerCase(Locale.US));
       // Update the data before we sign.
       // Parse the data
       MultiSigContractParameters contractParams = new MultiSigContractParameters();
@@ -461,7 +462,8 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
       try {
         sig = ethereumRpc.eth_sign("0x" + address, data);
       } catch (Exception e) {
-        return new byte[][] {};
+        e.printStackTrace();
+        return new byte[0][0];
       }
 
       try {
@@ -473,7 +475,8 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
         return new byte[][] {sigR, sigS, sigV};
       } catch (Exception e) {
-        return new byte[][] {};
+        e.printStackTrace();
+        return new byte[0][0];
       }
     } else {
       int rounds = 1;
@@ -495,7 +498,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
         }
       }
       if (privateKey.isEmpty()) {
-        return new byte[][] {};
+        return new byte[0][0];
       }
 
       // Sign and return it
@@ -540,7 +543,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
       String blockNumber = "0x" + BigInteger.valueOf(i).toString(16);
       Block block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
 
-      if (block.getTransactions() == null) {
+      if (block.getTransactions().length == 0) {
         continue;
       }
 

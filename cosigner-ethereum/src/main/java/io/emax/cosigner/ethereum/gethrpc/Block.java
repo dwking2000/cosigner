@@ -57,10 +57,10 @@ public class Block {
   private String timestamp;
 
   @JsonProperty("transactions")
-  private Transaction[] transactions;
+  private Transaction[] transactions = new Transaction[0];
 
   @JsonProperty("uncles")
-  private String[] uncles;
+  private String[] uncles = new String[0];
 
   public String getNumber() {
     return number;
@@ -199,19 +199,25 @@ public class Block {
   }
 
   public Transaction[] getTransactions() {
-    return transactions.clone();
+    Transaction[] retArray = new Transaction[transactions.length];
+    System.arraycopy(transactions, 0, retArray, 0, transactions.length);
+    return retArray;
   }
 
   public void setTransactions(Transaction[] transactions) {
-    this.transactions = transactions.clone();
+    this.transactions = new Transaction[transactions.length];
+    System.arraycopy(transactions, 0, this.transactions, 0, transactions.length);
   }
 
   public String[] getUncles() {
-    return uncles.clone();
+    String[] retArray = new String[uncles.length];
+    System.arraycopy(uncles, 0, retArray, 0, uncles.length);
+    return retArray;
   }
 
   public void setUncles(String[] uncles) {
-    this.uncles = uncles.clone();
+    this.uncles = new String[uncles.length];
+    System.arraycopy(uncles, 0, this.uncles, 0, uncles.length);
   }
 
   @Override

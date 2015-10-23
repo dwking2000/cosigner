@@ -9,7 +9,7 @@ import io.emax.cosigner.ethereum.common.ByteUtilities;
 
 public class MultiSigContractParameters {
   private String function;
-  private BigInteger nonce;
+  private BigInteger nonce = BigInteger.ZERO;
   private LinkedList<String> address = new LinkedList<>();
   private LinkedList<BigInteger> value = new LinkedList<>();
   private LinkedList<BigInteger> sigV = new LinkedList<>();

@@ -30,20 +30,6 @@ public interface RawTransactionRpc {
   String createrawtransaction(Outpoint[] unspentOutputs, Map<String, BigDecimal> addressAmounts);
 
   /**
-   * DecodeRawTransaction
-   * 
-   * The decoderawtransaction RPC decodes a serialized transaction hex string into a JSON object
-   * describing the transaction.
-   * 
-   * @param transaction The transaction to decode in serialized transaction format
-   * 
-   * @return An object describing the decoded transaction, or JSON null if the transaction could not
-   *         be decoded
-   */
-  @JsonRpcMethod("decoderawtransaction")
-  DecodedTransaction decoderawtransaction(String transaction);
-
-  /**
    * GetRawTransaction
    * 
    * The getrawtransaction RPC gets a hex-encoded serialized transaction or a JSON object describing

@@ -131,7 +131,9 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
   }
 
   public String[] getMultiSigAccounts() {
-    return multiSigAccounts.clone();
+    String[] retArray = new String[multiSigAccounts.length];
+    System.arraycopy(multiSigAccounts, 0, retArray, 0, multiSigAccounts.length);
+    return retArray;
   }
 
   public String getServerPrivateKey() {

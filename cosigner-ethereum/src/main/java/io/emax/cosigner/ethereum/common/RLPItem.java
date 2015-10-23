@@ -1,8 +1,10 @@
 package io.emax.cosigner.ethereum.common;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class RLPItem implements RLPEntity {
+public class RLPItem implements RLPEntity, Serializable {
+  private static final long serialVersionUID = 1L;
   private byte[] encodedContents;
   private byte[] decodedContents;
 
@@ -16,22 +18,28 @@ public class RLPItem implements RLPEntity {
 
   @Override
   public byte[] getEncodedContents() {
-    return encodedContents.clone();
+    byte[] retArray = new byte[encodedContents.length];
+    System.arraycopy(encodedContents, 0, retArray, 0, encodedContents.length);
+    return retArray;
   }
 
   @Override
   public void setEncodedContents(byte[] encodedContents) {
-    this.encodedContents = encodedContents.clone();
+    this.encodedContents = new byte[encodedContents.length];
+    System.arraycopy(encodedContents, 0, this.encodedContents, 0, encodedContents.length);
   }
 
   @Override
   public byte[] getDecodedContents() {
-    return decodedContents.clone();
+    byte[] retArray = new byte[decodedContents.length];
+    System.arraycopy(decodedContents, 0, retArray, 0, decodedContents.length);
+    return retArray;
   }
 
   @Override
   public void setDecodedContents(byte[] decodedContents) {
-    this.decodedContents = decodedContents.clone();
+    this.decodedContents = new byte[decodedContents.length];
+    System.arraycopy(decodedContents, 0, this.decodedContents, 0, decodedContents.length);
   }
 
   @Override
@@ -42,7 +50,9 @@ public class RLPItem implements RLPEntity {
 
   @Override
   public byte[] encode() {
-    this.encodedContents = RLP.encodeItem(decodedContents);
-    return this.encodedContents.clone();
+    encodedContents = RLP.encodeItem(decodedContents);
+    byte[] retArray = new byte[encodedContents.length];
+    System.arraycopy(encodedContents, 0, retArray, 0, encodedContents.length);
+    return retArray;
   }
 }

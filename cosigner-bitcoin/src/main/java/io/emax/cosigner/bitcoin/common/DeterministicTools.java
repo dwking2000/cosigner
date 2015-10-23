@@ -1,10 +1,12 @@
 package io.emax.cosigner.bitcoin.common;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Locale;
 
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
@@ -31,7 +33,8 @@ public class DeterministicTools {
     try {
       secureRandom =
           SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
-    } catch (Exception E) {
+    } catch (Exception e) {
+      e.printStackTrace();
       secureRandom = new SecureRandom();
     }
 
@@ -75,7 +78,8 @@ public class DeterministicTools {
       System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
       System.arraycopy(privateKeyAttempt, 0, privateKey2, privateKey.length,
           privateKeyAttempt.length);
-      privateKey = privateKey2.clone();
+      privateKey = new byte[privateKey2.length];
+      System.arraycopy(privateKey2, 0, privateKey, 0, privateKey2.length);
 
       try {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -85,7 +89,8 @@ public class DeterministicTools {
         privateKey2 = new byte[privateKey.length + checksumHash.length];
         System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
         System.arraycopy(checksumHash, 0, privateKey2, privateKey.length, checksumHash.length);
-        privateKey = privateKey2.clone();
+        privateKey = new byte[privateKey2.length];
+        System.arraycopy(privateKey2, 0, privateKey, 0, privateKey2.length);
 
         return Base58.encode(privateKey);
 
@@ -93,7 +98,7 @@ public class DeterministicTools {
         e.printStackTrace();
         return NOKEY;
       }
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       e.printStackTrace();
       return NOKEY;
     }
@@ -102,9 +107,9 @@ public class DeterministicTools {
   public static String encodeUserKey(String key) {
     try {
       MessageDigest md = MessageDigest.getInstance("SHA-256");
-      md.update(key.getBytes());
+      md.update(key.getBytes("UTF-8"));
       return new BigInteger(md.digest()).toString(16);
-    } catch (NoSuchAlgorithmException e) {
+    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
       e.printStackTrace();
       return null;
     }
@@ -136,7 +141,9 @@ public class DeterministicTools {
           networkPublicKeyBytes.length);
       System.arraycopy(publicRipemdKeyBytes, 0, networkPublicKeyBytes2,
           networkPublicKeyBytes.length, publicRipemdKeyBytes.length);
-      networkPublicKeyBytes = networkPublicKeyBytes2.clone();
+      networkPublicKeyBytes = new byte[networkPublicKeyBytes2.length];
+      System.arraycopy(networkPublicKeyBytes2, 0, networkPublicKeyBytes, 0,
+          networkPublicKeyBytes2.length);
 
       md = MessageDigest.getInstance("SHA-256");
       md.reset();
@@ -152,8 +159,7 @@ public class DeterministicTools {
       return publicKey;
 
     } catch (Exception e) {
-      System.out.println("Panic!!" + e.toString());
-      e.printStackTrace(System.out);
+      e.printStackTrace();
       return null;
     }
   }
@@ -162,9 +168,7 @@ public class DeterministicTools {
     try {
       byte[] decodedNetworkAddress = Base58.decode(address);
       byte[] networkBytes = ByteUtilities.readBytes(decodedNetworkAddress, 0, 1);
-      byte[] addressBytes = new byte[] {};
-
-      addressBytes =
+      byte[] addressBytes =
           ByteUtilities.readBytes(decodedNetworkAddress, 1, decodedNetworkAddress.length - 5);
 
       byte[] checksumBytes =
@@ -183,6 +187,7 @@ public class DeterministicTools {
       }
       return ByteUtilities.toHexString(addressBytes);
     } catch (Exception e) {
+      e.printStackTrace();
       return "";
     }
   }
@@ -197,10 +202,11 @@ public class DeterministicTools {
       byte[] publicKeyChecksum = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
 
       encodedBytes = encodedBytes + ByteUtilities.toHexString(publicKeyChecksum);
-      encodedBytes = encodedBytes.toLowerCase();
+      encodedBytes = encodedBytes.toLowerCase(Locale.US);
       encodedBytes = Base58.encode(ByteUtilities.toByteArray(encodedBytes));
       return encodedBytes;
     } catch (Exception e) {
+      e.printStackTrace();
       return null;
     }
   }
@@ -224,6 +230,7 @@ public class DeterministicTools {
       return false;
 
     } catch (Exception e) {
+      e.printStackTrace();
       return false;
     }
   }
@@ -250,8 +257,7 @@ public class DeterministicTools {
       byte[] checksumCheck = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
       for (int i = 0; i < 4; i++) {
         if (privateKeyChecksum[i] != checksumCheck[i]) {
-          System.out.println("Bad Checksum");
-          return null;
+          return new byte[0];
         }
       }
 
@@ -263,9 +269,8 @@ public class DeterministicTools {
       return publicKeyBytes;
 
     } catch (Exception e) {
-      System.out.println("Panic!!" + e.toString());
-      e.printStackTrace(System.out);
-      return null;
+      e.printStackTrace();
+      return new byte[0];
     }
   }
 }

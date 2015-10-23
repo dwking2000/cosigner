@@ -24,7 +24,7 @@ public class Secp256k1 {
     } catch (Exception e) {
       System.out.println("Panic!!" + e.toString());
       e.printStackTrace(System.out);
-      return null;
+      return new byte[0];
     }
   }
 
@@ -55,7 +55,7 @@ public class Secp256k1 {
     } catch (Exception e) {
       System.out.println("Panic!!" + e.toString());
       e.printStackTrace(System.out);
-      return null;
+      return new byte[0];
     }
   }
 
@@ -113,7 +113,7 @@ public class Secp256k1 {
       compEnc[0] = (byte) ((recoveryId & 1) == 1 ? 0x03 : 0x02);
       ECPoint R = spec.getCurve().decodePoint(compEnc);
       if (!R.multiply(N).isInfinity()) {
-        return null;
+        return new byte[0];
       }
 
       BigInteger e = new BigInteger(1, message);
@@ -129,6 +129,6 @@ public class Secp256k1 {
 
     }
 
-    return null;
+    return new byte[0];
   }
 }

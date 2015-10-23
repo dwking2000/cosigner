@@ -1,5 +1,6 @@
 package io.emax.cosigner.ethereum.common;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -26,7 +27,8 @@ public class DeterministicTools {
     try {
       secureRandom =
           SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
-    } catch (Exception E) {
+    } catch (Exception e) {
+      e.printStackTrace();
       secureRandom = new SecureRandom();
     }
 
@@ -60,7 +62,6 @@ public class DeterministicTools {
     }
 
     return privateKeyCheck.toString(16);
-
   }
 
   public static String hashSha3(String data) {
@@ -76,9 +77,9 @@ public class DeterministicTools {
   public static String encodeUserKey(String key) {
     try {
       MessageDigest md = MessageDigest.getInstance("SHA-256");
-      md.update(key.getBytes());
+      md.update(key.getBytes("UTF-8"));
       return new BigInteger(md.digest()).toString(16);
-    } catch (NoSuchAlgorithmException e) {
+    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
       e.printStackTrace();
       return null;
     }
@@ -89,7 +90,8 @@ public class DeterministicTools {
     try {
       secureRandom =
           SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
-    } catch (Exception E) {
+    } catch (Exception e) {
+      e.printStackTrace();
       secureRandom = new SecureRandom();
     }
 
@@ -123,8 +125,7 @@ public class DeterministicTools {
       return publicKey.toString(16);
 
     } catch (Exception e) {
-      System.out.println("Panic!!" + e.toString());
-      e.printStackTrace(System.out);
+      e.printStackTrace();
       return null;
     }
   }
@@ -142,9 +143,8 @@ public class DeterministicTools {
       return publicKeyBytes;
 
     } catch (Exception e) {
-      System.out.println("Panic!!" + e.toString());
-      e.printStackTrace(System.out);
-      return null;
+      e.printStackTrace();
+      return new byte[0];
     }
   }
 }

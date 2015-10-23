@@ -5,7 +5,7 @@ import java.math.BigInteger;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.cosigner.bitcoin.common.ByteUtilities;
 
-public final class RawOutput implements Cloneable  {
+public final class RawOutput {
   private long amount;
   private long scriptSize = 0;
   private String script = "";
@@ -108,7 +108,6 @@ public final class RawOutput implements Cloneable  {
     output.setScriptSize(vScriptSize.getValue());
 
     byte[] scriptBytes = ByteUtilities.readBytes(rawTx, buffPointer, (int) output.getScriptSize());
-    buffPointer += output.getScriptSize();
     output.setScript(ByteUtilities.toHexString(scriptBytes));
 
     return output;
@@ -120,7 +119,7 @@ public final class RawOutput implements Cloneable  {
     return 8 + sizeSize + getScriptSize();
   }
 
-  public RawOutput clone() {
+  public RawOutput copy() {
     RawOutput output = new RawOutput();
 
     output.setAmount(getAmount());

@@ -113,4 +113,59 @@ public class Output extends Outpoint {
   public void setSpendable(boolean spendable) {
     this.spendable = spendable;
   }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + ((account == null) ? 0 : account.hashCode());
+    result = prime * result + ((address == null) ? 0 : address.hashCode());
+    result = prime * result + ((amount == null) ? 0 : amount.hashCode());
+    result = prime * result + (int) (confirmations ^ (confirmations >>> 32));
+    result = prime * result + ((redeemScript == null) ? 0 : redeemScript.hashCode());
+    result = prime * result + ((scriptPubKey == null) ? 0 : scriptPubKey.hashCode());
+    result = prime * result + (spendable ? 1231 : 1237);
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (!super.equals(obj))
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Output other = (Output) obj;
+    if (account == null) {
+      if (other.account != null)
+        return false;
+    } else if (!account.equals(other.account))
+      return false;
+    if (address == null) {
+      if (other.address != null)
+        return false;
+    } else if (!address.equals(other.address))
+      return false;
+    if (amount == null) {
+      if (other.amount != null)
+        return false;
+    } else if (!amount.equals(other.amount))
+      return false;
+    if (confirmations != other.confirmations)
+      return false;
+    if (redeemScript == null) {
+      if (other.redeemScript != null)
+        return false;
+    } else if (!redeemScript.equals(other.redeemScript))
+      return false;
+    if (scriptPubKey == null) {
+      if (other.scriptPubKey != null)
+        return false;
+    } else if (!scriptPubKey.equals(other.scriptPubKey))
+      return false;
+    if (spendable != other.spendable)
+      return false;
+    return true;
+  }
 }

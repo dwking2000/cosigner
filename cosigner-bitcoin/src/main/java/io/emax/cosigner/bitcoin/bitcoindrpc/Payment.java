@@ -2,6 +2,7 @@ package io.emax.cosigner.bitcoin.bitcoindrpc;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -98,7 +99,7 @@ public class Payment {
    * on the local best block chain which includes this transaction
    */
   @JsonProperty("blocktime")
-  private Date blocktime;
+  private Date blocktime = new Date();
 
   /**
    * The TXID of the transaction, encoded as hex in RPC byte order. Not returned for move category
@@ -114,20 +115,20 @@ public class Payment {
    * The TXID of a conflicting transaction, encoded as hex in RPC byte order
    */
   @JsonProperty("walletconflicts")
-  private List<String> walletconflicts;
+  private LinkedList<String> walletconflicts = new LinkedList<>();
 
   /**
    * A Unix epoch time when the transaction was added to the wallet
    */
   @JsonProperty("time")
-  private Date time;
+  private Date time = new Date();
 
   /**
    * A Unix epoch time when the transaction was detected by the local node, or the time of the block
    * on the local best block chain that included the transaction
    */
   @JsonProperty("timereceived")
-  private Date timereceived;
+  private Date timereceived = new Date();
 
   /**
    * For transaction originating with this wallet, a locally-stored comment added to the
@@ -217,11 +218,11 @@ public class Payment {
     this.generated = generated;
   }
 
-  public String getBlockhash() {
+  public String getBlockHash() {
     return blockhash;
   }
 
-  public void setBlockhash(String blockhash) {
+  public void setBlockHash(String blockhash) {
     this.blockhash = blockhash;
   }
 
@@ -253,7 +254,7 @@ public class Payment {
     return walletconflicts;
   }
 
-  public void setWalletconflicts(List<String> walletconflicts) {
+  public void setWalletconflicts(LinkedList<String> walletconflicts) {
     this.walletconflicts = walletconflicts;
   }
 

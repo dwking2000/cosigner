@@ -199,8 +199,8 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
           // TODO don't hardcode fees -- 0.0001 BTC * KB suggested by spec
           txnOutput.put(fromAddress.iterator().next(), subTotal.subtract(new BigDecimal("0.002")));
           filledAllOutputs = true;
-        }
-        break;
+          break;
+        }        
       }
     }
 

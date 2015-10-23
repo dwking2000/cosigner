@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.cosigner.bitcoin.common.ByteUtilities;
 
-public final class RawInput implements Cloneable {
+public final class RawInput {
   private String txHash;
   private int txIndex;
   private long scriptSize = 0;
@@ -170,7 +170,7 @@ public final class RawInput implements Cloneable {
     return 32 + 4 + sizeSize + getScriptSize() + 4;
   }
 
-  public RawInput clone() {
+  public RawInput copy() {
     RawInput input = new RawInput();
 
     input.setTxHash(getTxHash());

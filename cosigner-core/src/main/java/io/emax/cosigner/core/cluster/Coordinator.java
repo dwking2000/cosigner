@@ -44,12 +44,12 @@ public class Coordinator {
       String beaconString = writer.writeValueAsString(cluster.getThisServer());
 
       ZBeacon beacon = new ZBeacon(config.getClusterLocation(), config.getClusterPort(),
-          beaconString.getBytes(), false);
+          beaconString.getBytes("UTF-8"), false);
       beacon.setListener(new Listener() {
         @Override
         public void onBeacon(InetAddress arg0, byte[] arg1) {
           try {
-            String request = new String(arg1);
+            String request = new String(arg1, "UTF-8");
             JsonParser jsonParser = jsonFact.createParser(request);
             jsonParser.nextToken();
 
@@ -64,7 +64,7 @@ public class Coordinator {
               cluster.getServers().get(existingLocation)
                   .setLastCommunication(System.currentTimeMillis());
             }
-          } catch (Exception e) {
+          } catch (RuntimeException | IOException e) {
             e.printStackTrace();
           }
         }

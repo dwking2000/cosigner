@@ -22,7 +22,7 @@ public class Secp256k1 {
     } catch (Exception e) {
       System.out.println("Panic!!" + e.toString());
       e.printStackTrace(System.out);
-      return null;
+      return new byte[0];
     }
   }
 
@@ -71,7 +71,7 @@ public class Secp256k1 {
     } catch (Exception e) {
       System.out.println("Panic!!" + e.toString());
       e.printStackTrace(System.out);
-      return null;
+      return new byte[0];
     }
   }
 }

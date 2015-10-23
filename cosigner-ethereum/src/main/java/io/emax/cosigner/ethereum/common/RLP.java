@@ -42,17 +42,15 @@ public class RLP {
             .setEncodedContents(Arrays.copyOfRange(input, 0, 1 + sizeBytes + byteCount.intValue()));
         parsedEntity.setDecodedContents(
             Arrays.copyOfRange(input, 1 + sizeBytes, 1 + sizeBytes + byteCount.intValue()));
-      } else if (header < SHORT_ITEM) {
+      } else {
         parsedEntity = new RLPItem();
         parsedEntity.setEncodedContents(Arrays.copyOfRange(input, 0, 1));
         parsedEntity.setDecodedContents(Arrays.copyOfRange(input, 0, 1));
-      } else {
-        // Something went wrong...
-        System.out.println("Couldn't decode!: " + ByteUtilities.toHexString(input));
       }
 
       return parsedEntity;
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
+      e.printStackTrace();
       return null;
     }
   }

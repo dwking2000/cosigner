@@ -11,22 +11,28 @@ public class RLPList extends LinkedList<RLPEntity>implements RLPEntity {
 
   @Override
   public byte[] getEncodedContents() {
-    return encodedContents.clone();
+    byte[] retArray = new byte[encodedContents.length];
+    System.arraycopy(encodedContents, 0, retArray, 0, encodedContents.length);
+    return retArray;
   }
 
   @Override
   public void setEncodedContents(byte[] encodedContents) {
-    this.encodedContents = encodedContents.clone();
+    this.encodedContents = new byte[encodedContents.length];
+    System.arraycopy(encodedContents, 0, this.encodedContents, 0, encodedContents.length);
   }
 
   @Override
   public byte[] getDecodedContents() {
-    return decodedContents.clone();
+    byte[] retArray = new byte[decodedContents.length];
+    System.arraycopy(decodedContents, 0, retArray, 0, decodedContents.length);
+    return retArray;
   }
 
   @Override
   public void setDecodedContents(byte[] decodedContents) {
-    this.decodedContents = decodedContents.clone();
+    this.decodedContents = new byte[decodedContents.length];
+    System.arraycopy(decodedContents, 0, this.decodedContents, 0, decodedContents.length);
     int bufferPointer = 0;
     while (bufferPointer < this.decodedContents.length) {
       RLPEntity newEntity = RLP.parseArray(
@@ -56,7 +62,9 @@ public class RLPList extends LinkedList<RLPEntity>implements RLPEntity {
 
   @Override
   public byte[] encode() {
-    this.encodedContents = RLP.encodeList(this);
-    return this.encodedContents.clone();
+    encodedContents = RLP.encodeList(this);
+    byte[] retArray = new byte[encodedContents.length];
+    System.arraycopy(encodedContents, 0, retArray, 0, encodedContents.length);
+    return retArray;
   }
 }
