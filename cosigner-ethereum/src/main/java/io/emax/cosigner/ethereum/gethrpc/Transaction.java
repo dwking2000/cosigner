@@ -144,68 +144,93 @@ public class Transaction {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Transaction other = (Transaction) obj;
     if (blockHash == null) {
-      if (other.blockHash != null)
+      if (other.blockHash != null) {
         return false;
-    } else if (!blockHash.equals(other.blockHash))
+      }
+    } else if (!blockHash.equals(other.blockHash)) {
       return false;
+    }
     if (blockNumber == null) {
-      if (other.blockNumber != null)
+      if (other.blockNumber != null) {
         return false;
-    } else if (!blockNumber.equals(other.blockNumber))
+      }
+    } else if (!blockNumber.equals(other.blockNumber)) {
       return false;
+    }
     if (from == null) {
-      if (other.from != null)
+      if (other.from != null) {
         return false;
-    } else if (!from.equals(other.from))
+      }
+    } else if (!from.equals(other.from)) {
       return false;
+    }
     if (gas == null) {
-      if (other.gas != null)
+      if (other.gas != null) {
         return false;
-    } else if (!gas.equals(other.gas))
+      }
+    } else if (!gas.equals(other.gas)) {
       return false;
+    }
     if (gasPrice == null) {
-      if (other.gasPrice != null)
+      if (other.gasPrice != null) {
         return false;
-    } else if (!gasPrice.equals(other.gasPrice))
+      }
+    } else if (!gasPrice.equals(other.gasPrice)) {
       return false;
+    }
     if (hash == null) {
-      if (other.hash != null)
+      if (other.hash != null) {
         return false;
-    } else if (!hash.equals(other.hash))
+      }
+    } else if (!hash.equals(other.hash)) {
       return false;
+    }
     if (input == null) {
-      if (other.input != null)
+      if (other.input != null) {
         return false;
-    } else if (!input.equals(other.input))
+      }
+    } else if (!input.equals(other.input)) {
       return false;
+    }
     if (nonce == null) {
-      if (other.nonce != null)
+      if (other.nonce != null) {
         return false;
-    } else if (!nonce.equals(other.nonce))
+      }
+    } else if (!nonce.equals(other.nonce)) {
       return false;
+    }
     if (to == null) {
-      if (other.to != null)
+      if (other.to != null) {
         return false;
-    } else if (!to.equals(other.to))
+      }
+    } else if (!to.equals(other.to)) {
       return false;
+    }
     if (transactionIndex == null) {
-      if (other.transactionIndex != null)
+      if (other.transactionIndex != null) {
         return false;
-    } else if (!transactionIndex.equals(other.transactionIndex))
+      }
+    } else if (!transactionIndex.equals(other.transactionIndex)) {
       return false;
+    }
     if (value == null) {
-      if (other.value != null)
+      if (other.value != null) {
         return false;
-    } else if (!value.equals(other.value))
+      }
+    } else if (!value.equals(other.value)) {
       return false;
+    }
     return true;
   }
 

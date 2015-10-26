@@ -1,8 +1,8 @@
 package io.emax.cosigner.ethereum.gethrpc;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Arrays;
 
 public class Block {
   @JsonProperty("number")
@@ -198,6 +198,11 @@ public class Block {
     this.timestamp = timestamp;
   }
 
+  /**
+   * Get the transactions that are present in this block.
+   * 
+   * @return Array of transactions.
+   */
   public Transaction[] getTransactions() {
     Transaction[] retArray = new Transaction[transactions.length];
     System.arraycopy(transactions, 0, retArray, 0, transactions.length);
@@ -209,6 +214,11 @@ public class Block {
     System.arraycopy(transactions, 0, this.transactions, 0, transactions.length);
   }
 
+  /**
+   * Get the uncles that were present for this block.
+   * 
+   * @return Array of block hashes of the uncles present for this block.
+   */
   public String[] getUncles() {
     String[] retArray = new String[uncles.length];
     System.arraycopy(uncles, 0, retArray, 0, uncles.length);
@@ -248,102 +258,141 @@ public class Block {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Block other = (Block) obj;
     if (difficulty == null) {
-      if (other.difficulty != null)
+      if (other.difficulty != null) {
         return false;
-    } else if (!difficulty.equals(other.difficulty))
+      }
+    } else if (!difficulty.equals(other.difficulty)) {
       return false;
+    }
     if (extraData == null) {
-      if (other.extraData != null)
+      if (other.extraData != null) {
         return false;
-    } else if (!extraData.equals(other.extraData))
+      }
+    } else if (!extraData.equals(other.extraData)) {
       return false;
+    }
     if (gasLimit == null) {
-      if (other.gasLimit != null)
+      if (other.gasLimit != null) {
         return false;
-    } else if (!gasLimit.equals(other.gasLimit))
+      }
+    } else if (!gasLimit.equals(other.gasLimit)) {
       return false;
+    }
     if (gasUsed == null) {
-      if (other.gasUsed != null)
+      if (other.gasUsed != null) {
         return false;
-    } else if (!gasUsed.equals(other.gasUsed))
+      }
+    } else if (!gasUsed.equals(other.gasUsed)) {
       return false;
+    }
     if (hash == null) {
-      if (other.hash != null)
+      if (other.hash != null) {
         return false;
-    } else if (!hash.equals(other.hash))
+      }
+    } else if (!hash.equals(other.hash)) {
       return false;
+    }
     if (logsBloom == null) {
-      if (other.logsBloom != null)
+      if (other.logsBloom != null) {
         return false;
-    } else if (!logsBloom.equals(other.logsBloom))
+      }
+    } else if (!logsBloom.equals(other.logsBloom)) {
       return false;
+    }
     if (miner == null) {
-      if (other.miner != null)
+      if (other.miner != null) {
         return false;
-    } else if (!miner.equals(other.miner))
+      }
+    } else if (!miner.equals(other.miner)) {
       return false;
+    }
     if (nonce == null) {
-      if (other.nonce != null)
+      if (other.nonce != null) {
         return false;
-    } else if (!nonce.equals(other.nonce))
+      }
+    } else if (!nonce.equals(other.nonce)) {
       return false;
+    }
     if (number == null) {
-      if (other.number != null)
+      if (other.number != null) {
         return false;
-    } else if (!number.equals(other.number))
+      }
+    } else if (!number.equals(other.number)) {
       return false;
+    }
     if (parentHash == null) {
-      if (other.parentHash != null)
+      if (other.parentHash != null) {
         return false;
-    } else if (!parentHash.equals(other.parentHash))
+      }
+    } else if (!parentHash.equals(other.parentHash)) {
       return false;
+    }
     if (receiptRoot == null) {
-      if (other.receiptRoot != null)
+      if (other.receiptRoot != null) {
         return false;
-    } else if (!receiptRoot.equals(other.receiptRoot))
+      }
+    } else if (!receiptRoot.equals(other.receiptRoot)) {
       return false;
+    }
     if (sha3Uncles == null) {
-      if (other.sha3Uncles != null)
+      if (other.sha3Uncles != null) {
         return false;
-    } else if (!sha3Uncles.equals(other.sha3Uncles))
+      }
+    } else if (!sha3Uncles.equals(other.sha3Uncles)) {
       return false;
+    }
     if (size == null) {
-      if (other.size != null)
+      if (other.size != null) {
         return false;
-    } else if (!size.equals(other.size))
+      }
+    } else if (!size.equals(other.size)) {
       return false;
+    }
     if (stateRoot == null) {
-      if (other.stateRoot != null)
+      if (other.stateRoot != null) {
         return false;
-    } else if (!stateRoot.equals(other.stateRoot))
+      }
+    } else if (!stateRoot.equals(other.stateRoot)) {
       return false;
+    }
     if (timestamp == null) {
-      if (other.timestamp != null)
+      if (other.timestamp != null) {
         return false;
-    } else if (!timestamp.equals(other.timestamp))
+      }
+    } else if (!timestamp.equals(other.timestamp)) {
       return false;
+    }
     if (totalDifficulty == null) {
-      if (other.totalDifficulty != null)
+      if (other.totalDifficulty != null) {
         return false;
-    } else if (!totalDifficulty.equals(other.totalDifficulty))
+      }
+    } else if (!totalDifficulty.equals(other.totalDifficulty)) {
       return false;
-    if (!Arrays.equals(transactions, other.transactions))
+    }
+    if (!Arrays.equals(transactions, other.transactions)) {
       return false;
+    }
     if (transactionsRoot == null) {
-      if (other.transactionsRoot != null)
+      if (other.transactionsRoot != null) {
         return false;
-    } else if (!transactionsRoot.equals(other.transactionsRoot))
+      }
+    } else if (!transactionsRoot.equals(other.transactionsRoot)) {
       return false;
-    if (!Arrays.equals(uncles, other.uncles))
+    }
+    if (!Arrays.equals(uncles, other.uncles)) {
       return false;
+    }
     return true;
   }
 

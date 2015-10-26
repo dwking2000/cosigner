@@ -31,23 +31,30 @@ public class CurrencyParametersRecipient {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     CurrencyParametersRecipient other = (CurrencyParametersRecipient) obj;
     if (amount == null) {
-      if (other.amount != null)
+      if (other.amount != null) {
         return false;
-    } else if (!amount.equals(other.amount))
+      }
+    } else if (!amount.equals(other.amount)) {
       return false;
+    }
     if (recipientAddress == null) {
-      if (other.recipientAddress != null)
+      if (other.recipientAddress != null) {
         return false;
-    } else if (!recipientAddress.equals(other.recipientAddress))
+      }
+    } else if (!recipientAddress.equals(other.recipientAddress)) {
       return false;
+    }
     return true;
   }
 

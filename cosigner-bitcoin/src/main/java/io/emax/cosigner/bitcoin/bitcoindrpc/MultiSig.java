@@ -4,12 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class MultiSig {
   /**
-   * The P2SH address for this multisig redeem script
+   * The P2SH address for this multisig redeem script.
    */
   @JsonProperty("address")
   private String address;
+  
   /**
-   * The multisig redeem script encoded as hex
+   * The multisig redeem script encoded as hex.
    */
   @JsonProperty("redeemScript")
   private String redeemScript;

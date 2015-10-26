@@ -1,16 +1,14 @@
 package io.emax.cosigner.api.currency;
 
 /**
- * Common configuration that each currency needs to provide to cosigner-core
+ * Common configuration that each currency needs to provide to cosigner-core.
  * 
  * @author Tom
  *
  */
 public interface CurrencyConfiguration {
   /**
-   * Currency symbol
-   * 
-   * @return
+   * Currency symbol.
    */
   String getCurrencySymbol();
 

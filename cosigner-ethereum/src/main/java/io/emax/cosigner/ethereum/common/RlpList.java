@@ -1,10 +1,10 @@
 package io.emax.cosigner.ethereum.common;
 
-import java.util.LinkedList;
-
 import org.bouncycastle.util.Arrays;
 
-public class RLPList extends LinkedList<RLPEntity>implements RLPEntity {
+import java.util.LinkedList;
+
+public class RlpList extends LinkedList<RlpEntity> implements RlpEntity {
   private static final long serialVersionUID = 1L;
   private byte[] encodedContents;
   private byte[] decodedContents;
@@ -35,7 +35,7 @@ public class RLPList extends LinkedList<RLPEntity>implements RLPEntity {
     System.arraycopy(decodedContents, 0, this.decodedContents, 0, decodedContents.length);
     int bufferPointer = 0;
     while (bufferPointer < this.decodedContents.length) {
-      RLPEntity newEntity = RLP.parseArray(
+      RlpEntity newEntity = Rlp.parseArray(
           Arrays.copyOfRange(this.decodedContents, bufferPointer, this.decodedContents.length));
       if (newEntity != null) {
         this.add(newEntity);
@@ -52,7 +52,7 @@ public class RLPList extends LinkedList<RLPEntity>implements RLPEntity {
     output.append("RLPList [encodedContents=" + java.util.Arrays.toString(encodedContents)
         + ", decodedContents=" + java.util.Arrays.toString(decodedContents));
 
-    for (RLPEntity entity : this) {
+    for (RlpEntity entity : this) {
       output.append("\n {" + entity.toString() + "}");
     }
 
@@ -62,7 +62,7 @@ public class RLPList extends LinkedList<RLPEntity>implements RLPEntity {
 
   @Override
   public byte[] encode() {
-    encodedContents = RLP.encodeList(this);
+    encodedContents = Rlp.encodeList(this);
     byte[] retArray = new byte[encodedContents.length];
     System.arraycopy(encodedContents, 0, retArray, 0, encodedContents.length);
     return retArray;

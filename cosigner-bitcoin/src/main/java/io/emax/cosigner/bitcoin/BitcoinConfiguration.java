@@ -1,11 +1,11 @@
 package io.emax.cosigner.bitcoin;
 
+import io.emax.cosigner.api.currency.SigningType;
+import io.emax.cosigner.bitcoin.common.EnvironmentVariableParser;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
-
-import io.emax.cosigner.api.currency.SigningType;
-import io.emax.cosigner.bitcoin.common.EnvironmentVariableParser;
 
 public class BitcoinConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
   private static String daemonConnectionString = "http://127.0.0.1:18332";
@@ -28,7 +28,7 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
     loadConfig();
   }
 
-  public static synchronized void loadConfig() {
+  private static synchronized void loadConfig() {
     if (!configLoaded) {
       FileInputStream propertiesFile = null;
       try {
@@ -49,6 +49,7 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
           int intParser = Integer.parseInt(cosignerProperties.getProperty("minConfirmations"));
           minConfirmations = intParser;
         } catch (NumberFormatException nex) {
+          nex.printStackTrace();
         }
 
         // minSignatures
@@ -56,6 +57,7 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
           int intParser = Integer.parseInt(cosignerProperties.getProperty("minSignatures"));
           minSignatures = intParser;
         } catch (NumberFormatException nex) {
+          nex.printStackTrace();
         }
 
         // maxConfirmations
@@ -63,6 +65,7 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
           int intParser = Integer.parseInt(cosignerProperties.getProperty("maxConfirmations"));
           maxConfirmations = intParser;
         } catch (NumberFormatException nex) {
+          nex.printStackTrace();
         }
 
         // multiSigAccounts
@@ -79,6 +82,7 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
               Integer.parseInt(cosignerProperties.getProperty("maxDeterministicAddresses"));
           maxDeterministicAddresses = intParser;
         } catch (NumberFormatException nex) {
+          nex.printStackTrace();
         }
 
         // daemonUser
@@ -95,7 +99,7 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
           try {
             propertiesFile.close();
           } catch (IOException e1) {
-
+            e1.printStackTrace();
           }
         }
         System.out.println("Could not load cosigner-bitcoin configuration, using defaults.");
@@ -130,6 +134,11 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
     return minSignatures;
   }
 
+  /**
+   * Returns addresses that will be appended to list of signers used in multi-sig address.
+   * 
+   * @return Array of addresses.
+   */
   public String[] getMultiSigAccounts() {
     String[] retArray = new String[multiSigAccounts.length];
     System.arraycopy(multiSigAccounts, 0, retArray, 0, multiSigAccounts.length);

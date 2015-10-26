@@ -1,11 +1,11 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
-import java.math.BigDecimal;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.math.BigDecimal;
+
 /**
- * Information about the current state of the local block chain
+ * Information about the current state of the local block chain.
  * 
  * @author dquintela
  */
@@ -32,22 +32,21 @@ public class BlockChainInfo {
 
   /**
    * The estimated number of block header hashes checked from the genesis block to this block,
-   * encoded as big-endian hex
+   * encoded as big-endian hex.
    */
   @JsonProperty("chainwork")
   private String chainwork;
 
   /**
-   * The difficulty of the highest-height block in the best block chain
+   * The difficulty of the highest-height block in the best block chain.
    */
   @JsonProperty("difficulty")
   private BigDecimal difficulty;
 
   /**
-   * Added in Bitcoin Core 0.10.0
-   * 
    * The number of validated headers in the local best headers chain. For a new node with just the
-   * hardcoded genesis block, this will be zero. This number may be higher than the number of blocks
+   * hardcoded genesis block, this will be zero. This number may be higher than the number of
+   * blocks.
    */
   @JsonProperty("headers")
   private long headers;
@@ -66,44 +65,60 @@ public class BlockChainInfo {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     BlockChainInfo other = (BlockChainInfo) obj;
     if (bestblockhash == null) {
-      if (other.bestblockhash != null)
+      if (other.bestblockhash != null) {
         return false;
-    } else if (!bestblockhash.equals(other.bestblockhash))
+      }
+    } else if (!bestblockhash.equals(other.bestblockhash)) {
       return false;
-    if (blocks != other.blocks)
+    }
+    if (blocks != other.blocks) {
       return false;
-    if (chain != other.chain)
+    }
+    if (chain != other.chain) {
       return false;
+    }
     if (chainwork == null) {
-      if (other.chainwork != null)
+      if (other.chainwork != null) {
         return false;
-    } else if (!chainwork.equals(other.chainwork))
+      }
+    } else if (!chainwork.equals(other.chainwork)) {
       return false;
+    }
     if (difficulty == null) {
-      if (other.difficulty != null)
+      if (other.difficulty != null) {
         return false;
-    } else if (!difficulty.equals(other.difficulty))
+      }
+    } else if (!difficulty.equals(other.difficulty)) {
       return false;
-    if (headers != other.headers)
+    }
+    if (headers != other.headers) {
       return false;
+    }
     if (pruned == null) {
-      if (other.pruned != null)
+      if (other.pruned != null) {
         return false;
-    } else if (!pruned.equals(other.pruned))
+      }
+    } else if (!pruned.equals(other.pruned)) {
       return false;
+    }
     if (verificationprogress == null) {
-      if (other.verificationprogress != null)
+      if (other.verificationprogress != null) {
         return false;
-    } else if (!verificationprogress.equals(other.verificationprogress))
+      }
+    } else if (!verificationprogress.equals(other.verificationprogress)) {
       return false;
+    }
     return true;
   }
 
@@ -111,37 +126,22 @@ public class BlockChainInfo {
     return bestblockhash;
   }
 
-  /**
-   * @return the blocks
-   */
   public long getBlocks() {
     return blocks;
   }
 
-  /**
-   * @return the chain
-   */
   public BlockChainName getChain() {
     return chain;
   }
 
-  /**
-   * @return the chainwork
-   */
   public String getChainwork() {
     return chainwork;
   }
 
-  /**
-   * @return the difficulty
-   */
   public BigDecimal getDifficulty() {
     return difficulty;
   }
 
-  /**
-   * @return the headers
-   */
   public long getHeaders() {
     return headers;
   }
@@ -174,37 +174,22 @@ public class BlockChainInfo {
     this.bestblockhash = bestblockhash;
   }
 
-  /**
-   * @param blocks the blocks to set
-   */
   public void setBlocks(long blocks) {
     this.blocks = blocks;
   }
 
-  /**
-   * @param chain the chain to set
-   */
   public void setChain(BlockChainName chain) {
     this.chain = chain;
   }
 
-  /**
-   * @param chainwork the chainwork to set
-   */
   public void setChainwork(String chainwork) {
     this.chainwork = chainwork;
   }
 
-  /**
-   * @param difficulty the difficulty to set
-   */
   public void setDifficulty(BigDecimal difficulty) {
     this.difficulty = difficulty;
   }
 
-  /**
-   * @param headers the headers to set
-   */
   public void setHeaders(long headers) {
     this.headers = headers;
   }

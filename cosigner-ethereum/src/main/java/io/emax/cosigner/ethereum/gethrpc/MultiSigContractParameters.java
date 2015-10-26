@@ -1,11 +1,11 @@
 package io.emax.cosigner.ethereum.gethrpc;
 
-import java.math.BigInteger;
-import java.util.LinkedList;
+import io.emax.cosigner.ethereum.common.ByteUtilities;
 
 import org.bouncycastle.util.Arrays;
 
-import io.emax.cosigner.ethereum.common.ByteUtilities;
+import java.math.BigInteger;
+import java.util.LinkedList;
 
 public class MultiSigContractParameters {
   private String function;
@@ -73,7 +73,11 @@ public class MultiSigContractParameters {
     this.function = function;
   }
 
-  // Encode
+  /**
+   * Encode the parameters into the byte array that the contract is expecting.
+   * 
+   * @return Byte array encoding of the parameters.
+   */
   public byte[] encode() {
     StringBuilder encodedData = new StringBuilder();
     encodedData.append(this.function);
@@ -193,7 +197,12 @@ public class MultiSigContractParameters {
     return ByteUtilities.toByteArray(encodedData.toString());
   }
 
-  // Decode
+  /**
+   * Decode a byte array of parameters into this data structure for easier manipulation.
+   * 
+   * @param data Byte array representation of the parameters
+   * @return Data structure of parameters.
+   */
   public MultiSigContractParameters decode(byte[] data) {
     int buffPointer = 0;
 

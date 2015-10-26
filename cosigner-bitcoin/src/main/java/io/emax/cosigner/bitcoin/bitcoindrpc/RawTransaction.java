@@ -1,14 +1,14 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
+import io.emax.cosigner.bitcoin.BitcoinResource;
+import io.emax.cosigner.bitcoin.common.ByteUtilities;
+import io.emax.cosigner.bitcoin.common.DeterministicTools;
+
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import io.emax.cosigner.bitcoin.BitcoinResource;
-import io.emax.cosigner.bitcoin.common.ByteUtilities;
-import io.emax.cosigner.bitcoin.common.DeterministicTools;
 
 /**
  * Utility class to convert between a raw transaction and the data structure represented here.
@@ -87,31 +87,42 @@ public final class RawTransaction {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     RawTransaction other = (RawTransaction) obj;
-    if (inputCount != other.inputCount)
+    if (inputCount != other.inputCount) {
       return false;
+    }
     if (inputs == null) {
-      if (other.inputs != null)
+      if (other.inputs != null) {
         return false;
-    } else if (!inputs.equals(other.inputs))
+      }
+    } else if (!inputs.equals(other.inputs)) {
       return false;
-    if (lockTime != other.lockTime)
+    }
+    if (lockTime != other.lockTime) {
       return false;
-    if (outputCount != other.outputCount)
+    }
+    if (outputCount != other.outputCount) {
       return false;
+    }
     if (outputs == null) {
-      if (other.outputs != null)
+      if (other.outputs != null) {
         return false;
-    } else if (!outputs.equals(other.outputs))
+      }
+    } else if (!outputs.equals(other.outputs)) {
       return false;
-    if (version != other.version)
+    }
+    if (version != other.version) {
       return false;
+    }
     return true;
   }
 
@@ -123,9 +134,9 @@ public final class RawTransaction {
   }
 
   /**
-   * Returns a String representing the raw tx.
+   * Returns a String representing the raw transaction.
    * 
-   * @return
+   * @return Hex string representing the raw transaction.
    */
   public String encode() {
     StringBuilder tx = new StringBuilder();
@@ -168,10 +179,10 @@ public final class RawTransaction {
   }
 
   /**
-   * Decode a raw TX
+   * Decode a raw trasaction.
    * 
-   * @param txData
-   * @return
+   * @param txData Hex string representing the transaction.
+   * @return Corresponding RawTransaction object.
    */
   public static RawTransaction parse(String txData) {
     RawTransaction tx = new RawTransaction();
@@ -185,9 +196,9 @@ public final class RawTransaction {
     tx.setVersion(new BigInteger(1, version).intValue());
 
     // Number of inputs
-    VariableInt vInputCount = readVariableInt(rawTx, buffPointer);
-    buffPointer += vInputCount.getSize();
-    tx.setInputCount(vInputCount.getValue());
+    VariableInt varInputCount = readVariableInt(rawTx, buffPointer);
+    buffPointer += varInputCount.getSize();
+    tx.setInputCount(varInputCount.getValue());
 
     // Parse inputs
     for (long i = 0; i < tx.getInputCount(); i++) {
@@ -198,9 +209,9 @@ public final class RawTransaction {
     }
 
     // Get the number of outputs
-    VariableInt vOutputCount = readVariableInt(rawTx, buffPointer);
-    buffPointer += vOutputCount.getSize();
-    tx.setOutputCount(vOutputCount.getValue());
+    VariableInt varOutputCount = readVariableInt(rawTx, buffPointer);
+    buffPointer += varOutputCount.getSize();
+    tx.setOutputCount(varOutputCount.getValue());
 
     // Parse outputs
     for (long i = 0; i < tx.getOutputCount(); i++) {
@@ -240,69 +251,90 @@ public final class RawTransaction {
     }
   }
 
+  /**
+   * Parse a byte array of data to extract a variable length integer.
+   * 
+   * @param data Byte array that contains the integer.
+   * @param start Position of integer in the byte array.
+   * @return Information about the integer
+   */
   public static VariableInt readVariableInt(byte[] data, int start) {
     int checkSize = 0xFF & data[start];
-    VariableInt vInt = new VariableInt();
-    vInt.setSize(0);
+    VariableInt varInt = new VariableInt();
+    varInt.setSize(0);
 
     if (checkSize < 0xFD) {
-      vInt.setSize(1);
-      vInt.setValue(checkSize);
-      return vInt;
+      varInt.setSize(1);
+      varInt.setValue(checkSize);
+      return varInt;
     }
 
     if (checkSize == 0xFD) {
-      vInt.setSize(3);
+      varInt.setSize(3);
     } else if (checkSize == 0xFE) {
-      vInt.setSize(5);
+      varInt.setSize(5);
     } else if (checkSize == 0xFF) {
-      vInt.setSize(9);
+      varInt.setSize(9);
     }
 
-    if (vInt.getSize() == 0) {
+    if (varInt.getSize() == 0) {
       return null;
     }
 
-    byte[] newData = ByteUtilities.readBytes(data, start + 1, vInt.getSize() - 1);
+    byte[] newData = ByteUtilities.readBytes(data, start + 1, varInt.getSize() - 1);
     newData = ByteUtilities.flipEndian(newData);
-    vInt.setValue(new BigInteger(1, newData).longValue());
-    return vInt;
+    varInt.setValue(new BigInteger(1, newData).longValue());
+    return varInt;
   }
 
+  /**
+   * Similar to variable integers, this reads a variable integer that is being pushed on the stack
+   * in a script.
+   * 
+   * @param data Byte array containing the data to be pushed.
+   * @param start Position of the integer.
+   * @return Information about the value and size of the integer.
+   */
   public static VariableInt readVariableStackInt(byte[] data, int start) {
     int checkSize = 0xFF & data[start];
-    VariableInt vInt = new VariableInt();
-    vInt.setSize(0);
+    VariableInt varInt = new VariableInt();
+    varInt.setSize(0);
 
     if (checkSize < 0x4C) {
-      vInt.setSize(1);
-      vInt.setValue(checkSize);
-      return vInt;
+      varInt.setSize(1);
+      varInt.setValue(checkSize);
+      return varInt;
     }
 
     if (checkSize == 0x4C) {
-      vInt.setSize(2);
+      varInt.setSize(2);
     } else if (checkSize == 0x4D) {
-      vInt.setSize(3);
+      varInt.setSize(3);
     } else if (checkSize == 0x4E) {
-      vInt.setSize(5);
+      varInt.setSize(5);
     } else {
       // Just process the byte and advance
-      vInt.setSize(1);
-      vInt.setValue(0);
-      return vInt;
+      varInt.setSize(1);
+      varInt.setValue(0);
+      return varInt;
     }
 
-    if (vInt.getSize() == 0) {
+    if (varInt.getSize() == 0) {
       return null;
     }
 
-    byte[] newData = ByteUtilities.readBytes(data, start + 1, vInt.getSize() - 1);
+    byte[] newData = ByteUtilities.readBytes(data, start + 1, varInt.getSize() - 1);
     newData = ByteUtilities.flipEndian(newData);
-    vInt.setValue(new BigInteger(1, newData).longValue());
-    return vInt;
+    varInt.setValue(new BigInteger(1, newData).longValue());
+    return varInt;
   }
 
+  /**
+   * Encode an integer into a byte array with variable length encoding.
+   * 
+   * @param data Integer data to encode.
+   * @return Byte array representation.
+   */
   public static byte[] writeVariableInt(long data) {
     byte[] newData;
 
@@ -312,7 +344,7 @@ public final class RawTransaction {
     } else if (data <= 0xFFFF) {
       newData = new byte[3];
       newData[0] = (byte) 0xFD;
-    } else if (data <= 4294967295L /*0xFFFFFFFF*/) {
+    } else if (data <= 4294967295L /* 0xFFFFFFFF */) {
       newData = new byte[5];
       newData[0] = (byte) 0xFE;
     } else {
@@ -332,6 +364,12 @@ public final class RawTransaction {
     return newData;
   }
 
+  /**
+   * Encode a stack push integer into a byte array with variable length encoding.
+   * 
+   * @param data Integer data to encode.
+   * @return Byte array representation.
+   */
   public static byte[] writeVariableStackInt(long data) {
     byte[] newData;
 
@@ -361,6 +399,11 @@ public final class RawTransaction {
     return newData;
   }
 
+  /**
+   * Creates a copy of the current raw transaction.
+   * 
+   * @return A copy of the current object.
+   */
   public RawTransaction copy() {
     RawTransaction rawTx = new RawTransaction();
 
@@ -378,6 +421,12 @@ public final class RawTransaction {
     return rawTx;
   }
 
+  /**
+   * Strips the inputs of their scripts, preparing them for signing.
+   * 
+   * @param tx Transaction to prepare for signing.
+   * @return Transaction with no script attached to its inputs.
+   */
   public static RawTransaction stripInputScripts(RawTransaction tx) {
     RawTransaction rawTx = tx.copy();
 
@@ -390,6 +439,12 @@ public final class RawTransaction {
   }
 
   // TODO - Start using this in case we get an old/nonstandard client tx that we need to sign
+  /**
+   * Parses non-standard signature scripts for signing.
+   * 
+   * @param originalScript The script provided in the original output.
+   * @return The altered script which will be used in signing.
+   */
   public static String prepareSigScript(String originalScript) {
     String modifiedScript = "";
     int scriptPosition;
@@ -413,11 +468,11 @@ public final class RawTransaction {
         if ((scriptBytes[scriptPosition] & 0xFF) >= 0x01
             && (scriptBytes[scriptPosition] & 0xFF) <= 0x4B) {
           // This byte is the size
-          scriptPosition += (scriptBytes[scriptPosition] & 0xFF);
+          scriptPosition += scriptBytes[scriptPosition] & 0xFF;
         } else if ((scriptBytes[scriptPosition] & 0xFF) == 0x4C) {
           // Next byte is the size
           scriptPosition++;
-          scriptPosition += (scriptBytes[scriptPosition] & 0xFF);
+          scriptPosition += scriptBytes[scriptPosition] & 0xFF;
         } else if ((scriptBytes[scriptPosition] & 0xFF) == 0x4D) {
           // Next 2 bytes are the size
           scriptPosition++;
@@ -436,8 +491,9 @@ public final class RawTransaction {
           scriptPosition += size;
         } else if ((scriptBytes[scriptPosition] & 0xFF) == 0xAB) {
           // If the CHECKSIG was found and we find any 0xAB's, remove them.
-          if (scriptSectionStart <= scriptPosition) { // If start > position then we got two 0xAB's
-                                                      // in a row, skip the copy
+          if (scriptSectionStart <= scriptPosition) {
+            // If start > position then we got two 0xAB's
+            // in a row, skip the copy
             byte[] copyArray =
                 Arrays.copyOfRange(scriptBytes, scriptSectionStart, scriptPosition - 1);
             modifiedScript += ByteUtilities.toHexString(copyArray);
@@ -450,10 +506,10 @@ public final class RawTransaction {
   }
 
   /**
-   * Assuming standard scripts, return the address
+   * Assuming standard scripts, return the address.
    * 
-   * @param script
-   * @return
+   * @param script Standard script to be decoded.
+   * @return The address that the redeem script corresponds to. 
    */
   public static String decodeRedeemScript(String script) {
     // Regular address
@@ -465,7 +521,7 @@ public final class RawTransaction {
       String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
           .getChain() == BlockChainName.main ? NetworkBytes.P2PKH.toString()
               : NetworkBytes.P2PKH_TEST.toString();
-          
+
       return DeterministicTools.encodeAddress(addressBytes, networkBytes);
     }
 
@@ -473,11 +529,11 @@ public final class RawTransaction {
     matcher = pattern.matcher(script);
     if (matcher.matches()) {
       String addressBytes = matcher.group(1);
-      
+
       String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
           .getChain() == BlockChainName.main ? NetworkBytes.P2SH.toString()
               : NetworkBytes.P2SH_TEST.toString();
-          
+
       return DeterministicTools.encodeAddress(addressBytes, networkBytes);
     }
 

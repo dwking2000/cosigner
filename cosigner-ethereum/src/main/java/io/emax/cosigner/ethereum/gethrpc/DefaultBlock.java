@@ -19,10 +19,18 @@ public enum DefaultBlock {
     return this.getValue();
   }
 
+  /**
+   * Provides a mapping from string to enum
+   * 
+   * @param value String value that the enum represents.
+   * @return Enum that corresponds to the string.
+   */
   public static DefaultBlock getEnum(String value) {
-    for (DefaultBlock v : values())
-      if (v.getValue().equalsIgnoreCase(value))
+    for (DefaultBlock v : values()) {
+      if (v.getValue().equalsIgnoreCase(value)) {
         return v;
+      }
+    }
     throw new IllegalArgumentException();
   }
 }

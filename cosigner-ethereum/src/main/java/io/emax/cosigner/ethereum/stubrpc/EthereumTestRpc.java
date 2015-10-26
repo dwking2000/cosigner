@@ -1,13 +1,13 @@
 package io.emax.cosigner.ethereum.stubrpc;
 
-import java.math.BigInteger;
-
 import io.emax.cosigner.ethereum.common.ByteUtilities;
 import io.emax.cosigner.ethereum.common.DeterministicTools;
 import io.emax.cosigner.ethereum.gethrpc.Block;
 import io.emax.cosigner.ethereum.gethrpc.CallData;
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.gethrpc.MultiSigContract;
+
+import java.math.BigInteger;
 
 public class EthereumTestRpc implements EthereumRpc {
   private int txCounter = 1;
@@ -41,7 +41,8 @@ public class EthereumTestRpc implements EthereumRpc {
 
   @Override
   public String eth_sign(String address, String data) {
-    return "0x1234567890123456789012345678901234567890123456789012345678901234112345678901234567890123456789012345678901234567890123456789012341";
+    return "0x12345678901234567890123456789012345678901234567890123456789"
+        + "01234112345678901234567890123456789012345678901234567890123456789012341";
   }
 
   @Override

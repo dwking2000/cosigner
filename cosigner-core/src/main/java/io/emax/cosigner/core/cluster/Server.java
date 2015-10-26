@@ -6,13 +6,13 @@ public class Server {
   @JsonProperty
   private String serverLocation;
   @JsonProperty
-  private int serverRPCPort;
+  private int serverRpcPort;
   @JsonProperty
   private int serverListeningPort;
   @JsonProperty
   private boolean isOriginator;
   @JsonProperty
-  private String serverID;
+  private String serverId;
   @JsonProperty
   private long lastCommunication;
 
@@ -24,12 +24,12 @@ public class Server {
     this.serverLocation = serverLocation;
   }
 
-  public int getServerRPCPort() {
-    return serverRPCPort;
+  public int getServerRpcPort() {
+    return serverRpcPort;
   }
 
-  public void setServerRPCPort(int serverRPCPort) {
-    this.serverRPCPort = serverRPCPort;
+  public void setServerRpcPort(int serverRpcPort) {
+    this.serverRpcPort = serverRpcPort;
   }
 
   public int getServerListeningPort() {
@@ -48,12 +48,12 @@ public class Server {
     this.isOriginator = isOriginator;
   }
 
-  public String getServerID() {
-    return serverID;
+  public String getServerId() {
+    return serverId;
   }
 
-  public void setServerID(String serverID) {
-    this.serverID = serverID;
+  public void setServerId(String serverId) {
+    this.serverId = serverId;
   }
 
   public long getLastCommunication() {
@@ -68,38 +68,61 @@ public class Server {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
+    result = prime * result + (isOriginator ? 1231 : 1237);
+    result = prime * result + (int) (lastCommunication ^ (lastCommunication >>> 32));
+    result = prime * result + ((serverId == null) ? 0 : serverId.hashCode());
     result = prime * result + serverListeningPort;
     result = prime * result + ((serverLocation == null) ? 0 : serverLocation.hashCode());
-    result = prime * result + serverRPCPort;
+    result = prime * result + serverRpcPort;
     return result;
   }
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Server other = (Server) obj;
-    if (serverListeningPort != other.serverListeningPort)
+    if (isOriginator != other.isOriginator) {
       return false;
-    if (serverLocation == null) {
-      if (other.serverLocation != null)
+    }
+    if (lastCommunication != other.lastCommunication) {
+      return false;
+    }
+    if (serverId == null) {
+      if (other.serverId != null) {
         return false;
-    } else if (!serverLocation.equals(other.serverLocation))
+      }
+    } else if (!serverId.equals(other.serverId)) {
       return false;
-    if (serverRPCPort != other.serverRPCPort)
+    }
+    if (serverListeningPort != other.serverListeningPort) {
       return false;
+    }
+    if (serverLocation == null) {
+      if (other.serverLocation != null) {
+        return false;
+      }
+    } else if (!serverLocation.equals(other.serverLocation)) {
+      return false;
+    }
+    if (serverRpcPort != other.serverRpcPort) {
+      return false;
+    }
     return true;
   }
 
   @Override
   public String toString() {
-    return "Server [serverLocation=" + serverLocation + ", serverRPCPort=" + serverRPCPort
+    return "Server [serverLocation=" + serverLocation + ", serverRPCPort=" + serverRpcPort
         + ", serverListeningPort=" + serverListeningPort + ", isOriginator=" + isOriginator
-        + ", serverID=" + serverID + ", lastCommunication=" + lastCommunication + "]";
+        + ", serverID=" + serverId + ", lastCommunication=" + lastCommunication + "]";
   }
 
 }

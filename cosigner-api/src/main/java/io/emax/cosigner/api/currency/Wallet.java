@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 
 /**
- * Wallet interface
+ * Wallet interface.
  * 
  * @author Tom
  *
@@ -22,8 +22,7 @@ public interface Wallet {
   /**
    * Returns all addresses stored for the provided wallet name, they should be deterministic.
    * 
-   * @param name
-   * @return
+   * @param name User key the addresses belong to.
    */
   Iterable<String> getAddresses(String name);
 
@@ -32,21 +31,17 @@ public interface Wallet {
    * involved if provided in the currency configuration. The order of the addresses may matter
    * depending on the currency.
    * 
-   * @param addresses
+   * @param addresses Addresses to include in the multi-sig script.
    * @param name Associate the account with this user key
-   * @return
    */
   String getMultiSigAddress(Iterable<String> addresses, String name);
 
   /**
-   * Returns a balance for the given account
-   * 
-   * @param address
-   * @return
+   * Returns a balance for the given account.
    */
   String getBalance(String address);
 
-  public class Recipient {
+  class Recipient {
     private String recipientAddress;
     private BigDecimal amount;
 
@@ -69,11 +64,6 @@ public interface Wallet {
 
   /**
    * Create an unsigned transaction transferring funds between the provided accounts.
-   * 
-   * @param fromAddress
-   * @param toAddress
-   * @param amount
-   * @return Unsigned transaction
    */
   String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses);
 
@@ -82,8 +72,6 @@ public interface Wallet {
    * signing validation should be called before calling this interface I.E. Amount range,
    * transaction counts for the day, untrusted recipient, etc...
    * 
-   * @param transaction
-   * @param address
    * @return Same transaction with new signature data
    */
   String signTransaction(String transaction, String address);
@@ -92,22 +80,18 @@ public interface Wallet {
    * Sign the provided transaction, the address' private key will be generated with the provided
    * account name.
    * 
-   * @param transaction
-   * @param address
-   * @param name
    * @return Same transaction with new signature data
    */
   String signTransaction(String transaction, String address, String name);
 
   /**
-   * Submits the provided transaction to the network
+   * Submits the provided transaction to the network.
    * 
-   * @param transaction
    * @return Transaction identifier to allow for tracking
    */
   String sendTransaction(String transaction);
 
-  public class TransactionDetails {
+  class TransactionDetails {
     private String txHash = "";
     private String[] fromAddress = new String[0];
     private String[] toAddress = new String[0];
@@ -121,6 +105,9 @@ public interface Wallet {
       this.txHash = txHash;
     }
 
+    /**
+     * Lists the senders involved in the transaction.
+     */
     public String[] getFromAddress() {
       String[] retArray = new String[fromAddress.length];
       System.arraycopy(fromAddress, 0, retArray, 0, fromAddress.length);
@@ -132,6 +119,9 @@ public interface Wallet {
       System.arraycopy(fromAddress, 0, this.fromAddress, 0, fromAddress.length);
     }
 
+    /**
+     * Lists the recipients involved in the transaction.
+     */
     public String[] getToAddress() {
       String[] retArray = new String[toAddress.length];
       System.arraycopy(toAddress, 0, retArray, 0, toAddress.length);
@@ -164,27 +154,36 @@ public interface Wallet {
 
     @Override
     public boolean equals(Object obj) {
-      if (this == obj)
+      if (this == obj) {
         return true;
-      if (obj == null)
+      }
+      if (obj == null) {
         return false;
-      if (getClass() != obj.getClass())
+      }
+      if (getClass() != obj.getClass()) {
         return false;
+      }
       TransactionDetails other = (TransactionDetails) obj;
       if (amount == null) {
-        if (other.amount != null)
+        if (other.amount != null) {
           return false;
-      } else if (!amount.equals(other.amount))
+        }
+      } else if (!amount.equals(other.amount)) {
         return false;
-      if (!Arrays.equals(fromAddress, other.fromAddress))
+      }
+      if (!Arrays.equals(fromAddress, other.fromAddress)) {
         return false;
-      if (!Arrays.equals(toAddress, other.toAddress))
+      }
+      if (!Arrays.equals(toAddress, other.toAddress)) {
         return false;
+      }
       if (txHash == null) {
-        if (other.txHash != null)
+        if (other.txHash != null) {
           return false;
-      } else if (!txHash.equals(other.txHash))
+        }
+      } else if (!txHash.equals(other.txHash)) {
         return false;
+      }
       return true;
     }
 

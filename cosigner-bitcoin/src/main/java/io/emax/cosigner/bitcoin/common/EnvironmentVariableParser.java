@@ -5,6 +5,12 @@ import java.util.regex.Pattern;
 
 public class EnvironmentVariableParser {
 
+  /**
+   * Parses a string, resolves and expands any environment variables.
+   * 
+   * @param input String to resolve
+   * @return String with environment variables expanded to their actual values.
+   */
   public static String resolveEnvVars(String input) {
     if (input == null) {
       return null;

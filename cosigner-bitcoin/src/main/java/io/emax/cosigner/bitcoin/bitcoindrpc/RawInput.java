@@ -1,10 +1,10 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
-import java.math.BigInteger;
-import java.util.LinkedList;
-
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.cosigner.bitcoin.common.ByteUtilities;
+
+import java.math.BigInteger;
+import java.util.LinkedList;
 
 public final class RawInput {
   private String txHash;
@@ -67,29 +67,39 @@ public final class RawInput {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     RawInput other = (RawInput) obj;
     if (script == null) {
-      if (other.script != null)
+      if (other.script != null) {
         return false;
-    } else if (!script.equals(other.script))
+      }
+    } else if (!script.equals(other.script)) {
       return false;
-    if (scriptSize != other.scriptSize)
+    }
+    if (scriptSize != other.scriptSize) {
       return false;
-    if (sequence != other.sequence)
+    }
+    if (sequence != other.sequence) {
       return false;
+    }
     if (txHash == null) {
-      if (other.txHash != null)
+      if (other.txHash != null) {
         return false;
-    } else if (!txHash.equals(other.txHash))
+      }
+    } else if (!txHash.equals(other.txHash)) {
       return false;
-    if (txIndex != other.txIndex)
+    }
+    if (txIndex != other.txIndex) {
       return false;
+    }
     return true;
   }
 
@@ -99,6 +109,11 @@ public final class RawInput {
         + ", script=" + script + ", sequence=" + sequence + "]";
   }
 
+  /**
+   * Encodes this input as a byte array.
+   * 
+   * @return Hex string representing the input.
+   */
   public String encode() {
     String tx = "";
     // Tx Hash
@@ -133,6 +148,12 @@ public final class RawInput {
     return tx;
   }
 
+  /**
+   * Parses a hex string that represents an input, and converts it into a RawInput
+   * 
+   * @param txData Hex string representing the input
+   * @return RawInput generated from the input.
+   */
   public static RawInput parse(String txData) {
     RawInput input = new RawInput();
     byte[] rawTx = ByteUtilities.toByteArray(txData);
@@ -148,9 +169,9 @@ public final class RawInput {
     indexBytes = ByteUtilities.flipEndian(indexBytes);
     input.setTxIndex(new BigInteger(1, indexBytes).intValue());
 
-    VariableInt vScriptSize = RawTransaction.readVariableInt(rawTx, buffPointer);
-    buffPointer += vScriptSize.getSize();
-    input.setScriptSize(vScriptSize.getValue());
+    VariableInt varScriptSize = RawTransaction.readVariableInt(rawTx, buffPointer);
+    buffPointer += varScriptSize.getSize();
+    input.setScriptSize(varScriptSize.getValue());
 
     byte[] scriptBytes = ByteUtilities.readBytes(rawTx, buffPointer, (int) input.getScriptSize());
     buffPointer += input.getScriptSize();
@@ -164,12 +185,22 @@ public final class RawInput {
     return input;
   }
 
+  /**
+   * Returns the size of the encoded data
+   * 
+   * @return Size of the encoded data.
+   */
   public long getDataSize() {
     int sizeSize = RawTransaction.writeVariableInt(getScriptSize()).length;
     // Tx Hash + Index + scriptSize + Script + sequence
     return 32 + 4 + sizeSize + getScriptSize() + 4;
   }
 
+  /**
+   * Copies the current RawInput
+   * 
+   * @return A new copy of this RawInput.
+   */
   public RawInput copy() {
     RawInput input = new RawInput();
 
@@ -182,6 +213,12 @@ public final class RawInput {
     return input;
   }
 
+  /**
+   * Removes the multi-sig redeem script from the input signature so that more signatures can be
+   * appended.
+   * 
+   * @param redeemScript Script that we want to remove.
+   */
   public void stripMultiSigRedeemScript(String redeemScript) {
     LinkedList<String> stackItems = new LinkedList<>();
     byte[] myScript = ByteUtilities.toByteArray(getScript());

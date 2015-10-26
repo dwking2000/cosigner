@@ -1,12 +1,9 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
-import java.math.BigDecimal;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * @author dquintela
- */
+import java.math.BigDecimal;
+
 public class Output extends Outpoint {
   /**
    * The P2PKH or P2SH address the output paid. Only returned for P2PKH or P2SH output scripts
@@ -21,25 +18,25 @@ public class Output extends Outpoint {
   private String account;
 
   /**
-   * The output script paid, encoded as hex
+   * The output script paid, encoded as hex.
    */
   @JsonProperty("scriptPubKey")
   private String scriptPubKey;
 
   /**
-   * If the output is a P2SH whose script belongs to this wallet, this is the redeem script
+   * If the output is a P2SH whose script belongs to this wallet, this is the redeem script.
    */
   @JsonProperty("redeemScript")
   private String redeemScript;
 
   /**
-   * The amount paid to the output in bitcoins
+   * The amount paid to the output in bitcoins.
    */
   @JsonProperty("amount")
   private BigDecimal amount;
 
   /**
-   * The number of confirmations received for the transaction containing this output
+   * The number of confirmations received for the transaction containing this output.
    */
   @JsonProperty("confirmations")
   private long confirmations;
@@ -130,42 +127,57 @@ public class Output extends Outpoint {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (!super.equals(obj))
+    }
+    if (!super.equals(obj)) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Output other = (Output) obj;
     if (account == null) {
-      if (other.account != null)
+      if (other.account != null) {
         return false;
-    } else if (!account.equals(other.account))
+      }
+    } else if (!account.equals(other.account)) {
       return false;
+    }
     if (address == null) {
-      if (other.address != null)
+      if (other.address != null) {
         return false;
-    } else if (!address.equals(other.address))
+      }
+    } else if (!address.equals(other.address)) {
       return false;
+    }
     if (amount == null) {
-      if (other.amount != null)
+      if (other.amount != null) {
         return false;
-    } else if (!amount.equals(other.amount))
+      }
+    } else if (!amount.equals(other.amount)) {
       return false;
-    if (confirmations != other.confirmations)
+    }
+    if (confirmations != other.confirmations) {
       return false;
+    }
     if (redeemScript == null) {
-      if (other.redeemScript != null)
+      if (other.redeemScript != null) {
         return false;
-    } else if (!redeemScript.equals(other.redeemScript))
+      }
+    } else if (!redeemScript.equals(other.redeemScript)) {
       return false;
+    }
     if (scriptPubKey == null) {
-      if (other.scriptPubKey != null)
+      if (other.scriptPubKey != null) {
         return false;
-    } else if (!scriptPubKey.equals(other.scriptPubKey))
+      }
+    } else if (!scriptPubKey.equals(other.scriptPubKey)) {
       return false;
-    if (spendable != other.spendable)
+    }
+    if (spendable != other.spendable) {
       return false;
+    }
     return true;
   }
 }

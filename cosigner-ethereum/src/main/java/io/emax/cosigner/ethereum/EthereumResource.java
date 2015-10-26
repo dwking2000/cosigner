@@ -1,15 +1,15 @@
 package io.emax.cosigner.ethereum;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 /**
- * Static connection to a geth RPC server
+ * Static connection to a geth RPC server.
  * 
  * @author Tom
  */
@@ -19,7 +19,7 @@ public class EthereumResource {
   private JsonRpcHttpClient client;
   private EthereumRpc ethereumRpc;
 
-  public static EthereumResource getResource() {    
+  public static EthereumResource getResource() {
     return serverResource;
   }
 
@@ -35,15 +35,21 @@ public class EthereumResource {
   public EthereumResource(EthereumRpc rpc) {
     this.ethereumRpc = rpc;
   }
-  
+
   public void setEthereumRpc(EthereumRpc rpc) {
     this.ethereumRpc = rpc;
   }
 
+  /**
+   * Returns an RPC connector that should be pointing to the geth node.
+   * 
+   * @return RPC connector
+   */
   public EthereumRpc getGethRpc() {
-    if (ethereumRpc == null)
+    if (ethereumRpc == null) {
       this.ethereumRpc =
           ProxyUtil.createClientProxy(getClass().getClassLoader(), EthereumRpc.class, client);
+    }
 
     return this.ethereumRpc;
   }

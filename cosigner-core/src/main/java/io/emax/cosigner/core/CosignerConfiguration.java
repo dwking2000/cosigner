@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class CosignerConfiguration extends io.dropwizard.Configuration {
   private String clusterLocation = "localhost";
   private int clusterPort = 5555;
-  private int clusterRPCPort = 8080;
+  private int clusterRpcPort = 8080;
 
   @JsonProperty
   public String getClusterLocation() {
@@ -28,13 +28,13 @@ public class CosignerConfiguration extends io.dropwizard.Configuration {
   }
 
   @JsonProperty
-  public int getClusterRPCPort() {
-    return clusterRPCPort;
+  public int getClusterRpcPort() {
+    return clusterRpcPort;
   }
 
   @JsonProperty
-  public void setClusterRPCPort(int clusterRPCPort) {
-    this.clusterRPCPort = clusterRPCPort;
+  public void setClusterRrpPort(int clusterRpcPort) {
+    this.clusterRpcPort = clusterRpcPort;
   }
 
 

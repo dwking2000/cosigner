@@ -1,9 +1,9 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
-import java.math.BigInteger;
-
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.cosigner.bitcoin.common.ByteUtilities;
+
+import java.math.BigInteger;
 
 public final class RawOutput {
   private long amount;
@@ -46,22 +46,29 @@ public final class RawOutput {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     RawOutput other = (RawOutput) obj;
-    if (amount != other.amount)
+    if (amount != other.amount) {
       return false;
+    }
     if (script == null) {
-      if (other.script != null)
+      if (other.script != null) {
         return false;
-    } else if (!script.equals(other.script))
+      }
+    } else if (!script.equals(other.script)) {
       return false;
-    if (scriptSize != other.scriptSize)
+    }
+    if (scriptSize != other.scriptSize) {
       return false;
+    }
     return true;
   }
 
@@ -71,6 +78,11 @@ public final class RawOutput {
         + "]";
   }
 
+  /**
+   * Encodes this output into a hex string.
+   * 
+   * @return Hex string represnting the output.
+   */
   public String encode() {
     String tx = "";
 
@@ -93,6 +105,12 @@ public final class RawOutput {
     return tx;
   }
 
+  /**
+   * Parses a hex string representing an output and converts it into a RawOutput
+   * 
+   * @param txData String representing the output.
+   * @return Corresponding output object.
+   */
   public static RawOutput parse(String txData) {
     RawOutput output = new RawOutput();
     byte[] rawTx = ByteUtilities.toByteArray(txData);
@@ -103,9 +121,9 @@ public final class RawOutput {
     satoshiBytes = ByteUtilities.flipEndian(satoshiBytes);
     output.setAmount(new BigInteger(1, satoshiBytes).longValue());
 
-    VariableInt vScriptSize = RawTransaction.readVariableInt(rawTx, buffPointer);
-    buffPointer += vScriptSize.getSize();
-    output.setScriptSize(vScriptSize.getValue());
+    VariableInt varScriptSize = RawTransaction.readVariableInt(rawTx, buffPointer);
+    buffPointer += varScriptSize.getSize();
+    output.setScriptSize(varScriptSize.getValue());
 
     byte[] scriptBytes = ByteUtilities.readBytes(rawTx, buffPointer, (int) output.getScriptSize());
     output.setScript(ByteUtilities.toHexString(scriptBytes));
@@ -113,12 +131,22 @@ public final class RawOutput {
     return output;
   }
 
+  /**
+   * Size of the output when encoded to a hex string.
+   * 
+   * @return Size of the encoded output.
+   */
   public long getDataSize() {
     int sizeSize = RawTransaction.writeVariableInt(getScriptSize()).length;
     // Satoshis + scriptSize + Script
     return 8 + sizeSize + getScriptSize();
   }
 
+  /**
+   * Creates a copy of this output.
+   * 
+   * @return A copy of the current output.
+   */
   public RawOutput copy() {
     RawOutput output = new RawOutput();
 

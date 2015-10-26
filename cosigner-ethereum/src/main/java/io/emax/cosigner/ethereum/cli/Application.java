@@ -1,20 +1,27 @@
 package io.emax.cosigner.ethereum.cli;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.LinkedList;
-
 import io.emax.cosigner.api.currency.Wallet.Recipient;
 import io.emax.cosigner.ethereum.EthereumMonitor;
 import io.emax.cosigner.ethereum.EthereumWallet;
 
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.LinkedList;
+
 /**
- * Command line option for running the library
+ * Command line option for running the library.
  * 
  * @author Tom
  *
  */
 public class Application {
+  /**
+   * Command line interface that provides basic access to wallet.
+   * 
+   * @param args Commands, run with none to see usage.
+   * @throws InterruptedException Monitor and transaction usage requires time to load data, sleep
+   *         throws this exception.
+   */
   public static void main(String[] args) throws InterruptedException {
     if (args.length < 1) {
       System.out.println("Usage: <interfaceMethod> <argument> <argument> ...");
@@ -24,8 +31,8 @@ public class Application {
       System.out
           .println("\tgetMultiSigAddress(String address1, String address2, ..., accountName)");
       System.out.println("\tgetBalance(String address)");
-      System.out.println(
-          "\tcreateTransaction(String fromAddress1, String fromAddress2, ..., String toAddress, Decimal amount)");
+      System.out.println("\tcreateTransaction(String fromAddress1, String fromAddress2,"
+          + " ..., String toAddress, Decimal amount)");
       System.out.println("\tsignTransaction(String transaction, String address)");
       System.out.println("\tsendTransaction(String transaction)");
       System.out.println("\tmonitor(String address)");
@@ -42,13 +49,15 @@ public class Application {
     BigDecimal amount = BigDecimal.ZERO;
     switch (args[0]) {
       case "getNewAddress":
-        if (args.length >= 2)
+        if (args.length >= 2) {
           accountName = args[1];
+        }
         System.out.println(wallet.createAddress(accountName));
         break;
       case "getDeterministicAddresses":
-        if (args.length >= 2)
+        if (args.length >= 2) {
           accountName = args[1];
+        }
         wallet.getAddresses(accountName).forEach(System.out::println);
         break;
       case "getMultiSigAddress":
@@ -91,10 +100,11 @@ public class Application {
         if (args.length >= 2) {
           transaction = args[1];
         }
-        if (args.length < 4)
+        if (args.length < 4) {
           System.out.println(wallet.signTransaction(transaction, address));
-        else
+        } else {
           System.out.println(wallet.signTransaction(transaction, address, accountName));
+        }
         break;
       case "sendTransaction":
         if (args.length >= 2) {
@@ -107,8 +117,8 @@ public class Application {
           accountName = args[1];
         }
         System.out.println("*This is a testing function*");
-        System.out.println(
-            "*It will pause for several minutes to evaluate the network, a full run can take 8+ minutes*");
+        System.out.println("*It will pause for several minutes to evaluate the network,"
+            + " a full run can take 8+ minutes*");
         System.out.println("Adding " + accountName + " to monitor...");
         monitor.addAddresses(Arrays.asList(accountName));
         System.out.println("Initial values...");
@@ -140,13 +150,14 @@ public class Application {
         Thread.sleep(60 * 1000);
         break;
       case "listTxs":
-        if (args.length >= 2)
+        if (args.length >= 2) {
           accountName = args[1];
+        }
         System.out.println("Waiting 2 minutes to let txHistory build...");
         Thread.sleep(2 * 60 * 1000);
         Arrays.asList(wallet.getTransactions(accountName, 100, 0)).forEach(tx -> {
           System.out.println(tx);
-        });;
+        });
         break;
       default:
         System.out.println("Method not valid or not supported yet");

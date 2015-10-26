@@ -1,8 +1,12 @@
 package io.emax.cosigner.core.cluster;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.concurrent.TimeUnit;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
+import io.emax.cosigner.core.CosignerApplication;
+import io.emax.cosigner.core.CosignerConfiguration;
 
 import org.zeromq.ZBeacon;
 import org.zeromq.ZBeacon.Listener;
@@ -11,15 +15,12 @@ import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-
-import io.emax.cosigner.core.CosignerApplication;
-import io.emax.cosigner.core.CosignerConfiguration;
 import rx.Observable;
 import rx.functions.Action1;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.concurrent.TimeUnit;
 
 public class Coordinator {
   // Static resolver
@@ -76,7 +77,7 @@ public class Coordinator {
       Context context = ZMQ.context(1);
       responder = context.socket(ZMQ.REP);
       responder.bind("tcp://" + cluster.getThisServer().getServerLocation() + ":"
-          + cluster.getThisServer().getServerRPCPort());
+          + cluster.getThisServer().getServerRpcPort());
 
       Observable.interval(5, TimeUnit.MILLISECONDS).map(tick -> responder.recvStr())
           .subscribe(new Action1<String>() {
@@ -101,16 +102,24 @@ public class Coordinator {
     }
   }
 
-  private final static int REQUEST_TIMEOUT = 1500;
+  private static final int REQUEST_TIMEOUT = 1500;
 
-  // Expectation is that Common/etc... will loop through servers and figure out if it supports the
-  // given currency.
+  /**
+   * Broadcast a command to a remote server.
+   * 
+   * <p>Example: Send a signature command to the alternate cosigner server. It will respond with
+   * signed data.
+   * 
+   * @param command Command to broadcast.
+   * @param server Server to attempt to send the command to.
+   * @return Reply from the server.
+   */
   public static String broadcastCommand(BaseCommand command, Server server) {
     String commandString = command.toJson();
 
     Context context = ZMQ.context(1);
     Socket requester = context.socket(ZMQ.REQ);
-    requester.connect("tcp://" + server.getServerLocation() + ":" + server.getServerRPCPort());
+    requester.connect("tcp://" + server.getServerLocation() + ":" + server.getServerRpcPort());
 
     requester.send(commandString);
 
@@ -122,9 +131,9 @@ public class Coordinator {
 
     if (poller.pollin(0)) {
       reply = requester.recvStr();
-    } else {
-      // TODO Timed out, consider removing server
-    }
+    } 
+    // TODO Else, timed out, consider removing server
+    
 
     requester.close();
 

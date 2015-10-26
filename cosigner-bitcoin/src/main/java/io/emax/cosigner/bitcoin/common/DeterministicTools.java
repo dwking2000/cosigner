@@ -1,5 +1,11 @@
 package io.emax.cosigner.bitcoin.common;
 
+import io.emax.cosigner.bitcoin.BitcoinResource;
+import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
+import io.emax.cosigner.bitcoin.bitcoindrpc.NetworkBytes;
+
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -8,12 +14,6 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Locale;
 
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
-
-import io.emax.cosigner.bitcoin.BitcoinResource;
-import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
-import io.emax.cosigner.bitcoin.bitcoindrpc.NetworkBytes;
-
 public class DeterministicTools {
 
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
@@ -21,11 +21,14 @@ public class DeterministicTools {
   public static final String NOKEY = "NOKEY";
 
   /**
+   * Generate a deterministic set of private keys based on a secret key.
    * 
-   * @param userKeyPart Expect these to be hex strings without the leading 0x identifier
-   * @param serverKeyPart Expect these to be hex strings without the leading 0x identifier
-   * @param rounds
-   * @return
+   * @param userKeyPart Expect these to be hex strings without the leading 0x identifier. When
+   *        combined with serverKeyPart, it provides the seed for the private keys.
+   * @param serverKeyPart Expect these to be hex strings without the leading 0x identifier. When
+   *        combined with userKeyPart, it provides the seed for the private keys.
+   * @param rounds Number of keys to skip when generating the private key.
+   * @return The private key that this data generates.
    */
   public static String getDeterministicPrivateKey(String userKeyPart, String serverKeyPart,
       int rounds) {
@@ -104,6 +107,13 @@ public class DeterministicTools {
     }
   }
 
+  /**
+   * Encodes the userKey secret so that it can be referenced and stored in bitcoind's wallet without
+   * revealing what the original value is.
+   * 
+   * @param key User key secret value.
+   * @return Encoded/hashed version of the key.
+   */
   public static String encodeUserKey(String key) {
     try {
       MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -115,6 +125,12 @@ public class DeterministicTools {
     }
   }
 
+  /**
+   * Convert a private key into its corresponding public address.
+   * 
+   * @param privateKey Private key
+   * @return Public bitcoin address.
+   */
   public static String getPublicAddress(String privateKey) {
     try {
       byte[] publicKeyBytes = getPublicKeyBytes(privateKey);
@@ -164,6 +180,12 @@ public class DeterministicTools {
     }
   }
 
+  /**
+   * Decodes a bitcoin address and returns the RIPEMD-160 that it contains.
+   * 
+   * @param address Bitcoin address
+   * @return RIPEMD-160 hash of the public key.
+   */
   public static String decodeAddress(String address) {
     try {
       byte[] decodedNetworkAddress = Base58.decode(address);
@@ -192,6 +214,13 @@ public class DeterministicTools {
     }
   }
 
+  /**
+   * Converts a RIPEMD-160 address to a base58 encoded one with checksums.
+   * 
+   * @param addressBytes RIPEMD-160 address
+   * @param networkBytes Network bytes that identify which network this address belongs to.
+   * @return Address that bitcoind can import.
+   */
   public static String encodeAddress(String addressBytes, String networkBytes) {
     try {
       String encodedBytes = networkBytes + addressBytes;
@@ -211,6 +240,12 @@ public class DeterministicTools {
     }
   }
 
+  /**
+   * Decodes an address and checks if it's a P2SH.
+   * 
+   * @param address Bitcoin address
+   * @return True if it's a P2SH address, false otherwise.
+   */
   public static boolean isMultiSigAddress(String address) {
     try {
       // If the address isn't valid.
@@ -239,12 +274,16 @@ public class DeterministicTools {
     return ByteUtilities.toHexString(getPublicKeyBytes(privateKey));
   }
 
+  /**
+   * Converts a bitcoin-encoded private key to its corresponding public key.
+   * 
+   * @param privateKey Bitcoin-encoded private key.
+   * @return ECDSA public key.
+   */
   public static byte[] getPublicKeyBytes(String privateKey) {
     try {
       byte[] decodedPrivateKey = Base58.decode(privateKey);
-      byte[] networkPrivateKeyBytes = new byte[decodedPrivateKey.length - 4]; // trailing
-                                                                              // 4-byte
-                                                                              // checksum
+      byte[] networkPrivateKeyBytes = new byte[decodedPrivateKey.length - 4];
       byte[] privateKeyChecksum = new byte[4];
 
       System.arraycopy(decodedPrivateKey, 0, networkPrivateKeyBytes, 0,

@@ -1,5 +1,10 @@
 package io.emax.cosigner.ethereum;
 
+import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
+
+import rx.Observable;
+import rx.Subscription;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,10 +12,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
-import rx.Observable;
-import rx.Subscription;
 
 public class EthereumMonitor implements io.emax.cosigner.api.currency.Monitor {
   private HashSet<String> monitoredAddresses = new HashSet<>();
@@ -108,7 +109,8 @@ public class EthereumMonitor implements io.emax.cosigner.api.currency.Monitor {
 
   @Override
   public void destroyMonitor() {
-    if (balanceSubscription != null)
+    if (balanceSubscription != null) {
       balanceSubscription.unsubscribe();
+    }
   }
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class OutpointDetails {
   /**
-   * The output’s pubkey script encoded as hex Required
+   * The output’s pubkey script encoded as hex Required.
    */
   @JsonProperty("txid")
   private String transactionId;
@@ -16,13 +16,18 @@ public class OutpointDetails {
   private String scriptPubKey;
 
   /**
-   * Optional If the pubkey script was a script hash, this must be the corresponding redeem script
+   * Optional If the pubkey script was a script hash, this must be the corresponding redeem script.
    */
   @JsonProperty("redeemScript")
   private String redeemScript;
 
   public OutpointDetails() {}
 
+  /**
+   * Create a new outpoint based on an output
+   * 
+   * @param output Output with transaction data.
+   */
   public OutpointDetails(Output output) {
     setTransactionId(output.getTransactionId());
     setOutputIndex(output.getOutputIndex());
@@ -35,6 +40,14 @@ public class OutpointDetails {
     setRedeemScript(redeemScript);
   }
 
+  /**
+   * Create a new outpoint based on transaction data.
+   * 
+   * @param transactionId Transaction hash this outpoint represents.
+   * @param outputIndex Index of the output in the given transaction.
+   * @param scriptPubKey Script that was used on the output.
+   * @param redeemScript Redeem script that was used if this is a P2SH output.
+   */
   public OutpointDetails(String transactionId, long outputIndex, String scriptPubKey,
       String redeemScript) {
     setTransactionId(transactionId);
@@ -94,30 +107,40 @@ public class OutpointDetails {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     OutpointDetails other = (OutpointDetails) obj;
-    if (outputIndex != other.outputIndex)
+    if (outputIndex != other.outputIndex) {
       return false;
+    }
     if (redeemScript == null) {
-      if (other.redeemScript != null)
+      if (other.redeemScript != null) {
         return false;
-    } else if (!redeemScript.equals(other.redeemScript))
+      }
+    } else if (!redeemScript.equals(other.redeemScript)) {
       return false;
+    }
     if (scriptPubKey == null) {
-      if (other.scriptPubKey != null)
+      if (other.scriptPubKey != null) {
         return false;
-    } else if (!scriptPubKey.equals(other.scriptPubKey))
+      }
+    } else if (!scriptPubKey.equals(other.scriptPubKey)) {
       return false;
+    }
     if (transactionId == null) {
-      if (other.transactionId != null)
+      if (other.transactionId != null) {
         return false;
-    } else if (!transactionId.equals(other.transactionId))
+      }
+    } else if (!transactionId.equals(other.transactionId)) {
       return false;
+    }
     return true;
   }
 }

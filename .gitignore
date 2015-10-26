@@ -7,3 +7,5 @@ target/
 *.iml
 .vagrant/
 infer-out/
+.pmd*
+.checkstyle

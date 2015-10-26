@@ -1,12 +1,5 @@
 package io.emax.cosigner.core;
 
-import java.util.HashMap;
-
-import javax.servlet.ServletRegistration;
-
-import org.atmosphere.cpr.ApplicationConfig;
-import org.atmosphere.cpr.AtmosphereServlet;
-
 import io.dropwizard.setup.Environment;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
@@ -14,6 +7,14 @@ import io.emax.cosigner.core.currency.CurrencyPackage;
 import io.emax.cosigner.core.resources.AdminResource;
 import io.emax.cosigner.core.resources.CurrencyResource;
 
+import org.atmosphere.cpr.ApplicationConfig;
+import org.atmosphere.cpr.AtmosphereServlet;
+
+import java.util.HashMap;
+
+import javax.servlet.ServletRegistration;
+
+//TODO Convert all printStackTraces to LOG.* calls.
 public class CosignerApplication extends io.dropwizard.Application<CosignerConfiguration> {
   private static CosignerConfiguration config;
   private static HashMap<String, CurrencyPackage> currencies = new HashMap<>();

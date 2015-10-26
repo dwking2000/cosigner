@@ -1,19 +1,5 @@
 package io.emax.cosigner.core.currency;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
-import org.atmosphere.cpr.AtmosphereResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,12 +15,27 @@ import io.emax.cosigner.core.cluster.Coordinator;
 import io.emax.cosigner.core.cluster.CurrencyCommand;
 import io.emax.cosigner.core.cluster.CurrencyCommandType;
 import io.emax.cosigner.core.cluster.Server;
+
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClients;
+import org.atmosphere.cpr.AtmosphereResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import rx.Subscription;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Common {
   static Logger logger = LoggerFactory.getLogger(Common.class);
 
-  public static CurrencyParameters convertParams(String params) {
+  private static CurrencyParameters convertParams(String params) {
     try {
       JsonFactory jsonFact = new JsonFactory();
       JsonParser jsonParser = jsonFact.createParser(params);
@@ -55,6 +56,13 @@ public class Common {
     }
   }
 
+  /**
+   * Convert a JSON string to the object that it represents.
+   * 
+   * @param objectType Class that we're converting this string to.
+   * @param str String containing the JSON representation.
+   * @return Object that was reconstructed from the JSON.
+   */
   public static Object objectifyString(Class<?> objectType, String str) {
     try {
       JsonFactory jsonFact = new JsonFactory();
@@ -67,6 +75,13 @@ public class Common {
     }
   }
 
+  /**
+   * Convert an object to a JSON representation of itself.
+   * 
+   * @param objectType Object type we're writing.
+   * @param obj Object we're writing.
+   * @return JSON representation of the object.
+   */
   public static String stringifyObject(Class<?> objectType, Object obj) {
     try {
       JsonFactory jsonFact = new JsonFactory();
@@ -79,7 +94,7 @@ public class Common {
     }
   }
 
-  public static CurrencyPackage lookupCurrency(CurrencyParameters params) {
+  private static CurrencyPackage lookupCurrency(CurrencyParameters params) {
     if (CosignerApplication.getCurrencies().containsKey(params.getCurrencySymbol())) {
       return CosignerApplication.getCurrencies().get(params.getCurrencySymbol());
     } else {
@@ -87,6 +102,11 @@ public class Common {
     }
   }
 
+  /**
+   * List all currencies that are currently loaded in cosigner.
+   * 
+   * @return String list of currencies.
+   */
   public static String listCurrencies() {
     List<String> currencies = new LinkedList<>();
     CosignerApplication.getCurrencies().keySet().forEach((currency) -> {
@@ -99,6 +119,13 @@ public class Common {
     return currencyString;
   }
 
+  /**
+   * Get a new address for the provided currency & user key.
+   * 
+   * @param params {@link CurrencyParameters} with the currency code and user key filled in.
+   * @return Address that the user can use to deposit funds, for which we can generate the private
+   *         keys.
+   */
   public static String getNewAddress(String params) {
     CurrencyParameters currencyParams = convertParams(params);
 
@@ -116,6 +143,13 @@ public class Common {
     return response;
   }
 
+  /**
+   * List all addresses that we have generated for the given user key and currency.
+   * 
+   * @param params {@link CurrencyParameters} with the currency code and user key filled in.
+   * @return All addresses that cosigner can generate the private key for belonging to that user
+   *         key.
+   */
   public static String listAllAddresses(String params) {
     CurrencyParameters currencyParams = convertParams(params);
 
@@ -130,6 +164,14 @@ public class Common {
     return response;
   }
 
+  /**
+   * List transactions for the given address and currency.
+   * 
+   * <p>Will only return data for addresses that belong to cosigner.
+   * 
+   * @param params {@link CurrencyParameters} with the currency code and addresses filled in.
+   * @return List of transactions that affect each account.
+   */
   public static String listTransactions(String params) {
     CurrencyParameters currencyParams = convertParams(params);
 
@@ -147,6 +189,12 @@ public class Common {
     return response;
   }
 
+  /**
+   * Returns the combined balance of all addresses provided in the parameters.
+   * 
+   * @param params {@link CurrencyParameters} with the currency code and addresses filled in.
+   * @return Sum of all balances for the provided addresses.
+   */
   public static String getBalance(String params) {
     CurrencyParameters currencyParams = convertParams(params);
 
@@ -191,6 +239,21 @@ public class Common {
     }
   }
 
+  /**
+   * Sets up a monitor for the given addresses.
+   * 
+   * <p>A monitor provides periodic balance updates, along with all known transactions when
+   * initialized, and any new transactions that come in while it's active. Transactions can be
+   * distinguished from balance updates in that the transaction data portion of the response has
+   * data, it contains the transaction hash.
+   * 
+   * @param params {@link CurrencyParameters} with the currency code and addresses filled in. If
+   *        using a REST callback, the callback needs to be filled in as well.
+   * @param responseSocket If this has been called using a web socket, pass the socket in here and
+   *        the data will be written to is as it's available.
+   * @return An empty {@link CurrencyParameters} object is returned when the monitor is set up. The
+   *         actual data is sent through the socket or callback.
+   */
   public static String monitorBalance(String params, AtmosphereResponse responseSocket) {
     CurrencyParameters currencyParams = convertParams(params);
 
@@ -327,10 +390,19 @@ public class Common {
     return response;
   }
 
+  /**
+   * Create and sign a transaction.
+   * 
+   * <p>This only signs the transaction with the user's key, showing that the user has requested the
+   * transaction. The server keys are not used until the approve stage.
+   * 
+   * @param params {@link CurrencyParameters} with the currency code, user key, senders, recipients
+   *        and amounts filled in.
+   * @return The transaction string that was requested.
+   */
   public static String prepareTransaction(String params) {
     CurrencyParameters currencyParams = convertParams(params);
 
-    String response = "";
     CurrencyPackage currency = lookupCurrency(currencyParams);
 
     // Create the transaction
@@ -363,11 +435,24 @@ public class Common {
       submitTransaction(stringifyObject(CurrencyParameters.class, currencyParams));
     }
 
-    response = currencyParams.getTransactionData();
+    String response = currencyParams.getTransactionData();
     logger.debug("[Response] " + response);
     return response;
   }
 
+  /**
+   * Approve a transaction that's been signed off on by the user.
+   * 
+   * <p>This stage signs the transaction with the server keys after running it through any sanity
+   * checks and validation required.
+   * 
+   * @param params {@link CurrencyParameters} with the currency code, user key, senders, recipients
+   *        and amounts filled in. The transaction data should be filled in with the response from
+   *        prepareTransaction.
+   * @param sendToRemotes Indicates whether cosigner should attempt to request signature from any
+   *        other cosigner servers in the cluster.
+   * @return Signed transaction string
+   */
   public static String approveTransaction(String params, boolean sendToRemotes) {
     CurrencyParameters currencyParams = convertParams(params);
 
@@ -402,6 +487,13 @@ public class Common {
     return response;
   }
 
+  /**
+   * Submits a transaction for processing on the network.
+   * 
+   * @param params {@link CurrencyParameters} with the currency and transaction data filled in. The
+   *        transaction data required is the result from the approveTransaction stage.
+   * @return The transaction hash/ID. 
+   */
   public static String submitTransaction(String params) {
     CurrencyParameters currencyParams = convertParams(params);
 

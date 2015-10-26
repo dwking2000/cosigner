@@ -1,9 +1,5 @@
 package io.emax.cosigner.bitcoin.stubrpc;
 
-import java.math.BigDecimal;
-import java.util.LinkedList;
-import java.util.Map;
-
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainInfo;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
@@ -14,6 +10,10 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.Output;
 import io.emax.cosigner.bitcoin.bitcoindrpc.Payment;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SigHash;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
+
+import java.math.BigDecimal;
+import java.util.LinkedList;
+import java.util.Map;
 
 public class BitcoinTestRpc implements BitcoindRpc {
 
@@ -66,10 +66,10 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public MultiSig createmultisig(int nrequired, String[] keys) {
-    MultiSig mSig = new MultiSig();
-    mSig.setAddress("2sjJ8zfnqZbkYj79EBtJLN4CDNPRg4s9xn");
-    mSig.setRedeemScript("");
-    return mSig;
+    MultiSig multiSig = new MultiSig();
+    multiSig.setAddress("2sjJ8zfnqZbkYj79EBtJLN4CDNPRg4s9xn");
+    multiSig.setRedeemScript("");
+    return multiSig;
   }
 
   @Override

@@ -1,13 +1,13 @@
 package io.emax.cosigner.core.cluster;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.CosignerConfiguration;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 
 public class ClusterInfo {
   // Static resolver
@@ -22,9 +22,9 @@ public class ClusterInfo {
     CosignerConfiguration config = CosignerApplication.getConfig();
     this.thisServer.setServerLocation(config.getClusterLocation());
     this.thisServer.setServerListeningPort(config.getClusterPort());
-    this.thisServer.setServerRPCPort(config.getClusterRPCPort());
+    this.thisServer.setServerRpcPort(config.getClusterRpcPort());
     this.thisServer.setOriginator(true);
-    this.thisServer.setServerID(UUID.randomUUID().toString());
+    this.thisServer.setServerId(UUID.randomUUID().toString());
 
     servers.add(thisServer);
   }

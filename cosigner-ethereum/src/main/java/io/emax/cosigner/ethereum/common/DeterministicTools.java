@@ -1,5 +1,7 @@
 package io.emax.cosigner.ethereum.common;
 
+import org.bouncycastle.crypto.digests.SHA3Digest;
+
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -7,19 +9,20 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
-import org.bouncycastle.crypto.digests.SHA3Digest;
-
 public class DeterministicTools {
 
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
 
   /**
+   * Generates a deterministic random number that can be used as a private key in ECDSA.
    * 
-   * @param userKeyPart Expect these to be hex strings without the leading 0x identifier
-   * @param serverKeyPart Expect these to be hex strings without the leading 0x identifier
-   * @param rounds
-   * @return
+   * @param userKeyPart Expect these to be hex strings without the leading 0x identifier. This
+   *        combined with the serverKeyPart is used as a seed to generate the private keys.
+   * @param serverKeyPart Expect these to be hex strings without the leading 0x identifier. This
+   *        combined with the userKeyPart is used as a seed to generate the private keys.
+   * @param rounds Number of private keys to skip while generating them.
+   * @return A private key encoded in a hex string.
    */
   public static String getDeterministicPrivateKey(String userKeyPart, String serverKeyPart,
       int rounds) {
@@ -64,6 +67,12 @@ public class DeterministicTools {
     return privateKeyCheck.toString(16);
   }
 
+  /**
+   * Generates a SHA-3 hash on the provided data.
+   * 
+   * @param data Hex data encoded in a string.
+   * @return Hash encoded in a hex string.
+   */
   public static String hashSha3(String data) {
     byte[] dataBytes = ByteUtilities.toByteArray(data);
     SHA3Digest md = new SHA3Digest(256);
@@ -74,6 +83,15 @@ public class DeterministicTools {
     return ByteUtilities.toHexString(hashedBytes);
   }
 
+  /**
+   * Obscures the userKey which is sensitive data.
+   * 
+   * <p>Intended to be used when the key needs to be identified but also exported, to the geth node
+   * for example.
+   * 
+   * @param key User secret that needs to be hidden
+   * @return Hashed user key
+   */
   public static String encodeUserKey(String key) {
     try {
       MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -85,26 +103,18 @@ public class DeterministicTools {
     }
   }
 
-  public static byte[] getRandomBytes(int size) {
-    SecureRandom secureRandom;
-    try {
-      secureRandom =
-          SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
-    } catch (Exception e) {
-      e.printStackTrace();
-      secureRandom = new SecureRandom();
-    }
-
-    byte[] randBytes = new byte[size];
-    secureRandom.nextBytes(randBytes);
-
-    return randBytes;
-  }
-
   public static String getPublicAddress(String privateKey) {
     return getPublicAddress(privateKey, true);
   }
 
+  /**
+   * Converts a private key, or public key, to the public address used in Ethereum.
+   * 
+   * @param key Key being converted.
+   * @param isPrivateKey Do we need to convert from a private key to public, or is it already a
+   *        public key.
+   * @return The public address that people using Ethereum are used to seeing.
+   */
   public static String getPublicAddress(String key, boolean isPrivateKey) {
     try {
       byte[] publicKeyBytes;
@@ -134,6 +144,12 @@ public class DeterministicTools {
     return ByteUtilities.toHexString(getPublicKeyBytes(privateKey));
   }
 
+  /**
+   * Convert a private key into the corresponding public one.
+   * 
+   * @param privateKey Private key being converted.
+   * @return Public key that corresponds to the input.
+   */
   public static byte[] getPublicKeyBytes(String privateKey) {
     try {
       byte[] decodedPrivateKey = new BigInteger("00" + privateKey, 16).toByteArray();

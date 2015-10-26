@@ -1,19 +1,5 @@
 package io.emax.cosigner.bitcoin;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 import io.emax.cosigner.bitcoin.bitcoindrpc.MultiSig;
 import io.emax.cosigner.bitcoin.bitcoindrpc.Outpoint;
@@ -29,8 +15,23 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
 import io.emax.cosigner.bitcoin.common.ByteUtilities;
 import io.emax.cosigner.bitcoin.common.DeterministicTools;
 import io.emax.cosigner.bitcoin.common.Secp256k1;
+
 import rx.Observable;
 import rx.Subscription;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
 
@@ -38,13 +39,13 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
   private static BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
   private static final String PUBKEY_PREFIX = "PK-";
   @SuppressWarnings("unused")
-  private static Subscription multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-      .subscribe(tick -> scanForAddresses());
+  private static Subscription multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES)
+      .onErrorReturn(null).subscribe(tick -> scanForAddresses());
 
   private static HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
   public BitcoinWallet() {
-    
+
   }
 
   @Override
@@ -97,7 +98,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
     return newAddress;
   }
 
-  public static void scanForAddresses() {
+  private static void scanForAddresses() {
     Map<String, BigDecimal> knownAccounts = bitcoindRpc.listaccounts(0, true);
     knownAccounts.keySet().forEach(account -> {
       // Look for any known PK/Single accounts and generate the matching multisig in memory
@@ -110,7 +111,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
     });
   }
 
-  public static String generateMultiSigAddress(Iterable<String> addresses, String name) {
+  private static String generateMultiSigAddress(Iterable<String> addresses, String name) {
     LinkedList<String> multisigAddresses = new LinkedList<>();
     addresses.forEach((address) -> {
       // Check if any of the addresses belong to the user
@@ -200,7 +201,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
           txnOutput.put(fromAddress.iterator().next(), subTotal.subtract(new BigDecimal("0.002")));
           filledAllOutputs = true;
           break;
-        }        
+        }
       }
     }
 
@@ -457,7 +458,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
           });
         }
       } catch (Exception e) {
-
+        e.printStackTrace();
       }
     });
 

@@ -1,8 +1,8 @@
 package io.emax.cosigner.core.currency;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
 
 public class CurrencyParameters {
   @JsonProperty
@@ -86,43 +86,58 @@ public class CurrencyParameters {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     CurrencyParameters other = (CurrencyParameters) obj;
     if (account == null) {
-      if (other.account != null)
+      if (other.account != null) {
         return false;
-    } else if (!account.equals(other.account))
+      }
+    } else if (!account.equals(other.account)) {
       return false;
+    }
     if (callback == null) {
-      if (other.callback != null)
+      if (other.callback != null) {
         return false;
-    } else if (!callback.equals(other.callback))
+      }
+    } else if (!callback.equals(other.callback)) {
       return false;
+    }
     if (currencySymbol == null) {
-      if (other.currencySymbol != null)
+      if (other.currencySymbol != null) {
         return false;
-    } else if (!currencySymbol.equals(other.currencySymbol))
+      }
+    } else if (!currencySymbol.equals(other.currencySymbol)) {
       return false;
+    }
     if (receivingAccount == null) {
-      if (other.receivingAccount != null)
+      if (other.receivingAccount != null) {
         return false;
-    } else if (!receivingAccount.equals(other.receivingAccount))
+      }
+    } else if (!receivingAccount.equals(other.receivingAccount)) {
       return false;
+    }
     if (transactionData == null) {
-      if (other.transactionData != null)
+      if (other.transactionData != null) {
         return false;
-    } else if (!transactionData.equals(other.transactionData))
+      }
+    } else if (!transactionData.equals(other.transactionData)) {
       return false;
+    }
     if (userKey == null) {
-      if (other.userKey != null)
+      if (other.userKey != null) {
         return false;
-    } else if (!userKey.equals(other.userKey))
+      }
+    } else if (!userKey.equals(other.userKey)) {
       return false;
+    }
     return true;
   }
 

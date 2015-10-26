@@ -1,8 +1,8 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Arrays;
 
 public class SignedTransaction {
   /**
@@ -13,7 +13,7 @@ public class SignedTransaction {
   private String transaction;
 
   /**
-   * The value true if transaction is fully signed; the value false if more signatures are required
+   * The value true if transaction is fully signed; the value false if more signatures are required.
    */
   @JsonProperty("complete")
   private boolean complete;
@@ -37,6 +37,11 @@ public class SignedTransaction {
     this.complete = complete;
   }
 
+  /**
+   * Any errors that may have occured in signing.
+   * 
+   * @return Array of errors.
+   */
   public Errors[] getErrors() {
     Errors[] retArray = new Errors[errors.length];
     System.arraycopy(errors, 0, retArray, 0, errors.length);

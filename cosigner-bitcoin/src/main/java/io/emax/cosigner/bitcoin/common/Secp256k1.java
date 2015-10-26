@@ -1,8 +1,5 @@
 package io.emax.cosigner.bitcoin.common;
 
-import java.math.BigInteger;
-import java.security.Security;
-
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
@@ -12,13 +9,22 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.math.ec.ECPoint;
 
+import java.math.BigInteger;
+import java.security.Security;
+
 public class Secp256k1 {
+  /**
+   * Converts a private key into its corresponding public key.
+   * 
+   * @param privateKey ECDSA private key.
+   * @return Public key.
+   */
   public static byte[] getPublicKey(byte[] privateKey) {
     try {
       ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
-      ECPoint Q = spec.getG().multiply(new BigInteger(1, privateKey));
+      ECPoint pointQ = spec.getG().multiply(new BigInteger(1, privateKey));
 
-      return Q.getEncoded(false);
+      return pointQ.getEncoded(false);
     } catch (Exception e) {
       System.out.println("Panic!!" + e.toString());
       e.printStackTrace(System.out);
@@ -26,6 +32,13 @@ public class Secp256k1 {
     }
   }
 
+  /** 
+   * Signs a message using the provided private key.
+   * 
+   * @param data Message to sign. This is expected to already be hashed.
+   * @param privateKey Private key to sign the data with.
+   * @return ECDSA signature data, DER encoded.
+   */
   public static byte[] signTransaction(byte[] data, byte[] privateKey) {
     try {
       Security.addProvider(new BouncyCastleProvider());

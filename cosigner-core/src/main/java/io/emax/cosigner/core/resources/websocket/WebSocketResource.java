@@ -1,9 +1,6 @@
 package io.emax.cosigner.core.resources.websocket;
 
-import java.io.IOException;
-import java.util.Locale;
-
-import javax.ws.rs.Path;
+import io.emax.cosigner.core.currency.Common;
 
 import org.atmosphere.cache.UUIDBroadcasterCache;
 import org.atmosphere.client.TrackMessageSizeInterceptor;
@@ -16,7 +13,10 @@ import org.atmosphere.interceptor.HeartbeatInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.emax.cosigner.core.currency.Common;
+import java.io.IOException;
+import java.util.Locale;
+
+import javax.ws.rs.Path;
 
 @Path("/")
 @AtmosphereHandlerService(path = "/ws", broadcasterCache = UUIDBroadcasterCache.class,

@@ -1,11 +1,11 @@
 package io.emax.cosigner.ethereum;
 
+import io.emax.cosigner.api.currency.SigningType;
+import io.emax.cosigner.ethereum.common.EnvironmentVariableParser;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
-
-import io.emax.cosigner.api.currency.SigningType;
-import io.emax.cosigner.ethereum.common.EnvironmentVariableParser;
 
 public class EthereumConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
   // Defaults
@@ -49,6 +49,7 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
           int intParser = Integer.parseInt(cosignerProperties.getProperty("minConfirmations"));
           minConfirmations = intParser;
         } catch (NumberFormatException nex) {
+          nex.printStackTrace();
         }
 
         // gasPrice
@@ -56,6 +57,7 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
           long longParser = Long.parseLong(cosignerProperties.getProperty("gasPrice"));
           gasPrice = longParser;
         } catch (NumberFormatException nex) {
+          nex.printStackTrace();
         }
 
         // simpleTxGas
@@ -63,6 +65,7 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
           long longParser = Long.parseLong(cosignerProperties.getProperty("simpleTxGas"));
           simpleTxGas = longParser;
         } catch (NumberFormatException nex) {
+          nex.printStackTrace();
         }
 
         // contractGas
@@ -70,6 +73,7 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
           long longParser = Long.parseLong(cosignerProperties.getProperty("contractGas"));
           contractGas = longParser;
         } catch (NumberFormatException nex) {
+          nex.printStackTrace();
         }
 
         // minSignatures
@@ -77,6 +81,7 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
           int intParser = Integer.parseInt(cosignerProperties.getProperty("minSignatures"));
           minSignatures = intParser;
         } catch (NumberFormatException nex) {
+          nex.printStackTrace();
         }
 
         // contractAccount
@@ -100,6 +105,7 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
           try {
             propertiesFile.close();
           } catch (IOException e1) {
+            e1.printStackTrace();
           }
         }
         System.out.println("Could not load cosigner-ethereum configuration, using defaults.");
@@ -146,6 +152,11 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
     return minSignatures;
   }
 
+  /**
+   * Lists addresses that should be appended to the signers when creating new multi-sig addresses.
+   * 
+   * @return Array of addresses
+   */
   public String[] getMultiSigAddresses() {
     String[] retArray = new String[multiSigAccounts.length];
     System.arraycopy(multiSigAccounts, 0, retArray, 0, multiSigAccounts.length);

@@ -1,18 +1,9 @@
 package io.emax.cosigner.ethereum;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
-
 import io.emax.cosigner.ethereum.common.ByteUtilities;
 import io.emax.cosigner.ethereum.common.DeterministicTools;
-import io.emax.cosigner.ethereum.common.RLPItem;
-import io.emax.cosigner.ethereum.common.RLPList;
+import io.emax.cosigner.ethereum.common.RlpItem;
+import io.emax.cosigner.ethereum.common.RlpList;
 import io.emax.cosigner.ethereum.common.Secp256k1;
 import io.emax.cosigner.ethereum.gethrpc.Block;
 import io.emax.cosigner.ethereum.gethrpc.CallData;
@@ -21,8 +12,18 @@ import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.gethrpc.MultiSigContract;
 import io.emax.cosigner.ethereum.gethrpc.MultiSigContractParameters;
 import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
+
 import rx.Observable;
 import rx.Subscription;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
   // RPC and configuration
@@ -43,13 +44,18 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
   private static HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
   @SuppressWarnings("unused")
   private static Subscription txHistorySubscription = Observable.interval(1, TimeUnit.MINUTES)
-      .onErrorReturn(null).subscribe(tick -> scanTransactions());;
+      .onErrorReturn(null).subscribe(tick -> scanTransactions());
 
+  /**
+   * Ethereum wallet.
+   * 
+   * <p>Provides wallet access to the Ethereum network via a geth node.
+   */
   public EthereumWallet() {
     try {
       syncMultiSigAddresses();
     } catch (Exception e) {
-      // this is ok.
+      e.printStackTrace();
     }
   }
 
@@ -59,17 +65,17 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
         DefaultBlock.LATEST.toString());
     int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
     for (int i = 0; i < rounds; i++) {
-      RLPList contractAddress = new RLPList();
-      RLPItem contractCreator = new RLPItem(ByteUtilities.toByteArray(config.getContractAccount()));
-      RLPItem nonce =
-          new RLPItem(ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(i).toByteArray()));
+      RlpList contractAddress = new RlpList();
+      RlpItem contractCreator = new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
+      RlpItem nonce =
+          new RlpItem(ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(i).toByteArray()));
       contractAddress.add(contractCreator);
       contractAddress.add(nonce);
 
       String contract = DeterministicTools
           .hashSha3(ByteUtilities.toHexString(contractAddress.encode())).substring(96 / 4, 256 / 4);
-      String contractCode =
-          ethereumRpc.eth_getCode("0x" + contract.toLowerCase(Locale.US), DefaultBlock.LATEST.toString());
+      String contractCode = ethereumRpc.eth_getCode("0x" + contract.toLowerCase(Locale.US),
+          DefaultBlock.LATEST.toString());
 
       if (contractCode.equalsIgnoreCase(contractPayload)) {
         // We found an existing contract
@@ -98,7 +104,8 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
           }
 
           msigContracts.put(userAddress.toLowerCase(Locale.US), contract.toLowerCase(Locale.US));
-          reverseMsigContracts.put(contract.toLowerCase(Locale.US), userAddress.toLowerCase(Locale.US));
+          reverseMsigContracts.put(contract.toLowerCase(Locale.US),
+              userAddress.toLowerCase(Locale.US));
         }
       }
     }
@@ -168,12 +175,12 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
         .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
 
     // Setup parameters for contract
-    String contractInit = MultiSigContract.getInitData();
     // Parameters for constructor are appended after the contract code
     // Each value is a 64-byte hex entry, one after the next with no delimiters
     // Addresses[] - because it's an array we provide a pointer relative to the input data start,
     // showing where you can find the data
-    String accountOffset = String.format("%64s", "40").replace(' ', '0');
+    final String contractInit = MultiSigContract.getInitData();
+    final String accountOffset = String.format("%64s", "40").replace(' ', '0');
     // Required sigs
     String requiredSigs =
         ByteUtilities.toHexString(BigInteger.valueOf(config.getMinSignatures()).toByteArray());
@@ -220,8 +227,8 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     // Nonce is only filled when we sign so grab the new value now
     // We use this to predict the address, instead of waiting for a receipt.
     tx = RawTransaction.parseBytes(ByteUtilities.toByteArray(signedTx));
-    RLPList contractAddress = new RLPList();
-    RLPItem contractCreator = new RLPItem(ByteUtilities.toByteArray(config.getContractAccount()));
+    RlpList contractAddress = new RlpList();
+    RlpItem contractCreator = new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
     contractAddress.add(contractCreator);
     contractAddress.add(tx.getNonce());
 
@@ -230,8 +237,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
         .hashSha3(ByteUtilities.toHexString(contractAddress.encode())).substring(96 / 4, 256 / 4);
 
     // Figure out if we already created this, if so, skip it...
-    if (reverseMsigContracts.containsKey(contract.toLowerCase(Locale.US)))
+    if (reverseMsigContracts.containsKey(contract.toLowerCase(Locale.US))) {
       return "";
+    }
 
     // Otherwise, register it
     msigContracts.put(userAddress, contract.toLowerCase(Locale.US));
@@ -317,8 +325,8 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
       // For this particular contract the previous nonce is stored at 0x0a.
       // It will only accept nonce's one greater than this.
-      String txCount = ethereumRpc.eth_getStorageAt("0x" + senderAddress.toLowerCase(Locale.US), "0x1",
-          DefaultBlock.LATEST.toString());
+      String txCount = ethereumRpc.eth_getStorageAt("0x" + senderAddress.toLowerCase(Locale.US),
+          "0x1", DefaultBlock.LATEST.toString());
       BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
       contractParms.setNonce(nonce);
 
@@ -375,8 +383,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
           // Sign it and rebuild the data
           byte[][] sigData = signData(hashBytes, config.getMultiSigAddresses()[i], null);
-          if (sigData.length < 3)
+          if (sigData.length < 3) {
             return transaction;
+          }
 
           contractParams.getSigR().add(new BigInteger(1, sigData[0]));
           contractParams.getSigS().add(new BigInteger(1, sigData[1]));
@@ -417,8 +426,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
       // Sign it and rebuild the data
       byte[][] sigData = signData(hashBytes, translatedAddress, name);
-      if (sigData.length < 3)
+      if (sigData.length < 3) {
         return transaction;
+      }
 
       contractParams.getSigR().add(new BigInteger(1, sigData[0]));
       contractParams.getSigS().add(new BigInteger(1, sigData[1]));
@@ -445,8 +455,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     sigString = DeterministicTools.hashSha3(sigString);
 
     byte[][] sigData = signData(sigString, address, name);
-    if (sigData.length < 3)
+    if (sigData.length < 3) {
       return transaction;
+    }
 
     sigTx.getSigR().setDecodedContents(sigData[0]);
     sigTx.getSigS().setDecodedContents(sigData[1]);
@@ -516,8 +527,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
         sigR = Arrays.copyOfRange(signedBytes, 1, 33);
         sigS = Arrays.copyOfRange(signedBytes, 33, 65);
 
-        if (sigV[0] != 27 && sigV[0] != 28)
+        if (sigV[0] != 27 && sigV[0] != 28) {
           continue;
+        }
 
         signingAddress = ByteUtilities
             .toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigBytes, sigV[0] - 27));
@@ -564,15 +576,16 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
         // another account.
         try {
           byte[] inputData = ByteUtilities.toByteArray(tx.getInput());
-          MultiSigContractParameters mSig = new MultiSigContractParameters();
-          mSig.decode(inputData);
+          MultiSigContractParameters multiSig = new MultiSigContractParameters();
+          multiSig.decode(inputData);
 
-          if (mSig.getFunction().equalsIgnoreCase(MultiSigContract.getExecuteFunctionAddress())) {
-            for (int j = 0; j < mSig.getAddress().size(); j++) {
+          if (multiSig.getFunction()
+              .equalsIgnoreCase(MultiSigContract.getExecuteFunctionAddress())) {
+            for (int j = 0; j < multiSig.getAddress().size(); j++) {
               TransactionDetails msigTx = new TransactionDetails();
               msigTx.setFromAddress(txDetail.getToAddress());
-              msigTx.setToAddress(new String[] {mSig.getAddress().get(j)});
-              msigTx.setAmount(BigDecimal.valueOf(mSig.getValue().get(j).longValue())
+              msigTx.setToAddress(new String[] {multiSig.getAddress().get(j)});
+              msigTx.setAmount(BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
                   .divide(BigDecimal.valueOf(config.getWeiMultiplier())));
               msigTx.setTxHash(txDetail.getTxHash());
 
@@ -592,7 +605,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
             }
           }
         } catch (Exception e) {
-          // This is OK, just means it's not a transfer command
+          e.printStackTrace();
         }
 
         if (!txHistory.containsKey(txDetail.getToAddress()[0])) {

@@ -1,7 +1,7 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
 /**
- * Bitcoind RPC Interface
+ * Bitcoind RPC Interface.
  * 
  * @author dquintela
  */

@@ -1,7 +1,5 @@
 package io.emax.cosigner.core.cluster;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 import io.emax.cosigner.core.currency.Common;
 import io.emax.cosigner.core.currency.CurrencyParameters;
+
+import java.io.IOException;
 
 public class CurrencyCommand implements BaseCommand {
   private CurrencyCommandType commandType;
@@ -30,6 +30,9 @@ public class CurrencyCommand implements BaseCommand {
     this.currencyParams = currencyParams;
   }
 
+  /**
+   * Convert this command to a JSON string.
+   */
   public String toJson() {
     try {
       JsonFactory jsonFact = new JsonFactory();
@@ -42,6 +45,12 @@ public class CurrencyCommand implements BaseCommand {
     }
   }
 
+  /**
+   * Parse a JSON string that represents a CurrencyCommand.
+   * 
+   * @param commandString JSON string to parse.
+   * @return CurrencyCommand that the string represents.
+   */
   public static CurrencyCommand parseCommandString(String commandString) {
     try {
       JsonFactory jsonFact = new JsonFactory();
@@ -55,6 +64,12 @@ public class CurrencyCommand implements BaseCommand {
     }
   }
 
+  /**
+   * Attempt to handle the request in a currency command.
+   * 
+   * @param command The command received.
+   * @return The string response to return to the requestor.
+   */
   public static String handleCommand(CurrencyCommand command) {
     // SIGN -- Attempt to sign the provided data, for off-client keys
     switch (command.commandType) {

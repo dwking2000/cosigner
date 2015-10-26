@@ -1,24 +1,24 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
+import com.googlecode.jsonrpc4j.JsonRpcMethod;
+
 import java.math.BigDecimal;
 import java.util.Map;
 
-import com.googlecode.jsonrpc4j.JsonRpcMethod;
-
 /**
- * Raw Transaction RPCs
+ * Raw Transaction RPCs.
  * 
- * https://bitcoin.org/en/developer-reference
+ * <p>https://bitcoin.org/en/developer-reference
  * 
  * @author dquintela
  */
 public interface RawTransactionRpc {
   /**
-   * CreateRawTransaction
+   * CreateRawTransaction.
    * 
-   * The createrawtransaction RPC creates an unsigned serialized transaction that spends a previous
-   * output to a new output with a P2PKH or P2SH address. The transaction is not stored in the
-   * wallet or transmitted to the network.
+   * <p>The createrawtransaction RPC creates an unsigned serialized transaction that spends a
+   * previous output to a new output with a P2PKH or P2SH address. The transaction is not stored in
+   * the wallet or transmitted to the network.
    * 
    * @param unspentOutputs references to previous unspent outputs
    * @param addressAmounts P2PKH or P2SH addresses and amounts A key/value pair with the address to
@@ -30,14 +30,14 @@ public interface RawTransactionRpc {
   String createrawtransaction(Outpoint[] unspentOutputs, Map<String, BigDecimal> addressAmounts);
 
   /**
-   * GetRawTransaction
+   * GetRawTransaction.
    * 
-   * The getrawtransaction RPC gets a hex-encoded serialized transaction or a JSON object describing
-   * the transaction. By default, Bitcoin Core only stores complete transaction data for UTXOs and
-   * your own transactions, so the RPC may fail on historic transactions unless you use the
-   * non-default txindex=1 in your Bitcoin Core startup settings.
+   * <p>The getrawtransaction RPC gets a hex-encoded serialized transaction or a JSON object
+   * describing the transaction. By default, Bitcoin Core only stores complete transaction data for
+   * UTXOs and your own transactions, so the RPC may fail on historic transactions unless you use
+   * the non-default txindex=1 in your Bitcoin Core startup settings.
    * 
-   * Note: if you begin using txindex=1 after downloading the block chain, you must rebuild your
+   * <p>Note: if you begin using txindex=1 after downloading the block chain, you must rebuild your
    * indexes by starting Bitcoin Core with the option -reindex. This may take several hours to
    * complete, during which time your node will not process new blocks or transactions. This reindex
    * only needs to be done once.
@@ -50,9 +50,9 @@ public interface RawTransactionRpc {
   String getrawtransaction(String transactionId);
 
   /**
-   * SendRawTransaction
+   * SendRawTransaction.
    * 
-   * The sendrawtransaction RPC validates a transaction and broadcasts it to the peer-to-peer
+   * <p>The sendrawtransaction RPC validates a transaction and broadcasts it to the peer-to-peer
    * network.
    * 
    * @param transaction The serialized transaction to broadcast encoded as hex
@@ -70,9 +70,9 @@ public interface RawTransactionRpc {
   String sendrawtransaction(String transaction, boolean allowHighFees);
 
   /**
-   * SignRawTransaction
+   * SignRawTransaction.
    * 
-   * The signrawtransaction RPC signs a transaction in the serialized transaction format using
+   * <p>The signrawtransaction RPC signs a transaction in the serialized transaction format using
    * private keys stored in the wallet or provided in the call.
    * 
    * @param transaction The transaction to sign as a serialized transaction

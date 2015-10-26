@@ -1,63 +1,66 @@
 package io.emax.cosigner.ethereum.gethrpc;
 
-import io.emax.cosigner.ethereum.common.RLP;
-import io.emax.cosigner.ethereum.common.RLPEntity;
-import io.emax.cosigner.ethereum.common.RLPItem;
-import io.emax.cosigner.ethereum.common.RLPList;
+import io.emax.cosigner.ethereum.common.Rlp;
+import io.emax.cosigner.ethereum.common.RlpEntity;
+import io.emax.cosigner.ethereum.common.RlpItem;
+import io.emax.cosigner.ethereum.common.RlpList;
 
-public class RawTransaction extends RLPList {
+public class RawTransaction extends RlpList {
   private static final long serialVersionUID = 1L;
 
-  private RLPItem nonce = new RLPItem();
-  private RLPItem gasPrice = new RLPItem();
-  private RLPItem gasLimit = new RLPItem();
-  private RLPItem to = new RLPItem();
-  private RLPItem value = new RLPItem();
-  private RLPItem data = new RLPItem();
-  private RLPItem sigV = new RLPItem();
-  private RLPItem sigR = new RLPItem();
-  private RLPItem sigS = new RLPItem();
+  private RlpItem nonce = new RlpItem();
+  private RlpItem gasPrice = new RlpItem();
+  private RlpItem gasLimit = new RlpItem();
+  private RlpItem to = new RlpItem();
+  private RlpItem value = new RlpItem();
+  private RlpItem data = new RlpItem();
+  private RlpItem sigV = new RlpItem();
+  private RlpItem sigR = new RlpItem();
+  private RlpItem sigS = new RlpItem();
 
   public static long getSerialversionuid() {
     return serialVersionUID;
   }
 
-  public RLPItem getNonce() {
+  public RlpItem getNonce() {
     return nonce;
   }
 
-  public RLPItem getGasPrice() {
+  public RlpItem getGasPrice() {
     return gasPrice;
   }
 
-  public RLPItem getGasLimit() {
+  public RlpItem getGasLimit() {
     return gasLimit;
   }
 
-  public RLPItem getTo() {
+  public RlpItem getTo() {
     return to;
   }
 
-  public RLPItem getValue() {
+  public RlpItem getValue() {
     return value;
   }
 
-  public RLPItem getData() {
+  public RlpItem getData() {
     return data;
   }
 
-  public RLPItem getSigV() {
+  public RlpItem getSigV() {
     return sigV;
   }
 
-  public RLPItem getSigR() {
+  public RlpItem getSigR() {
     return sigR;
   }
 
-  public RLPItem getSigS() {
+  public RlpItem getSigS() {
     return sigS;
   }
 
+  /**
+   * Raw transaction that is sent over the Ethereum network.
+   */
   public RawTransaction() {
     this.add(nonce);
     this.add(gasPrice);
@@ -70,8 +73,13 @@ public class RawTransaction extends RLPList {
     this.add(sigS);
   }
 
+  /**
+   * The bytes that need to be signed for the transaction to be valid.
+   * 
+   * @return Byte array of data that will be checked against the signature.
+   */
   public byte[] getSigBytes() {
-    RLPList sigTx = new RLPList();
+    RlpList sigTx = new RlpList();
     sigTx.add(nonce);
     sigTx.add(gasPrice);
     sigTx.add(gasLimit);
@@ -82,13 +90,19 @@ public class RawTransaction extends RLPList {
     return sigTx.encode();
   }
 
+  /**
+   * Parse a raw transaction from a byte representation into a useful data structure.
+   * 
+   * @param bytes Bytes representing the transaction.
+   * @return Data structure built from the raw bytes.
+   */
   public static RawTransaction parseBytes(byte[] bytes) {
-    RLPEntity entity = RLP.parseArray(bytes);
-    if (!entity.getClass().equals(RLPList.class)) {
+    RlpEntity entity = Rlp.parseArray(bytes);
+    if (!entity.getClass().equals(RlpList.class)) {
       return null;
     }
 
-    RLPList txList = (RLPList) entity;
+    RlpList txList = (RlpList) entity;
     RawTransaction tx = new RawTransaction();
     for (int i = 0; i < txList.size(); i++) {
       if (i == 0) {

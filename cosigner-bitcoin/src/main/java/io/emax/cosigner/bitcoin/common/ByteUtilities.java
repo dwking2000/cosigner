@@ -5,6 +5,12 @@ import java.util.Locale;
 
 public class ByteUtilities {
 
+  /**
+   * Remove any leading 0x00 bytes from a byte array.
+   * 
+   * @param input Byte array to alter.
+   * @return Copy of the byte array, without any leading 0x00's.
+   */
   public static byte[] stripLeadingNullBytes(byte[] input) {
     byte[] result = Arrays.copyOf(input, input.length);
     while (result.length > 0 && result[0] == 0x00) {
@@ -15,6 +21,12 @@ public class ByteUtilities {
 
   static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
 
+  /**
+   * Convert a byte array to a hex string.
+   * 
+   * @param data Byte array to convert.
+   * @return Hex string representation of the array.
+   */
   public static String toHexString(byte[] data) {
     char[] chars = new char[data.length * 2];
     for (int i = 0; i < data.length; i++) {
@@ -24,6 +36,12 @@ public class ByteUtilities {
     return new String(chars).toLowerCase(Locale.US);
   }
 
+  /**
+   * Convert a hex string to a byte array.
+   * 
+   * @param data Hex string to convert.
+   * @return Byte array that the string represented.
+   */
   public static byte[] toByteArray(String data) {
     if (data.length() == 0) {
       return new byte[] {};
@@ -43,14 +61,20 @@ public class ByteUtilities {
     byte[] bytes = new byte[data.length() / 2];
     String hexString = new String(HEX_DIGITS);
     for (int i = 0; i < bytes.length; i++) {
-      int byteConv = (hexString.indexOf(data.charAt(i * 2)) * 0x10);
-      byteConv += (hexString.indexOf(data.charAt((i * 2) + 1)));
+      int byteConv = hexString.indexOf(data.charAt(i * 2)) * 0x10;
+      byteConv += hexString.indexOf(data.charAt(i * 2 + 1));
       bytes[i] = (byte) (byteConv & 0xFF);
     }
 
     return bytes;
   }
 
+  /**
+   * Reverse the endian-ness of a byte array.
+   * 
+   * @param data Byte array to flip
+   * @return Flipped array
+   */
   public static byte[] flipEndian(byte[] data) {
     if (data == null) {
       return new byte[0];
@@ -63,6 +87,14 @@ public class ByteUtilities {
     return newData;
   }
 
+  /**
+   * Pad a byte array with leading bytes.
+   * 
+   * @param data Data that needs padding
+   * @param size The final desired size of the data.
+   * @param pad The byte value to use in padding the data.
+   * @return A padded array.
+   */
   public static byte[] leftPad(byte[] data, int size, byte pad) {
     if (size <= data.length) {
       return data;
@@ -79,6 +111,14 @@ public class ByteUtilities {
     return newData;
   }
 
+  /**
+   * Reads a section of a byte array and returns it as its own byte array, not unlike a substring.
+   * 
+   * @param data Byte array to read from.
+   * @param start Starting position of the desired data.
+   * @param size Size of the data.
+   * @return Byte array containing the desired data.
+   */
   public static byte[] readBytes(byte[] data, int start, int size) {
     if (data.length < start + size) {
       return new byte[0];

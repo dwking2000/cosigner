@@ -1,17 +1,17 @@
 package io.emax.cosigner.bitcoin;
 
-import java.net.Authenticator;
-import java.net.MalformedURLException;
-import java.net.PasswordAuthentication;
-import java.net.URL;
-
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 
+import java.net.Authenticator;
+import java.net.MalformedURLException;
+import java.net.PasswordAuthentication;
+import java.net.URL;
+
 /**
- * Static connection to a bitcoind RPC server
+ * Static connection to a bitcoind RPC server.
  * 
  * @author Tom
  */
@@ -21,7 +21,7 @@ public class BitcoinResource {
   private JsonRpcHttpClient client;
   private BitcoindRpc bitcoindRpc;
 
-  public static BitcoinResource getResource() {    
+  public static BitcoinResource getResource() {
     return serverResource;
   }
 
@@ -47,15 +47,21 @@ public class BitcoinResource {
   public BitcoinResource(BitcoindRpc rpc) {
     this.bitcoindRpc = rpc;
   }
-  
+
   public void setBitcoindRpc(BitcoindRpc rpc) {
     this.bitcoindRpc = rpc;
   }
 
+  /**
+   * Get an RPC object that is connected to a bitcoind node.
+   * 
+   * @return RPC object
+   */
   public BitcoindRpc getBitcoindRpc() {
-    if (bitcoindRpc == null)
+    if (bitcoindRpc == null) {
       this.bitcoindRpc =
           ProxyUtil.createClientProxy(getClass().getClassLoader(), BitcoindRpc.class, client);
+    }
 
     return this.bitcoindRpc;
   }

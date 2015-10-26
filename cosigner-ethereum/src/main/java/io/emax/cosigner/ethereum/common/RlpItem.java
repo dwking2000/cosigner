@@ -3,16 +3,16 @@ package io.emax.cosigner.ethereum.common;
 import java.io.Serializable;
 import java.util.Arrays;
 
-public class RLPItem implements RLPEntity, Serializable {
+public class RlpItem implements RlpEntity, Serializable {
   private static final long serialVersionUID = 1L;
   private byte[] encodedContents;
   private byte[] decodedContents;
 
-  public RLPItem(byte[] decodedBytes) {
+  public RlpItem(byte[] decodedBytes) {
     this.setDecodedContents(decodedBytes);
   }
 
-  public RLPItem() {
+  public RlpItem() {
     this.setDecodedContents(new byte[] {});
   }
 
@@ -50,7 +50,7 @@ public class RLPItem implements RLPEntity, Serializable {
 
   @Override
   public byte[] encode() {
-    encodedContents = RLP.encodeItem(decodedContents);
+    encodedContents = Rlp.encodeItem(decodedContents);
     byte[] retArray = new byte[encodedContents.length];
     System.arraycopy(encodedContents, 0, retArray, 0, encodedContents.length);
     return retArray;

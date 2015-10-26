@@ -3,9 +3,9 @@ package io.emax.cosigner.bitcoin.bitcoindrpc;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 
 /**
- * Utility RPCs
+ * Utility RPCs.
  * 
- * CreateMultiSig: creates a P2SH multi-signature address. EstimateFee: estimates the transaction
+ * <p>CreateMultiSig: creates a P2SH multi-signature address. EstimateFee: estimates the transaction
  * fee per kilobyte that needs to be paid for a transaction to be included within a certain number
  * of blocks. New in 0.10.0 PENDING: EstimatePriority: estimates the priority that a transaction
  * needs in order to be included within a certain number of blocks as a free high-priority
@@ -17,9 +17,9 @@ import com.googlecode.jsonrpc4j.JsonRpcMethod;
 public interface UtilityRpc {
 
   /**
-   * CreateMultiSig
+   * CreateMultiSig.
    * 
-   * The createmultisig RPC creates a P2SH multi-signature address.
+   * <p>The createmultisig RPC creates a P2SH multi-signature address.
    * 
    * @param nrequired The minimum (m) number of signatures required to spend this m-of-n multisig
    *        script
