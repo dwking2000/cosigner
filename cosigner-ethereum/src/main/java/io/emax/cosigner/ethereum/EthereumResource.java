@@ -5,6 +5,11 @@ import com.googlecode.jsonrpc4j.ProxyUtil;
 
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -14,6 +19,7 @@ import java.net.URL;
  * @author Tom
  */
 public class EthereumResource {
+  private static final Logger logger = LoggerFactory.getLogger(EthereumResource.class);
   private static EthereumResource serverResource = new EthereumResource();
   private EthereumConfiguration config;
   private JsonRpcHttpClient client;
@@ -28,7 +34,9 @@ public class EthereumResource {
     try {
       this.client = new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()));
     } catch (MalformedURLException e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
     }
   }
 

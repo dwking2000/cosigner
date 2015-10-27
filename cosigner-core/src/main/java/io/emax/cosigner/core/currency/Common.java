@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import rx.Subscription;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,7 +53,9 @@ public class Common {
 
       return currencyParams;
     } catch (IOException e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.warn(errors.toString());
       return null;
     }
   }
@@ -70,7 +74,9 @@ public class Common {
       Object obj = new ObjectMapper().readValue(jsonParser, objectType);
       return obj;
     } catch (IOException e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.warn(errors.toString());
       return null;
     }
   }
@@ -89,7 +95,9 @@ public class Common {
       ObjectWriter writer = mapper.writerFor(objectType);
       return writer.writeValueAsString(obj);
     } catch (IOException e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
       return "";
     }
   }
@@ -492,7 +500,7 @@ public class Common {
    * 
    * @param params {@link CurrencyParameters} with the currency and transaction data filled in. The
    *        transaction data required is the result from the approveTransaction stage.
-   * @return The transaction hash/ID. 
+   * @return The transaction hash/ID.
    */
   public static String submitTransaction(String params) {
     CurrencyParameters currencyParams = convertParams(params);

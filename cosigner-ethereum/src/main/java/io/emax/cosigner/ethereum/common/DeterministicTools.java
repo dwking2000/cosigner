@@ -1,7 +1,11 @@
 package io.emax.cosigner.ethereum.common;
 
 import org.bouncycastle.crypto.digests.SHA3Digest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -10,7 +14,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 
 public class DeterministicTools {
-
+  private static final Logger logger = LoggerFactory.getLogger(DeterministicTools.class);
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
 
@@ -31,7 +35,9 @@ public class DeterministicTools {
       secureRandom =
           SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
     } catch (Exception e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
       secureRandom = new SecureRandom();
     }
 
@@ -98,7 +104,9 @@ public class DeterministicTools {
       md.update(key.getBytes("UTF-8"));
       return new BigInteger(md.digest()).toString(16);
     } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
       return null;
     }
   }
@@ -135,7 +143,9 @@ public class DeterministicTools {
       return publicKey.toString(16);
 
     } catch (Exception e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
       return null;
     }
   }
@@ -159,7 +169,9 @@ public class DeterministicTools {
       return publicKeyBytes;
 
     } catch (Exception e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.warn(errors.toString());
       return new byte[0];
     }
   }

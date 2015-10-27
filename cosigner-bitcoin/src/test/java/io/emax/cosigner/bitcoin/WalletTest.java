@@ -42,7 +42,7 @@ public class WalletTest extends TestCase {
       txString = wallet.sendTransaction(txString);
       System.out.println("TX ID: " + txString);
     } catch (Exception e) {
-      e.printStackTrace();
+      e.printStackTrace(System.err);
       fail("Simple wallet test failed!");
     }
   }
@@ -62,7 +62,7 @@ public class WalletTest extends TestCase {
       balance = wallet.getBalance(multiSigAddress);
       System.out.println("Balance for " + multiSigAddress + ": " + balance);
     } catch (Exception e) {
-      e.printStackTrace();
+      e.printStackTrace(System.err);
       fail("Balance test failed");
     }
   }

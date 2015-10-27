@@ -14,7 +14,6 @@ import java.util.HashMap;
 
 import javax.servlet.ServletRegistration;
 
-//TODO Convert all printStackTraces to LOG.* calls.
 public class CosignerApplication extends io.dropwizard.Application<CosignerConfiguration> {
   private static CosignerConfiguration config;
   private static HashMap<String, CurrencyPackage> currencies = new HashMap<>();

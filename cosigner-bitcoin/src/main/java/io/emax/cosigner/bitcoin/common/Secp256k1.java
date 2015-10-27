@@ -8,11 +8,17 @@ import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.math.ec.ECPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.Security;
 
 public class Secp256k1 {
+  private static final Logger logger = LoggerFactory.getLogger(Secp256k1.class);
+
   /**
    * Converts a private key into its corresponding public key.
    * 
@@ -26,13 +32,14 @@ public class Secp256k1 {
 
       return pointQ.getEncoded(false);
     } catch (Exception e) {
-      System.out.println("Panic!!" + e.toString());
-      e.printStackTrace(System.out);
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
       return new byte[0];
     }
   }
 
-  /** 
+  /**
    * Signs a message using the provided private key.
    * 
    * @param data Message to sign. This is expected to already be hashed.
@@ -82,8 +89,9 @@ public class Secp256k1 {
       return ByteUtilities.toByteArray(signatureString);
 
     } catch (Exception e) {
-      System.out.println("Panic!!" + e.toString());
-      e.printStackTrace(System.out);
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
       return new byte[0];
     }
   }

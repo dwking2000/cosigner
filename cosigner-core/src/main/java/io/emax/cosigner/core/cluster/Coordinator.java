@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.CosignerConfiguration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeromq.ZBeacon;
 import org.zeromq.ZBeacon.Listener;
 import org.zeromq.ZMQ;
@@ -19,12 +21,15 @@ import rx.Observable;
 import rx.functions.Action1;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 public class Coordinator {
   // Static resolver
   private static Coordinator coordinator = new Coordinator();
+  private static final Logger logger = LoggerFactory.getLogger(Coordinator.class);
 
   public static Coordinator getInstance() {
     return coordinator;
@@ -66,7 +71,9 @@ public class Coordinator {
                   .setLastCommunication(System.currentTimeMillis());
             }
           } catch (RuntimeException | IOException e) {
-            e.printStackTrace();
+            StringWriter errors = new StringWriter();
+            e.printStackTrace(new PrintWriter(errors));
+            logger.warn(errors.toString());
           }
         }
       });
@@ -98,7 +105,9 @@ public class Coordinator {
           });
 
     } catch (IOException e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.warn(errors.toString());
     }
   }
 
@@ -131,9 +140,9 @@ public class Coordinator {
 
     if (poller.pollin(0)) {
       reply = requester.recvStr();
-    } 
+    }
     // TODO Else, timed out, consider removing server
-    
+
 
     requester.close();
 

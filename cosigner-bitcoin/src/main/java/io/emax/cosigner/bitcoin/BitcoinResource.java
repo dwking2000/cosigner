@@ -5,6 +5,11 @@ import com.googlecode.jsonrpc4j.ProxyUtil;
 
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.Authenticator;
 import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
@@ -16,6 +21,7 @@ import java.net.URL;
  * @author Tom
  */
 public class BitcoinResource {
+  private static final Logger logger = LoggerFactory.getLogger(BitcoinResource.class);
   private static BitcoinResource serverResource = new BitcoinResource();
   private BitcoinConfiguration config;
   private JsonRpcHttpClient client;
@@ -40,7 +46,9 @@ public class BitcoinResource {
       this.client = new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()));
 
     } catch (MalformedURLException e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
     }
   }
 

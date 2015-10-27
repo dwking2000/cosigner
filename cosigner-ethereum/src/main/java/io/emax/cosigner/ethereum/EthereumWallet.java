@@ -13,9 +13,14 @@ import io.emax.cosigner.ethereum.gethrpc.MultiSigContract;
 import io.emax.cosigner.ethereum.gethrpc.MultiSigContractParameters;
 import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import rx.Observable;
 import rx.Subscription;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -26,6 +31,8 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
+  private static final Logger logger = LoggerFactory.getLogger(EthereumWallet.class);
+
   // RPC and configuration
   private static EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
   private static EthereumConfiguration config = new EthereumConfiguration();
@@ -55,7 +62,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     try {
       syncMultiSigAddresses();
     } catch (Exception e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.debug(errors.toString());
     }
   }
 
@@ -473,7 +482,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
       try {
         sig = ethereumRpc.eth_sign("0x" + address, data);
       } catch (Exception e) {
-        e.printStackTrace();
+        StringWriter errors = new StringWriter();
+        e.printStackTrace(new PrintWriter(errors));
+        logger.warn(errors.toString());
         return new byte[0][0];
       }
 
@@ -486,7 +497,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
         return new byte[][] {sigR, sigS, sigV};
       } catch (Exception e) {
-        e.printStackTrace();
+        StringWriter errors = new StringWriter();
+        e.printStackTrace(new PrintWriter(errors));
+        logger.error(errors.toString());
         return new byte[0][0];
       }
     } else {
@@ -605,7 +618,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
             }
           }
         } catch (Exception e) {
-          e.printStackTrace();
+          StringWriter errors = new StringWriter();
+          e.printStackTrace(new PrintWriter(errors));
+          logger.warn(errors.toString());
         }
 
         if (!txHistory.containsKey(txDetail.getToAddress()[0])) {

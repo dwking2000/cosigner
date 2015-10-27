@@ -16,9 +16,14 @@ import io.emax.cosigner.bitcoin.common.ByteUtilities;
 import io.emax.cosigner.bitcoin.common.DeterministicTools;
 import io.emax.cosigner.bitcoin.common.Secp256k1;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import rx.Observable;
 import rx.Subscription;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -34,7 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
-
+  private static final Logger logger = LoggerFactory.getLogger(BitcoinWallet.class);
   private static BitcoinConfiguration config = new BitcoinConfiguration();
   private static BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
   private static final String PUBKEY_PREFIX = "PK-";
@@ -320,7 +325,9 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
                     MessageDigest md = MessageDigest.getInstance("SHA-256");
                     sigData = md.digest(md.digest(sigData));
                   } catch (Exception e) {
-                    e.printStackTrace();
+                    StringWriter errors = new StringWriter();
+                    e.printStackTrace(new PrintWriter(errors));
+                    logger.error(errors.toString());
                   }
 
                   sigData = Secp256k1.signTransaction(sigData, privateKeyBytes);
@@ -458,7 +465,9 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
           });
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        StringWriter errors = new StringWriter();
+        e.printStackTrace(new PrintWriter(errors));
+        logger.debug(errors.toString());
       }
     });
 

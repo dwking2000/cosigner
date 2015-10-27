@@ -10,11 +10,17 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.Security;
 
 public class Secp256k1 {
+  private static final Logger logger = LoggerFactory.getLogger(Secp256k1.class);
+
   /**
    * Convert a private key to a public key.
    * 
@@ -28,7 +34,9 @@ public class Secp256k1 {
 
       return pointQ.getEncoded(false);
     } catch (Exception e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
       return new byte[0];
     }
   }
@@ -66,7 +74,9 @@ public class Secp256k1 {
       return new BigInteger(sigData.toString(), 16).toByteArray();
 
     } catch (Exception e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
       return new byte[0];
     }
   }
@@ -118,7 +128,9 @@ public class Secp256k1 {
         }
         return (byte) (0xFF & (27 + recoveryId));
       } catch (Exception e) {
-        e.printStackTrace();
+        StringWriter errors = new StringWriter();
+        e.printStackTrace(new PrintWriter(errors));
+        logger.error(errors.toString());
         continue;
       }
     }
@@ -159,8 +171,9 @@ public class Secp256k1 {
       byte[] pointQBytes = pointQ.getEncoded(false);
       return pointQBytes;
     } catch (Exception e) {
-      e.printStackTrace();
-
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
     }
 
     return new byte[0];

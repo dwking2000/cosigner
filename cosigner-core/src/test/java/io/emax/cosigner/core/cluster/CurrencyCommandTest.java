@@ -35,7 +35,7 @@ public class CurrencyCommandTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
-      e.printStackTrace();
+      e.printStackTrace(System.err);
       fail("Problem listing currencies.");
     }
 

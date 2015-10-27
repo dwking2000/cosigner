@@ -1,10 +1,16 @@
 package io.emax.cosigner.ethereum.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
 
 public class Rlp {
+  private static final Logger logger = LoggerFactory.getLogger(Rlp.class);
   private static final int THRESHOLD = 56;
   private static final int SHORT_ITEM = 0x80;
   private static final int LONG_ITEM = 0xb7;
@@ -55,7 +61,9 @@ public class Rlp {
 
       return parsedEntity;
     } catch (RuntimeException e) {
-      e.printStackTrace();
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.warn(errors.toString());
       return null;
     }
   }
