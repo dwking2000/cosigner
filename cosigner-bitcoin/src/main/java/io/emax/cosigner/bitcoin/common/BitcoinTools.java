@@ -3,6 +3,8 @@ package io.emax.cosigner.bitcoin.common;
 import io.emax.cosigner.bitcoin.BitcoinResource;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
 import io.emax.cosigner.bitcoin.bitcoindrpc.NetworkBytes;
+import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.crypto.Secp256k1;
 
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;
@@ -18,9 +20,9 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Locale;
 
-public class DeterministicTools {
+public class BitcoinTools {
 
-  private static final Logger logger = LoggerFactory.getLogger(DeterministicTools.class);
+  private static final Logger logger = LoggerFactory.getLogger(BitcoinTools.class);
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
   public static final String NOKEY = "NOKEY";

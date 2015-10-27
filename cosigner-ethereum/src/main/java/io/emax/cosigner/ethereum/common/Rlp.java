@@ -1,5 +1,7 @@
 package io.emax.cosigner.ethereum.common;
 
+import io.emax.cosigner.common.ByteUtilities;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

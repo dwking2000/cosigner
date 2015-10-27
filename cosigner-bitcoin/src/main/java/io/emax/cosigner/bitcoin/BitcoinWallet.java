@@ -12,9 +12,9 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.RawOutput;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SigHash;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
-import io.emax.cosigner.bitcoin.common.ByteUtilities;
-import io.emax.cosigner.bitcoin.common.DeterministicTools;
-import io.emax.cosigner.bitcoin.common.Secp256k1;
+import io.emax.cosigner.bitcoin.common.BitcoinTools;
+import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.crypto.Secp256k1;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,9 +57,9 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
   public String createAddress(String name) {
     int rounds = 1;
     String privateKey =
-        DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-    String newAddress = DeterministicTools.getPublicAddress(privateKey);
-    String pubKey = DeterministicTools.getPublicKey(privateKey);
+        BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+    String newAddress = BitcoinTools.getPublicAddress(privateKey);
+    String pubKey = BitcoinTools.getPublicKey(privateKey);
     // Hash the user's key so it's not stored in the wallet
     String internalName = PUBKEY_PREFIX + pubKey;
 
@@ -72,9 +72,9 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
         if (existingAddresses[i].equalsIgnoreCase(newAddress)) {
           oldAddress = true;
           rounds++;
-          privateKey = DeterministicTools.getDeterministicPrivateKey(name,
-              config.getServerPrivateKey(), rounds);
-          newAddress = DeterministicTools.getPublicAddress(privateKey);
+          privateKey =
+              BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+          newAddress = BitcoinTools.getPublicAddress(privateKey);
           break;
         }
       }
@@ -87,7 +87,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
   @Override
   public Iterable<String> getAddresses(String name) {
     // Hash the user's key so it's not stored in the wallet
-    String internalName = DeterministicTools.encodeUserKey(name);
+    String internalName = BitcoinTools.encodeUserKey(name);
 
     String[] addresses = bitcoindRpc.getaddressesbyaccount(internalName);
     return Arrays.asList(addresses);
@@ -96,7 +96,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
   @Override
   public String getMultiSigAddress(Iterable<String> addresses, String name) {
     // Hash the user's key so it's not stored in the wallet
-    String internalName = DeterministicTools.encodeUserKey(name);
+    String internalName = BitcoinTools.encodeUserKey(name);
     String newAddress = generateMultiSigAddress(addresses, name);
     bitcoindRpc.importaddress(newAddress, internalName, false);
 
@@ -122,23 +122,23 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
       // Check if any of the addresses belong to the user
       int rounds = 1;
       String userPrivateKey =
-          DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+          BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
 
-      String userAddress = DeterministicTools.NOKEY;
-      if (!userPrivateKey.equalsIgnoreCase(DeterministicTools.NOKEY)) {
-        userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
+      String userAddress = BitcoinTools.NOKEY;
+      if (!userPrivateKey.equalsIgnoreCase(BitcoinTools.NOKEY)) {
+        userAddress = BitcoinTools.getPublicAddress(userPrivateKey);
 
         while (!address.equalsIgnoreCase(userAddress)
             && rounds <= config.getMaxDeterministicAddresses()) {
           rounds++;
-          userPrivateKey = DeterministicTools.getDeterministicPrivateKey(name,
-              config.getServerPrivateKey(), rounds);
-          userAddress = DeterministicTools.getPublicAddress(userPrivateKey);
+          userPrivateKey =
+              BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+          userAddress = BitcoinTools.getPublicAddress(userPrivateKey);
         }
       }
 
       if (address.equalsIgnoreCase(userAddress)) {
-        multisigAddresses.add(DeterministicTools.getPublicKey(userPrivateKey));
+        multisigAddresses.add(BitcoinTools.getPublicKey(userPrivateKey));
       } else {
         multisigAddresses.add(address);
       }
@@ -157,7 +157,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
       // Bitcoind refuses to connect the address it has to the p2sh script even when provided.
       // Simplest to just load it, it still doesn't have the private keys.
       bitcoindRpc.addmultisigaddress(config.getMinSignatures(),
-          multisigAddresses.toArray(addressArray), DeterministicTools.encodeUserKey(name));
+          multisigAddresses.toArray(addressArray), BitcoinTools.encodeUserKey(name));
     }
 
     multiSigRedeemScripts.put(newAddress.getAddress(), newAddress.getRedeemScript());
@@ -229,10 +229,10 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
     txnOutput.forEach((address, amount) -> {
       RawOutput rawOutput = new RawOutput();
       rawOutput.setAmount(amount.multiply(BigDecimal.valueOf(100000000)).longValue());
-      String decodedAddress = DeterministicTools.decodeAddress(address);
+      String decodedAddress = BitcoinTools.decodeAddress(address);
       byte[] addressBytes = ByteUtilities.toByteArray(decodedAddress);
       String scriptData = "";
-      if (!DeterministicTools.isMultiSigAddress(address)) {
+      if (!BitcoinTools.isMultiSigAddress(address)) {
         // Regular address
         scriptData = "76a914";
         scriptData += ByteUtilities.toHexString(addressBytes);
@@ -258,40 +258,48 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
+    logger.debug("Attempting to sign a transaction");
     int rounds = 1;
     String privateKey = "";
     String userAddress = "";
     SignedTransaction signedTransaction = null;
 
     if (name != null) {
+      logger.debug("User key has value, trying to determine private key");
       privateKey =
-          DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-      userAddress = DeterministicTools.getPublicAddress(privateKey);
-      while (!generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
-          .equalsIgnoreCase(address) && !userAddress.equalsIgnoreCase(address)
+          BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+      userAddress = BitcoinTools.getPublicAddress(privateKey);
+      while (!userAddress.equalsIgnoreCase(address)
+          && !generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
+              .equalsIgnoreCase(address)
           && rounds < config.getMaxDeterministicAddresses()) {
         rounds++;
-        privateKey = DeterministicTools.getDeterministicPrivateKey(name,
-            config.getServerPrivateKey(), rounds);
-        userAddress = DeterministicTools.getPublicAddress(privateKey);
+        privateKey =
+            BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+        userAddress = BitcoinTools.getPublicAddress(privateKey);
       }
 
       // If we hit max addresses/user bail out
-      if (!generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
-          .equalsIgnoreCase(address) && !userAddress.equalsIgnoreCase(address)) {
+      if (!userAddress.equalsIgnoreCase(address)
+          && !generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
+              .equalsIgnoreCase(address)) {
+        logger.debug("Too many rounds, failed to sign");
         return transaction;
       }
+      
+      logger.debug("We can sign for " + userAddress);
 
       // We have the private key, now get all the unspent inputs so we have the redeemScripts.
       Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
           config.getMaxConfirmations(), new String[] {});
 
       RawTransaction rawTx = RawTransaction.parse(transaction);
-      final byte[] addressData = DeterministicTools.getPublicKeyBytes(privateKey);
+      final byte[] addressData = BitcoinTools.getPublicKeyBytes(privateKey);
       final byte[] privateKeyBytes =
-          ByteUtilities.toByteArray(DeterministicTools.decodeAddress(privateKey));
+          ByteUtilities.toByteArray(BitcoinTools.decodeAddress(privateKey));
       rawTx.getInputs().forEach((input) -> {
         for (Outpoint output : outputs) {
+          logger.debug("Looking for outputs we can sign");
           if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
               && output.getOutputIndex() == input.getTxIndex()) {
             OutpointDetails outpoint = new OutpointDetails();
@@ -304,11 +312,12 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
               RawTransaction signingTx = RawTransaction.stripInputScripts(rawTx);
               byte[] sigData = new byte[] {};
 
+              logger.debug("Found an output, matching to inputs in the transaction");
               for (RawInput sigInput : signingTx.getInputs()) {
                 if (sigInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
                     && sigInput.getTxIndex() == outpoint.getOutputIndex()) {
                   // This is the input we're processing, fill it and sign it
-                  if (DeterministicTools.isMultiSigAddress(address)) {
+                  if (BitcoinTools.isMultiSigAddress(address)) {
                     sigInput.setScript(outpoint.getRedeemScript());
                   } else {
                     sigInput.setScript(outpoint.getScriptPubKey());
@@ -319,6 +328,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
                   hashTypeBytes = ByteUtilities.leftPad(hashTypeBytes, 4, (byte) 0x00);
                   hashTypeBytes = ByteUtilities.flipEndian(hashTypeBytes);
                   String sigString = signingTx.encode() + ByteUtilities.toHexString(hashTypeBytes);
+                  logger.debug("Signing: " + sigString);
 
                   try {
                     sigData = ByteUtilities.toByteArray(sigString);
@@ -330,13 +340,33 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
                     logger.error(errors.toString());
                   }
 
-                  sigData = Secp256k1.signTransaction(sigData, privateKeyBytes);
+                  byte[][] sigResults = Secp256k1.signTransaction(sigData, privateKeyBytes);
+                  StringBuilder signature = new StringBuilder();
+                  // Only want R & S, don't need V
+                  for (int i = 0; i < 2; i++) {
+                    byte[] sig = sigResults[i];
+                    signature.append("02");
+                    byte[] sigBytes = sig;
+                    byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
+                    sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
+                    signature.append(ByteUtilities.toHexString(sigSize));
+                    signature.append(ByteUtilities.toHexString(sigBytes));
+                  }
+
+                  byte[] sigBytes = ByteUtilities.toByteArray(signature.toString());
+                  byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
+                  sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
+                  String signatureString =
+                      ByteUtilities.toHexString(sigSize) + signature.toString();
+                  signatureString = "30" + signatureString;
+
+                  sigData = ByteUtilities.toByteArray(signatureString);
                   break;
                 }
               }
 
               // Determine how we need to format the sig data
-              if (DeterministicTools.isMultiSigAddress(address)) {
+              if (BitcoinTools.isMultiSigAddress(address)) {
                 for (RawInput signedInput : rawTx.getInputs()) {
                   if (signedInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
                       && signedInput.getTxIndex() == outpoint.getOutputIndex()) {

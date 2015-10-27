@@ -1,17 +1,18 @@
 package io.emax.cosigner.ethereum;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
+import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.crypto.Secp256k1;
+import io.emax.cosigner.ethereum.common.EthereumTools;
+import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
+import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 
 import org.junit.Test;
 
-import io.emax.cosigner.api.currency.Wallet.Recipient;
-import io.emax.cosigner.ethereum.common.ByteUtilities;
-import io.emax.cosigner.ethereum.common.DeterministicTools;
-import io.emax.cosigner.ethereum.common.Secp256k1;
-import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
-import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 import junit.framework.TestCase;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
 
 public class WalletTest extends TestCase {
   private static EthereumWallet wallet;
@@ -139,13 +140,13 @@ public class WalletTest extends TestCase {
 
       byte[] sigBytes = txStructure.getSigBytes();
       String sigBytesString = ByteUtilities.toHexString(sigBytes);
-      sigBytesString = DeterministicTools.hashSha3(sigBytesString);
+      sigBytesString = EthereumTools.hashSha3(sigBytesString);
       sigBytes = ByteUtilities.toByteArray(sigBytesString);
 
       String signingAddress = ByteUtilities.toHexString(Secp256k1.recoverPublicKey(
           txStructure.getSigR().getDecodedContents(), txStructure.getSigS().getDecodedContents(),
-          sigBytes, txStructure.getSigV().getDecodedContents()[0] - 27));
-      signingAddress = DeterministicTools.getPublicAddress(signingAddress, false);
+          new byte[] {(byte) (txStructure.getSigV().getDecodedContents()[0] - 27)}, sigBytes));
+      signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
       System.out.println("Signed by: " + signingAddress);
 
       assertEquals(signingAddress, singleAddress);

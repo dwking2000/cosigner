@@ -1,4 +1,6 @@
-package io.emax.cosigner.ethereum.common;
+package io.emax.cosigner.common.crypto;
+
+import io.emax.cosigner.common.ByteUtilities;
 
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
 import org.bouncycastle.crypto.params.ECDomainParameters;
@@ -16,16 +18,50 @@ import org.slf4j.LoggerFactory;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.security.Security;
+import java.util.LinkedList;
 
 public class Secp256k1 {
   private static final Logger logger = LoggerFactory.getLogger(Secp256k1.class);
+  private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
+  private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
 
   /**
-   * Convert a private key to a public key.
-   * 
-   * @param privateKey Private key to convert.
-   * @return Corresponding public key.
+   * Generate a random private key that can be used with Secp256k1.
+   */
+  public static byte[] generatePrivateKey() {
+    SecureRandom secureRandom;
+    try {
+      secureRandom =
+          SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
+    } catch (Exception e) {
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
+      secureRandom = new SecureRandom();
+    }
+
+    BigInteger privateKeyCheck = BigInteger.ZERO;
+    // Bit of magic, move this maybe. This is the max key range.
+    BigInteger maxKey =
+        new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);
+
+    // Generate the key, skipping as many as desired.
+    byte[] privateKeyAttempt = new byte[32];
+    secureRandom.nextBytes(privateKeyAttempt);
+    privateKeyCheck = new BigInteger(1, privateKeyAttempt);
+    while (privateKeyCheck.compareTo(BigInteger.ZERO) == 0
+        || privateKeyCheck.compareTo(maxKey) == 1) {
+      secureRandom.nextBytes(privateKeyAttempt);
+      privateKeyCheck = new BigInteger(1, privateKeyAttempt);
+    }
+
+    return privateKeyAttempt;
+  }
+
+  /**
+   * Converts a private key into its corresponding public key.
    */
   public static byte[] getPublicKey(byte[] privateKey) {
     try {
@@ -43,13 +79,8 @@ public class Secp256k1 {
 
   /**
    * Sign data using the ECDSA algorithm.
-   * 
-   * @param data Data that needs to be signed. This is expected to be hashed in the desired way
-   *        already.
-   * @param privateKey Private key to sign the data with.
-   * @return Signature data in the form of sigV(1-byte)|sigR(32-bytes)|sigS(32-bytes)
    */
-  public static byte[] signTransaction(byte[] data, byte[] privateKey) {
+  public static byte[][] signTransaction(byte[] data, byte[] privateKey) {
     try {
       Security.addProvider(new BouncyCastleProvider());
       ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
@@ -63,21 +94,20 @@ public class Secp256k1 {
       ecdsaSigner.init(true, params);
 
       BigInteger[] sig = ecdsaSigner.generateSignature(data);
-      StringBuilder sigData = new StringBuilder();
-      sigData.append("00");
+      LinkedList<byte[]> sigData = new LinkedList<>();
       byte[] publicKey = getPublicKey(privateKey);
       byte recoveryId = getRecoveryId(sig[0].toByteArray(), sig[1].toByteArray(), data, publicKey);
-      sigData.append(ByteUtilities.toHexString(new byte[] {recoveryId}));
       for (BigInteger sigChunk : sig) {
-        sigData.append(sigChunk.toString(16));
+        sigData.add(sigChunk.toByteArray());
       }
-      return new BigInteger(sigData.toString(), 16).toByteArray();
+      sigData.add(new byte[] {recoveryId});
+      return sigData.toArray(new byte[][] {});
 
     } catch (Exception e) {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));
       logger.error(errors.toString());
-      return new byte[0];
+      return new byte[0][0];
     }
   }
 
@@ -87,12 +117,6 @@ public class Secp256k1 {
    * <p>Any signed message can resolve to one of two public keys due to the nature ECDSA. The
    * recovery ID provides information about which one it is, allowing confirmation that the message
    * was signed by a specific key.</p>
-   * 
-   * @param sigR R value of the signature.
-   * @param sigS S value of the signature.
-   * @param message Data that was signed.
-   * @param publicKey The public key that we expect to recover.
-   * @return Recovery ID that will let us recover the expected public key.
    */
   public static byte getRecoveryId(byte[] sigR, byte[] sigS, byte[] message, byte[] publicKey) {
     ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
@@ -126,7 +150,7 @@ public class Secp256k1 {
         if (!matchedKeys) {
           continue;
         }
-        return (byte) (0xFF & (27 + recoveryId));
+        return (byte) (0xFF & recoveryId);
       } catch (Exception e) {
         StringWriter errors = new StringWriter();
         e.printStackTrace(new PrintWriter(errors));
@@ -135,19 +159,13 @@ public class Secp256k1 {
       }
     }
 
-    return (byte) 0x00;
+    return (byte) 0xFF;
   }
 
   /**
    * Recover the public key that corresponds to the private key, which signed this message.
-   * 
-   * @param sigR R value of the signature.
-   * @param sigS S value of the signature.
-   * @param message Data that was signed.
-   * @param recoveryId Recovery ID provided with the signature.
-   * @return The public key that corresponds to the private key, which signed the data.
    */
-  public static byte[] recoverPublicKey(byte[] sigR, byte[] sigS, byte[] message, int recoveryId) {
+  public static byte[] recoverPublicKey(byte[] sigR, byte[] sigS, byte[] sigV, byte[] message) {
     ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
     BigInteger pointN = spec.getN();
 
@@ -156,7 +174,7 @@ public class Secp256k1 {
 
       X9IntegerConverter x9 = new X9IntegerConverter();
       byte[] compEnc = x9.integerToBytes(pointX, 1 + x9.getByteLength(spec.getCurve()));
-      compEnc[0] = (byte) ((recoveryId & 1) == 1 ? 0x03 : 0x02);
+      compEnc[0] = (byte) ((sigV[0] & 1) == 1 ? 0x03 : 0x02);
       ECPoint pointR = spec.getCurve().decodePoint(compEnc);
       if (!pointR.multiply(pointN).isInfinity()) {
         return new byte[0];
@@ -178,4 +196,18 @@ public class Secp256k1 {
 
     return new byte[0];
   }
+
+  /**
+   * Generate a shared AES key using ECDH.
+   */
+  public static byte[] generateSharedSecret(byte[] privateKey, byte[] publicKey) {
+    ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+    ECPoint pointQ = spec.getCurve().decodePoint(publicKey);
+    ECPoint pointK = pointQ.multiply(new BigInteger(1, privateKey));
+    byte[] password = pointK.getXCoord().toBigInteger().toByteArray();
+
+    byte[] key = Aes.generateKey(ByteUtilities.toHexString(password), password);
+
+    return key;
+  }  
 }

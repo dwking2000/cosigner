@@ -1,6 +1,6 @@
 package io.emax.cosigner.ethereum.gethrpc;
 
-import io.emax.cosigner.ethereum.common.ByteUtilities;
+import io.emax.cosigner.common.ByteUtilities;
 
 import org.bouncycastle.util.Arrays;
 

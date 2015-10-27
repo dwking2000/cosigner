@@ -1,5 +1,6 @@
 package io.emax.cosigner.bitcoin.stubrpc;
 
+import io.emax.cosigner.bitcoin.BitcoinWallet;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainInfo;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
@@ -10,9 +11,10 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.Output;
 import io.emax.cosigner.bitcoin.bitcoindrpc.Payment;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SigHash;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
+import io.emax.cosigner.bitcoin.common.BitcoinTools;
+import io.emax.cosigner.common.ByteUtilities;
 
 import java.math.BigDecimal;
-import java.util.LinkedList;
 import java.util.Map;
 
 public class BitcoinTestRpc implements BitcoindRpc {
@@ -95,19 +97,22 @@ public class BitcoinTestRpc implements BitcoindRpc {
   @Override
   public Output[] listunspent(int minimumConfirmations, int maximumConfirmations,
       String[] addresses) {
-    LinkedList<Output> outputs = new LinkedList<>();
-    for (String address : addresses) {
-      Output output = new Output();
-      output.setAccount("");
-      output.setAddress(address);
-      output.setAmount(BigDecimal.valueOf(30));
-      output.setConfirmations(minimumConfirmations);
-      output.setOutputIndex(1);
-      output.setTransactionId("deadbeef");
-      outputs.add(output);
-    }
-    Output[] outputArray = new Output[outputs.size()];
-    return outputs.toArray(outputArray);
+
+    Output output = new Output();
+    output.setAccount("");
+    output.setAddress(new BitcoinWallet().createAddress("deadbeef"));
+    output.setAmount(BigDecimal.valueOf(30));
+    output.setConfirmations(minimumConfirmations);
+    output.setOutputIndex(1);
+    output.setTransactionId("00000000000000000000000000000000000000000000000000000000deadbeef");
+    String decodedAddress = BitcoinTools.decodeAddress(output.getAddress());
+    byte[] addressBytes = ByteUtilities.toByteArray(decodedAddress);
+    String scriptData = "76a914";
+    scriptData += ByteUtilities.toHexString(addressBytes);
+    scriptData += "88ac";
+    output.setScriptPubKey(scriptData);
+
+    return new Output[] {output};
   }
 
   @Override

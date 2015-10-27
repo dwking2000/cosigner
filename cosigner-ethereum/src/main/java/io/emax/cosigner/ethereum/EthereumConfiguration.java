@@ -1,7 +1,7 @@
 package io.emax.cosigner.ethereum;
 
 import io.emax.cosigner.api.currency.SigningType;
-import io.emax.cosigner.ethereum.common.EnvironmentVariableParser;
+import io.emax.cosigner.common.EnvironmentVariableParser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

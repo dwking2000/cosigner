@@ -43,6 +43,7 @@
 
 	<modules>
 		<module>cosigner-api</module>
+                <module>cosigner-common</module>
 		<module>cosigner-bitcoin</module>
 		<module>cosigner-ethereum</module>
 		<module>cosigner-core</module>

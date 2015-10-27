@@ -1,7 +1,7 @@
 package io.emax.cosigner.ethereum.stubrpc;
 
-import io.emax.cosigner.ethereum.common.ByteUtilities;
-import io.emax.cosigner.ethereum.common.DeterministicTools;
+import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.gethrpc.Block;
 import io.emax.cosigner.ethereum.gethrpc.CallData;
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
@@ -36,7 +36,7 @@ public class EthereumTestRpc implements EthereumRpc {
   @Override
   public String eth_sendRawTransaction(String transaction) {
     txCounter++;
-    return DeterministicTools.hashSha3(transaction);
+    return EthereumTools.hashSha3(transaction);
   }
 
   @Override

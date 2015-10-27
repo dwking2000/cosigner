@@ -1,10 +1,10 @@
 package io.emax.cosigner.ethereum;
 
-import io.emax.cosigner.ethereum.common.ByteUtilities;
-import io.emax.cosigner.ethereum.common.DeterministicTools;
+import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.crypto.Secp256k1;
+import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.common.RlpItem;
 import io.emax.cosigner.ethereum.common.RlpList;
-import io.emax.cosigner.ethereum.common.Secp256k1;
 import io.emax.cosigner.ethereum.gethrpc.Block;
 import io.emax.cosigner.ethereum.gethrpc.CallData;
 import io.emax.cosigner.ethereum.gethrpc.DefaultBlock;
@@ -81,7 +81,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
       contractAddress.add(contractCreator);
       contractAddress.add(nonce);
 
-      String contract = DeterministicTools
+      String contract = EthereumTools
           .hashSha3(ByteUtilities.toHexString(contractAddress.encode())).substring(96 / 4, 256 / 4);
       String contractCode = ethereumRpc.eth_getCode("0x" + contract.toLowerCase(Locale.US),
           DefaultBlock.LATEST.toString());
@@ -125,16 +125,16 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     // Generate the next private key
     int rounds = 1;
     String privateKey =
-        DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+        EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
 
     // Convert to an Ethereum address
-    String publicAddress = DeterministicTools.getPublicAddress(privateKey);
+    String publicAddress = EthereumTools.getPublicAddress(privateKey);
 
     while (msigContracts.containsKey(publicAddress.toLowerCase(Locale.US))) {
       rounds++;
       privateKey =
-          DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-      publicAddress = DeterministicTools.getPublicAddress(privateKey);
+          EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
+      publicAddress = EthereumTools.getPublicAddress(privateKey);
     }
     addressRounds.put(name, rounds);
 
@@ -154,8 +154,8 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
     LinkedList<String> addresses = new LinkedList<>();
     for (int i = 1; i <= maxRounds; i++) {
-      addresses.add(DeterministicTools.getPublicAddress(
-          DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), i)));
+      addresses.add(EthereumTools.getPublicAddress(
+          EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), i)));
     }
 
     LinkedList<String> contracts = new LinkedList<>();
@@ -242,7 +242,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     contractAddress.add(tx.getNonce());
 
     // Figure out the contract address and store it in lookup tables for future use
-    String contract = DeterministicTools
+    String contract = EthereumTools
         .hashSha3(ByteUtilities.toHexString(contractAddress.encode())).substring(96 / 4, 256 / 4);
 
     // Figure out if we already created this, if so, skip it...
@@ -387,7 +387,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
                         ByteUtilities.toHexString(ByteUtilities
                             .stripLeadingNullBytes(contractParams.getNonce().toByteArray())))
                         .replace(' ', '0');
-            hashBytes = DeterministicTools.hashSha3(hashBytes);
+            hashBytes = EthereumTools.hashSha3(hashBytes);
           }
 
           // Sign it and rebuild the data
@@ -430,7 +430,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
                     ByteUtilities.toHexString(ByteUtilities
                         .stripLeadingNullBytes(contractParams.getNonce().toByteArray())))
                     .replace(' ', '0');
-        hashBytes = DeterministicTools.hashSha3(hashBytes);
+        hashBytes = EthereumTools.hashSha3(hashBytes);
       }
 
       // Sign it and rebuild the data
@@ -461,7 +461,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     }
 
     String sigString = ByteUtilities.toHexString(sigTx.getSigBytes());
-    sigString = DeterministicTools.hashSha3(sigString);
+    sigString = EthereumTools.hashSha3(sigString);
 
     byte[][] sigData = signData(sigString, address, name);
     if (sigData.length < 3) {
@@ -515,8 +515,8 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
       String privateKey = "";
       for (int i = 1; i <= rounds; i++) {
         String privateKeyCheck =
-            DeterministicTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), i);
-        if (DeterministicTools.getPublicAddress(privateKeyCheck).equalsIgnoreCase(address)) {
+            EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), i);
+        if (EthereumTools.getPublicAddress(privateKeyCheck).equalsIgnoreCase(address)) {
           privateKey = privateKeyCheck;
           break;
         }
@@ -535,20 +535,23 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
       byte[] sigR;
       byte[] sigS;
       do {
-        byte[] signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
-        sigV = Arrays.copyOfRange(signedBytes, 0, 1);
-        sigR = Arrays.copyOfRange(signedBytes, 1, 33);
-        sigS = Arrays.copyOfRange(signedBytes, 33, 65);
+        byte[][] signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);       
+        sigR = signedBytes[0];
+        sigS = signedBytes[1];
+        sigV = signedBytes[2];        
 
-        if (sigV[0] != 27 && sigV[0] != 28) {
+        if (sigV[0] != 0 && sigV[0] != 1) {
           continue;
         }
 
         signingAddress = ByteUtilities
-            .toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigBytes, sigV[0] - 27));
-        signingAddress = DeterministicTools.getPublicAddress(signingAddress, false);
+            .toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigV, sigBytes));
+        signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
       } while (!address.equalsIgnoreCase(signingAddress));
 
+      // Adjust for ethereum's encoding
+      sigV[0] += 27;
+      
       return new byte[][] {sigR, sigS, sigV};
     }
   }

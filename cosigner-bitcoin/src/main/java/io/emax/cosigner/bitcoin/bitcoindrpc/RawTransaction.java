@@ -1,8 +1,8 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
 import io.emax.cosigner.bitcoin.BitcoinResource;
-import io.emax.cosigner.bitcoin.common.ByteUtilities;
-import io.emax.cosigner.bitcoin.common.DeterministicTools;
+import io.emax.cosigner.bitcoin.common.BitcoinTools;
+import io.emax.cosigner.common.ByteUtilities;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -522,7 +522,7 @@ public final class RawTransaction {
           .getChain() == BlockChainName.main ? NetworkBytes.P2PKH.toString()
               : NetworkBytes.P2PKH_TEST.toString();
 
-      return DeterministicTools.encodeAddress(addressBytes, networkBytes);
+      return BitcoinTools.encodeAddress(addressBytes, networkBytes);
     }
 
     pattern = Pattern.compile("^a914(.{40})87$");
@@ -534,7 +534,7 @@ public final class RawTransaction {
           .getChain() == BlockChainName.main ? NetworkBytes.P2SH.toString()
               : NetworkBytes.P2SH_TEST.toString();
 
-      return DeterministicTools.encodeAddress(addressBytes, networkBytes);
+      return BitcoinTools.encodeAddress(addressBytes, networkBytes);
     }
 
     return null;

@@ -1,15 +1,16 @@
 package io.emax.cosigner.bitcoin;
 
+import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
+
+import org.junit.Test;
+
+import junit.framework.TestCase;
+import rx.Subscription;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import org.junit.Test;
-
-import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
-import junit.framework.TestCase;
-import rx.Subscription;
 
 public class MonitorTest extends TestCase {
   private static BitcoinWallet wallet;

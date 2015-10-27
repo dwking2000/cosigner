@@ -1,5 +1,8 @@
 package io.emax.cosigner.ethereum.common;
 
+import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.crypto.Secp256k1;
+
 import org.bouncycastle.crypto.digests.SHA3Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +16,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
-public class DeterministicTools {
-  private static final Logger logger = LoggerFactory.getLogger(DeterministicTools.class);
+public class EthereumTools {
+  private static final Logger logger = LoggerFactory.getLogger(EthereumTools.class);
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
 

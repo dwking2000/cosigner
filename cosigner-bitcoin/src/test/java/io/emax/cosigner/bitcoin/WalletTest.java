@@ -1,13 +1,15 @@
 package io.emax.cosigner.bitcoin;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
+import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction;
+import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 
 import org.junit.Test;
 
-import io.emax.cosigner.api.currency.Wallet.Recipient;
-import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 import junit.framework.TestCase;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
 
 public class WalletTest extends TestCase {
   private static BitcoinWallet wallet;
@@ -16,7 +18,7 @@ public class WalletTest extends TestCase {
   @Override
   public void setUp() {
     BitcoinResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
-    wallet = new BitcoinWallet();    
+    wallet = new BitcoinWallet();
     userKey = "deadbeef";
   }
 
@@ -25,20 +27,21 @@ public class WalletTest extends TestCase {
     System.out.println("");
     System.out.println("Simple wallet test. Should be no exceptions");
     try {
-      String singleAddress = wallet.createAddress(userKey);
-      System.out.println("Single Address: " + singleAddress);
-      String multiSigAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
-      System.out.println("Multi-sig Address: " + multiSigAddress);
+      String firstAddress = wallet.createAddress(userKey);
+      System.out.println("First Address: " + firstAddress);
+      String secondAddress = wallet.createAddress(userKey + userKey);
+      System.out.println("Second Address: " + secondAddress);
 
       Recipient recipient = new Recipient();
       recipient.setAmount(BigDecimal.valueOf(20));
-      recipient.setRecipientAddress(multiSigAddress);
+      recipient.setRecipientAddress(secondAddress);
       String txString =
-          wallet.createTransaction(Arrays.asList(singleAddress), Arrays.asList(recipient));
-      System.out
-          .println("20 BTC from " + singleAddress + " to " + multiSigAddress + ": " + txString);
-      txString = wallet.signTransaction(txString, singleAddress, userKey);
+          wallet.createTransaction(Arrays.asList(firstAddress), Arrays.asList(recipient));
+      System.out.println("20 BTC from " + firstAddress + " to " + secondAddress + ": " + txString);
+      System.out.println(RawTransaction.parse(txString));
+      txString = wallet.signTransaction(txString, firstAddress, userKey);
       System.out.println("Signed TX: " + txString);
+      System.out.println(RawTransaction.parse(txString));
       txString = wallet.sendTransaction(txString);
       System.out.println("TX ID: " + txString);
     } catch (Exception e) {

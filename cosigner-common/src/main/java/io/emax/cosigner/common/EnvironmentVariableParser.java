@@ -1,4 +1,4 @@
-package io.emax.cosigner.bitcoin.common;
+package io.emax.cosigner.common;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

@@ -1,7 +1,7 @@
 package io.emax.cosigner.bitcoin;
 
 import io.emax.cosigner.api.currency.SigningType;
-import io.emax.cosigner.bitcoin.common.EnvironmentVariableParser;
+import io.emax.cosigner.common.EnvironmentVariableParser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

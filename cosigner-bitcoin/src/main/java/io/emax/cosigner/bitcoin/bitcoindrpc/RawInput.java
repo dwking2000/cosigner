@@ -1,7 +1,7 @@
 package io.emax.cosigner.bitcoin.bitcoindrpc;
 
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
-import io.emax.cosigner.bitcoin.common.ByteUtilities;
+import io.emax.cosigner.common.ByteUtilities;
 
 import java.math.BigInteger;
 import java.util.LinkedList;

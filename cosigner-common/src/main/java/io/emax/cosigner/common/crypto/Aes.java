@@ -1,4 +1,6 @@
-package io.emax.cosigner.core.cluster.crypto;
+package io.emax.cosigner.common.crypto;
+
+import io.emax.cosigner.common.ByteUtilities;
 
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -9,14 +11,42 @@ import org.bouncycastle.crypto.paddings.PKCS7Padding;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
+import java.security.spec.InvalidKeySpecException;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Aes {
   private static final Logger logger = LoggerFactory.getLogger(Aes.class);
+
+  /**
+   * Generate a key from a password and salt.
+   */
+  public static byte[] generateKey(String password, byte[] salt) {
+    try {
+      Security.addProvider(new BouncyCastleProvider());
+      PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray(), salt, 50, 256);
+      SecretKeyFactory keyFactory =
+          SecretKeyFactory.getInstance("PBEWithSHA256And256BitAES-CBC-BC");
+      SecretKeySpec secretKey;
+
+      secretKey = new SecretKeySpec(keyFactory.generateSecret(pbeKeySpec).getEncoded(), "AES");
+
+      byte[] key = secretKey.getEncoded();
+
+      return key;
+    } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+      logger.error(null, e);
+      return new byte[0];
+    }
+  }
 
   /**
    * Encrypt data using the provided key and IV data.
@@ -25,9 +55,7 @@ public class Aes {
     try {
       return Aes.transform(key, iv, encString, true);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      logger.error(null, e);
       return "";
     }
   }
@@ -39,9 +67,7 @@ public class Aes {
     try {
       return Aes.transform(key, iv, encString, false);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      logger.error(null, e);
       return "";
     }
   }
