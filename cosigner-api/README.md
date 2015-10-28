@@ -21,3 +21,14 @@ Interface that provides periodic balance updates and transaction information.
 ### Validation Interfaces
 
 Coming soon.
+
+## Building
+
+### Requirements
+
+- Java 1.8
+- Maven 3
+
+### Compiling
+
+`mvn install` should work.
