@@ -1,61 +1,44 @@
 # cosigner-core
 
-### Ownership & License
-
 ## Overview
 
 cosigner's core coordinator and external facing RPC server.  
 
 ## Current State
-- Unstable 
-- Needs user-facing endpoints
-  - [Done] GetCurrencies() 
-  - [Done] GetNewAccount(Currency, User)
-  - [Done] ListAllAccounts(Currency, User)
-  - [Done] GetBalance(Currency, User, [Account]) 
-  - [Done] MonitorBalance(Currency, [Accounts], Callback)
-    - Needs work on disconnects/exceptions
-    - Needs to filter or needs to be broken into instanced copies     
-  - [Done] PrepareTransaction(Currency, FromUser, FromAddress, To, Amount)   
-    - Needs validation
-    - cosigner servers need to communicate with each other    
-  - [Done] ApproveTransaction(Currency, TransactionID)      
-  - [Done] SubmitTransaction(TransactionID)
-- Authorization and logging is not implemented yet.
+Unstable 
+- Authorization is not implemented yet.
+- Validation is not implemented yet.
 
-*TransactionID may be the raw transaction. TransactionIDs may expire. 
+## Building
 
-## Testing hints
+### Requirements
 
-Run the jar with
-```bash
-java -jar cosigner-core-0.0.1-SNAPSHOT.jar server core.yml
-```
+- Java 1.8
+- Maven 3
 
-Core.yml should look like the following:
-```yml
-server:
-  applicationConnectors:
-    - type: http
-      port: 8080      
-  adminConnectors:
-    - type: http
-      port: 8081
+### Compiling
 
-clusterLocation: "localhost"
-clusterPort: 5555
-clusterRPCPort: 8080
-```
+`mvn install` should work.
 
-If running multiple instances on the same server make sure to update the ports to avoid conflicts. When running in this setup, your first node will know about new ones automatically but new ones will not be able to listen on the same port. Use /admin/AddNode to add them manually.  
+### Vagrant
 
-/admin/AddNode & /admin/ListNodes are administrative endpoints, will be used to add a cosigner node to the cluster. More detail to follow.
+There is a vagrant file in the root project path intended to provide a build environment that's known to work. To make use of it you will need vagrant installed. To build using this method run the following:
+- `vagrant up`
+- `vagrant ssh`
+- `cd /vagrant`
+- `mvn install`
+- `exit`
+- `vagrant destroy`
 
-/ws/\<Function\> will access the WebSocket version of the RPC <br/>
-/rs/\<Function\> will access the REST version of the RPC <br/>
-Both versions expect the same input as a JSON object and return JSON. WebSockets won't have callbacks, will simply send the data later.
+The result will be a compiled and packaged cosigner suite in the ./target directory.
 
-Generic parameter object has the following definition, you only need to provide the parameters being used by the function being called:
+## Using cosigner-core
+
+For instructions on getting the server running see [Usage.md](https://github.com/EMAXio/cosigner/blob/master/cosigner-core/Usage.md)
+
+cosigner provides REST endpoints under the /rs/ path, and web socket endpoints under the /ws/ path.
+
+All endpoints expect the same generic parameter object for input. It has the following definition, only the parameters being used by the function being called need to be filled in:
 ```json
 [{"currencySymbol": "BTC",
   "userKey": "<random hex string>",
