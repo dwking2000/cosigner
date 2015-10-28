@@ -1,7 +1,5 @@
 # cosigner-ethereum
 
-### Ownership & License
-
 ## Overview
 
 An ethereum implementation for cosigner-api  
