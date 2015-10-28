@@ -15,6 +15,10 @@ Cosigner, the API can and will likely change.
 Cosigner will be following Google's
 [Java style guide](http://google.github.io/styleguide/javaguide.html).
 
+## Usage
+
+See [cosigner-core](https://github.com/EMAXio/cosigner/blob/master/cosigner-core/README.md) for instructions on building and using cosigner.
+
 ## Ownership and License
 
 Copyright information and contributors are listed in AUTHORS. This project uses
