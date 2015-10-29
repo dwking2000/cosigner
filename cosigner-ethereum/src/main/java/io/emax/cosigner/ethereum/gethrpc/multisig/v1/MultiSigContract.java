@@ -1,7 +1,10 @@
-package io.emax.cosigner.ethereum.gethrpc;
+package io.emax.cosigner.ethereum.gethrpc.multisig.v1;
+
+import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractInterface;
+import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractParametersInterface;
 
 // TODO Fix contract, check that sends are going through.
-public class MultiSigContract {
+public class MultiSigContract implements MultiSigContractInterface {
   private static String initData =
       "606060405260405161082b38038061082b833981016040528051608051910190600060018190555b"
           + "825181101560bb578281815181101560025790602001906020020151600660005060008360010181"
@@ -110,27 +113,38 @@ public class MultiSigContract {
   private static String isOwnerFunctionAddress = "2f54bf6e";
   private static String getOwnersFunctionAddress = "a0e67e2b";
 
-  public static String getInitData() {
+  @Override
+  public String getInitData() {
     return initData;
   }
 
-  public static String getContractPayload() {
+  @Override
+  public String getContractPayload() {
     return contractPayload;
   }
 
-  public static String getExecuteFunctionAddress() {
+  @Override
+  public String getExecuteFunctionAddress() {
     return executeFunctionAddress;
   }
 
-  public static String getKillFunctionAddress() {
+  @Override
+  public String getKillFunctionAddress() {
     return killFunctionAddress;
   }
 
-  public static String getIsOwnerFunctionAddress() {
+  @Override
+  public String getIsOwnerFunctionAddress() {
     return isOwnerFunctionAddress;
   }
 
-  public static String getGetOwnersFunctionAddress() {
+  @Override
+  public String getGetOwnersFunctionAddress() {
     return getOwnersFunctionAddress;
+  }
+
+  @Override
+  public MultiSigContractParametersInterface getContractParameters() {
+    return new MultiSigContractParameters();
   }
 }

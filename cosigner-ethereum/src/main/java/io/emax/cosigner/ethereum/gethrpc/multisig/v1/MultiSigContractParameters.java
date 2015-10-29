@@ -1,13 +1,14 @@
-package io.emax.cosigner.ethereum.gethrpc;
+package io.emax.cosigner.ethereum.gethrpc.multisig.v1;
 
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractParametersInterface;
 
 import org.bouncycastle.util.Arrays;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
 
-public class MultiSigContractParameters {
+public class MultiSigContractParameters implements MultiSigContractParametersInterface {
   private String function;
   private BigInteger nonce = BigInteger.ZERO;
   private LinkedList<String> address = new LinkedList<>();
@@ -16,68 +17,77 @@ public class MultiSigContractParameters {
   private LinkedList<BigInteger> sigR = new LinkedList<>();
   private LinkedList<BigInteger> sigS = new LinkedList<>();
 
-  // Getters & Setters
+  @Override
   public LinkedList<String> getAddress() {
     return address;
   }
 
+  @Override
   public void setAddress(LinkedList<String> address) {
     this.address = address;
   }
 
+  @Override
   public LinkedList<BigInteger> getValue() {
     return value;
   }
 
+  @Override
   public void setValue(LinkedList<BigInteger> value) {
     this.value = value;
   }
 
+  @Override
   public BigInteger getNonce() {
     return nonce;
   }
 
+  @Override
   public void setNonce(BigInteger nonce) {
     this.nonce = nonce;
   }
 
+  @Override
   public LinkedList<BigInteger> getSigV() {
     return sigV;
   }
 
+  @Override
   public void setSigV(LinkedList<BigInteger> sigV) {
     this.sigV = sigV;
   }
 
+  @Override
   public LinkedList<BigInteger> getSigR() {
     return sigR;
   }
 
+  @Override
   public void setSigR(LinkedList<BigInteger> sigR) {
     this.sigR = sigR;
   }
 
+  @Override
   public LinkedList<BigInteger> getSigS() {
     return sigS;
   }
 
+  @Override
   public void setSigS(LinkedList<BigInteger> sigS) {
     this.sigS = sigS;
   }
 
+  @Override
   public String getFunction() {
     return function;
   }
 
+  @Override
   public void setFunction(String function) {
     this.function = function;
   }
 
-  /**
-   * Encode the parameters into the byte array that the contract is expecting.
-   * 
-   * @return Byte array encoding of the parameters.
-   */
+  @Override
   public byte[] encode() {
     StringBuilder encodedData = new StringBuilder();
     encodedData.append(this.function);
@@ -197,13 +207,8 @@ public class MultiSigContractParameters {
     return ByteUtilities.toByteArray(encodedData.toString());
   }
 
-  /**
-   * Decode a byte array of parameters into this data structure for easier manipulation.
-   * 
-   * @param data Byte array representation of the parameters
-   * @return Data structure of parameters.
-   */
-  public MultiSigContractParameters decode(byte[] data) {
+  @Override
+  public MultiSigContractParametersInterface decode(byte[] data) {
     int buffPointer = 0;
 
     // First 16-bytes should be function

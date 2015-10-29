@@ -5,7 +5,7 @@ import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.gethrpc.Block;
 import io.emax.cosigner.ethereum.gethrpc.CallData;
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
-import io.emax.cosigner.ethereum.gethrpc.MultiSigContract;
+import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContract;
 
 import java.math.BigInteger;
 
@@ -25,7 +25,7 @@ public class EthereumTestRpc implements EthereumRpc {
 
   @Override
   public String eth_getCode(String address, String defaultBlock) {
-    return "0x" + MultiSigContract.getContractPayload();
+    return "0x" + new MultiSigContract().getContractPayload();
   }
 
   @Override
