@@ -35,6 +35,21 @@ public class CurrencyResource {
   /**
    * REST end-point for the {@link Common} currency methods.
    * 
+   * @return Common.registerAddress()
+   */
+  @POST
+  @Path("/RegisterAddress")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response registerAddress(String params) {
+    logger.debug("[RegisterAddress:Request]");
+    Response response = Response.ok(Common.registerAddress(params)).build();
+    logger.debug("[RegisterAddress:Response] " + response.toString());
+    return response;
+  }
+
+  /**
+   * REST end-point for the {@link Common} currency methods.
+   * 
    * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.getNewAddress()
    */

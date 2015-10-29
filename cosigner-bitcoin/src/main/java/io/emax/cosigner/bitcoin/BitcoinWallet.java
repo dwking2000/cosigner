@@ -55,7 +55,12 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
 
   @Override
   public String createAddress(String name) {
-    int rounds = 1;
+    return createAddress(name, 0);
+  }
+
+  @Override
+  public String createAddress(String name, int skipNumber) {
+    int rounds = 1 + skipNumber;
     String privateKey =
         BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
     String newAddress = BitcoinTools.getPublicAddress(privateKey);
@@ -79,9 +84,15 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
         }
       }
     }
-    bitcoindRpc.importaddress(newAddress, internalName, false);
+    bitcoindRpc.importaddress(newAddress, internalName, true);
 
     return newAddress;
+  }
+
+  @Override
+  public boolean registerAddress(String address) {
+    bitcoindRpc.importaddress(address, "", true);
+    return true;
   }
 
   @Override
@@ -98,7 +109,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
     // Hash the user's key so it's not stored in the wallet
     String internalName = BitcoinTools.encodeUserKey(name);
     String newAddress = generateMultiSigAddress(addresses, name);
-    bitcoindRpc.importaddress(newAddress, internalName, false);
+    bitcoindRpc.importaddress(newAddress, internalName, true);
 
     return newAddress;
   }
@@ -286,7 +297,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
         logger.debug("Too many rounds, failed to sign");
         return transaction;
       }
-      
+
       logger.debug("We can sign for " + userAddress);
 
       // We have the private key, now get all the unspent inputs so we have the redeemScripts.

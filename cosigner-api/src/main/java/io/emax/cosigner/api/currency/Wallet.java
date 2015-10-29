@@ -11,8 +11,7 @@ import java.util.Arrays;
  */
 public interface Wallet {
   /**
-   * Returns a new regular address. It's assumed the wallet will provide a way to backup the private
-   * keys
+   * Returns a new regular address.
    * 
    * @param name Name associated to the account, for deterministic addresses.
    * @return Public key/address of the account.
@@ -20,7 +19,23 @@ public interface Wallet {
   String createAddress(String name);
 
   /**
-   * Returns all addresses stored for the provided wallet name, they should be deterministic.
+   * Returns a new regular address.
+   * 
+   * <p>This version skips the first N addresses.
+   */
+  String createAddress(String name, int skipNumber);
+
+  /**
+   * Register a non-cosigner address for the account.
+   * 
+   * <p>Some crypto-currency wallets need to be watching for addresses in order to calculate
+   * balance. This will allow us to track this data for addresses not created with cosigner.
+   */
+  boolean registerAddress(String address);
+
+  /**
+   * Returns all multi-sig addresses stored for the provided wallet name, they should be
+   * deterministic.
    * 
    * @param name User key the addresses belong to.
    */

@@ -128,6 +128,24 @@ public class Common {
   }
 
   /**
+   * Registers addresses for currency libraries that need a watch list.
+   */
+  public static String registerAddress(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
+
+    CurrencyPackage currency = lookupCurrency(currencyParams);
+
+    HashMap<String, Boolean> responses = new HashMap<>();
+    currencyParams.getAccount().forEach(address -> {
+      Boolean result = currency.getWallet().registerAddress(address);
+      responses.put(address, result);
+    });
+    
+    String response = stringifyObject(HashMap.class, responses);
+    return response;    
+  }
+
+  /**
    * Get a new address for the provided currency & user key.
    * 
    * @param params {@link CurrencyParameters} with the currency code and user key filled in.

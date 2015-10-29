@@ -34,6 +34,10 @@ public class WebSocketResource extends OnMessage<String> {
         logger.debug("[GetCurrencies:WSRequest]");
         arg0.write(Common.listCurrencies());
         break;
+      case "/registeraddress":
+        logger.debug("[GetCurrencies:WSRequest]");
+        arg0.write(Common.registerAddress(arg1));
+        break;
       case "/getnewaddress":
         logger.debug("[GetNewAccount:WSRequest]");
         arg0.write(Common.getNewAddress(arg1));

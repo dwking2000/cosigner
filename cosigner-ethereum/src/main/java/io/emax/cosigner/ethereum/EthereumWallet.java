@@ -140,8 +140,13 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
   @Override
   public String createAddress(String name) {
+    return createAddress(name, 0);
+  }
+
+  @Override
+  public String createAddress(String name, int skipNumber) {
     // Generate the next private key
-    int rounds = 1;
+    int rounds = 1 + skipNumber;
     String privateKey =
         EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
 
@@ -157,6 +162,11 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     addressRounds.put(name, rounds);
 
     return publicAddress;
+  }
+
+  @Override
+  public boolean registerAddress(String address) {
+    return true;
   }
 
   @Override
