@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>io.emax</groupId>
-	<artifactId>cosigner-parent</artifactId>
+	<artifactId>cosigner</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Cosigner</name>
@@ -43,7 +43,7 @@
 
 	<modules>
 		<module>cosigner-api</module>
-                <module>cosigner-common</module>
+		<module>cosigner-common</module>
 		<module>cosigner-bitcoin</module>
 		<module>cosigner-ethereum</module>
 		<module>cosigner-core</module>
@@ -55,7 +55,7 @@
 			<url>http://cosigner.emax.io/project/</url>
 		</site>
 	</distributionManagement>
-	
+
 	<reporting>
 		<plugins>
 			<plugin>
@@ -164,5 +164,5 @@
 				<version>2.5</version>
 			</plugin>
 		</plugins>
-	</build>
+	</build>	
 </project>
