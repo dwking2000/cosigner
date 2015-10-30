@@ -1,4 +1,4 @@
-package io.emax.cosigner.core.currency;
+package io.emax.cosigner.api.core;
 
 public class CurrencyParametersRecipient {
   private String recipientAddress;

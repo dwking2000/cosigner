@@ -1,4 +1,4 @@
-package io.emax.cosigner.core.currency;
+package io.emax.cosigner.api.core;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

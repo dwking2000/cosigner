@@ -5,11 +5,12 @@ import java.util.LinkedList;
 
 import org.junit.Test;
 
+import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.CosignerConfiguration;
 import io.emax.cosigner.core.currency.Common;
 import io.emax.cosigner.core.currency.CommonTest;
-import io.emax.cosigner.core.currency.CurrencyParameters;
+
 import junit.framework.TestCase;
 
 public class CurrencyCommandTest extends TestCase {

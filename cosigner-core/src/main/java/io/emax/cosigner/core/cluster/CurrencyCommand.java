@@ -5,8 +5,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.core.currency.Common;
-import io.emax.cosigner.core.currency.CurrencyParameters;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

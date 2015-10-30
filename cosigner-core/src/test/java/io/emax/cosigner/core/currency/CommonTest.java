@@ -5,6 +5,8 @@ import java.util.LinkedList;
 
 import org.junit.Test;
 
+import io.emax.cosigner.api.core.CurrencyParameters;
+import io.emax.cosigner.api.core.CurrencyParametersRecipient;
 import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.Wallet;

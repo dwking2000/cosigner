@@ -63,7 +63,17 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<properties>
+		<dropwizard.version>0.8.2</dropwizard.version>
+	</properties>
+
 	<dependencies>
+		<dependency>
+			<groupId>io.dropwizard</groupId>
+			<artifactId>dropwizard-core</artifactId>
+			<version>${dropwizard.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>io.reactivex</groupId>
 			<artifactId>rxjava</artifactId>

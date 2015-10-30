@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import io.emax.cosigner.api.core.CurrencyParameters;
+import io.emax.cosigner.api.core.CurrencyParametersRecipient;
 import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.SigningType;
 import io.emax.cosigner.api.currency.Wallet.Recipient;
