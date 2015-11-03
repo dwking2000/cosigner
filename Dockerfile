@@ -6,5 +6,6 @@ ADD target/ /opt/emax/
 WORKDIR /opt/emax
 
 EXPOSE 8080
+EXPOSE 8443
 
 ENTRYPOINT ["java", "-server", "-jar", "cosigner-core-0.0.1-SNAPSHOT.jar", "server", "core.yml"]

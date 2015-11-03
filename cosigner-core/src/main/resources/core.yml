@@ -2,6 +2,20 @@ server:
   applicationConnectors:
     - type: http
       port: 8080
+    - type: https
+      port: 8443
+      keyStorePath: ./cosigner.jks
+      keyStorePassword: cosigner
+      keyStoreType: JKS
+      keyManagerPassword: cosigner
+      trustStorePath: ./cosigner.jks
+      trustStorePassword: cosigner
+      trustStoreType: JKS
+      certAlias: cosigner
+      validateCerts: false
+      validatePeers: false
+      needClientAuth: true
+      allowRenegotiation: false
   adminConnectors:
     - type: http
       port: 8081
@@ -14,13 +28,13 @@ logging:
     - type: console
       threshold: WARN
       target: stderr
-      
+
     - type: file
       threshold: DEBUG
       currentLogFilename: ./logs/debug.log
       archivedLogFilenamePattern: ./logs/debug-%d{yyyy-MM-dd-hh}.log.gz
       archivedFileCount: 6
-      
+
 clusterLocation: "localhost"
 clusterPort: 5555
 clusterRpcPort: 5556
