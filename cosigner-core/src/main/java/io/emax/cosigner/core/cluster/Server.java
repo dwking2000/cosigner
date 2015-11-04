@@ -68,8 +68,6 @@ public class Server {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + (isOriginator ? 1231 : 1237);
-    result = prime * result + (int) (lastCommunication ^ (lastCommunication >>> 32));
     result = prime * result + ((serverId == null) ? 0 : serverId.hashCode());
     result = prime * result + serverListeningPort;
     result = prime * result + ((serverLocation == null) ? 0 : serverLocation.hashCode());
@@ -89,12 +87,6 @@ public class Server {
       return false;
     }
     Server other = (Server) obj;
-    if (isOriginator != other.isOriginator) {
-      return false;
-    }
-    if (lastCommunication != other.lastCommunication) {
-      return false;
-    }
     if (serverId == null) {
       if (other.serverId != null) {
         return false;

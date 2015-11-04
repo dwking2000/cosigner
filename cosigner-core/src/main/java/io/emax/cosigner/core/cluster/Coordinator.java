@@ -62,14 +62,10 @@ public class Coordinator {
             Server server = new ObjectMapper().readValue(jsonParser, Server.class);
             server.setLastCommunication(System.currentTimeMillis());
 
-            if (!cluster.getServers().contains(server)) {
-              server.setOriginator(false);
-              cluster.getServers().add(server);
-            } else if (server.isOriginator()) {
-              int existingLocation = cluster.getServers().indexOf(server);
-              cluster.getServers().get(existingLocation)
-                  .setLastCommunication(System.currentTimeMillis());
+            if (cluster.getServers().contains(server)) {
+              cluster.getServers().remove(server);
             }
+            cluster.getServers().add(server);
           } catch (RuntimeException | IOException e) {
             StringWriter errors = new StringWriter();
             e.printStackTrace(new PrintWriter(errors));

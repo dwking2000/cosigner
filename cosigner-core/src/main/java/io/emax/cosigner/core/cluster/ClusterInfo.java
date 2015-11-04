@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.CosignerConfiguration;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class ClusterInfo {
@@ -29,16 +29,16 @@ public class ClusterInfo {
     servers.add(thisServer);
   }
 
-  private List<Server> servers = new LinkedList<>();
+  private Set<Server> servers = new HashSet<>();
 
   private Server thisServer = new Server();
 
-  public List<Server> getServers() {
+  public Set<Server> getServers() {
     return servers;
   }
 
   @JsonProperty
-  public void setServers(List<Server> servers) {
+  public void setServers(Set<Server> servers) {
     this.servers = servers;
   }
 

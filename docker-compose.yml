@@ -14,6 +14,10 @@ cosigner:
   ports:
     - "8080:8080"
     - "8443:8443"
+    - "5555:5555"
+    - "5555:5555/udp"
+    - "5556:5556"
+    - "5556:5556/udp"
   links:
     - bitcoind
     - geth
@@ -21,4 +25,3 @@ cosigner:
     BITCOIND_MSIG_ACCOUNTS: 
     GETH_CONTRACT_ACCOUNT:
     GETH_MSIG_ACCOUNTS:
-
