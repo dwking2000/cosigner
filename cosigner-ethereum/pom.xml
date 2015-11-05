@@ -106,7 +106,7 @@
 
 	<parent>
 		<groupId>io.emax</groupId>
-		<artifactId>cosigner-parent</artifactId>
+		<artifactId>cosigner</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
