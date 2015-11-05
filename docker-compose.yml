@@ -21,6 +21,22 @@ cosigner:
   links:
     - bitcoind
     - geth
+  cap_add:
+    - NET_ADMIN
+  environment:
+    BITCOIND_MSIG_ACCOUNTS: 
+    GETH_CONTRACT_ACCOUNT:
+    GETH_MSIG_ACCOUNTS:
+
+cosigner2:
+  build: ./
+  hostname: cosigner2
+  links:
+    - bitcoind
+    - geth
+    - cosigner
+  cap_add:
+    - NET_ADMIN
   environment:
     BITCOIND_MSIG_ACCOUNTS: 
     GETH_CONTRACT_ACCOUNT:

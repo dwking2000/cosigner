@@ -30,24 +30,15 @@ public class AdminResource {
   public Response addNode(Server newServer) {
     logger.debug("[AddNode:Request]");
     ClusterInfo cluster = ClusterInfo.getInstance();
-    boolean serverExists = false;
 
     if (newServer == null) {
       return Response.serverError().build();
     }
 
-    for (Server knownServer : cluster.getServers()) {
-      if (knownServer.getServerLocation().equalsIgnoreCase(newServer.getServerLocation())) {
-        serverExists = true;
-      }
-    }
+    cluster.addBeaconServer(newServer);
 
-    if (serverExists) {
-      return Response.ok("Node already exists").build();
-    } else {
-      cluster.getServers().add(newServer);
-      return Response.ok(newServer).build();
-    }
+    return Response.ok().build();
+
   }
 
   /**
@@ -61,6 +52,39 @@ public class AdminResource {
   public Response listNodes() {
     logger.debug("[ListNodes:Request]");
     ClusterInfo cluster = ClusterInfo.getInstance();
-    return Response.ok(cluster).build();
+    return Response.ok(cluster.getServers()).build();
+  }
+
+  /**
+   * Set the cluster key for the current node.
+   */
+  @POST
+  @Path("/SetClusterKey")
+  public Response setClusterKey(String clusterKey) {
+    ClusterInfo.getInstance().setClusterKey(clusterKey);
+    return Response.ok().build();
+  }
+
+  /**
+   * Get the current cluster key the node is using.
+   */
+  @GET
+  @Path("/GetClusterKey")
+  public Response getClusterKey() {
+    return Response.ok(ClusterInfo.getInstance().getClusterKey()).build();
+  }
+
+  /**
+   * Set the current server's routable IP.
+   */
+  @POST
+  @Path("/SetLocation")
+  public Response setLocation(String location) {
+    Server server = ClusterInfo.getInstance().getThisServer();
+    server.setServerLocation(location);
+    ClusterInfo.getInstance().getServers().remove(server);
+    ClusterInfo.getInstance().getServers().add(server);
+
+    return Response.ok().build();
   }
 }

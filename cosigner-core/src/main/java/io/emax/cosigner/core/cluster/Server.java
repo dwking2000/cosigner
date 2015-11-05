@@ -15,6 +15,12 @@ public class Server {
   private String serverId;
   @JsonProperty
   private long lastCommunication;
+  @JsonProperty
+  private String sigR;
+  @JsonProperty
+  private String sigS;
+  @JsonProperty
+  private String sigV;
 
   public String getServerLocation() {
     return serverLocation;
@@ -64,13 +70,36 @@ public class Server {
     this.lastCommunication = lastCommunication;
   }
 
+  public String getSigR() {
+    return sigR;
+  }
+
+  public void setSigR(String sigR) {
+    this.sigR = sigR;
+  }
+
+  public String getSigS() {
+    return sigS;
+  }
+
+  public void setSigS(String sigS) {
+    this.sigS = sigS;
+  }
+
+  public String getSigV() {
+    return sigV;
+  }
+
+  public void setSigV(String sigV) {
+    this.sigV = sigV;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((serverId == null) ? 0 : serverId.hashCode());
     result = prime * result + serverListeningPort;
-    result = prime * result + ((serverLocation == null) ? 0 : serverLocation.hashCode());
     result = prime * result + serverRpcPort;
     return result;
   }
@@ -97,13 +126,6 @@ public class Server {
     if (serverListeningPort != other.serverListeningPort) {
       return false;
     }
-    if (serverLocation == null) {
-      if (other.serverLocation != null) {
-        return false;
-      }
-    } else if (!serverLocation.equals(other.serverLocation)) {
-      return false;
-    }
     if (serverRpcPort != other.serverRpcPort) {
       return false;
     }
@@ -112,9 +134,10 @@ public class Server {
 
   @Override
   public String toString() {
-    return "Server [serverLocation=" + serverLocation + ", serverRPCPort=" + serverRpcPort
+    return "Server [serverLocation=" + serverLocation + ", serverRpcPort=" + serverRpcPort
         + ", serverListeningPort=" + serverListeningPort + ", isOriginator=" + isOriginator
-        + ", serverID=" + serverId + ", lastCommunication=" + lastCommunication + "]";
+        + ", serverId=" + serverId + ", lastCommunication=" + lastCommunication + ", sigR=" + sigR
+        + ", sigS=" + sigS + ", sigV=" + sigV + "]";
   }
 
 }

@@ -14,9 +14,9 @@ import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
-import io.emax.cosigner.core.cluster.CurrencyCommand;
-import io.emax.cosigner.core.cluster.CurrencyCommandType;
 import io.emax.cosigner.core.cluster.Server;
+import io.emax.cosigner.core.cluster.commands.CurrencyCommand;
+import io.emax.cosigner.core.cluster.commands.CurrencyCommandType;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -142,9 +142,9 @@ public class Common {
       Boolean result = currency.getWallet().registerAddress(address);
       responses.put(address, result);
     });
-    
+
     String response = stringifyObject(HashMap.class, responses);
-    return response;    
+    return response;
   }
 
   /**
@@ -492,20 +492,26 @@ public class Common {
         currencyParams.setTransactionData(currency.getWallet().signTransaction(
             currencyParams.getTransactionData(), currencyParams.getAccount().get(0)));
       } else if (sendToRemotes) {
-        CurrencyCommand command = new CurrencyCommand();
-        command.setCurrencyParams(currencyParams);
-        command.setCommandType(CurrencyCommandType.SIGN);
-        command = CurrencyCommand.parseCommandString(Coordinator.broadcastCommand(command, server));
+        try {
+          CurrencyCommand command = new CurrencyCommand();
+          command.setCurrencyParams(currencyParams);
+          command.setCommandType(CurrencyCommandType.SIGN);
+          command =
+              CurrencyCommand.parseCommandString(Coordinator.broadcastCommand(command, server));
 
-        if (command != null) {
-          String originalTx = currencyParams.getTransactionData();
-          currencyParams.setTransactionData(command.getCurrencyParams().getTransactionData());
+          if (command != null) {
+            String originalTx = currencyParams.getTransactionData();
+            currencyParams.setTransactionData(command.getCurrencyParams().getTransactionData());
 
-          // If it's send-each and the remote actually signed it, send it.
-          if (!originalTx.equalsIgnoreCase(currencyParams.getTransactionData())
-              && currency.getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
-            submitTransaction(stringifyObject(CurrencyParameters.class, currencyParams));
+            // If it's send-each and the remote actually signed it, send it.
+            if (!originalTx.equalsIgnoreCase(currencyParams.getTransactionData())
+                && currency.getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
+              submitTransaction(stringifyObject(CurrencyParameters.class, currencyParams));
+            }
           }
+        } catch (Exception e) {
+          // Likely caused by an offline server or bad response.
+          logger.warn(null, e);
         }
       }
     }

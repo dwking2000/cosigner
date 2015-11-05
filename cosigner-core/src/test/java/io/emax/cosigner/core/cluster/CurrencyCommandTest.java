@@ -8,6 +8,8 @@ import org.junit.Test;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.CosignerConfiguration;
+import io.emax.cosigner.core.cluster.commands.CurrencyCommand;
+import io.emax.cosigner.core.cluster.commands.CurrencyCommandType;
 import io.emax.cosigner.core.currency.Common;
 import io.emax.cosigner.core.currency.CommonTest;
 

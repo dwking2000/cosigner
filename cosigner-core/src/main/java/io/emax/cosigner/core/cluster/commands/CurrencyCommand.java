@@ -1,4 +1,4 @@
-package io.emax.cosigner.core.cluster;
+package io.emax.cosigner.core.cluster.commands;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -39,6 +39,7 @@ public class CurrencyCommand implements BaseCommand {
   /**
    * Convert this command to a JSON string.
    */
+  @Override
   public String toJson() {
     try {
       JsonFactory jsonFact = new JsonFactory();
