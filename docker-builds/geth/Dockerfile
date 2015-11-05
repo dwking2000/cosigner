@@ -8,9 +8,13 @@ RUN apt-get update
 RUN apt-get -y install expect ethereum
 
 ADD privatenet.sh /opt/emax/bin/gethprivatenet.sh
+RUN chmod 555 /opt/emax/bin/gethprivatenet.sh
 ADD attach.sh /opt/emax/bin/gethattach.sh
+RUN chmod 555 /opt/emax/bin/gethattach.sh
 ADD clearlicenseprompt.sh /opt/emax/bin/clearlicenseprompt.sh
+RUN chmod 555 /opt/emax/bin/clearlicenseprompt.sh
 ADD createaccount.sh /opt/emax/bin/createaccount.sh
+RUN chmod 555 /opt/emax/bin/createaccount.sh
 ADD private_genesis.json /opt/emax/geth/private_genesis.json
 
 WORKDIR /opt/emax/bin

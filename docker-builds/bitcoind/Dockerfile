@@ -10,6 +10,7 @@ RUN mkdir -p /opt/emax/bin
 
 ADD privatenet.sh /opt/emax/bin/btcprivatenet.sh
 ADD bitcoin.conf /root/.bitcoin/bitcoin.conf
+RUN chmod 555 /opt/emax/bin/btcprivatenet.sh
 
 WORKDIR /opt/emax/bin
 
