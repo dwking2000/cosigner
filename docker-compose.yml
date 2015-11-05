@@ -21,8 +21,6 @@ cosigner:
   links:
     - bitcoind
     - geth
-  cap_add:
-    - NET_ADMIN
   environment:
     BITCOIND_MSIG_ACCOUNTS: 
     GETH_CONTRACT_ACCOUNT:
@@ -35,8 +33,6 @@ cosigner2:
     - bitcoind
     - geth
     - cosigner
-  cap_add:
-    - NET_ADMIN
   environment:
     BITCOIND_MSIG_ACCOUNTS: 
     GETH_CONTRACT_ACCOUNT:
