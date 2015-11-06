@@ -54,6 +54,12 @@ public class CurrencyCommand implements BaseCommand {
     }
   }
 
+  @Override
+  public String toString() {
+    return "CurrencyCommand [commandType=" + commandType + ", currencyParams=" + currencyParams
+        + "]";
+  }
+
   /**
    * Parse a JSON string that represents a CurrencyCommand.
    * 

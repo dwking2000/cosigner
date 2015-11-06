@@ -54,6 +54,11 @@ public class ClusterCommand implements BaseCommand {
     }
   }
 
+  @Override
+  public String toString() {
+    return "ClusterCommand [commandType=" + commandType + ", server=" + server + "]";
+  }
+
   /**
    * Parse a JSON string that represents a ClusterCommand..
    */

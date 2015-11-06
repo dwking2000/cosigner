@@ -11,6 +11,7 @@ import io.emax.cosigner.core.cluster.commands.BaseCommand;
 import io.emax.cosigner.core.cluster.commands.ClusterCommand;
 import io.emax.cosigner.core.cluster.commands.ClusterCommandType;
 import io.emax.cosigner.core.cluster.commands.CurrencyCommand;
+import io.emax.cosigner.core.cluster.commands.EncryptedCommand;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,11 +92,21 @@ public class Coordinator {
               }
               logger.debug("Got a remote command: " + commandString);
 
+              // Check if it's an encrypted command first.
+              EncryptedCommand encryptedCommand =
+                  EncryptedCommand.parseCommandString(commandString);
+              if (encryptedCommand != null) {
+                logger.debug("Command is an EncryptedCommand");
+                commandString =
+                    EncryptedCommand.handleCommand(ServerKey.getMykey(), encryptedCommand);
+                logger.debug("Decrypted to: " + commandString);
+              }
+
               // CurrencyCommand
-              CurrencyCommand command = CurrencyCommand.parseCommandString(commandString);
-              if (command != null) {
+              CurrencyCommand currencyCommand = CurrencyCommand.parseCommandString(commandString);
+              if (currencyCommand != null) {
                 logger.debug("Command is a CurrencyCommand");
-                responder.send(CurrencyCommand.handleCommand(command));
+                responder.send(CurrencyCommand.handleCommand(currencyCommand));
                 return;
               }
 
@@ -172,6 +183,13 @@ public class Coordinator {
         ClusterInfo.getInstance().getServers().remove(server);
         return "";
       }
+    }
+
+    // If it's not a ClusterCommand, encrypt it. ClusterCommands only identify servers, and
+    // they're checked for signatures.
+    if (command.getClass() != ClusterCommand.class) {
+      command = new EncryptedCommand(ClusterInfo.getInstance().getThisServer(),
+          ServerKey.getMykey(), server, command.toJson());
     }
 
     String commandString = command.toJson();

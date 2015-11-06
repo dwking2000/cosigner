@@ -31,8 +31,8 @@ public class ServerKey {
       sha3.update(Secp256k1.getPublicKey(myKey), 0, Secp256k1.getPublicKey(myKey).length);
       byte[] hashedBytes = new byte[256 / 8];
       sha3.doFinal(hashedBytes, 0);
-      
-      //Sign it.
+
+      // Sign it.
       signature = Secp256k1.signTransaction(hashedBytes, ByteUtilities.toByteArray(clusterKey));
       Arrays.asList(signature).forEach(sigValue -> {
         rsvValues.add(ByteUtilities.toHexString(sigValue));
@@ -47,5 +47,9 @@ public class ServerKey {
     }
 
     return rsvValues.toArray(new String[0]);
+  }
+
+  public static byte[] getMykey() {
+    return myKey;
   }
 }

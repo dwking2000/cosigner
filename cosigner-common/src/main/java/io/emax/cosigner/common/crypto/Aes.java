@@ -15,7 +15,10 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 
@@ -25,6 +28,28 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Aes {
   private static final Logger logger = LoggerFactory.getLogger(Aes.class);
+  private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
+  private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
+
+  /**
+   * Generate a random IV.
+   */
+  public static byte[] generateIv() {
+    SecureRandom secureRandom;
+    try {
+      secureRandom =
+          SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
+    } catch (Exception e) {
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      logger.error(errors.toString());
+      secureRandom = new SecureRandom();
+    }
+
+    byte[] iv = new byte[16];
+    secureRandom.nextBytes(iv);
+    return iv;
+  }
 
   /**
    * Generate a key from a password and salt.

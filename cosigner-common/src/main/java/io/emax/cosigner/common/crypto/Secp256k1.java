@@ -10,6 +10,8 @@ import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.bouncycastle.jce.spec.ECPrivateKeySpec;
+import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
 import org.slf4j.Logger;
@@ -18,9 +20,14 @@ import org.slf4j.LoggerFactory;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.util.LinkedList;
+
+import javax.crypto.KeyAgreement;
 
 public class Secp256k1 {
   private static final Logger logger = LoggerFactory.getLogger(Secp256k1.class);
@@ -201,13 +208,27 @@ public class Secp256k1 {
    * Generate a shared AES key using ECDH.
    */
   public static byte[] generateSharedSecret(byte[] privateKey, byte[] publicKey) {
-    ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
-    ECPoint pointQ = spec.getCurve().decodePoint(publicKey);
-    ECPoint pointK = pointQ.multiply(new BigInteger(1, privateKey));
-    byte[] password = pointK.getXCoord().toBigInteger().toByteArray();
+    try {
+      Security.addProvider(new BouncyCastleProvider());
+      ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+      ECPublicKeySpec pubKey = new ECPublicKeySpec(spec.getCurve().decodePoint(publicKey), spec);
+      KeyFactory kf = KeyFactory.getInstance("ECDH", "BC");
+      PublicKey otherKey = kf.generatePublic(pubKey);
 
-    byte[] key = Aes.generateKey(ByteUtilities.toHexString(password), password);
+      ECPrivateKeySpec prvkey = new ECPrivateKeySpec(new BigInteger(1, privateKey), spec);
+      PrivateKey myKey = kf.generatePrivate(prvkey);
 
-    return key;
-  }  
+      KeyAgreement ka = KeyAgreement.getInstance("ECDH", "BC");
+      ka.init(myKey);
+      ka.doPhase(otherKey, true);
+      byte[] password = ka.generateSecret();
+
+      byte[] key = Aes.generateKey(ByteUtilities.toHexString(password), password);
+
+      return key;
+    } catch (Exception e) {
+      logger.error(null, e);
+      return new byte[0];
+    }
+  }
 }
