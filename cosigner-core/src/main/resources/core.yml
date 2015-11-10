@@ -38,3 +38,4 @@ logging:
 clusterLocation: "localhost"
 clusterPort: 5555
 clusterRpcPort: 5556
+enabledCurrencies: []

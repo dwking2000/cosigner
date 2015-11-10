@@ -2,10 +2,14 @@ package io.emax.cosigner.core;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class CosignerConfiguration extends io.dropwizard.Configuration {
   private String clusterLocation = "localhost";
   private int clusterPort = 5555;
   private int clusterRpcPort = 8080;
+  private List<String> enabledCurrencies = new LinkedList<>();
 
   @JsonProperty
   public String getClusterLocation() {
@@ -33,9 +37,19 @@ public class CosignerConfiguration extends io.dropwizard.Configuration {
   }
 
   @JsonProperty
-  public void setClusterRrpPort(int clusterRpcPort) {
+  public void setClusterRpcPort(int clusterRpcPort) {
     this.clusterRpcPort = clusterRpcPort;
   }
 
+  @JsonProperty
+  public List<String> getEnabledCurrencies() {
+    return enabledCurrencies;
+  }
 
+  @JsonProperty
+  public void setEnabledCurrencies(List<String> enabledCurrencies) {
+    this.enabledCurrencies = enabledCurrencies;
+  }
+
+  
 }

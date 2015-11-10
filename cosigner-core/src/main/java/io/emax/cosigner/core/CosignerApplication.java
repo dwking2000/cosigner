@@ -9,14 +9,19 @@ import io.emax.cosigner.core.resources.CurrencyResource;
 
 import org.atmosphere.cpr.ApplicationConfig;
 import org.atmosphere.cpr.AtmosphereServlet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.servlet.ServletRegistration;
 
 public class CosignerApplication extends io.dropwizard.Application<CosignerConfiguration> {
   private static CosignerConfiguration config;
   private static HashMap<String, CurrencyPackage> currencies = new HashMap<>();
+  private static Logger logger = LoggerFactory.getLogger(CosignerApplication.class);
 
   public static CosignerConfiguration getConfig() {
     return config;
@@ -48,7 +53,6 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     // Initialize the coordinator
     Coordinator.getInstance();
 
-    // TODO - Make each currency a toggle in the configuration, disable those not wanted.
     // Load api.currency libraries here
     // Bitcoin
     CurrencyPackage bitcoinPackage = new CurrencyPackage();
@@ -62,6 +66,21 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     ethereumPackage.setWallet(new io.emax.cosigner.ethereum.EthereumWallet());
     ethereumPackage.setMonitor(new io.emax.cosigner.ethereum.EthereumMonitor());
     getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(), ethereumPackage);
+
+    // If the enabled currency list has been set, then remove any that aren't enabled.
+    List<String> removeThese = new LinkedList<>();
+    if (!config.getEnabledCurrencies().isEmpty()) {
+      getCurrencies().forEach((symbol, currency) -> {
+        if (!config.getEnabledCurrencies().contains(symbol)) {
+          removeThese.add(symbol);
+        }
+      });
+      removeThese.forEach(symbol -> {
+        getCurrencies().remove(symbol);
+      });
+    }
+
+    logger.info("Currencies enabled for cosigner: " + getCurrencies().keySet());
 
     // [FUTURE] Load any plugin libraries
 
