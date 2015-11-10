@@ -82,7 +82,13 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
 
     logger.info("Currencies enabled for cosigner: " + getCurrencies().keySet());
 
-    // [FUTURE] Load any plugin libraries
+    // TODO Load any plugin libraries
+    // TODO come up with a validation API maybe...
+    // At the simplest level, validation would be a check on transaction rates for an address, if
+    // too high in volume or amount, refuse to sign the transaction.
+
+    // TODO Not likely done here, but create a node web app that acts as a simple interface to
+    // cosigner.
 
     // Register WebSocket endpoints -- Everything after /ws/*
     AtmosphereServlet websocketServlet = new AtmosphereServlet();

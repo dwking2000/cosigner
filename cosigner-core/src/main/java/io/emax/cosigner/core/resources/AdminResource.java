@@ -13,6 +13,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+// TODO Create an admin utility that uses a second JKS to manage cluster admin vs. client library.
+// Admin should be able to change Server settings that are safe to change like:
+// address clients can reach it
+// cluster key
+// manually add a node
+// Maybe temporarily disable a currency? vs. full disable like in the config. -- Only thing not done
+// at the moment.
+// Needs to be able to see the cluster status
 @Path("/admin")
 public class AdminResource {
   Logger logger = LoggerFactory.getLogger(AdminResource.class);

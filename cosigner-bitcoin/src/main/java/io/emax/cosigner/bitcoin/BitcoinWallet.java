@@ -207,14 +207,33 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
       subTotal = subTotal.add(output.getAmount());
       usedOutputs.add(output);
 
+      // Force tx amount > amount due so there should be enough to pay fees
       if (subTotal.compareTo(recipient.getAmount()) > 0) {
         txnOutput.put(recipient.getRecipientAddress(), recipient.getAmount());
         subTotal = subTotal.subtract(recipient.getAmount());
         if (recipients.hasNext()) {
           recipient = recipients.next();
         } else {
-          // TODO don't hardcode fees -- 0.0001 BTC * KB suggested by spec
-          txnOutput.put(fromAddress.iterator().next(), subTotal.subtract(new BigDecimal("0.002")));
+          // 0.0001 BTC * 1000 Bytes suggested by spec
+          int byteSize = 0;
+          // inputs for normal TXs should only be ~181 bytes
+          byteSize += usedOutputs.size() * 181;
+          // outputs should be ~34 bytes
+          byteSize += (txnOutput.size() + 1) * 34;
+          // tx overhead should be ~10 bytes
+          byteSize += 10;
+          // round up to the nearest KB.
+          logger.debug("Estimated tx size: " + byteSize);
+          byteSize = (int) Math.ceil(((double) byteSize) / 1000);
+          BigDecimal fees =
+              new BigDecimal(((double) byteSize)).multiply(BigDecimal.valueOf(0.0001));
+          logger.debug("Expecting fees of: " + fees.toPlainString());
+          // Only set a change address if there's change.
+          if (subTotal.compareTo(fees) > 0) {
+            subTotal = subTotal.subtract(fees);
+            logger.debug("We have change: " + subTotal.toPlainString());
+            txnOutput.put(fromAddress.iterator().next(), subTotal);
+          }
           filledAllOutputs = true;
           break;
         }
