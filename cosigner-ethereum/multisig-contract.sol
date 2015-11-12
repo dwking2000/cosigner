@@ -127,9 +127,12 @@ contract multisigwallet {
       if(confirmTransaction()) {
         lastNonce = transactionNonce;
         for(i = 0; i < numTransactions; i++) {
-          transactions[i].to.send(transactions[i].value);
+          if(!transactions[i].to.send(transactions[i].value)) {
+          	// Rollback the tx if there'x a problem executing it.
+          	throw;
 	      }
 	    }
+	  }
     }
     
     // deposit

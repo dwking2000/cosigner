@@ -146,6 +146,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
   @Override
   public String createAddress(String name, int skipNumber) {
     // Generate the next private key
+    logger.debug("Creating a new normal address...");
     int rounds = 1 + skipNumber;
     String privateKey =
         EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
@@ -161,6 +162,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     }
     addressRounds.put(name, rounds);
 
+    logger.debug("New address " + publicAddress + " generated after " + rounds + " rounds");
     return publicAddress;
   }
 
@@ -201,9 +203,12 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     // Look for existing msig account for this address.
     String userAddress = addresses.iterator().next().toLowerCase(Locale.US);
     if (msigContracts.containsKey(userAddress.toLowerCase(Locale.US))) {
+      logger.debug("Found existing address: "
+          + msigContracts.get(userAddress).getContractAddress().toLowerCase(Locale.US));
       return msigContracts.get(userAddress).getContractAddress().toLowerCase(Locale.US);
     }
 
+    logger.debug("Generating new contract...");
     // Create the TX data structure
     RawTransaction tx = new RawTransaction();
     tx.getGasPrice().setDecodedContents(ByteUtilities
@@ -272,6 +277,9 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
     // Figure out the contract address and store it in lookup tables for future use
     String contract = EthereumTools.hashSha3(ByteUtilities.toHexString(contractAddress.encode()))
         .substring(96 / 4, 256 / 4);
+
+    logger.debug("Expecting new contract address of " + contract + " with tx: "
+        + RawTransaction.parseBytes(ByteUtilities.toByteArray(signedTx)));
 
     // Figure out if we already created this, if so, skip it...
     if (reverseMsigContracts.containsKey(contract.toLowerCase(Locale.US))) {
@@ -687,9 +695,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
             }
           }
         } catch (Exception e) {
-          StringWriter errors = new StringWriter();
-          e.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
+          logger.debug("Unable to decode tx data", e);
         }
 
         if (!txHistory.containsKey(txDetail.getToAddress()[0])) {

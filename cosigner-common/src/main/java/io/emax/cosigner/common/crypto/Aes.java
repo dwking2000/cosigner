@@ -19,7 +19,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.SecretKeyFactory;
@@ -56,13 +55,11 @@ public class Aes {
    */
   public static byte[] generateKey(String password, byte[] salt) {
     try {
-      Security.addProvider(new BouncyCastleProvider());
       PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray(), salt, 50, 256);
-      SecretKeyFactory keyFactory =
-          SecretKeyFactory.getInstance("PBEWithSHA256And256BitAES-CBC-BC");
-      SecretKeySpec secretKey;
-
-      secretKey = new SecretKeySpec(keyFactory.generateSecret(pbeKeySpec).getEncoded(), "AES");
+      SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithSHA256And256BitAES-CBC-BC",
+          new BouncyCastleProvider());
+      SecretKeySpec secretKey =
+          new SecretKeySpec(keyFactory.generateSecret(pbeKeySpec).getEncoded(), "AES");
 
       byte[] key = secretKey.getEncoded();
 

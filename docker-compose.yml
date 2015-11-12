@@ -23,8 +23,8 @@ cosigner:
     - geth
   environment:
     BITCOIND_MSIG_ACCOUNTS: 
-    GETH_CONTRACT_ACCOUNT:
-    GETH_MSIG_ACCOUNTS:
+    GETH_CONTRACT_ACCOUNT: 8f5cfa007280808f2bdaa68aee98a7267d823338
+    GETH_MSIG_ACCOUNTS: 8f5cfa007280808f2bdaa68aee98a7267d823338
 
 cosigner2:
   build: ./

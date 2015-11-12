@@ -3,7 +3,6 @@ package io.emax.cosigner.ethereum.gethrpc.multisig.v1;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractInterface;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractParametersInterface;
 
-// TODO Fix contract, check that sends are going through.
 public class MultiSigContract implements MultiSigContractInterface {
   private static String initData =
       "606060405260405161082b38038061082b833981016040528051608051910190600060018190555b"
@@ -108,6 +107,7 @@ public class MultiSigContract implements MultiSigContractInterface {
           + "038116600090815260056020526040902054610063565b6000546003541061062857600194506106"
           + "2d565b91508160020a9050600082118015610726575060025481166000145b1561073d5760028054"
           + "821790556003805460010190555b6001939093019261065a56";
+
   private static String executeFunctionAddress = "c11bf4e3";
   private static String killFunctionAddress = "a17ecf9e";
   private static String isOwnerFunctionAddress = "2f54bf6e";
