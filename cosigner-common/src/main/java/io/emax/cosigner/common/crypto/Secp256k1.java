@@ -3,15 +3,16 @@ package io.emax.cosigner.common.crypto;
 import io.emax.cosigner.common.ByteUtilities;
 
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
+import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
-import org.bouncycastle.jce.spec.ECPrivateKeySpec;
-import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
 import org.slf4j.Logger;
@@ -20,14 +21,9 @@ import org.slf4j.LoggerFactory;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.util.LinkedList;
-
-import javax.crypto.KeyAgreement;
 
 public class Secp256k1 {
   private static final Logger logger = LoggerFactory.getLogger(Secp256k1.class);
@@ -209,19 +205,17 @@ public class Secp256k1 {
    */
   public static byte[] generateSharedSecret(byte[] privateKey, byte[] publicKey) {
     try {
-      Security.addProvider(new BouncyCastleProvider());
       ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
-      ECPublicKeySpec pubKey = new ECPublicKeySpec(spec.getCurve().decodePoint(publicKey), spec);
-      KeyFactory kf = KeyFactory.getInstance("ECDH", "BC");
-      PublicKey otherKey = kf.generatePublic(pubKey);
+      ECDomainParameters domain =
+          new ECDomainParameters(spec.getCurve(), spec.getG(), spec.getN(), spec.getH());
+      ECPublicKeyParameters pubKey =
+          new ECPublicKeyParameters(spec.getCurve().decodePoint(publicKey), domain);
+      ECPrivateKeyParameters prvkey =
+          new ECPrivateKeyParameters(new BigInteger(1, privateKey), domain);
 
-      ECPrivateKeySpec prvkey = new ECPrivateKeySpec(new BigInteger(1, privateKey), spec);
-      PrivateKey myKey = kf.generatePrivate(prvkey);
-
-      KeyAgreement ka = KeyAgreement.getInstance("ECDH", "BC");
-      ka.init(myKey);
-      ka.doPhase(otherKey, true);
-      byte[] password = ka.generateSecret();
+      ECDHBasicAgreement agreement = new ECDHBasicAgreement();
+      agreement.init((CipherParameters) prvkey);
+      byte[] password = agreement.calculateAgreement((CipherParameters) pubKey).toByteArray();
 
       byte[] key = Aes.generateKey(ByteUtilities.toHexString(password), password);
 
