@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package io.emax.cosigner.bitcoin.common;
+package io.emax.cosigner.common;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;

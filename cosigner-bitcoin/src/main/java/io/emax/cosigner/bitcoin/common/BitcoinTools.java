@@ -3,6 +3,7 @@ package io.emax.cosigner.bitcoin.common;
 import io.emax.cosigner.bitcoin.BitcoinResource;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
 import io.emax.cosigner.bitcoin.bitcoindrpc.NetworkBytes;
+import io.emax.cosigner.common.Base58;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.crypto.Secp256k1;
 
