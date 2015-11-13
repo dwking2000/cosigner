@@ -3,7 +3,6 @@ package io.emax.cosigner.bitcoin;
 import io.emax.cosigner.api.currency.SigningType;
 import io.emax.cosigner.common.EnvironmentVariableParser;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +10,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.security.Security;
 import java.util.Properties;
 
 public class BitcoinConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
@@ -34,7 +32,6 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
 
   public BitcoinConfiguration() {
     loadConfig();
-    Security.addProvider(new BouncyCastleProvider());
   }
 
   private static synchronized void loadConfig() {
