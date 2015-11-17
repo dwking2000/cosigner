@@ -438,7 +438,6 @@ public final class RawTransaction {
     return rawTx;
   }
 
-  // TODO - Start using this in case we get an old/nonstandard client tx that we need to sign
   /**
    * Parses non-standard signature scripts for signing.
    * 

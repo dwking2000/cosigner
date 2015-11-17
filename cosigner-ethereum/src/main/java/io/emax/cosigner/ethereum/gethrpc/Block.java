@@ -3,6 +3,7 @@ package io.emax.cosigner.ethereum.gethrpc;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Arrays;
+import java.util.Date;
 
 public class Block {
   @JsonProperty("number")
@@ -54,7 +55,7 @@ public class Block {
   private String gasUsed;
 
   @JsonProperty("timestamp")
-  private String timestamp;
+  private Date timestamp;
 
   @JsonProperty("transactions")
   private Transaction[] transactions = new Transaction[0];
@@ -190,12 +191,12 @@ public class Block {
     this.gasUsed = gasUsed;
   }
 
-  public String getTimestamp() {
-    return timestamp;
+  public Date getTimestamp() {
+    return Date.from(timestamp.toInstant());
   }
 
-  public void setTimestamp(String timestamp) {
-    this.timestamp = timestamp;
+  public void setTimestamp(Date timestamp) {
+    this.timestamp = Date.from(timestamp.toInstant());
   }
 
   /**

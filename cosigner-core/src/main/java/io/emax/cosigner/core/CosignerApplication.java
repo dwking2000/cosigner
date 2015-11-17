@@ -1,11 +1,13 @@
 package io.emax.cosigner.core;
 
 import io.dropwizard.setup.Environment;
+import io.emax.cosigner.api.core.CurrencyPackage;
+import io.emax.cosigner.api.validation.Validator;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
-import io.emax.cosigner.core.currency.CurrencyPackage;
 import io.emax.cosigner.core.resources.AdminResource;
 import io.emax.cosigner.core.resources.CurrencyResource;
+import io.emax.cosigner.validator.BasicValidator;
 
 import org.atmosphere.cpr.ApplicationConfig;
 import org.atmosphere.cpr.AtmosphereServlet;
@@ -21,6 +23,7 @@ import javax.servlet.ServletRegistration;
 public class CosignerApplication extends io.dropwizard.Application<CosignerConfiguration> {
   private static CosignerConfiguration config;
   private static HashMap<String, CurrencyPackage> currencies = new HashMap<>();
+  private static LinkedList<Validator> validators = new LinkedList<>();
   private static Logger logger = LoggerFactory.getLogger(CosignerApplication.class);
 
   public static CosignerConfiguration getConfig() {
@@ -37,6 +40,14 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
 
   public static void setCurrencies(HashMap<String, CurrencyPackage> currencies) {
     CosignerApplication.currencies = currencies;
+  }
+
+  public static LinkedList<Validator> getValidators() {
+    return validators;
+  }
+
+  public static void setValidators(LinkedList<Validator> validators) {
+    CosignerApplication.validators = validators;
   }
 
   public static void main(String[] args) throws Exception {
@@ -82,13 +93,8 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
 
     logger.info("Currencies enabled for cosigner: " + getCurrencies().keySet());
 
-    // TODO Load any plugin libraries
-    // TODO come up with a validation API maybe...
-    // At the simplest level, validation would be a check on transaction rates for an address, if
-    // too high in volume or amount, refuse to sign the transaction.
-
-    // TODO Not likely done here, but create a node web app that acts as a simple interface to
-    // cosigner.
+    BasicValidator validator = new BasicValidator();
+    validators.add(validator);
 
     // Register WebSocket endpoints -- Everything after /ws/*
     AtmosphereServlet websocketServlet = new AtmosphereServlet();

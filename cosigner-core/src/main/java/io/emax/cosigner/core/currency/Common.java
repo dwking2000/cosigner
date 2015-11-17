@@ -5,12 +5,14 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import io.emax.cosigner.api.core.CurrencyPackage;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.api.core.CurrencyParametersRecipient;
 import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.SigningType;
 import io.emax.cosigner.api.currency.Wallet.Recipient;
 import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
+import io.emax.cosigner.api.validation.Validator;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
@@ -448,6 +450,14 @@ public class Common {
 
     // Authorize it with the user account
     String initalTx = currencyParams.getTransactionData();
+
+    // Try to validate it, don't sign if it fails.
+    for (Validator validator : CosignerApplication.getValidators()) {
+      if (!validator.validateTransaction(currency, initalTx)) {
+        return initalTx;
+      }
+    }
+
     currencyParams.setTransactionData(currency.getWallet().signTransaction(initalTx,
         currencyParams.getAccount().get(0), currencyParams.getUserKey()));
 
@@ -489,6 +499,12 @@ public class Common {
 
     for (Server server : ClusterInfo.getInstance().getServers()) {
       if (server.isOriginator()) { // It's us, try to sign it locally.
+        // But first check that it's valid.
+        for (Validator validator : CosignerApplication.getValidators()) {
+          if (!validator.validateTransaction(currency, currencyParams.getTransactionData())) {
+            return currencyParams.getTransactionData();
+          }
+        }
         currencyParams.setTransactionData(currency.getWallet().signTransaction(
             currencyParams.getTransactionData(), currencyParams.getAccount().get(0)));
       } else if (sendToRemotes) {

@@ -1,4 +1,4 @@
-package io.emax.cosigner.core.currency;
+package io.emax.cosigner.api.core;
 
 import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.Monitor;

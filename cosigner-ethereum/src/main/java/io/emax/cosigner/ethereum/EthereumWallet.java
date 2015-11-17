@@ -1,5 +1,7 @@
 package io.emax.cosigner.ethereum;
 
+import io.emax.cosigner.api.currency.Wallet;
+import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.ethereum.common.EthereumTools;
@@ -29,10 +31,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
+public class EthereumWallet implements Wallet, Validatable {
   private static final Logger logger = LoggerFactory.getLogger(EthereumWallet.class);
 
   // RPC and configuration
@@ -643,6 +646,7 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
 
       Arrays.asList(block.getTransactions()).forEach(tx -> {
         TransactionDetails txDetail = new TransactionDetails();
+        txDetail.setTxDate(block.getTimestamp());
 
         txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
         txDetail.setFromAddress(
@@ -724,5 +728,56 @@ public class EthereumWallet implements io.emax.cosigner.api.currency.Wallet {
       });
     }
     return txDetails.toArray(new TransactionDetails[] {});
+  }
+
+  @Override
+  public TransactionDetails decodeRawTransaction(String transaction) {
+    RawTransaction tx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
+    TransactionDetails txDetail = new TransactionDetails();
+    txDetail.setAmount(new BigDecimal(new BigInteger(1, tx.getValue().getDecodedContents())));
+    txDetail.setAmount(txDetail.getAmount().divide(BigDecimal.valueOf(config.getWeiMultiplier())));
+
+    String senderKey =
+        ByteUtilities.toHexString(Secp256k1.recoverPublicKey(tx.getSigR().getDecodedContents(),
+            tx.getSigS().getDecodedContents(), tx.getSigV().getDecodedContents(),
+            tx.getSigBytes()));
+    String sender = EthereumTools.getPublicAddress(senderKey, false);
+    txDetail.setFromAddress(new String[] {sender});
+
+    txDetail
+        .setToAddress(new String[] {ByteUtilities.toHexString(tx.getTo().getDecodedContents())});
+
+    // Check if the recipient/data show that we're talking to a contract.
+    try {
+      if (reverseMsigContracts.containsKey(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
+        ContractInformation contractInfo = msigContracts
+            .get(reverseMsigContracts.get(txDetail.getToAddress()[0].toLowerCase(Locale.US)));
+        MultiSigContractInterface contract =
+            (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
+
+        byte[] inputData = tx.getData().getDecodedContents();
+        MultiSigContractParametersInterface multiSig = contract.getContractParameters();
+        multiSig.decode(inputData);
+
+        if (multiSig.getFunction().equalsIgnoreCase(contract.getExecuteFunctionAddress())) {
+          txDetail.setFromAddress(txDetail.getToAddress());
+          txDetail.setToAddress(new String[0]);
+          txDetail.setAmount(BigDecimal.ZERO);
+          for (int j = 0; j < multiSig.getAddress().size(); j++) {
+            List<String> recipients = Arrays.asList(txDetail.getToAddress());
+            recipients.add(multiSig.getAddress().get(j));
+            txDetail.setToAddress(recipients.toArray(new String[0]));
+
+            txDetail.setAmount(
+                txDetail.getAmount().add(BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
+                    .divide(BigDecimal.valueOf(config.getWeiMultiplier()))));
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.debug("Unable to decode tx data", e);
+    }
+
+    return txDetail;
   }
 }

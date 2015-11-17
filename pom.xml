@@ -46,6 +46,7 @@
 		<module>cosigner-common</module>
 		<module>cosigner-bitcoin</module>
 		<module>cosigner-ethereum</module>
+                <module>cosigner-basic-validator</module>
 		<module>cosigner-core</module>
 	</modules>
 

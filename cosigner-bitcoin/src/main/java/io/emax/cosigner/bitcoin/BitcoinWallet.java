@@ -1,5 +1,7 @@
 package io.emax.cosigner.bitcoin;
 
+import io.emax.cosigner.api.currency.Wallet;
+import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 import io.emax.cosigner.bitcoin.bitcoindrpc.MultiSig;
 import io.emax.cosigner.bitcoin.bitcoindrpc.Outpoint;
@@ -34,11 +36,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
+public class BitcoinWallet implements Wallet, Validatable {
   private static final Logger logger = LoggerFactory.getLogger(BitcoinWallet.class);
   private static BitcoinConfiguration config = new BitcoinConfiguration();
   private static BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
@@ -472,6 +475,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
     Payment[] payments = bitcoindRpc.listtransactions("*", 1000000, 0, true);
     Arrays.asList(payments).forEach(payment -> {
 
+
       // Lookup the txid and vout/vin based on the sign of the amount (+/-)
       // Determine the address involved
       try {
@@ -483,6 +487,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
           if (payment.getAddress().equalsIgnoreCase(address)) {
             TransactionDetails detail = new TransactionDetails();
             detail.setAmount(payment.getAmount());
+            detail.setTxDate(payment.getBlocktime());
 
             // Senders
             HashSet<String> senders = new HashSet<>();
@@ -515,6 +520,7 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
             if (scriptAddress.equalsIgnoreCase(address)) {
               TransactionDetails detail = new TransactionDetails();
 
+              detail.setTxDate(payment.getBlocktime());
               detail.setTxHash(payment.getTxid());
               detail.setAmount(payment.getAmount());
               detail.setFromAddress(new String[] {address});
@@ -558,5 +564,42 @@ public class BitcoinWallet implements io.emax.cosigner.api.currency.Wallet {
       txDetails.remove(detail);
     });
     return txDetails.toArray(new TransactionDetails[] {});
+  }
+
+  @Override
+  public TransactionDetails decodeRawTransaction(String transaction) {
+    RawTransaction tx = RawTransaction.parse(transaction);
+    Set<String> senders = new HashSet<>();
+    tx.getInputs().forEach(input -> {
+      String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
+      RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
+      String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
+      String scriptAddress = RawTransaction.decodeRedeemScript(script);
+      senders.add(scriptAddress);
+    });
+
+    Set<String> recipients = new HashSet<>();
+    List<Long> satoshis = new LinkedList<>();
+    tx.getOutputs().forEach(output -> {
+      String scriptAddress = RawTransaction.decodeRedeemScript(output.getScript());
+      if (senders.contains(scriptAddress)) {
+        // Skip if it's change returned.
+        return;
+      }
+      recipients.add(scriptAddress);
+      satoshis.add(output.getAmount());
+    });
+
+    BigDecimal totalAmount = BigDecimal.ZERO;
+    for (long amount : satoshis) {
+      totalAmount = totalAmount.add(BigDecimal.valueOf(amount));
+    }
+    totalAmount = totalAmount.divide(BigDecimal.valueOf(100000000));
+
+    TransactionDetails txDetails = new TransactionDetails();
+    txDetails.setAmount(totalAmount);
+    txDetails.setFromAddress(senders.toArray(new String[0]));
+    txDetails.setToAddress(recipients.toArray(new String[0]));
+    return txDetails;
   }
 }

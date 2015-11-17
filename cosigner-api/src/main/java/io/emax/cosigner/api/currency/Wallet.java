@@ -2,6 +2,7 @@ package io.emax.cosigner.api.currency;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Date;
 
 /**
  * Wallet interface.
@@ -108,6 +109,7 @@ public interface Wallet {
 
   class TransactionDetails {
     private String txHash = "";
+    private Date txDate = null;
     private String[] fromAddress = new String[0];
     private String[] toAddress = new String[0];
     private BigDecimal amount;
@@ -118,6 +120,14 @@ public interface Wallet {
 
     public void setTxHash(String txHash) {
       this.txHash = txHash;
+    }
+
+    public Date getTxDate() {
+      return txDate;
+    }
+
+    public void setTxDate(Date txDate) {
+      this.txDate = txDate;
     }
 
     /**
@@ -163,6 +173,7 @@ public interface Wallet {
       result = prime * result + ((amount == null) ? 0 : amount.hashCode());
       result = prime * result + Arrays.hashCode(fromAddress);
       result = prime * result + Arrays.hashCode(toAddress);
+      result = prime * result + ((txDate == null) ? 0 : txDate.hashCode());
       result = prime * result + ((txHash == null) ? 0 : txHash.hashCode());
       return result;
     }
@@ -192,6 +203,13 @@ public interface Wallet {
       if (!Arrays.equals(toAddress, other.toAddress)) {
         return false;
       }
+      if (txDate == null) {
+        if (other.txDate != null) {
+          return false;
+        }
+      } else if (!txDate.equals(other.txDate)) {
+        return false;
+      }
       if (txHash == null) {
         if (other.txHash != null) {
           return false;
@@ -204,7 +222,7 @@ public interface Wallet {
 
     @Override
     public String toString() {
-      return "TransactionDetails [txHash=" + txHash + ", fromAddress="
+      return "TransactionDetails [txHash=" + txHash + ", txDate=" + txDate + ", fromAddress="
           + Arrays.toString(fromAddress) + ", toAddress=" + Arrays.toString(toAddress) + ", amount="
           + amount + "]";
     }
