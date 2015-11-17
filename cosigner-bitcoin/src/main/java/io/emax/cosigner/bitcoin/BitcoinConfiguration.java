@@ -1,6 +1,8 @@
 package io.emax.cosigner.bitcoin;
 
+import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.SigningType;
+import io.emax.cosigner.api.validation.ValidatorConfiguration;
 import io.emax.cosigner.common.EnvironmentVariableParser;
 
 import org.slf4j.Logger;
@@ -10,9 +12,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.util.Properties;
 
-public class BitcoinConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
+public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(BitcoinConfiguration.class);
   private static String daemonConnectionString = "http://127.0.0.1:18332";
   private static int minConfirmations = 6;
@@ -22,6 +25,9 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
   private static int maxDeterministicAddresses = 100;
   private static String daemonUser = "bitcoinrpc";
   private static String daemonPassword = "changeit";
+  private static BigDecimal maxAmountPerHour;
+  private static BigDecimal maxAmountPerDay;
+  private static BigDecimal maxAmountPerTransaction;
 
   // Ideally we'll prompt for this or something more secure than a properties
   // file...
@@ -105,6 +111,18 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
         // daemonPassword
         daemonPassword = cosignerProperties.getProperty("daemonPassword", daemonPassword);
 
+        // maxAmountPerHour
+        maxAmountPerHour = new BigDecimal(
+            cosignerProperties.getProperty("maxAmountPerHour", maxAmountPerHour.toPlainString()));
+
+        // maxAmountPerDay
+        maxAmountPerDay = new BigDecimal(
+            cosignerProperties.getProperty("maxAmountPerDay", maxAmountPerDay.toPlainString()));
+
+        // maxAmountPerTransaction
+        maxAmountPerTransaction = new BigDecimal(cosignerProperties
+            .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString()));
+
         // serverPrivateKey
         serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
         logger.info("cosigner-bitcoin configuration loaded.");
@@ -175,5 +193,20 @@ public class BitcoinConfiguration implements io.emax.cosigner.api.currency.Curre
 
   public int getMaxDeterministicAddresses() {
     return maxDeterministicAddresses;
+  }
+
+  @Override
+  public BigDecimal getMaxAmountPerHour() {
+    return maxAmountPerHour;
+  }
+
+  @Override
+  public BigDecimal getMaxAmountPerDay() {
+    return maxAmountPerDay;
+  }
+
+  @Override
+  public BigDecimal getMaxAmountPerTransaction() {
+    return maxAmountPerTransaction;
   }
 }

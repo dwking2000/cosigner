@@ -1,6 +1,8 @@
 package io.emax.cosigner.ethereum;
 
+import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.SigningType;
+import io.emax.cosigner.api.validation.ValidatorConfiguration;
 import io.emax.cosigner.common.EnvironmentVariableParser;
 
 import org.slf4j.Logger;
@@ -10,9 +12,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.util.Properties;
 
-public class EthereumConfiguration implements io.emax.cosigner.api.currency.CurrencyConfiguration {
+public class EthereumConfiguration implements CurrencyConfiguration, ValidatorConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(EthereumConfiguration.class);
   // Defaults
   private static String daemonConnectionString = "http://localhost:8101";
@@ -23,6 +26,9 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
   private static int minSignatures = 2;
   private static String contractAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
   private static String[] multiSigAccounts = {"4839540a0ae3242fadf288622f7de1a9278a5858"};
+  private static BigDecimal maxAmountPerHour;
+  private static BigDecimal maxAmountPerDay;
+  private static BigDecimal maxAmountPerTransaction;
   // Ideally we'll prompt for this or something more secure than a properties
   // file...
   private static String serverPrivateKey =
@@ -112,6 +118,18 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
           multiSigAccounts = arrayParser.split("[|]");
         }
 
+        // maxAmountPerHour
+        maxAmountPerHour = new BigDecimal(
+            cosignerProperties.getProperty("maxAmountPerHour", maxAmountPerHour.toPlainString()));
+
+        // maxAmountPerDay
+        maxAmountPerDay = new BigDecimal(
+            cosignerProperties.getProperty("maxAmountPerDay", maxAmountPerDay.toPlainString()));
+
+        // maxAmountPerTransaction
+        maxAmountPerTransaction = new BigDecimal(cosignerProperties
+            .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString()));
+
         // serverPrivateKey
         serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
 
@@ -187,5 +205,20 @@ public class EthereumConfiguration implements io.emax.cosigner.api.currency.Curr
 
   public String getContractAccount() {
     return contractAccount;
+  }
+
+  @Override
+  public BigDecimal getMaxAmountPerHour() {
+    return maxAmountPerHour;
+  }
+
+  @Override
+  public BigDecimal getMaxAmountPerDay() {
+    return maxAmountPerDay;
+  }
+
+  @Override
+  public BigDecimal getMaxAmountPerTransaction() {
+    return maxAmountPerTransaction;
   }
 }

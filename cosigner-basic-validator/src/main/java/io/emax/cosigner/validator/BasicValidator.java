@@ -11,7 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 public class BasicValidator implements Validator {
   private static final Logger logger = LoggerFactory.getLogger(BasicValidator.class);
@@ -46,15 +48,15 @@ public class BasicValidator implements Validator {
 
     BigDecimal hourlyTotal = BigDecimal.ZERO;
     BigDecimal dailyTotal = BigDecimal.ZERO;
-    Date oneHourAgo = new Date(System.currentTimeMillis() - (1 * 60 * 60 * 1000));
-    Date oneDayAgo = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
+    Instant oneHourAgo = Clock.systemUTC().instant().minus(1, ChronoUnit.HOURS);
+    Instant oneDayAgo = Clock.systemUTC().instant().minus(1, ChronoUnit.DAYS);
     for (String senders : txDetail.getFromAddress()) {
       TransactionDetails[] txs = wallet.getTransactions(senders, 100, 0);
       for (TransactionDetails tx : txs) {
-        if (tx.getTxDate().after(oneHourAgo)) {
+        if (tx.getTxDate().toInstant().isAfter(oneHourAgo)) {
           hourlyTotal = hourlyTotal.add(tx.getAmount());
         }
-        if (tx.getTxDate().after(oneDayAgo)) {
+        if (tx.getTxDate().toInstant().isAfter(oneDayAgo)) {
           dailyTotal = dailyTotal.add(tx.getAmount());
         }
       }
