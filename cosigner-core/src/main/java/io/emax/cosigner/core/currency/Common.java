@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 import rx.Subscription;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,7 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Common {
-  static Logger logger = LoggerFactory.getLogger(Common.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Common.class);
 
   private static CurrencyParameters convertParams(String params) {
     try {
@@ -53,13 +51,11 @@ public class Common {
       String sanitizedParams = stringifyObject(CurrencyParameters.class, currencyParams);
       currencyParams.setUserKey(userKey);
 
-      logger.debug("[CurrencyParams] " + sanitizedParams);
+      LOGGER.debug("[CurrencyParams] " + sanitizedParams);
 
       return currencyParams;
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return null;
     }
   }
@@ -78,9 +74,7 @@ public class Common {
       Object obj = new ObjectMapper().readValue(jsonParser, objectType);
       return obj;
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return null;
     }
   }
@@ -99,9 +93,7 @@ public class Common {
       ObjectWriter writer = mapper.writerFor(objectType);
       return writer.writeValueAsString(obj);
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
       return "";
     }
   }
@@ -127,7 +119,7 @@ public class Common {
 
     String currencyString = stringifyObject(LinkedList.class, currencies);
 
-    logger.debug("[Response] " + currencyString);
+    LOGGER.debug("[Response] " + currencyString);
     return currencyString;
   }
 
@@ -169,7 +161,7 @@ public class Common {
         currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
     response = userMultiAccount;
 
-    logger.debug("[Response] " + response);
+    LOGGER.debug("[Response] " + response);
     return response;
   }
 
@@ -190,7 +182,7 @@ public class Common {
     currency.getWallet().getAddresses(currencyParams.getUserKey()).forEach(accounts::add);
     response = stringifyObject(LinkedList.class, accounts);
 
-    logger.debug("[Response] " + response);
+    LOGGER.debug("[Response] " + response);
     return response;
   }
 
@@ -215,7 +207,7 @@ public class Common {
 
     response = stringifyObject(LinkedList.class, txDetails);
 
-    logger.debug("[Response] " + response);
+    LOGGER.debug("[Response] " + response);
     return response;
   }
 
@@ -244,7 +236,7 @@ public class Common {
 
     response = balance.toPlainString();
 
-    logger.debug("[Response] " + response);
+    LOGGER.debug("[Response] " + response);
     return response;
   }
 
@@ -315,6 +307,7 @@ public class Common {
                 responseParms.setReceivingAccount(Arrays.asList(accountData));
                 responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
               } catch (Exception e) {
+                LOGGER.debug(null, e);
                 cleanUpSubscriptions(responseSocket.uuid());
                 return;
               }
@@ -340,6 +333,7 @@ public class Common {
                 responseParms.setTransactionData(transaction.getTxHash());
                 responseSocket.write(stringifyObject(CurrencyParameters.class, responseParms));
               } catch (Exception e) {
+                LOGGER.debug(null, e);
                 cleanUpSubscriptions(responseSocket.uuid());
                 return;
               }
@@ -372,6 +366,7 @@ public class Common {
 
                 HttpClients.createDefault().execute(httpPost).close();
               } catch (Exception e) {
+                LOGGER.debug(null, e);
                 cleanUpSubscriptions(currencyParams.getCallback());
                 return;
               }
@@ -404,6 +399,7 @@ public class Common {
 
                 HttpClients.createDefault().execute(httpPost).close();
               } catch (Exception e) {
+                LOGGER.debug(null, e);
                 cleanUpSubscriptions(currencyParams.getCallback());
                 return;
               }
@@ -416,7 +412,7 @@ public class Common {
       monitor.destroyMonitor();
     }
 
-    logger.debug("[Response] " + response);
+    LOGGER.debug("[Response] " + response);
     return response;
   }
 
@@ -474,7 +470,7 @@ public class Common {
     }
 
     String response = currencyParams.getTransactionData();
-    logger.debug("[Response] " + response);
+    LOGGER.debug("[Response] " + response);
     return response;
   }
 
@@ -527,13 +523,13 @@ public class Common {
           }
         } catch (Exception e) {
           // Likely caused by an offline server or bad response.
-          logger.warn(null, e);
+          LOGGER.warn(null, e);
         }
       }
     }
     response = currencyParams.getTransactionData();
 
-    logger.debug("[Response] " + response);
+    LOGGER.debug("[Response] " + response);
     return response;
   }
 
@@ -551,7 +547,7 @@ public class Common {
     CurrencyPackage currency = lookupCurrency(currencyParams);
     response = currency.getWallet().sendTransaction(currencyParams.getTransactionData());
 
-    logger.debug("[Response] " + response);
+    LOGGER.debug("[Response] " + response);
     return response;
   }
 

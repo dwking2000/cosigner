@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.Subscription;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -51,10 +49,6 @@ public class BitcoinWallet implements Wallet, Validatable {
       .onErrorReturn(null).subscribe(tick -> scanForAddresses());
 
   private static HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
-
-  public BitcoinWallet() {
-
-  }
 
   @Override
   public String createAddress(String name) {
@@ -229,7 +223,7 @@ public class BitcoinWallet implements Wallet, Validatable {
           logger.debug("Estimated tx size: " + byteSize);
           byteSize = (int) Math.ceil(((double) byteSize) / 1000);
           BigDecimal fees =
-              new BigDecimal(((double) byteSize)).multiply(BigDecimal.valueOf(0.0001));
+              BigDecimal.valueOf((double) byteSize).multiply(BigDecimal.valueOf(0.0001));
           logger.debug("Expecting fees of: " + fees.toPlainString());
           // Only set a change address if there's change.
           if (subTotal.compareTo(fees) > 0) {
@@ -293,9 +287,9 @@ public class BitcoinWallet implements Wallet, Validatable {
   public String signTransaction(String transaction, String address, String name) {
     logger.debug("Attempting to sign a transaction");
     int rounds = 1;
-    String privateKey = "";
-    String userAddress = "";
-    SignedTransaction signedTransaction = null;
+    String privateKey;
+    String userAddress;
+    SignedTransaction signedTransaction;
 
     if (name != null) {
       logger.debug("User key has value, trying to determine private key");
@@ -330,7 +324,8 @@ public class BitcoinWallet implements Wallet, Validatable {
       final byte[] addressData = BitcoinTools.getPublicKeyBytes(privateKey);
       final byte[] privateKeyBytes =
           ByteUtilities.toByteArray(BitcoinTools.decodeAddress(privateKey));
-      rawTx.getInputs().forEach((input) -> {
+
+      for (RawInput input : rawTx.getInputs()) {
         for (Outpoint output : outputs) {
           logger.debug("Looking for outputs we can sign");
           if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
@@ -368,9 +363,7 @@ public class BitcoinWallet implements Wallet, Validatable {
                     MessageDigest md = MessageDigest.getInstance("SHA-256");
                     sigData = md.digest(md.digest(sigData));
                   } catch (Exception e) {
-                    StringWriter errors = new StringWriter();
-                    e.printStackTrace(new PrintWriter(errors));
-                    logger.error(errors.toString());
+                    logger.error(null, e);
                   }
 
                   byte[][] sigResults = Secp256k1.signTransaction(sigData, privateKeyBytes);
@@ -453,7 +446,7 @@ public class BitcoinWallet implements Wallet, Validatable {
             }
           }
         }
-      });
+      }
       signedTransaction = new SignedTransaction();
       signedTransaction.setTransaction(rawTx.encode());
     } else {
@@ -473,8 +466,7 @@ public class BitcoinWallet implements Wallet, Validatable {
   public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     Payment[] payments = bitcoindRpc.listtransactions("*", 1000000, 0, true);
-    Arrays.asList(payments).forEach(payment -> {
-
+    for (Payment payment : Arrays.asList(payments)) {
 
       // Lookup the txid and vout/vin based on the sign of the amount (+/-)
       // Determine the address involved
@@ -499,6 +491,7 @@ public class BitcoinWallet implements Wallet, Validatable {
                 String scriptAddress = RawTransaction.decodeRedeemScript(script);
                 senders.add(scriptAddress);
               } catch (Exception e) {
+                logger.debug(null, e);
                 senders.add(null);
               }
             });
@@ -531,14 +524,12 @@ public class BitcoinWallet implements Wallet, Validatable {
           });
         }
       } catch (Exception e) {
-        StringWriter errors = new StringWriter();
-        e.printStackTrace(new PrintWriter(errors));
-        logger.debug(errors.toString());
+        logger.debug(null, e);
       }
-    });
+    }
 
     LinkedList<TransactionDetails> removeThese = new LinkedList<>();
-    txDetails.forEach(detail -> {
+    for (TransactionDetails detail : txDetails) {
       boolean noMatch = false;
       for (String from : Arrays.asList(detail.getFromAddress())) {
         boolean subMatch = false;
@@ -558,12 +549,12 @@ public class BitcoinWallet implements Wallet, Validatable {
       if (!noMatch) {
         removeThese.add(detail);
       }
-    });
+    }
 
     removeThese.forEach(detail -> {
       txDetails.remove(detail);
     });
-    return txDetails.toArray(new TransactionDetails[] {});
+    return txDetails.toArray(new TransactionDetails[0]);
   }
 
   @Override

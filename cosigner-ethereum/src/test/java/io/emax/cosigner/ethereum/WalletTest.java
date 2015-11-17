@@ -8,6 +8,8 @@ import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
 import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import junit.framework.TestCase;
 
@@ -15,8 +17,9 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 
 public class WalletTest extends TestCase {
-  private static EthereumWallet wallet;
-  private static String userKey;
+  private static final Logger LOGGER = LoggerFactory.getLogger(WalletTest.class);
+  private EthereumWallet wallet;
+  private String userKey;
 
   @Override
   public void setUp() {
@@ -71,7 +74,7 @@ public class WalletTest extends TestCase {
       String balance = wallet.getBalance(multiAddress);
       System.out.println("Balance of " + multiAddress + ": " + balance);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Simple operation test failed!");
       return;
     }
@@ -102,7 +105,7 @@ public class WalletTest extends TestCase {
       // If the key is missing the result should be the same TX string we submitted
       assertEquals(txString, signedTxString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Missing key test should not throw exceptions!");
       return;
     }
@@ -152,7 +155,7 @@ public class WalletTest extends TestCase {
       assertEquals(signingAddress, singleAddress);
 
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Missing key test should not throw exceptions!");
       return;
     }

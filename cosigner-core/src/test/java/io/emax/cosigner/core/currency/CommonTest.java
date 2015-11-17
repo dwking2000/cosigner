@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.emax.cosigner.api.core.CurrencyPackage;
 import io.emax.cosigner.api.core.CurrencyParameters;
@@ -19,18 +21,20 @@ import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 import junit.framework.TestCase;
 
 public class CommonTest extends TestCase {
+  private static final Logger LOGGER = LoggerFactory.getLogger(CommonTest.class);
+
   // General
-  private static String userKey;
+  private String userKey;
 
   // Bitcoin
-  private static Wallet bitcoinWallet;
-  private static Monitor bitcoinMonitor;
-  private static CurrencyConfiguration bitcoinConfig;
+  private Wallet bitcoinWallet;
+  private Monitor bitcoinMonitor;
+  private CurrencyConfiguration bitcoinConfig;
 
   // Ethereum
-  private static Wallet ethereumWallet;
-  private static Monitor ethereumMonitor;
-  private static CurrencyConfiguration ethereumConfig;
+  private Wallet ethereumWallet;
+  private Monitor ethereumMonitor;
+  private CurrencyConfiguration ethereumConfig;
 
   @Override
   public void setUp() {
@@ -82,7 +86,7 @@ public class CommonTest extends TestCase {
         System.out.println("Found currency: " + currency);
       });
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Problem listing currencies.");
     }
   }
@@ -98,7 +102,7 @@ public class CommonTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Problem listing currencies.");
     }
 
@@ -114,7 +118,7 @@ public class CommonTest extends TestCase {
         System.out.println(address);
       });
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Exception when creating addresses");
     }
   }
@@ -130,7 +134,7 @@ public class CommonTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Problem listing currencies.");
     }
 
@@ -151,7 +155,7 @@ public class CommonTest extends TestCase {
         });
       });
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Exception when listing addresses");
     }
   }
@@ -167,7 +171,7 @@ public class CommonTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Problem listing currencies.");
     }
 
@@ -187,7 +191,7 @@ public class CommonTest extends TestCase {
         System.out.println(balance);
       });
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Exception when checking balances");
     }
   }
@@ -203,7 +207,7 @@ public class CommonTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Problem listing currencies.");
     }
 
@@ -223,7 +227,7 @@ public class CommonTest extends TestCase {
         System.out.println(balance);
       });
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Exception when setting up a monitor");
     }
   }
@@ -239,7 +243,7 @@ public class CommonTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Problem listing currencies.");
     }
 
@@ -265,7 +269,7 @@ public class CommonTest extends TestCase {
         System.out.println(tx);
       });
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Exception when preparing up a transaction");
     }
   }
@@ -281,7 +285,7 @@ public class CommonTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Problem listing currencies.");
     }
 
@@ -311,7 +315,7 @@ public class CommonTest extends TestCase {
         System.out.println(tx);
       });
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Exception when preparing up a transaction");
     }
   }
@@ -327,7 +331,7 @@ public class CommonTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Problem listing currencies.");
     }
 
@@ -361,7 +365,7 @@ public class CommonTest extends TestCase {
         System.out.println(tx);
       });
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Exception when preparing up a transaction");
     }
   }

@@ -26,15 +26,13 @@ import rx.Observable;
 import rx.functions.Action1;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 public class Coordinator {
   // Static resolver
   private static Coordinator coordinator = new Coordinator();
-  private static final Logger logger = LoggerFactory.getLogger(Coordinator.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Coordinator.class);
 
   public static Coordinator getInstance() {
     return coordinator;
@@ -67,9 +65,7 @@ public class Coordinator {
             Server server = new ObjectMapper().readValue(jsonParser, Server.class);
             cluster.addBeaconServer(server);
           } catch (RuntimeException | IOException e) {
-            StringWriter errors = new StringWriter();
-            e.printStackTrace(new PrintWriter(errors));
-            logger.warn(errors.toString());
+            LOGGER.warn(null, e);
           }
         }
       });
@@ -90,35 +86,35 @@ public class Coordinator {
               if (commandString.isEmpty()) {
                 return;
               }
-              logger.debug("Got a remote command: " + commandString);
+              LOGGER.debug("Got a remote command: " + commandString);
 
               // Check if it's an encrypted command first.
               EncryptedCommand encryptedCommand =
                   EncryptedCommand.parseCommandString(commandString);
               if (encryptedCommand != null) {
-                logger.debug("Command is an EncryptedCommand");
+                LOGGER.debug("Command is an EncryptedCommand");
                 commandString =
                     EncryptedCommand.handleCommand(ServerKey.getMykey(), encryptedCommand);
-                logger.debug("Decrypted to: " + commandString);
+                LOGGER.debug("Decrypted to: " + commandString);
               }
 
               // CurrencyCommand
               CurrencyCommand currencyCommand = CurrencyCommand.parseCommandString(commandString);
               if (currencyCommand != null) {
-                logger.debug("Command is a CurrencyCommand");
+                LOGGER.debug("Command is a CurrencyCommand");
                 responder.send(CurrencyCommand.handleCommand(currencyCommand));
                 return;
               }
 
               ClusterCommand clusterCommand = ClusterCommand.parseCommandString(commandString);
               if (clusterCommand != null) {
-                logger.debug("Command is a ClusterCommand");
+                LOGGER.debug("Command is a ClusterCommand");
                 responder.send(Boolean.toString(ClusterCommand.handleCommand(clusterCommand)));
                 return;
               }
 
               // Catch-all
-              logger.debug("Command isn't valid.");
+              LOGGER.debug("Command isn't valid.");
               responder.send("Invalid command format");
             }
           });
@@ -127,7 +123,7 @@ public class Coordinator {
       Observable.interval(30, TimeUnit.SECONDS).map(tick -> true).subscribe(new Action1<Boolean>() {
         @Override
         public void call(Boolean arg0) {
-          logger.debug("Heartbeat tick");
+          LOGGER.debug("Heartbeat tick");
           ClusterInfo.getInstance().getServers().forEach(server -> {
             if (server.isOriginator()) {
               // Skip ourselves.
@@ -136,18 +132,16 @@ public class Coordinator {
             ClusterCommand command = new ClusterCommand();
             command.setCommandType(ClusterCommandType.Heartbeat);
             command.getServer().add(ClusterInfo.getInstance().getThisServer());
-            logger.debug("Sending heartbeat to: " + server);
+            LOGGER.debug("Sending heartbeat to: " + server);
             String response = broadcastCommand(command, server);
-            logger.debug("Response: " + response);
+            LOGGER.debug("Response: " + response);
           });
         }
 
       });
 
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
     }
   }
 
@@ -177,9 +171,9 @@ public class Coordinator {
     if ((System.currentTimeMillis() - server.getLastCommunication()) > 2 * 60 * 1000) {
       if (command.getClass() == ClusterCommand.class
           && ((ClusterCommand) command).getCommandType() == ClusterCommandType.Heartbeat) {
-        logger.debug("Server is too old, sending heartbeat");
+        LOGGER.debug("Server is too old, sending heartbeat");
       } else {
-        logger.debug("Server is too old, removing server");
+        LOGGER.debug("Server is too old, removing server");
         ClusterInfo.getInstance().getServers().remove(server);
         return "";
       }
@@ -199,7 +193,7 @@ public class Coordinator {
     requester.connect("tcp://" + server.getServerLocation() + ":" + server.getServerRpcPort());
 
     requester.send(commandString);
-    logger.debug("Command is in flight");
+    LOGGER.debug("Command is in flight");
 
     String reply = command.toJson();
     Poller poller = new Poller(1);
@@ -209,7 +203,7 @@ public class Coordinator {
 
     if (poller.pollin(0)) {
       reply = requester.recvStr();
-      logger.debug("Got response");
+      LOGGER.debug("Got response");
     }
 
     requester.close();

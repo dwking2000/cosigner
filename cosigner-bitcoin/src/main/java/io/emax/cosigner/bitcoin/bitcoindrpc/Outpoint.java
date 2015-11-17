@@ -38,7 +38,9 @@ public class Outpoint {
   @JsonProperty("spendable")
   private boolean spendable;
 
-  public Outpoint() {}
+  public Outpoint() {
+    // Creates an uninitialized data structure.
+  }
 
   public Outpoint(Outpoint other) {
     setTransactionId(other.getTransactionId());

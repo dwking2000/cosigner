@@ -16,25 +16,25 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 public class BasicValidator implements Validator {
-  private static final Logger logger = LoggerFactory.getLogger(BasicValidator.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(BasicValidator.class);
 
   @Override
   public boolean validateTransaction(CurrencyPackage currency, String transaction) {
     if (!Validatable.class.isAssignableFrom(currency.getWallet().getClass())) {
       // Wallet can not be validated.
-      logger.debug("Tried validating: " + currency.getConfiguration().getCurrencySymbol()
+      LOGGER.debug("Tried validating: " + currency.getConfiguration().getCurrencySymbol()
           + ", was not Validatable.");
       return true;
     }
 
     if (!ValidatorConfiguration.class.isAssignableFrom(currency.getConfiguration().getClass())) {
       // Configuration is not set up, we can't validate.
-      logger.debug("Tried validating: " + currency.getConfiguration().getCurrencySymbol()
+      LOGGER.debug("Tried validating: " + currency.getConfiguration().getCurrencySymbol()
           + ", was not Configured.");
       return true;
     }
 
-    logger.debug("Attempting to validate: " + currency.getConfiguration().getCurrencySymbol());
+    LOGGER.debug("Attempting to validate: " + currency.getConfiguration().getCurrencySymbol());
     Wallet wallet = currency.getWallet();
     Validatable validatableWallet = (Validatable) currency.getWallet();
     ValidatorConfiguration validatorConfig = (ValidatorConfiguration) currency.getConfiguration();
@@ -42,10 +42,11 @@ public class BasicValidator implements Validator {
     TransactionDetails txDetail = validatableWallet.decodeRawTransaction(transaction);
     if (validatorConfig.getMaxAmountPerTransaction().compareTo(BigDecimal.ZERO) != 0
         && txDetail.getAmount().compareTo(validatorConfig.getMaxAmountPerTransaction()) > 0) {
-      logger.info("Transaction value too high for: " + txDetail.toString());
+      LOGGER.info("Transaction value too high for: " + txDetail.toString());
       return false;
     }
 
+    // Build timed totals.
     BigDecimal hourlyTotal = BigDecimal.ZERO;
     BigDecimal dailyTotal = BigDecimal.ZERO;
     Instant oneHourAgo = Clock.systemUTC().instant().minus(1, ChronoUnit.HOURS);
@@ -63,19 +64,20 @@ public class BasicValidator implements Validator {
     }
 
     // Verify that the tx + timed totals are within bounds.
-    if (validatorConfig.getMaxAmountPerHour().compareTo(BigDecimal.ZERO) != 0 && hourlyTotal
-        .add(txDetail.getAmount()).compareTo(validatorConfig.getMaxAmountPerHour()) > 0) {
-      logger.info("Transaction value exceeds hourly limit.");
+    BigDecimal maxPerHour = validatorConfig.getMaxAmountPerHour();
+    hourlyTotal = hourlyTotal.add(txDetail.getAmount());
+    if (maxPerHour.compareTo(BigDecimal.ZERO) != 0 && hourlyTotal.compareTo(maxPerHour) > 0) {
+      LOGGER.info("Transaction value exceeds hourly limit.");
       return false;
     }
     if (validatorConfig.getMaxAmountPerDay().compareTo(BigDecimal.ZERO) != 0 && dailyTotal
         .add(txDetail.getAmount()).compareTo(validatorConfig.getMaxAmountPerDay()) > 0) {
-      logger.info("Transaction value exceeds daily limit.");
+      LOGGER.info("Transaction value exceeds daily limit.");
       return false;
     }
 
     // Nothing failed, so it's ok.
-    logger.debug("Validation passed");
+    LOGGER.debug("Validation passed");
     return true;
   }
 

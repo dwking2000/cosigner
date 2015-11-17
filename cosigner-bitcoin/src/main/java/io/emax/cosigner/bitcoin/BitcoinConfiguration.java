@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Properties;
 
@@ -23,8 +21,8 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   private static int minSignatures = 1;
   private static String[] multiSigAccounts = {};
   private static int maxDeterministicAddresses = 100;
-  private static String daemonUser = "bitcoinrpc";
-  private static String daemonPassword = "changeit";
+  private static String daemonUser;
+  private static String daemonPassword;
   private static BigDecimal maxAmountPerHour;
   private static BigDecimal maxAmountPerDay;
   private static BigDecimal maxAmountPerTransaction;
@@ -38,6 +36,15 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
 
   public BitcoinConfiguration() {
     loadConfig();
+  }
+
+  private static int getIntProp(Properties prop, String value, int defaultValue) {
+    try {
+      return Integer.parseInt(prop.getProperty(value));
+    } catch (Exception e) {
+      logger.warn(null, e);
+      return defaultValue;
+    }
   }
 
   private static synchronized void loadConfig() {
@@ -57,59 +64,30 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
             cosignerProperties.getProperty("daemonConnectionString", daemonConnectionString));
 
         // minConfirmations
-        try {
-          int intParser = Integer.parseInt(cosignerProperties.getProperty("minConfirmations"));
-          minConfirmations = intParser;
-        } catch (NumberFormatException nex) {
-          StringWriter errors = new StringWriter();
-          nex.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
-        }
+        minConfirmations = getIntProp(cosignerProperties, "minConfirmations", minConfirmations);
 
         // minSignatures
-        try {
-          int intParser = Integer.parseInt(cosignerProperties.getProperty("minSignatures"));
-          minSignatures = intParser;
-        } catch (NumberFormatException nex) {
-          StringWriter errors = new StringWriter();
-          nex.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
-        }
+        minSignatures = getIntProp(cosignerProperties, "minSignatures", minSignatures);
 
         // maxConfirmations
-        try {
-          int intParser = Integer.parseInt(cosignerProperties.getProperty("maxConfirmations"));
-          maxConfirmations = intParser;
-        } catch (NumberFormatException nex) {
-          StringWriter errors = new StringWriter();
-          nex.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
-        }
+        maxConfirmations = getIntProp(cosignerProperties, "maxConfirmations", maxConfirmations);
 
         // multiSigAccounts
-        String arrayParser = "";
-        arrayParser = EnvironmentVariableParser
+        String arrayParser = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("multiSigAccounts"));
         if (arrayParser != null) {
           multiSigAccounts = arrayParser.split("[|]");
         }
 
         // maxDeterministicAddresses
-        try {
-          int intParser =
-              Integer.parseInt(cosignerProperties.getProperty("maxDeterministicAddresses"));
-          maxDeterministicAddresses = intParser;
-        } catch (NumberFormatException nex) {
-          StringWriter errors = new StringWriter();
-          nex.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
-        }
+        maxDeterministicAddresses =
+            getIntProp(cosignerProperties, "maxDeterministicAddresses", maxDeterministicAddresses);
 
         // daemonUser
-        daemonUser = cosignerProperties.getProperty("daemonUser", daemonUser);
+        daemonUser = cosignerProperties.getProperty("daemonUser", "");
 
         // daemonPassword
-        daemonPassword = cosignerProperties.getProperty("daemonPassword", daemonPassword);
+        daemonPassword = cosignerProperties.getProperty("daemonPassword", "");
 
         // maxAmountPerHour
         maxAmountPerHour = new BigDecimal(
@@ -131,12 +109,11 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
           try {
             propertiesFile.close();
           } catch (IOException e1) {
-            StringWriter errors = new StringWriter();
-            e1.printStackTrace(new PrintWriter(errors));
-            logger.warn(errors.toString());
+            logger.warn(null, e1);
           }
         }
         logger.info("Could not load cosigner-bitcoin configuration, using defaults.");
+        logger.debug(null, e);
       }
       configLoaded = true;
     }

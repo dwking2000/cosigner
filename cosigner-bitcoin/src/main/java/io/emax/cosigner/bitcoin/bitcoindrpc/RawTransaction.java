@@ -7,6 +7,7 @@ import io.emax.cosigner.common.ByteUtilities;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,12 +41,13 @@ public final class RawTransaction {
     this.inputCount = inputCount;
   }
 
-  public LinkedList<RawInput> getInputs() {
+  public List<RawInput> getInputs() {
     return inputs;
   }
 
-  public void setInputs(LinkedList<RawInput> inputs) {
-    this.inputs = inputs;
+  public void setInputs(List<RawInput> inputs) {
+    this.inputs = new LinkedList<>();
+    this.inputs.addAll(inputs);
   }
 
   public long getOutputCount() {
@@ -56,12 +58,13 @@ public final class RawTransaction {
     this.outputCount = outputCount;
   }
 
-  public LinkedList<RawOutput> getOutputs() {
+  public List<RawOutput> getOutputs() {
     return outputs;
   }
 
-  public void setOutputs(LinkedList<RawOutput> outputs) {
-    this.outputs = outputs;
+  public void setOutputs(List<RawOutput> outputs) {
+    this.outputs = new LinkedList<>();
+    this.outputs.addAll(outputs);
   }
 
   public long getLockTime() {
@@ -508,7 +511,7 @@ public final class RawTransaction {
    * Assuming standard scripts, return the address.
    * 
    * @param script Standard script to be decoded.
-   * @return The address that the redeem script corresponds to. 
+   * @return The address that the redeem script corresponds to.
    */
   public static String decodeRedeemScript(String script) {
     // Regular address

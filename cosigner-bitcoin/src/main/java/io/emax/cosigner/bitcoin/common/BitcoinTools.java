@@ -11,8 +11,6 @@ import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -45,9 +43,7 @@ public class BitcoinTools {
       secureRandom =
           SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      logger.error(null, e);
       secureRandom = new SecureRandom();
     }
 
@@ -108,15 +104,11 @@ public class BitcoinTools {
         return Base58.encode(privateKey);
 
       } catch (NoSuchAlgorithmException e) {
-        StringWriter errors = new StringWriter();
-        e.printStackTrace(new PrintWriter(errors));
-        logger.error(errors.toString());
+        logger.error(null, e);
         return NOKEY;
       }
     } catch (RuntimeException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      logger.error(null, e);
       return NOKEY;
     }
   }
@@ -134,9 +126,7 @@ public class BitcoinTools {
       md.update(key.getBytes("UTF-8"));
       return new BigInteger(md.digest()).toString(16);
     } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      logger.error(null, e);
       return null;
     }
   }
@@ -191,9 +181,7 @@ public class BitcoinTools {
       return publicKey;
 
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      logger.error(null, e);
       return null;
     }
   }
@@ -227,9 +215,7 @@ public class BitcoinTools {
       }
       return ByteUtilities.toHexString(addressBytes);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      logger.error(null, e);
       return "";
     }
   }
@@ -255,9 +241,7 @@ public class BitcoinTools {
       encodedBytes = Base58.encode(ByteUtilities.toByteArray(encodedBytes));
       return encodedBytes;
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      logger.error(null, e);
       return null;
     }
   }
@@ -287,9 +271,7 @@ public class BitcoinTools {
       return false;
 
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.debug(errors.toString());
+      logger.debug(null, e);
       return false;
     }
   }
@@ -332,9 +314,7 @@ public class BitcoinTools {
       return publicKeyBytes;
 
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      logger.error(null, e);
       return new byte[0];
     }
   }

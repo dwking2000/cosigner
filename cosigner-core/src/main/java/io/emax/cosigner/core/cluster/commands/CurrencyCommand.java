@@ -12,11 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 public class CurrencyCommand implements BaseCommand {
-  private static final Logger logger = LoggerFactory.getLogger(CurrencyCommand.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CurrencyCommand.class);
   private CurrencyCommandType commandType;
   private CurrencyParameters currencyParams;
 
@@ -47,9 +45,7 @@ public class CurrencyCommand implements BaseCommand {
       ObjectWriter writer = mapper.writerFor(CurrencyCommand.class);
       return writer.writeValueAsString(this);
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return "";
     }
   }
@@ -74,9 +70,7 @@ public class CurrencyCommand implements BaseCommand {
           new ObjectMapper().readValue(jsonParser, CurrencyCommand.class);
       return currencyCommand;
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return null;
     }
   }

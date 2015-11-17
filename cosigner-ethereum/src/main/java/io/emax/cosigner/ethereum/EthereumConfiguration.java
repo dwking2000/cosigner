@@ -10,13 +10,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Properties;
 
 public class EthereumConfiguration implements CurrencyConfiguration, ValidatorConfiguration {
-  private static final Logger logger = LoggerFactory.getLogger(EthereumConfiguration.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EthereumConfiguration.class);
   // Defaults
   private static String daemonConnectionString = "http://localhost:8101";
   private static int minConfirmations = 10;
@@ -61,9 +59,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
           int intParser = Integer.parseInt(cosignerProperties.getProperty("minConfirmations"));
           minConfirmations = intParser;
         } catch (NumberFormatException nex) {
-          StringWriter errors = new StringWriter();
-          nex.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
+          LOGGER.warn(null, nex);
         }
 
         // gasPrice
@@ -71,9 +67,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
           long longParser = Long.parseLong(cosignerProperties.getProperty("gasPrice"));
           gasPrice = longParser;
         } catch (NumberFormatException nex) {
-          StringWriter errors = new StringWriter();
-          nex.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
+          LOGGER.warn(null, nex);
         }
 
         // simpleTxGas
@@ -81,9 +75,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
           long longParser = Long.parseLong(cosignerProperties.getProperty("simpleTxGas"));
           simpleTxGas = longParser;
         } catch (NumberFormatException nex) {
-          StringWriter errors = new StringWriter();
-          nex.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
+          LOGGER.warn(null, nex);
         }
 
         // contractGas
@@ -91,9 +83,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
           long longParser = Long.parseLong(cosignerProperties.getProperty("contractGas"));
           contractGas = longParser;
         } catch (NumberFormatException nex) {
-          StringWriter errors = new StringWriter();
-          nex.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
+          LOGGER.warn(null, nex);
         }
 
         // minSignatures
@@ -101,9 +91,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
           int intParser = Integer.parseInt(cosignerProperties.getProperty("minSignatures"));
           minSignatures = intParser;
         } catch (NumberFormatException nex) {
-          StringWriter errors = new StringWriter();
-          nex.printStackTrace(new PrintWriter(errors));
-          logger.warn(errors.toString());
+          LOGGER.warn(null, nex);
         }
 
         // contractAccount
@@ -133,18 +121,17 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
         // serverPrivateKey
         serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
 
-        logger.info("cosigner-ethereum configuration loaded.");
+        LOGGER.info("cosigner-ethereum configuration loaded.");
       } catch (IOException e) {
         if (propertiesFile != null) {
           try {
             propertiesFile.close();
           } catch (IOException e1) {
-            StringWriter errors = new StringWriter();
-            e1.printStackTrace(new PrintWriter(errors));
-            logger.warn(errors.toString());
+            LOGGER.warn(null, e1);
           }
         }
-        logger.info("Could not load cosigner-ethereum configuration, using defaults.");
+        LOGGER.debug(null, e);
+        LOGGER.info("Could not load cosigner-ethereum configuration, using defaults.");
       }
       configLoaded = true;
     }

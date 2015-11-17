@@ -5,6 +5,8 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction;
 import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import junit.framework.TestCase;
 
@@ -12,8 +14,9 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 
 public class WalletTest extends TestCase {
-  private static BitcoinWallet wallet;
-  private static String userKey;
+  private static final Logger LOGGER = LoggerFactory.getLogger(WalletTest.class);
+  private BitcoinWallet wallet;
+  private String userKey;
 
   @Override
   public void setUp() {
@@ -45,7 +48,7 @@ public class WalletTest extends TestCase {
       txString = wallet.sendTransaction(txString);
       System.out.println("TX ID: " + txString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.error(null, e);
       fail("Simple wallet test failed!");
     }
   }
@@ -65,7 +68,7 @@ public class WalletTest extends TestCase {
       balance = wallet.getBalance(multiSigAddress);
       System.out.println("Balance for " + multiSigAddress + ": " + balance);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.error(null, e);
       fail("Balance test failed");
     }
   }

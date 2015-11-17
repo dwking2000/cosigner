@@ -15,7 +15,7 @@ public class ByteUtilities {
     return result;
   }
 
-  static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
+  private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
 
   /**
    * Convert a byte array into its hex string equivalent.

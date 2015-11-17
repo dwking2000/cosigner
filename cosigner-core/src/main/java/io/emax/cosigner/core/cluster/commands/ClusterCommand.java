@@ -13,13 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ClusterCommand implements BaseCommand {
-  private static final Logger logger = LoggerFactory.getLogger(ClusterCommand.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCommand.class);
   private ClusterCommandType commandType;
   private Set<Server> server = new HashSet<>();
 
@@ -47,9 +45,7 @@ public class ClusterCommand implements BaseCommand {
       ObjectWriter writer = mapper.writerFor(ClusterCommand.class);
       return writer.writeValueAsString(this);
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return "";
     }
   }
@@ -70,9 +66,7 @@ public class ClusterCommand implements BaseCommand {
           new ObjectMapper().readValue(jsonParser, ClusterCommand.class);
       return clusterCommand;
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return null;
     }
   }
@@ -83,19 +77,19 @@ public class ClusterCommand implements BaseCommand {
   public static boolean handleCommand(ClusterCommand command) {
     switch (command.commandType) {
       case Heartbeat:
-        logger.debug("Got heartbeat for: " + command);
+        LOGGER.debug("Got heartbeat for: " + command);
         command.getServer().forEach(server -> {
           if (ClusterInfo.getInstance().addServer(server, true)) {
             ClusterCommand response = new ClusterCommand();
             response.setCommandType(ClusterCommandType.KnownServers);
             response.getServer().addAll(ClusterInfo.getInstance().getServers());
             String commandResponse = Coordinator.broadcastCommand(response, server);
-            logger.debug(commandResponse);
+            LOGGER.debug(commandResponse);
           }
         });
         return true;
       case KnownServers:
-        logger.debug("Got list of known servers: " + command);
+        LOGGER.debug("Got list of known servers: " + command);
         command.getServer().forEach(server -> {
           ClusterInfo.getInstance().addServer(server, server.isOriginator());
         });

@@ -9,11 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 public class Json {
-  private static final Logger logger = LoggerFactory.getLogger(Json.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Json.class);
 
   /**
    * Convert a JSON string to the object that it represents.
@@ -29,9 +27,7 @@ public class Json {
       Object obj = new ObjectMapper().readValue(jsonParser, objectType);
       return obj;
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return null;
     }
   }
@@ -50,9 +46,7 @@ public class Json {
       ObjectWriter writer = mapper.writerFor(objectType);
       return writer.writeValueAsString(obj);
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
       return "";
     }
   }

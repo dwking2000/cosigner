@@ -21,7 +21,9 @@ public class OutpointDetails {
   @JsonProperty("redeemScript")
   private String redeemScript;
 
-  public OutpointDetails() {}
+  public OutpointDetails() {
+    // Creates an uninitialized data structure.
+  }
 
   /**
    * Create a new outpoint based on an output

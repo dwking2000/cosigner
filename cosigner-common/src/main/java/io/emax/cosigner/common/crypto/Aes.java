@@ -15,8 +15,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
@@ -26,7 +24,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class Aes {
-  private static final Logger logger = LoggerFactory.getLogger(Aes.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Aes.class);
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
 
@@ -39,9 +37,7 @@ public class Aes {
       secureRandom =
           SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
       secureRandom = new SecureRandom();
     }
 
@@ -65,7 +61,7 @@ public class Aes {
 
       return key;
     } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return new byte[0];
     }
   }
@@ -77,7 +73,7 @@ public class Aes {
     try {
       return Aes.transform(key, iv, encString, true);
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return "";
     }
   }
@@ -89,7 +85,7 @@ public class Aes {
     try {
       return Aes.transform(key, iv, encString, false);
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return "";
     }
   }

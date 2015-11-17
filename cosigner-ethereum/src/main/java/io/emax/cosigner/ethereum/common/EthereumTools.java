@@ -7,8 +7,6 @@ import org.bouncycastle.crypto.digests.SHA3Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -17,7 +15,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 
 public class EthereumTools {
-  private static final Logger logger = LoggerFactory.getLogger(EthereumTools.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EthereumTools.class);
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
 
@@ -38,9 +36,7 @@ public class EthereumTools {
       secureRandom =
           SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
       secureRandom = new SecureRandom();
     }
 
@@ -107,9 +103,7 @@ public class EthereumTools {
       md.update(key.getBytes("UTF-8"));
       return new BigInteger(md.digest()).toString(16);
     } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
       return null;
     }
   }
@@ -146,9 +140,7 @@ public class EthereumTools {
       return publicKey.toString(16);
 
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
       return null;
     }
   }
@@ -172,9 +164,7 @@ public class EthereumTools {
       return publicKeyBytes;
 
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return new byte[0];
     }
   }

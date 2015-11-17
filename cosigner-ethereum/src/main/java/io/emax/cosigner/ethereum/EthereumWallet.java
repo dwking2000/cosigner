@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.Subscription;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -36,7 +34,7 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class EthereumWallet implements Wallet, Validatable {
-  private static final Logger logger = LoggerFactory.getLogger(EthereumWallet.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EthereumWallet.class);
 
   // RPC and configuration
   private static EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
@@ -67,9 +65,7 @@ public class EthereumWallet implements Wallet, Validatable {
     try {
       syncMultiSigAddresses();
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.debug(errors.toString());
+      LOGGER.debug(null, e);
     }
   }
 
@@ -100,7 +96,7 @@ public class EthereumWallet implements Wallet, Validatable {
               (MultiSigContractInterface) contractType.newInstance();
           if (contractParams.getContractPayload().equalsIgnoreCase(contractPayload)) {
             // We found an existing contract
-            logger.debug("Found existing contract version: " + contractType.getCanonicalName());
+            LOGGER.debug("Found existing contract version: " + contractType.getCanonicalName());
             CallData callData = new CallData();
             callData.setTo("0x" + contract);
             callData.setData("0x" + contractParams.getGetOwnersFunctionAddress());
@@ -137,7 +133,7 @@ public class EthereumWallet implements Wallet, Validatable {
         }
       }
     } catch (Exception e) {
-      logger.debug(null, e);
+      LOGGER.debug(null, e);
     }
   }
 
@@ -149,7 +145,7 @@ public class EthereumWallet implements Wallet, Validatable {
   @Override
   public String createAddress(String name, int skipNumber) {
     // Generate the next private key
-    logger.debug("Creating a new normal address...");
+    LOGGER.debug("Creating a new normal address...");
     int rounds = 1 + skipNumber;
     String privateKey =
         EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
@@ -165,7 +161,7 @@ public class EthereumWallet implements Wallet, Validatable {
     }
     addressRounds.put(name, rounds);
 
-    logger.debug("New address " + publicAddress + " generated after " + rounds + " rounds");
+    LOGGER.debug("New address " + publicAddress + " generated after " + rounds + " rounds");
     return publicAddress;
   }
 
@@ -206,12 +202,12 @@ public class EthereumWallet implements Wallet, Validatable {
     // Look for existing msig account for this address.
     String userAddress = addresses.iterator().next().toLowerCase(Locale.US);
     if (msigContracts.containsKey(userAddress.toLowerCase(Locale.US))) {
-      logger.debug("Found existing address: "
+      LOGGER.debug("Found existing address: "
           + msigContracts.get(userAddress).getContractAddress().toLowerCase(Locale.US));
       return msigContracts.get(userAddress).getContractAddress().toLowerCase(Locale.US);
     }
 
-    logger.debug("Generating new contract...");
+    LOGGER.debug("Generating new contract...");
     // Create the TX data structure
     RawTransaction tx = new RawTransaction();
     tx.getGasPrice().setDecodedContents(ByteUtilities
@@ -281,7 +277,7 @@ public class EthereumWallet implements Wallet, Validatable {
     String contract = EthereumTools.hashSha3(ByteUtilities.toHexString(contractAddress.encode()))
         .substring(96 / 4, 256 / 4);
 
-    logger.debug("Expecting new contract address of " + contract + " with tx: "
+    LOGGER.debug("Expecting new contract address of " + contract + " with tx: "
         + RawTransaction.parseBytes(ByteUtilities.toByteArray(signedTx)));
 
     // Figure out if we already created this, if so, skip it...
@@ -367,7 +363,7 @@ public class EthereumWallet implements Wallet, Validatable {
         // Figure out which contract we're using.
         MultiSigContractInterface contract = (MultiSigContractInterface) msigContracts
             .get(possibleSenders.getFirst()).getContractVersion().newInstance();
-        logger.debug(
+        LOGGER.debug(
             "Creating transaction for contract version: " + contract.getClass().getCanonicalName());
         MultiSigContractParametersInterface contractParms = contract.getContractParameters();
         contractParms.setFunction(contract.getExecuteFunctionAddress());
@@ -392,7 +388,7 @@ public class EthereumWallet implements Wallet, Validatable {
             ByteUtilities.stripLeadingNullBytes(new BigInteger(senderAddress, 16).toByteArray()));
       }
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
     }
 
     return ByteUtilities.toHexString(tx.encode());
@@ -422,7 +418,7 @@ public class EthereumWallet implements Wallet, Validatable {
                 msigContracts.get(reverseMsigContracts.get(address.toLowerCase(Locale.US)));
             MultiSigContractInterface contract =
                 (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
-            logger.debug("Signing transaction for contract version: "
+            LOGGER.debug("Signing transaction for contract version: "
                 + contract.getClass().getCanonicalName());
 
             MultiSigContractParametersInterface contractParams = contract.getContractParameters();
@@ -473,7 +469,7 @@ public class EthereumWallet implements Wallet, Validatable {
             msigContracts.get(reverseMsigContracts.get(address.toLowerCase(Locale.US)));
         MultiSigContractInterface contract =
             (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
-        logger.debug(
+        LOGGER.debug(
             "Signing transaction for contract version: " + contract.getClass().getCanonicalName());
 
         MultiSigContractParametersInterface contractParams = contract.getContractParameters();
@@ -539,7 +535,7 @@ public class EthereumWallet implements Wallet, Validatable {
 
       return ByteUtilities.toHexString(sigTx.encode());
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return null;
     }
   }
@@ -551,9 +547,7 @@ public class EthereumWallet implements Wallet, Validatable {
       try {
         sig = ethereumRpc.eth_sign("0x" + address, data);
       } catch (Exception e) {
-        StringWriter errors = new StringWriter();
-        e.printStackTrace(new PrintWriter(errors));
-        logger.warn(errors.toString());
+        LOGGER.warn(null, e);
         return new byte[0][0];
       }
 
@@ -566,9 +560,7 @@ public class EthereumWallet implements Wallet, Validatable {
 
         return new byte[][] {sigR, sigS, sigV};
       } catch (Exception e) {
-        StringWriter errors = new StringWriter();
-        e.printStackTrace(new PrintWriter(errors));
-        logger.error(errors.toString());
+        LOGGER.error(null, e);
         return new byte[0][0];
       }
     } else {
@@ -666,7 +658,7 @@ public class EthereumWallet implements Wallet, Validatable {
                 .get(reverseMsigContracts.get(txDetail.getToAddress()[0].toLowerCase(Locale.US)));
             MultiSigContractInterface contract =
                 (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
-            logger.debug("Found transaction for contract version: "
+            LOGGER.debug("Found transaction for contract version: "
                 + contract.getClass().getCanonicalName());
 
             byte[] inputData = ByteUtilities.toByteArray(tx.getInput());
@@ -699,7 +691,7 @@ public class EthereumWallet implements Wallet, Validatable {
             }
           }
         } catch (Exception e) {
-          logger.debug("Unable to decode tx data", e);
+          LOGGER.debug("Unable to decode tx data", e);
         }
 
         if (!txHistory.containsKey(txDetail.getToAddress()[0])) {
@@ -775,7 +767,7 @@ public class EthereumWallet implements Wallet, Validatable {
         }
       }
     } catch (Exception e) {
-      logger.debug("Unable to decode tx data", e);
+      LOGGER.debug("Unable to decode tx data", e);
     }
 
     return txDetail;

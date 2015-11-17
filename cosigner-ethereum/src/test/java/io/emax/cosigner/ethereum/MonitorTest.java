@@ -12,10 +12,10 @@ import junit.framework.TestCase;
 import rx.Subscription;
 
 public class MonitorTest extends TestCase {
-  private static EthereumWallet wallet;
-  private static EthereumMonitor monitor;
-  private static String userKey;
-  private static int balanceCounter;
+  private EthereumWallet wallet;
+  private EthereumMonitor monitor;
+  private String userKey;
+  private int balanceCounter;
 
   @Override
   public void setUp() {

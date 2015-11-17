@@ -18,15 +18,13 @@ import org.bouncycastle.math.ec.ECPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.util.LinkedList;
 
 public class Secp256k1 {
-  private static final Logger logger = LoggerFactory.getLogger(Secp256k1.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Secp256k1.class);
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
 
@@ -39,9 +37,7 @@ public class Secp256k1 {
       secureRandom =
           SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
       secureRandom = new SecureRandom();
     }
 
@@ -73,9 +69,7 @@ public class Secp256k1 {
 
       return pointQ.getEncoded(false);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
       return new byte[0];
     }
   }
@@ -107,9 +101,7 @@ public class Secp256k1 {
       return sigData.toArray(new byte[][] {});
 
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
       return new byte[0][0];
     }
   }
@@ -155,9 +147,7 @@ public class Secp256k1 {
         }
         return (byte) (0xFF & recoveryId);
       } catch (Exception e) {
-        StringWriter errors = new StringWriter();
-        e.printStackTrace(new PrintWriter(errors));
-        logger.error(errors.toString());
+        LOGGER.error(null, e);
         continue;
       }
     }
@@ -192,9 +182,7 @@ public class Secp256k1 {
       byte[] pointQBytes = pointQ.getEncoded(false);
       return pointQBytes;
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors.toString());
+      LOGGER.error(null, e);
     }
 
     return new byte[0];
@@ -221,7 +209,7 @@ public class Secp256k1 {
 
       return key;
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return new byte[0];
     }
   }

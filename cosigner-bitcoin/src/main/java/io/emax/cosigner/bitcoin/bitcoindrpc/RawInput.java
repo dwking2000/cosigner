@@ -130,7 +130,7 @@ public final class RawInput {
     tx += ByteUtilities.toHexString(indexBytes);
 
     // Script Size
-    setScriptSize(getScript().length() / 2);
+    setScriptSize(getScript().length() / 2L);
     byte[] scriptSizeBytes = RawTransaction.writeVariableInt(getScriptSize());
     tx += ByteUtilities.toHexString(scriptSizeBytes);
 

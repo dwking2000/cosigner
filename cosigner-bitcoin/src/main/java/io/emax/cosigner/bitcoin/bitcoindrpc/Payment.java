@@ -15,11 +15,16 @@ import java.util.List;
 public class Payment {
   public enum PaymentCategory {
     /** if sending payment. */
-    send, /** if this wallet received payment in a regular transaction. */
-    receive, /** if a matured and spendable coinbase. */
-    generate, /** if a coinbase that is not spendable yet. */
-    immature, /** if a coinbase from a block that’s not in the local best block chain. */
-    orphan, /** if an off-block-chain move made with the move RPC. */
+    send,
+    /** if this wallet received payment in a regular transaction. */
+    receive,
+    /** if a matured and spendable coinbase. */
+    generate,
+    /** if a coinbase that is not spendable yet. */
+    immature,
+    /** if a coinbase from a block that’s not in the local best block chain. */
+    orphan,
+    /** if an off-block-chain move made with the move RPC. */
     move
   }
 
@@ -254,8 +259,9 @@ public class Payment {
     return walletconflicts;
   }
 
-  public void setWalletconflicts(LinkedList<String> walletconflicts) {
-    this.walletconflicts = walletconflicts;
+  public void setWalletconflicts(List<String> walletconflicts) {
+    this.walletconflicts = new LinkedList<String>();
+    this.walletconflicts.addAll(walletconflicts);
   }
 
   public Date getTime() {

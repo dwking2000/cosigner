@@ -13,10 +13,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MonitorTest extends TestCase {
-  private static BitcoinWallet wallet;
-  private static BitcoinMonitor monitor;
-  private static String userKey;
-  private static int balanceCounter;
+  private BitcoinWallet wallet;
+  private BitcoinMonitor monitor;
+  private String userKey;
+  private int balanceCounter;
 
   @Override
   public void setUp() {

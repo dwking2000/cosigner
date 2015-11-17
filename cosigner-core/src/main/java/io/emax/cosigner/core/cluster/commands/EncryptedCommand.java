@@ -14,12 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 
 public class EncryptedCommand implements BaseCommand {
-  private static final Logger logger = LoggerFactory.getLogger(EncryptedCommand.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EncryptedCommand.class);
   // Track nonces for other servers in both directions.
   private static HashMap<String, Long> incomingNonces = new HashMap<>();
   private static HashMap<String, Long> outgoingNonces = new HashMap<>();
@@ -73,7 +71,7 @@ public class EncryptedCommand implements BaseCommand {
       byte[] sharedKey = Secp256k1.generateSharedSecret(myKey, otherKey);
       this.payload = Aes.encrypt(sharedKey, ByteUtilities.toByteArray(iv), data);
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
     }
   }
 
@@ -85,9 +83,7 @@ public class EncryptedCommand implements BaseCommand {
       ObjectWriter writer = mapper.writerFor(EncryptedCommand.class);
       return writer.writeValueAsString(this);
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return "";
     }
   }
@@ -109,9 +105,7 @@ public class EncryptedCommand implements BaseCommand {
           new ObjectMapper().readValue(jsonParser, EncryptedCommand.class);
       return encryptedCommand;
     } catch (IOException e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.warn(errors.toString());
+      LOGGER.warn(null, e);
       return null;
     }
   }
@@ -145,7 +139,7 @@ public class EncryptedCommand implements BaseCommand {
 
       return payload.getPayload();
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return "";
     }
   }

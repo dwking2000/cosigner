@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.core.CosignerApplication;
@@ -16,6 +18,7 @@ import io.emax.cosigner.core.currency.CommonTest;
 import junit.framework.TestCase;
 
 public class CurrencyCommandTest extends TestCase {
+  private static final Logger LOGGER = LoggerFactory.getLogger(CurrencyCommandTest.class);
   private static String signingAccount = "beef";
   private static String sigString = "deadbeef";
 
@@ -38,7 +41,7 @@ public class CurrencyCommandTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
-      e.printStackTrace(System.err);
+      LOGGER.debug(null, e);
       fail("Problem listing currencies.");
     }
 
