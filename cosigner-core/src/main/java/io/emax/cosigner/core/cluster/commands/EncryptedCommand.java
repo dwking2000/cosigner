@@ -27,6 +27,38 @@ public class EncryptedCommand implements BaseCommand {
   private String iv;
   private long nonce;
 
+  /**
+   * Encrypts a command to be sent to the recipient.
+   */
+  public EncryptedCommand(Server sender, byte[] senderKey, Server recipient, String data) {
+    try {
+      this.iv = ByteUtilities.toHexString(Aes.generateIv());
+
+      // Nonce lists will be reset on app restart, but the serverID should be a new public key. This
+      // means the nonce lists should all be trying to talk to a new entry, and should all agree on
+      // the nonce.
+
+      // Set up the nonce
+      DecryptedPayload decryptedPayload = new DecryptedPayload();
+      if (!outgoingNonces.containsKey(recipient.getServerId())) {
+        outgoingNonces.put(recipient.getServerId(), 1L);
+      }
+      decryptedPayload.setNonce(outgoingNonces.get(recipient.getServerId()));
+      this.nonce = decryptedPayload.getNonce();
+      outgoingNonces.put(recipient.getServerId(), decryptedPayload.getNonce() + 1L);
+      decryptedPayload.setPayload(data);
+      data = ByteUtilities.toHexString(decryptedPayload.toJson().getBytes("UTF-8"));
+      this.sender = sender;
+
+      byte[] myKey = senderKey;
+      byte[] otherKey = ByteUtilities.toByteArray(recipient.getServerId());
+      byte[] sharedKey = Secp256k1.generateSharedSecret(myKey, otherKey);
+      this.payload = Aes.encrypt(sharedKey, ByteUtilities.toByteArray(iv), data);
+    } catch (Exception e) {
+      LOGGER.error(null, e);
+    }
+  }
+
   public Server getSender() {
     return sender;
   }
@@ -41,38 +73,6 @@ public class EncryptedCommand implements BaseCommand {
 
   public long getNonce() {
     return nonce;
-  }
-
-  /**
-   * Encrypts a command to be sent to the recipient.
-   */
-  public EncryptedCommand(Server sender, byte[] senderKey, Server recipient, String data) {
-    try {
-      this.iv = ByteUtilities.toHexString(Aes.generateIv());
-
-      // Nonce lists will be reset on app restart, but the serverID should be a new public key. This
-      // means the nonce lists should all be trying to talk to a new entry, and should all agree on
-      // the nonce.
-
-      // Set up the nonce
-      DecryptedPayload payload = new DecryptedPayload();
-      if (!outgoingNonces.containsKey(recipient.getServerId())) {
-        outgoingNonces.put(recipient.getServerId(), 1L);
-      }
-      payload.setNonce(outgoingNonces.get(recipient.getServerId()));
-      this.nonce = payload.getNonce();
-      outgoingNonces.put(recipient.getServerId(), payload.getNonce() + 1L);
-      payload.setPayload(data);
-      data = ByteUtilities.toHexString(payload.toJson().getBytes("UTF-8"));
-      this.sender = sender;
-
-      byte[] myKey = senderKey;
-      byte[] otherKey = ByteUtilities.toByteArray(recipient.getServerId());
-      byte[] sharedKey = Secp256k1.generateSharedSecret(myKey, otherKey);
-      this.payload = Aes.encrypt(sharedKey, ByteUtilities.toByteArray(iv), data);
-    } catch (Exception e) {
-      LOGGER.error(null, e);
-    }
   }
 
   @Override
@@ -101,9 +101,7 @@ public class EncryptedCommand implements BaseCommand {
     try {
       JsonFactory jsonFact = new JsonFactory();
       JsonParser jsonParser = jsonFact.createParser(commandString);
-      EncryptedCommand encryptedCommand =
-          new ObjectMapper().readValue(jsonParser, EncryptedCommand.class);
-      return encryptedCommand;
+      return new ObjectMapper().readValue(jsonParser, EncryptedCommand.class);
     } catch (IOException e) {
       LOGGER.warn(null, e);
       return null;

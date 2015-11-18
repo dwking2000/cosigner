@@ -191,7 +191,13 @@ public class Block {
     this.gasUsed = gasUsed;
   }
 
+  /**
+   * Returns timestamp, null if null.
+   */
   public Date getTimestamp() {
+    if (timestamp == null) {
+      return null;
+    }
     return Date.from(timestamp.toInstant());
   }
 

@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.List;
 
 public class Rlp {
   private static final Logger LOGGER = LoggerFactory.getLogger(Rlp.class);
@@ -25,7 +25,7 @@ public class Rlp {
    */
   public static RlpEntity parseArray(byte[] input) {
     try {
-      RlpEntity parsedEntity = null;
+      RlpEntity parsedEntity;
       int header = 0xFF & input[0];
       if (header >= SHORT_ITEM && header < LONG_ITEM) {
         int byteCount = header - SHORT_ITEM;
@@ -82,7 +82,7 @@ public class Rlp {
       return encodedItem;
     } else {
       byte[] itemSize =
-          ByteUtilities.stripLeadingNullBytes(new BigInteger(item.length + "").toByteArray());
+          ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(item.length).toByteArray());
       byte[] encodedItem = new byte[1 + itemSize.length + item.length];
       encodedItem[0] = (byte) (LONG_ITEM + itemSize.length);
       System.arraycopy(itemSize, 0, encodedItem, 1, itemSize.length);
@@ -97,7 +97,7 @@ public class Rlp {
    * @param list RLP data that needs to be encoded.
    * @return Byte array with RLP information added.
    */
-  public static byte[] encodeList(LinkedList<RlpEntity> list) {
+  public static byte[] encodeList(List<RlpEntity> list) {
     byte[] encodedListData = new byte[0];
     for (RlpEntity item : list) {
       byte[] encodedItem = item.encode();
@@ -115,7 +115,7 @@ public class Rlp {
       return encodedItem;
     } else {
       byte[] itemSize = ByteUtilities
-          .stripLeadingNullBytes(new BigInteger(encodedListData.length + "").toByteArray());
+          .stripLeadingNullBytes(BigInteger.valueOf(encodedListData.length).toByteArray());
       byte[] encodedItem = new byte[1 + itemSize.length + encodedListData.length];
       encodedItem[0] = (byte) (LONG_LIST + itemSize.length);
       System.arraycopy(itemSize, 0, encodedItem, 1, itemSize.length);

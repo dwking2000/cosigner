@@ -18,6 +18,21 @@ public class RawTransaction extends RlpList {
   private RlpItem sigR = new RlpItem();
   private RlpItem sigS = new RlpItem();
 
+  /**
+   * Raw transaction that is sent over the Ethereum network.
+   */
+  public RawTransaction() {
+    this.add(nonce);
+    this.add(gasPrice);
+    this.add(gasLimit);
+    this.add(to);
+    this.add(value);
+    this.add(data);
+    this.add(sigV);
+    this.add(sigR);
+    this.add(sigS);
+  }
+
   public static long getSerialversionuid() {
     return serialVersionUID;
   }
@@ -56,21 +71,6 @@ public class RawTransaction extends RlpList {
 
   public RlpItem getSigS() {
     return sigS;
-  }
-
-  /**
-   * Raw transaction that is sent over the Ethereum network.
-   */
-  public RawTransaction() {
-    this.add(nonce);
-    this.add(gasPrice);
-    this.add(gasLimit);
-    this.add(to);
-    this.add(value);
-    this.add(data);
-    this.add(sigV);
-    this.add(sigR);
-    this.add(sigS);
   }
 
   /**

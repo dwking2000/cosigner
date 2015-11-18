@@ -38,6 +38,15 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
     loadConfig();
   }
 
+  private static long getLongProp(Properties prop, String value, long defaultValue) {
+    try {
+      return Long.parseLong(prop.getProperty(value));
+    } catch (Exception e) {
+      LOGGER.warn(null, e);
+      return defaultValue;
+    }
+  }
+
   private synchronized void loadConfig() {
     if (!configLoaded) {
       FileInputStream propertiesFile = null;
@@ -55,52 +64,27 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
             cosignerProperties.getProperty("daemonConnectionString", daemonConnectionString));
 
         // minConfirmations
-        try {
-          int intParser = Integer.parseInt(cosignerProperties.getProperty("minConfirmations"));
-          minConfirmations = intParser;
-        } catch (NumberFormatException nex) {
-          LOGGER.warn(null, nex);
-        }
+        minConfirmations =
+            (int) getLongProp(cosignerProperties, "minConfirmations", minConfirmations);
 
         // gasPrice
-        try {
-          long longParser = Long.parseLong(cosignerProperties.getProperty("gasPrice"));
-          gasPrice = longParser;
-        } catch (NumberFormatException nex) {
-          LOGGER.warn(null, nex);
-        }
+        gasPrice = getLongProp(cosignerProperties, "gasPrice", gasPrice);
 
         // simpleTxGas
-        try {
-          long longParser = Long.parseLong(cosignerProperties.getProperty("simpleTxGas"));
-          simpleTxGas = longParser;
-        } catch (NumberFormatException nex) {
-          LOGGER.warn(null, nex);
-        }
+        simpleTxGas = getLongProp(cosignerProperties, "simpleTxGas", simpleTxGas);
 
         // contractGas
-        try {
-          long longParser = Long.parseLong(cosignerProperties.getProperty("contractGas"));
-          contractGas = longParser;
-        } catch (NumberFormatException nex) {
-          LOGGER.warn(null, nex);
-        }
+        contractGas = getLongProp(cosignerProperties, "contractGas", contractGas);
 
         // minSignatures
-        try {
-          int intParser = Integer.parseInt(cosignerProperties.getProperty("minSignatures"));
-          minSignatures = intParser;
-        } catch (NumberFormatException nex) {
-          LOGGER.warn(null, nex);
-        }
+        minSignatures = (int) getLongProp(cosignerProperties, "minSignatures", minSignatures);
 
         // contractAccount
         contractAccount = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("contractAccount", contractAccount));
 
         // multiSigAccounts
-        String arrayParser = "";
-        arrayParser = EnvironmentVariableParser
+        String arrayParser = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("multiSigAccounts"));
         if (arrayParser != null) {
           multiSigAccounts = arrayParser.split("[|]");

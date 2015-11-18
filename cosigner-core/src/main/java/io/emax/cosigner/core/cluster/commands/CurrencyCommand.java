@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
 import io.emax.cosigner.api.core.CurrencyParameters;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.currency.Common;
 
 import org.slf4j.Logger;
@@ -66,9 +67,7 @@ public class CurrencyCommand implements BaseCommand {
     try {
       JsonFactory jsonFact = new JsonFactory();
       JsonParser jsonParser = jsonFact.createParser(commandString);
-      CurrencyCommand currencyCommand =
-          new ObjectMapper().readValue(jsonParser, CurrencyCommand.class);
-      return currencyCommand;
+      return new ObjectMapper().readValue(jsonParser, CurrencyCommand.class);
     } catch (IOException e) {
       LOGGER.warn(null, e);
       return null;
@@ -86,7 +85,7 @@ public class CurrencyCommand implements BaseCommand {
     switch (command.commandType) {
       case SIGN:
         String signedTx = Common.approveTransaction(
-            Common.stringifyObject(CurrencyParameters.class, command.currencyParams), false);
+            Json.stringifyObject(CurrencyParameters.class, command.currencyParams), false);
         command.currencyParams.setTransactionData(signedTx);
         return command.toJson();
       default:

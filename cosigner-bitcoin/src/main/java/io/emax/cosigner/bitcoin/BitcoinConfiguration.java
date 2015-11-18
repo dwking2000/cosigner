@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.util.Properties;
 
 public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorConfiguration {
-  private static final Logger logger = LoggerFactory.getLogger(BitcoinConfiguration.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinConfiguration.class);
   private static String daemonConnectionString = "http://127.0.0.1:18332";
   private static int minConfirmations = 6;
   private static int maxConfirmations = 9999999;
@@ -42,7 +42,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
     try {
       return Integer.parseInt(prop.getProperty(value));
     } catch (Exception e) {
-      logger.warn(null, e);
+      LOGGER.warn(null, e);
       return defaultValue;
     }
   }
@@ -103,17 +103,17 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
 
         // serverPrivateKey
         serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
-        logger.info("cosigner-bitcoin configuration loaded.");
+        LOGGER.info("cosigner-bitcoin configuration loaded.");
       } catch (IOException e) {
         if (propertiesFile != null) {
           try {
             propertiesFile.close();
           } catch (IOException e1) {
-            logger.warn(null, e1);
+            LOGGER.warn(null, e1);
           }
         }
-        logger.info("Could not load cosigner-bitcoin configuration, using defaults.");
-        logger.debug(null, e);
+        LOGGER.info("Could not load cosigner-bitcoin configuration, using defaults.");
+        LOGGER.debug(null, e);
       }
       configLoaded = true;
     }

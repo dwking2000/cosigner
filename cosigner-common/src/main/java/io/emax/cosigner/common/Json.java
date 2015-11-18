@@ -24,8 +24,7 @@ public class Json {
     try {
       JsonFactory jsonFact = new JsonFactory();
       JsonParser jsonParser = jsonFact.createParser(str);
-      Object obj = new ObjectMapper().readValue(jsonParser, objectType);
-      return obj;
+      return new ObjectMapper().readValue(jsonParser, objectType);
     } catch (IOException e) {
       LOGGER.warn(null, e);
       return null;

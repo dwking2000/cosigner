@@ -27,6 +27,7 @@ public class Secp256k1 {
   private static final Logger LOGGER = LoggerFactory.getLogger(Secp256k1.class);
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
+  private static final String SECP256K1 = "secp256k1";
 
   /**
    * Generate a random private key that can be used with Secp256k1.
@@ -41,7 +42,6 @@ public class Secp256k1 {
       secureRandom = new SecureRandom();
     }
 
-    BigInteger privateKeyCheck = BigInteger.ZERO;
     // Bit of magic, move this maybe. This is the max key range.
     BigInteger maxKey =
         new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);
@@ -49,7 +49,7 @@ public class Secp256k1 {
     // Generate the key, skipping as many as desired.
     byte[] privateKeyAttempt = new byte[32];
     secureRandom.nextBytes(privateKeyAttempt);
-    privateKeyCheck = new BigInteger(1, privateKeyAttempt);
+    BigInteger privateKeyCheck = new BigInteger(1, privateKeyAttempt);
     while (privateKeyCheck.compareTo(BigInteger.ZERO) == 0
         || privateKeyCheck.compareTo(maxKey) == 1) {
       secureRandom.nextBytes(privateKeyAttempt);
@@ -64,7 +64,7 @@ public class Secp256k1 {
    */
   public static byte[] getPublicKey(byte[] privateKey) {
     try {
-      ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+      ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec(SECP256K1);
       ECPoint pointQ = spec.getG().multiply(new BigInteger(1, privateKey));
 
       return pointQ.getEncoded(false);
@@ -80,7 +80,7 @@ public class Secp256k1 {
   public static byte[][] signTransaction(byte[] data, byte[] privateKey) {
     try {
       Security.addProvider(new BouncyCastleProvider());
-      ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+      ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec(SECP256K1);
 
       ECDSASigner ecdsaSigner = new ECDSASigner();
       ECDomainParameters domain = new ECDomainParameters(spec.getCurve(), spec.getG(), spec.getN());
@@ -114,7 +114,7 @@ public class Secp256k1 {
    * was signed by a specific key.</p>
    */
   public static byte getRecoveryId(byte[] sigR, byte[] sigS, byte[] message, byte[] publicKey) {
-    ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+    ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec(SECP256K1);
     BigInteger pointN = spec.getN();
     for (int recoveryId = 0; recoveryId < 2; recoveryId++) {
       try {
@@ -159,7 +159,7 @@ public class Secp256k1 {
    * Recover the public key that corresponds to the private key, which signed this message.
    */
   public static byte[] recoverPublicKey(byte[] sigR, byte[] sigS, byte[] sigV, byte[] message) {
-    ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+    ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec(SECP256K1);
     BigInteger pointN = spec.getN();
 
     try {
@@ -179,8 +179,7 @@ public class Secp256k1 {
       BigInteger srInv = pointRInv.multiply(new BigInteger(1, sigS)).mod(pointN);
       BigInteger pointEInvRInv = pointRInv.multiply(pointEInv).mod(pointN);
       ECPoint pointQ = ECAlgorithms.sumOfTwoMultiplies(spec.getG(), pointEInvRInv, pointR, srInv);
-      byte[] pointQBytes = pointQ.getEncoded(false);
-      return pointQBytes;
+      return pointQ.getEncoded(false);
     } catch (Exception e) {
       LOGGER.error(null, e);
     }
@@ -193,7 +192,7 @@ public class Secp256k1 {
    */
   public static byte[] generateSharedSecret(byte[] privateKey, byte[] publicKey) {
     try {
-      ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+      ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec(SECP256K1);
       ECDomainParameters domain =
           new ECDomainParameters(spec.getCurve(), spec.getG(), spec.getN(), spec.getH());
       ECPublicKeyParameters pubKey =
@@ -205,9 +204,8 @@ public class Secp256k1 {
       agreement.init((CipherParameters) prvkey);
       byte[] password = agreement.calculateAgreement((CipherParameters) pubKey).toByteArray();
 
-      byte[] key = Aes.generateKey(ByteUtilities.toHexString(password), password);
+      return Aes.generateKey(ByteUtilities.toHexString(password), password);
 
-      return key;
     } catch (Exception e) {
       LOGGER.error(null, e);
       return new byte[0];

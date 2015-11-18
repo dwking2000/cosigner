@@ -57,9 +57,8 @@ public class Aes {
       SecretKeySpec secretKey =
           new SecretKeySpec(keyFactory.generateSecret(pbeKeySpec).getEncoded(), "AES");
 
-      byte[] key = secretKey.getEncoded();
+      return secretKey.getEncoded();
 
-      return key;
     } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
       LOGGER.error(null, e);
       return new byte[0];

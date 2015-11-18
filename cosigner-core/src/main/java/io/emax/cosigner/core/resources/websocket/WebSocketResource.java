@@ -24,54 +24,54 @@ import javax.ws.rs.Path;
         BroadcastOnPostAtmosphereInterceptor.class, TrackMessageSizeInterceptor.class,
         HeartbeatInterceptor.class})
 public class WebSocketResource extends OnMessage<String> {
-  Logger logger = LoggerFactory.getLogger(WebSocketResource.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketResource.class);
 
   @Override
   public void onMessage(AtmosphereResponse arg0, String arg1) throws IOException {
     String functionCall = arg0.request().getRequestURI().replaceAll("/ws", "");
     switch (functionCall.toLowerCase(Locale.US)) {
       case "/listcurrencies":
-        logger.debug("[GetCurrencies:WSRequest]");
+        LOGGER.debug("[GetCurrencies:WSRequest]");
         arg0.write(Common.listCurrencies());
         break;
       case "/registeraddress":
-        logger.debug("[GetCurrencies:WSRequest]");
+        LOGGER.debug("[GetCurrencies:WSRequest]");
         arg0.write(Common.registerAddress(arg1));
         break;
       case "/getnewaddress":
-        logger.debug("[GetNewAccount:WSRequest]");
+        LOGGER.debug("[GetNewAccount:WSRequest]");
         arg0.write(Common.getNewAddress(arg1));
         break;
       case "/listalladdresses":
-        logger.debug("[ListAllAccounts:WSRequest]");
+        LOGGER.debug("[ListAllAccounts:WSRequest]");
         arg0.write(Common.listAllAddresses(arg1));
         break;
       case "/listtransactions":
-        logger.debug("[ListTransactions:WSRequest]");
+        LOGGER.debug("[ListTransactions:WSRequest]");
         arg0.write(Common.listTransactions(arg1));
         break;
       case "/getbalance":
-        logger.debug("[GetBalance:WSRequest]");
+        LOGGER.debug("[GetBalance:WSRequest]");
         arg0.write(Common.getBalance(arg1));
         break;
       case "/monitorbalance":
-        logger.debug("[MonitorBalance:WSRequest]");
+        LOGGER.debug("[MonitorBalance:WSRequest]");
         arg0.write(Common.monitorBalance(arg1, arg0));
         break;
       case "/preparetransaction":
-        logger.debug("[PrepareTransaction:WSRequest]");
+        LOGGER.debug("[PrepareTransaction:WSRequest]");
         arg0.write(Common.prepareTransaction(arg1));
         break;
       case "/approvetransaction":
-        logger.debug("[ApproveTransaction:WSRequest]");
+        LOGGER.debug("[ApproveTransaction:WSRequest]");
         arg0.write(Common.approveTransaction(arg1, true));
         break;
       case "/submittransaction":
-        logger.debug("[SubmitTransaction:WSRequest]");
+        LOGGER.debug("[SubmitTransaction:WSRequest]");
         arg0.write(Common.submitTransaction(arg1));
         break;
       default:
-        logger.warn("[Invalid:WSRequest] " + arg1);
+        LOGGER.warn("[Invalid:WSRequest] " + arg1);
         arg0.write("No such function");
         break;
     }

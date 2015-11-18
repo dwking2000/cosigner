@@ -123,11 +123,11 @@ public interface Wallet {
     }
 
     public Date getTxDate() {
-      return txDate;
+      return Date.from(txDate.toInstant());
     }
 
     public void setTxDate(Date txDate) {
-      this.txDate = txDate;
+      this.txDate = Date.from(txDate.toInstant());
     }
 
     /**

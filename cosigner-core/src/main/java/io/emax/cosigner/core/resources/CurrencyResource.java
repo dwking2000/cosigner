@@ -15,7 +15,7 @@ import javax.ws.rs.core.Response;
 
 @Path("/rs")
 public class CurrencyResource {
-  Logger logger = LoggerFactory.getLogger(CurrencyResource.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CurrencyResource.class);
 
   /**
    * REST end-point for the {@link Common} currency methods.
@@ -26,9 +26,9 @@ public class CurrencyResource {
   @Path("/ListCurrencies")
   @Produces(MediaType.APPLICATION_JSON)
   public Response getCurrencies() {
-    logger.debug("[GetCurrencies:Request]");
+    LOGGER.debug("[GetCurrencies:Request]");
     Response response = Response.ok(Common.listCurrencies()).build();
-    logger.debug("[GetCurrencies:Response] " + response.toString());
+    LOGGER.debug("[GetCurrencies:Response] " + response.toString());
     return response;
   }
 
@@ -41,9 +41,9 @@ public class CurrencyResource {
   @Path("/RegisterAddress")
   @Produces(MediaType.APPLICATION_JSON)
   public Response registerAddress(String params) {
-    logger.debug("[RegisterAddress:Request]");
+    LOGGER.debug("[RegisterAddress:Request]");
     Response response = Response.ok(Common.registerAddress(params)).build();
-    logger.debug("[RegisterAddress:Response] " + response.toString());
+    LOGGER.debug("[RegisterAddress:Response] " + response.toString());
     return response;
   }
 
@@ -57,9 +57,9 @@ public class CurrencyResource {
   @Path("/GetNewAddress")
   @Produces(MediaType.APPLICATION_JSON)
   public Response getNewAccount(String params) {
-    logger.debug("[GetNewAccount:Request]");
+    LOGGER.debug("[GetNewAccount:Request]");
     Response response = Response.ok(Common.getNewAddress(params)).build();
-    logger.debug("[GetNewAccount:Response] " + response.toString());
+    LOGGER.debug("[GetNewAccount:Response] " + response.toString());
     return response;
   }
 
@@ -73,9 +73,9 @@ public class CurrencyResource {
   @Path("/ListAllAddresses")
   @Produces(MediaType.APPLICATION_JSON)
   public Response listAllAccounts(String params) {
-    logger.debug("[ListAllAccounts:Request]");
+    LOGGER.debug("[ListAllAccounts:Request]");
     Response response = Response.ok(Common.listAllAddresses(params)).build();
-    logger.debug("[ListAllAccounts:Response] " + response.toString());
+    LOGGER.debug("[ListAllAccounts:Response] " + response.toString());
     return response;
   }
 
@@ -89,9 +89,9 @@ public class CurrencyResource {
   @Path("/ListTransactions")
   @Produces(MediaType.APPLICATION_JSON)
   public Response listTransactions(String params) {
-    logger.debug("[ListTransactions:Request]");
+    LOGGER.debug("[ListTransactions:Request]");
     Response response = Response.ok(Common.listTransactions(params)).build();
-    logger.debug("[ListTransactions:Response] " + response.toString());
+    LOGGER.debug("[ListTransactions:Response] " + response.toString());
     return response;
   }
 
@@ -105,9 +105,9 @@ public class CurrencyResource {
   @Path("/GetBalance")
   @Produces(MediaType.APPLICATION_JSON)
   public Response getBalance(String params) {
-    logger.debug("[GetBalance:Request]");
+    LOGGER.debug("[GetBalance:Request]");
     Response response = Response.ok(Common.getBalance(params)).build();
-    logger.debug("[GetBalance:Response] " + response.toString());
+    LOGGER.debug("[GetBalance:Response] " + response.toString());
     return response;
   }
 
@@ -121,9 +121,9 @@ public class CurrencyResource {
   @Path("/MonitorBalance")
   @Produces(MediaType.APPLICATION_JSON)
   public Response monitorBalance(String params) {
-    logger.debug("[MonitorBalance:Request]");
+    LOGGER.debug("[MonitorBalance:Request]");
     Response response = Response.ok(Common.monitorBalance(params, null)).build();
-    logger.debug("[MonitorBalance:Response] " + response.toString());
+    LOGGER.debug("[MonitorBalance:Response] " + response.toString());
     return response;
   }
 
@@ -137,9 +137,9 @@ public class CurrencyResource {
   @Path("/PrepareTransaction")
   @Produces(MediaType.APPLICATION_JSON)
   public Response prepareTransaction(String params) {
-    logger.debug("[PrepareTransaction:Request]");
+    LOGGER.debug("[PrepareTransaction:Request]");
     Response response = Response.ok(Common.prepareTransaction(params)).build();
-    logger.debug("[PrepareTransaction:Response] " + response.toString());
+    LOGGER.debug("[PrepareTransaction:Response] " + response.toString());
     return response;
   }
 
@@ -153,9 +153,9 @@ public class CurrencyResource {
   @Path("/ApproveTransaction")
   @Produces(MediaType.APPLICATION_JSON)
   public Response approveTransaction(String params) {
-    logger.debug("[ApproveTransaction:Request]");
+    LOGGER.debug("[ApproveTransaction:Request]");
     Response response = Response.ok(Common.approveTransaction(params, true)).build();
-    logger.debug("[ApproveTransaction:Response] " + response.toString());
+    LOGGER.debug("[ApproveTransaction:Response] " + response.toString());
     return response;
   }
 
@@ -169,9 +169,9 @@ public class CurrencyResource {
   @Path("/SubmitTransaction")
   @Produces(MediaType.APPLICATION_JSON)
   public Response submitTransaction(String params) {
-    logger.debug("[SubmitTransaction:Request]");
+    LOGGER.debug("[SubmitTransaction:Request]");
     Response response = Response.ok(Common.submitTransaction(params)).build();
-    logger.debug("[SubmitTransaction:Response] " + response.toString());
+    LOGGER.debug("[SubmitTransaction:Response] " + response.toString());
     return response;
   }
 }

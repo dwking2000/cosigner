@@ -1,6 +1,7 @@
 package io.emax.cosigner.common;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 public class ByteUtilities {
 
@@ -26,7 +27,7 @@ public class ByteUtilities {
       chars[i * 2] = HEX_DIGITS[(data[i] >> 4) & 0xf];
       chars[i * 2 + 1] = HEX_DIGITS[data[i] & 0xf];
     }
-    return new String(chars).toLowerCase();
+    return new String(chars).toLowerCase(Locale.US);
   }
 
   /**
@@ -45,14 +46,14 @@ public class ByteUtilities {
       data = "0" + data;
     }
 
-    if (data.substring(0, 2).toLowerCase().equals("0x")) {
+    if (data.substring(0, 2).equalsIgnoreCase("0x")) {
       data = data.substring(2);
     }
     if (data.length() % 2 == 1) {
       data = "0" + data;
     }
 
-    data = data.toUpperCase();
+    data = data.toUpperCase(Locale.US);
 
     byte[] bytes = new byte[data.length() / 2];
     String hexString = new String(HEX_DIGITS);
@@ -120,8 +121,6 @@ public class ByteUtilities {
       return new byte[0];
     }
 
-    byte[] newData = Arrays.copyOfRange(data, start, start + size);
-
-    return newData;
+    return Arrays.copyOfRange(data, start, start + size);
   }
 }

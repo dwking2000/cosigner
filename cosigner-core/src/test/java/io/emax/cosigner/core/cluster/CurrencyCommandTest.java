@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.emax.cosigner.api.core.CurrencyParameters;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.CosignerConfiguration;
 import io.emax.cosigner.core.cluster.commands.CurrencyCommand;
@@ -39,7 +40,7 @@ public class CurrencyCommandTest extends TestCase {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
-      currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
+      currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
       fail("Problem listing currencies.");

@@ -30,16 +30,14 @@ import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 public class Coordinator {
-  // Static resolver
-  private static Coordinator coordinator = new Coordinator();
   private static final Logger LOGGER = LoggerFactory.getLogger(Coordinator.class);
+  private static Coordinator coordinator = new Coordinator();
+  private static final int REQUEST_TIMEOUT = 1500;
+  private Socket responder;
 
   public static Coordinator getInstance() {
     return coordinator;
   }
-  // End Static resolver, begin actual class.
-
-  private Socket responder;
 
   private Coordinator() {
     try {
@@ -130,7 +128,7 @@ public class Coordinator {
               return;
             }
             ClusterCommand command = new ClusterCommand();
-            command.setCommandType(ClusterCommandType.Heartbeat);
+            command.setCommandType(ClusterCommandType.HEARTBEAT);
             command.getServer().add(ClusterInfo.getInstance().getThisServer());
             LOGGER.debug("Sending heartbeat to: " + server);
             String response = broadcastCommand(command, server);
@@ -144,8 +142,6 @@ public class Coordinator {
       LOGGER.warn(null, e);
     }
   }
-
-  private static final int REQUEST_TIMEOUT = 1500;
 
   /**
    * Broadcast a command to a remote server.
@@ -170,7 +166,7 @@ public class Coordinator {
     // If we haven't heard from the server in more then 2 minutes, consider it offline.
     if ((System.currentTimeMillis() - server.getLastCommunication()) > 2 * 60 * 1000) {
       if (command.getClass() == ClusterCommand.class
-          && ((ClusterCommand) command).getCommandType() == ClusterCommandType.Heartbeat) {
+          && ((ClusterCommand) command).getCommandType() == ClusterCommandType.HEARTBEAT) {
         LOGGER.debug("Server is too old, sending heartbeat");
       } else {
         LOGGER.debug("Server is too old, removing server");

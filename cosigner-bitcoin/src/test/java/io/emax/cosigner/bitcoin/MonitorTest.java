@@ -47,7 +47,7 @@ public class MonitorTest extends TestCase {
     System.out.println("Waiting for balance updates (2 minutes)... ");
     System.out.println("Time: " + new Date());
 
-    Subscription monitorSub = monitor.getObservableBalances().subscribe((addresses) -> {
+    Subscription monitorSub = monitor.getObservableBalances().subscribe(addresses -> {
       System.out.println("Time: " + new Date());
       addresses.forEach((address, balance) -> {
         balanceCounter++;

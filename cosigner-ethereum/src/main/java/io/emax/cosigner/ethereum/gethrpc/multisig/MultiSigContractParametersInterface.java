@@ -1,35 +1,35 @@
 package io.emax.cosigner.ethereum.gethrpc.multisig;
 
 import java.math.BigInteger;
-import java.util.LinkedList;
+import java.util.List;
 
 
 public interface MultiSigContractParametersInterface {
 
   // Getters & Setters
-  LinkedList<String> getAddress();
+  List<String> getAddress();
 
-  void setAddress(LinkedList<String> address);
+  void setAddress(List<String> address);
 
-  LinkedList<BigInteger> getValue();
+  List<BigInteger> getValue();
 
-  void setValue(LinkedList<BigInteger> value);
+  void setValue(List<BigInteger> value);
 
   BigInteger getNonce();
 
   void setNonce(BigInteger nonce);
 
-  LinkedList<BigInteger> getSigV();
+  List<BigInteger> getSigV();
 
-  void setSigV(LinkedList<BigInteger> sigV);
+  void setSigV(List<BigInteger> sigV);
 
-  LinkedList<BigInteger> getSigR();
+  List<BigInteger> getSigR();
 
-  void setSigR(LinkedList<BigInteger> sigR);
+  void setSigR(List<BigInteger> sigR);
 
-  LinkedList<BigInteger> getSigS();
+  List<BigInteger> getSigS();
 
-  void setSigS(LinkedList<BigInteger> sigS);
+  void setSigS(List<BigInteger> sigS);
 
   String getFunction();
 

@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 public class ServerKey {
-  private static final Logger logger = LoggerFactory.getLogger(ServerKey.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ServerKey.class);
   private static final byte[] myKey = Secp256k1.generatePrivateKey();
 
   public static String getServerId() {
@@ -22,7 +22,6 @@ public class ServerKey {
    * Signs the server's public ID with the cluster key.
    */
   public static String[] getClusterSignature(String clusterKey) {
-    byte[][] signature = new byte[0][0];
     LinkedList<String> rsvValues = new LinkedList<>();
     while (rsvValues.isEmpty()) {
       // Hash the public key
@@ -33,15 +32,16 @@ public class ServerKey {
       sha3.doFinal(hashedBytes, 0);
 
       // Sign it.
-      signature = Secp256k1.signTransaction(hashedBytes, ByteUtilities.toByteArray(clusterKey));
+      byte[][] signature =
+          Secp256k1.signTransaction(hashedBytes, ByteUtilities.toByteArray(clusterKey));
       Arrays.asList(signature).forEach(sigValue -> {
         rsvValues.add(ByteUtilities.toHexString(sigValue));
       });
 
       // Recovery ID is bad, try again.
       if (rsvValues.get(2).equalsIgnoreCase("ff")) {
-        logger.debug("Problem getting signature, V is invalid.");
-        logger.debug(rsvValues.toString());
+        LOGGER.debug("Problem getting signature, V is invalid.");
+        LOGGER.debug(rsvValues.toString());
         rsvValues.clear();
       }
     }
@@ -49,7 +49,12 @@ public class ServerKey {
     return rsvValues.toArray(new String[0]);
   }
 
+  /**
+   * Returns the server's key.
+   */
   public static byte[] getMykey() {
-    return myKey;
+    byte[] returnArray = new byte[myKey.length];
+    System.arraycopy(myKey, 0, returnArray, 0, myKey.length);
+    return returnArray;
   }
 }

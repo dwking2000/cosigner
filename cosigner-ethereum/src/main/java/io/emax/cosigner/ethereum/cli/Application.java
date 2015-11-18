@@ -126,7 +126,7 @@ public class Application {
           System.out.println(balanceAddress + ": " + balance);
         });
         System.out.println("2 minute sleep to load...");
-        Thread.sleep(1000 * 120);
+        Thread.sleep(1000 * 120L);
         monitor.getBalances().forEach((balanceAddress, balance) -> {
           System.out.println(balanceAddress + ": " + balance);
         });
@@ -137,24 +137,24 @@ public class Application {
           });
         });
         System.out.println("60 second sleep...");
-        Thread.sleep(60 * 1000);
+        Thread.sleep(60 * 1000L);
         System.out.println("60 second sleep...");
-        Thread.sleep(60 * 1000);
+        Thread.sleep(60 * 1000L);
         System.out.println("60 second sleep...");
-        Thread.sleep(60 * 1000);
+        Thread.sleep(60 * 1000L);
         System.out.println("60 second sleep...");
-        Thread.sleep(60 * 1000);
+        Thread.sleep(60 * 1000L);
         System.out.println("60 second sleep...");
-        Thread.sleep(60 * 1000);
+        Thread.sleep(60 * 1000L);
         System.out.println("60 second sleep...");
-        Thread.sleep(60 * 1000);
+        Thread.sleep(60 * 1000L);
         break;
       case "listTxs":
         if (args.length >= 2) {
           accountName = args[1];
         }
         System.out.println("Waiting 2 minutes to let txHistory build...");
-        Thread.sleep(2 * 60 * 1000);
+        Thread.sleep(2 * 60 * 1000L);
         Arrays.asList(wallet.getTransactions(accountName, 100, 0)).forEach(tx -> {
           System.out.println(tx);
         });

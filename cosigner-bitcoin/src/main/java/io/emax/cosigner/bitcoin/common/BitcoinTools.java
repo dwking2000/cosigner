@@ -21,10 +21,11 @@ import java.util.Locale;
 
 public class BitcoinTools {
 
-  private static final Logger logger = LoggerFactory.getLogger(BitcoinTools.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinTools.class);
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
   public static final String NOKEY = "NOKEY";
+  private static final String SHA256 = "SHA-256";
 
   /**
    * Generate a deterministic set of private keys based on a secret key.
@@ -43,7 +44,7 @@ public class BitcoinTools {
       secureRandom =
           SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       secureRandom = new SecureRandom();
     }
 
@@ -59,7 +60,6 @@ public class BitcoinTools {
       }
 
       // Set up out private key variables
-      BigInteger privateKeyCheck = BigInteger.ZERO;
       secureRandom.setSeed(userSeed);
       // Bit of magic, move this maybe. This is the max key range.
       BigInteger maxKey =
@@ -69,7 +69,7 @@ public class BitcoinTools {
       byte[] privateKeyAttempt = new byte[32];
       for (int i = 0; i < Math.max(rounds, 1); i++) {
         secureRandom.nextBytes(privateKeyAttempt);
-        privateKeyCheck = new BigInteger(1, privateKeyAttempt);
+        BigInteger privateKeyCheck = new BigInteger(1, privateKeyAttempt);
         while (privateKeyCheck.compareTo(BigInteger.ZERO) == 0
             || privateKeyCheck.compareTo(maxKey) == 1) {
           secureRandom.nextBytes(privateKeyAttempt);
@@ -91,7 +91,7 @@ public class BitcoinTools {
       System.arraycopy(privateKey2, 0, privateKey, 0, privateKey2.length);
 
       try {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        MessageDigest md = MessageDigest.getInstance(SHA256);
         md.update(privateKey);
         byte[] checksumHash = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
 
@@ -104,11 +104,11 @@ public class BitcoinTools {
         return Base58.encode(privateKey);
 
       } catch (NoSuchAlgorithmException e) {
-        logger.error(null, e);
+        LOGGER.error(null, e);
         return NOKEY;
       }
     } catch (RuntimeException e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return NOKEY;
     }
   }
@@ -122,11 +122,11 @@ public class BitcoinTools {
    */
   public static String encodeUserKey(String key) {
     try {
-      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      MessageDigest md = MessageDigest.getInstance(SHA256);
       md.update(key.getBytes("UTF-8"));
       return new BigInteger(md.digest()).toString(16);
     } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return null;
     }
   }
@@ -141,7 +141,7 @@ public class BitcoinTools {
     try {
       byte[] publicKeyBytes = getPublicKeyBytes(privateKey);
 
-      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      MessageDigest md = MessageDigest.getInstance(SHA256);
       md.reset();
       md.update(publicKeyBytes);
       byte[] publicShaKeyBytes = md.digest();
@@ -167,7 +167,7 @@ public class BitcoinTools {
       System.arraycopy(networkPublicKeyBytes2, 0, networkPublicKeyBytes, 0,
           networkPublicKeyBytes2.length);
 
-      md = MessageDigest.getInstance("SHA-256");
+      md = MessageDigest.getInstance(SHA256);
       md.reset();
       md.update(networkPublicKeyBytes);
       byte[] publicKeyChecksum = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
@@ -177,11 +177,9 @@ public class BitcoinTools {
       System.arraycopy(publicKeyChecksum, 0, decodedPublicKey, networkPublicKeyBytes.length,
           publicKeyChecksum.length);
 
-      String publicKey = Base58.encode(decodedPublicKey);
-      return publicKey;
-
+      return Base58.encode(decodedPublicKey);
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return null;
     }
   }
@@ -206,7 +204,7 @@ public class BitcoinTools {
           ByteUtilities.toHexString(networkBytes) + ByteUtilities.toHexString(addressBytes);
       byte[] checksumData = ByteUtilities.toByteArray(checksumString);
 
-      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      MessageDigest md = MessageDigest.getInstance(SHA256);
       md.reset();
       byte[] calculatedCheckum = Arrays.copyOfRange(md.digest(md.digest(checksumData)), 0, 4);
       if (!ByteUtilities.toHexString(calculatedCheckum)
@@ -215,7 +213,7 @@ public class BitcoinTools {
       }
       return ByteUtilities.toHexString(addressBytes);
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return "";
     }
   }
@@ -231,7 +229,7 @@ public class BitcoinTools {
     try {
       String encodedBytes = networkBytes + addressBytes;
       byte[] data = ByteUtilities.toByteArray(encodedBytes);
-      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      MessageDigest md = MessageDigest.getInstance(SHA256);
       md.reset();
       md.update(data);
       byte[] publicKeyChecksum = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
@@ -241,7 +239,7 @@ public class BitcoinTools {
       encodedBytes = Base58.encode(ByteUtilities.toByteArray(encodedBytes));
       return encodedBytes;
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return null;
     }
   }
@@ -271,7 +269,7 @@ public class BitcoinTools {
       return false;
 
     } catch (Exception e) {
-      logger.debug(null, e);
+      LOGGER.debug(null, e);
       return false;
     }
   }
@@ -297,7 +295,7 @@ public class BitcoinTools {
       System.arraycopy(decodedPrivateKey, decodedPrivateKey.length - 4, privateKeyChecksum, 0, 4);
 
       // Is it valid?
-      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      MessageDigest md = MessageDigest.getInstance(SHA256);
       md.update(networkPrivateKeyBytes);
       byte[] checksumCheck = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
       for (int i = 0; i < 4; i++) {
@@ -309,12 +307,10 @@ public class BitcoinTools {
       // Strip leading network byte and get the public key
       byte[] privateKeyBytes =
           Arrays.copyOfRange(networkPrivateKeyBytes, 1, networkPrivateKeyBytes.length);
-      byte[] publicKeyBytes = Secp256k1.getPublicKey(privateKeyBytes);
-
-      return publicKeyBytes;
+      return Secp256k1.getPublicKey(privateKeyBytes);
 
     } catch (Exception e) {
-      logger.error(null, e);
+      LOGGER.error(null, e);
       return new byte[0];
     }
   }

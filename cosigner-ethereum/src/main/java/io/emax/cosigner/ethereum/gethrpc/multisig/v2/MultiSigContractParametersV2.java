@@ -1,4 +1,4 @@
-package io.emax.cosigner.ethereum.gethrpc.multisig.v1;
+package io.emax.cosigner.ethereum.gethrpc.multisig.v2;
 
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractParametersInterface;
@@ -7,8 +7,10 @@ import org.bouncycastle.util.Arrays;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
+import java.util.List;
 
-public class MultiSigContractParameters implements MultiSigContractParametersInterface {
+public class MultiSigContractParametersV2
+    extends io.emax.cosigner.ethereum.gethrpc.multisig.v1.MultiSigContractParametersV1 {
   private String function;
   private BigInteger nonce = BigInteger.ZERO;
   private LinkedList<String> address = new LinkedList<>();
@@ -18,23 +20,25 @@ public class MultiSigContractParameters implements MultiSigContractParametersInt
   private LinkedList<BigInteger> sigS = new LinkedList<>();
 
   @Override
-  public LinkedList<String> getAddress() {
+  public List<String> getAddress() {
     return address;
   }
 
   @Override
-  public void setAddress(LinkedList<String> address) {
-    this.address = address;
+  public void setAddress(List<String> address) {
+    this.address = new LinkedList<>();
+    this.address.addAll(address);
   }
 
   @Override
-  public LinkedList<BigInteger> getValue() {
+  public List<BigInteger> getValue() {
     return value;
   }
 
   @Override
-  public void setValue(LinkedList<BigInteger> value) {
-    this.value = value;
+  public void setValue(List<BigInteger> value) {
+    this.value = new LinkedList<>();
+    this.value.addAll(value);
   }
 
   @Override
@@ -48,33 +52,36 @@ public class MultiSigContractParameters implements MultiSigContractParametersInt
   }
 
   @Override
-  public LinkedList<BigInteger> getSigV() {
+  public List<BigInteger> getSigV() {
     return sigV;
   }
 
   @Override
-  public void setSigV(LinkedList<BigInteger> sigV) {
-    this.sigV = sigV;
+  public void setSigV(List<BigInteger> sigV) {
+    this.sigV = new LinkedList<>();
+    this.sigV.addAll(sigV);
   }
 
   @Override
-  public LinkedList<BigInteger> getSigR() {
+  public List<BigInteger> getSigR() {
     return sigR;
   }
 
   @Override
-  public void setSigR(LinkedList<BigInteger> sigR) {
-    this.sigR = sigR;
+  public void setSigR(List<BigInteger> sigR) {
+    this.sigR = new LinkedList<>();
+    this.sigR.addAll(sigR);
   }
 
   @Override
-  public LinkedList<BigInteger> getSigS() {
+  public List<BigInteger> getSigS() {
     return sigS;
   }
 
   @Override
-  public void setSigS(LinkedList<BigInteger> sigS) {
-    this.sigS = sigS;
+  public void setSigS(List<BigInteger> sigS) {
+    this.sigS = new LinkedList<>();
+    this.sigS.addAll(sigS);
   }
 
   @Override

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletRegistration;
 
@@ -24,7 +25,7 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
   private static CosignerConfiguration config;
   private static HashMap<String, CurrencyPackage> currencies = new HashMap<>();
   private static LinkedList<Validator> validators = new LinkedList<>();
-  private static Logger logger = LoggerFactory.getLogger(CosignerApplication.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CosignerApplication.class);
 
   public static CosignerConfiguration getConfig() {
     return config;
@@ -34,20 +35,22 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     CosignerApplication.config = config;
   }
 
-  public static HashMap<String, CurrencyPackage> getCurrencies() {
+  public static Map<String, CurrencyPackage> getCurrencies() {
     return currencies;
   }
 
-  public static void setCurrencies(HashMap<String, CurrencyPackage> currencies) {
-    CosignerApplication.currencies = currencies;
+  public static void setCurrencies(Map<String, CurrencyPackage> currencies) {
+    CosignerApplication.currencies = new HashMap<>();
+    CosignerApplication.currencies.putAll(currencies);
   }
 
-  public static LinkedList<Validator> getValidators() {
+  public static List<Validator> getValidators() {
     return validators;
   }
 
-  public static void setValidators(LinkedList<Validator> validators) {
-    CosignerApplication.validators = validators;
+  public static void setValidators(List<Validator> validators) {
+    CosignerApplication.validators = new LinkedList<>();
+    CosignerApplication.validators.addAll(validators);
   }
 
   public static void main(String[] args) throws Exception {
@@ -91,7 +94,7 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
       });
     }
 
-    logger.info("Currencies enabled for cosigner: " + getCurrencies().keySet());
+    LOGGER.info("Currencies enabled for cosigner: " + getCurrencies().keySet());
 
     BasicValidator validator = new BasicValidator();
     validators.add(validator);

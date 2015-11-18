@@ -17,7 +17,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ClusterInfo {
-  private static final Logger logger = LoggerFactory.getLogger(ClusterInfo.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClusterInfo.class);
+
+  private String clusterKey = "";
+  private Set<Server> servers = new HashSet<>();
+  private Server thisServer = new Server();
 
   // Static resolver
   private static ClusterInfo clusterInfo = new ClusterInfo();
@@ -38,10 +42,6 @@ public class ClusterInfo {
 
     servers.add(thisServer);
   }
-
-  private String clusterKey = "";
-  private Set<Server> servers = new HashSet<>();
-  private Server thisServer = new Server();
 
   public Set<Server> getServers() {
     return servers;
@@ -88,16 +88,16 @@ public class ClusterInfo {
    * message for one we need to respond with a signed heartbeat. This will trigger the server to add
    * us if the keys match, and send us its known hosts.
    */
-  public void addBeaconServer(Server server) {    
+  public void addBeaconServer(Server server) {
     if (!this.getServers().contains(server)) {
-      logger.debug("Got beacon for server: " + server);
-      logger.debug("Server is new to us, sending it a heartbeat");
+      LOGGER.debug("Got beacon for server: " + server);
+      LOGGER.debug("Server is new to us, sending it a heartbeat");
       ClusterCommand command = new ClusterCommand();
-      command.setCommandType(ClusterCommandType.Heartbeat);
+      command.setCommandType(ClusterCommandType.HEARTBEAT);
       command.getServer().add(getThisServer());
 
       String response = Coordinator.broadcastCommand(command, server);
-      logger.debug(response);
+      LOGGER.debug(response);
     }
   }
 
@@ -107,8 +107,8 @@ public class ClusterInfo {
    * <p>Returns true or false depending on whether the server's signature is acceptable or not.
    */
   public boolean addServer(Server server, boolean wasHeartbeat) {
-    logger.debug("Attempting to add a server: " + server);
-    logger.debug("Is a heartbeat: " + wasHeartbeat);
+    LOGGER.debug("Attempting to add a server: " + server);
+    LOGGER.debug("Is a heartbeat: " + wasHeartbeat);
     if (!getThisServer().equals(server)) {
       server.setOriginator(false);
     }
@@ -129,7 +129,7 @@ public class ClusterInfo {
         ByteUtilities.toHexString(Secp256k1.getPublicKey(ByteUtilities.toByteArray(clusterKey)));
 
     if (!publicKey.equalsIgnoreCase(recoveredPublicKey)) {
-      logger.debug("Server doesn't belong to this cluster.");
+      LOGGER.debug("Server doesn't belong to this cluster.");
       return false;
     }
 

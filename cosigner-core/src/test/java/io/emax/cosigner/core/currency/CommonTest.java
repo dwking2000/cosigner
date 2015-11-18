@@ -15,6 +15,7 @@ import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.bitcoin.BitcoinResource;
 import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
@@ -80,7 +81,7 @@ public class CommonTest extends TestCase {
       String currenciesString = Common.listCurrencies();
       @SuppressWarnings("unchecked")
       LinkedList<String> currencies =
-          (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
+          (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
 
       currencies.forEach(currency -> {
         System.out.println("Found currency: " + currency);
@@ -100,7 +101,7 @@ public class CommonTest extends TestCase {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
-      currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
+      currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
       fail("Problem listing currencies.");
@@ -113,7 +114,7 @@ public class CommonTest extends TestCase {
         parms.setCurrencySymbol(currency);
         parms.setUserKey(userKey);
 
-        String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
         System.out.println(address);
       });
@@ -132,7 +133,7 @@ public class CommonTest extends TestCase {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
-      currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
+      currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
       fail("Problem listing currencies.");
@@ -145,11 +146,11 @@ public class CommonTest extends TestCase {
         parms.setCurrencySymbol(currency);
         parms.setUserKey(userKey);
 
-        String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String addressString = Common.listAllAddresses(parmsString);
 
         LinkedList<String> addresses =
-            (LinkedList<String>) Common.objectifyString(LinkedList.class, addressString);
+            (LinkedList<String>) Json.objectifyString(LinkedList.class, addressString);
         addresses.forEach(address -> {
           System.out.println(address);
         });
@@ -169,7 +170,7 @@ public class CommonTest extends TestCase {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
-      currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
+      currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
       fail("Problem listing currencies.");
@@ -182,11 +183,11 @@ public class CommonTest extends TestCase {
         parms.setCurrencySymbol(currency);
         parms.setUserKey(userKey);
 
-        String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
 
         parms.setAccount(Arrays.asList(address));
-        parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String balance = Common.getBalance(parmsString);
         System.out.println(balance);
       });
@@ -205,7 +206,7 @@ public class CommonTest extends TestCase {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
-      currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
+      currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
       fail("Problem listing currencies.");
@@ -218,11 +219,11 @@ public class CommonTest extends TestCase {
         parms.setCurrencySymbol(currency);
         parms.setUserKey(userKey);
 
-        String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
 
         parms.setAccount(Arrays.asList(address));
-        parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String balance = Common.monitorBalance(parmsString, null);
         System.out.println(balance);
       });
@@ -241,7 +242,7 @@ public class CommonTest extends TestCase {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
-      currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
+      currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
       fail("Problem listing currencies.");
@@ -254,7 +255,7 @@ public class CommonTest extends TestCase {
         parms.setCurrencySymbol(currency);
         parms.setUserKey(userKey);
 
-        String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
 
         parms.setAccount(Arrays.asList(address));
@@ -263,7 +264,7 @@ public class CommonTest extends TestCase {
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);
         parms.setReceivingAccount(Arrays.asList(accountData));
-        parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         String tx = Common.prepareTransaction(parmsString);
         System.out.println(tx);
@@ -283,7 +284,7 @@ public class CommonTest extends TestCase {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
-      currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
+      currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
       fail("Problem listing currencies.");
@@ -296,7 +297,7 @@ public class CommonTest extends TestCase {
         parms.setCurrencySymbol(currency);
         parms.setUserKey(userKey);
 
-        String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
 
         parms.setAccount(Arrays.asList(address));
@@ -305,11 +306,11 @@ public class CommonTest extends TestCase {
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);
         parms.setReceivingAccount(Arrays.asList(accountData));
-        parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         String tx = Common.prepareTransaction(parmsString);
         parms.setTransactionData(tx);
-        parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         tx = Common.approveTransaction(parmsString, true);
         System.out.println(tx);
@@ -329,7 +330,7 @@ public class CommonTest extends TestCase {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
-      currencies = (LinkedList<String>) Common.objectifyString(LinkedList.class, currenciesString);
+      currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
       fail("Problem listing currencies.");
@@ -342,7 +343,7 @@ public class CommonTest extends TestCase {
         parms.setCurrencySymbol(currency);
         parms.setUserKey(userKey);
 
-        String parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
 
         parms.setAccount(Arrays.asList(address));
@@ -351,15 +352,15 @@ public class CommonTest extends TestCase {
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);
         parms.setReceivingAccount(Arrays.asList(accountData));
-        parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         String tx = Common.prepareTransaction(parmsString);
         parms.setTransactionData(tx);
-        parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         tx = Common.approveTransaction(parmsString, true);
         parms.setTransactionData(tx);
-        parmsString = Common.stringifyObject(CurrencyParameters.class, parms);
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         tx = Common.submitTransaction(parmsString);
         System.out.println(tx);

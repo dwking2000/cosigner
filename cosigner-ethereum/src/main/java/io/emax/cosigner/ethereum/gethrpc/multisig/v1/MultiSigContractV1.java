@@ -3,7 +3,7 @@ package io.emax.cosigner.ethereum.gethrpc.multisig.v1;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractInterface;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractParametersInterface;
 
-public class MultiSigContract implements MultiSigContractInterface {
+public class MultiSigContractV1 implements MultiSigContractInterface {
   private static String initData =
       "606060405260405161082b38038061082b833981016040528051608051910190600060018190555b"
           + "825181101560bb578281815181101560025790602001906020020151600660005060008360010181"
@@ -145,6 +145,6 @@ public class MultiSigContract implements MultiSigContractInterface {
 
   @Override
   public MultiSigContractParametersInterface getContractParameters() {
-    return new MultiSigContractParameters();
+    return new MultiSigContractParametersV1();
   }
 }

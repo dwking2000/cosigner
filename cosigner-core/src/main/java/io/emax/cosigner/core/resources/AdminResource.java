@@ -23,7 +23,7 @@ import javax.ws.rs.core.Response;
 // Needs to be able to see the cluster status
 @Path("/admin")
 public class AdminResource {
-  Logger logger = LoggerFactory.getLogger(AdminResource.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AdminResource.class);
 
   /**
    * Add a node to the current cluster.
@@ -36,7 +36,7 @@ public class AdminResource {
   @Path("/AddNode")
   @Produces(MediaType.APPLICATION_JSON)
   public Response addNode(Server newServer) {
-    logger.debug("[AddNode:Request]");
+    LOGGER.debug("[AddNode:Request]");
     ClusterInfo cluster = ClusterInfo.getInstance();
 
     if (newServer == null) {
@@ -58,7 +58,7 @@ public class AdminResource {
   @Path("/ListNodes")
   @Produces(MediaType.APPLICATION_JSON)
   public Response listNodes() {
-    logger.debug("[ListNodes:Request]");
+    LOGGER.debug("[ListNodes:Request]");
     ClusterInfo cluster = ClusterInfo.getInstance();
     return Response.ok(cluster.getServers()).build();
   }

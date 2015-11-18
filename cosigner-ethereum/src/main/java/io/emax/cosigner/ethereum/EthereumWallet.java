@@ -132,7 +132,7 @@ public class EthereumWallet implements Wallet, Validatable {
           contractType = contractType.getSuperclass();
         }
       }
-    } catch (Exception e) {
+    } catch (InstantiationException | IllegalAccessException e) {
       LOGGER.debug(null, e);
     }
   }
@@ -387,7 +387,7 @@ public class EthereumWallet implements Wallet, Validatable {
         tx.getTo().setDecodedContents(
             ByteUtilities.stripLeadingNullBytes(new BigInteger(senderAddress, 16).toByteArray()));
       }
-    } catch (Exception e) {
+    } catch (InstantiationException | IllegalAccessException e) {
       LOGGER.error(null, e);
     }
 
@@ -534,7 +534,7 @@ public class EthereumWallet implements Wallet, Validatable {
       sigTx.getSigV().setDecodedContents(sigData[2]);
 
       return ByteUtilities.toHexString(sigTx.encode());
-    } catch (Exception e) {
+    } catch (InstantiationException | IllegalAccessException e) {
       LOGGER.error(null, e);
       return null;
     }
@@ -766,7 +766,7 @@ public class EthereumWallet implements Wallet, Validatable {
           }
         }
       }
-    } catch (Exception e) {
+    } catch (InstantiationException | IllegalAccessException e) {
       LOGGER.debug("Unable to decode tx data", e);
     }
 

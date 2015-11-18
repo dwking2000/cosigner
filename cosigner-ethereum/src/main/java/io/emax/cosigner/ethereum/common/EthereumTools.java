@@ -159,9 +159,7 @@ public class EthereumTools {
     try {
       byte[] decodedPrivateKey = new BigInteger("00" + privateKey, 16).toByteArray();
 
-      byte[] publicKeyBytes = Secp256k1.getPublicKey(decodedPrivateKey);
-
-      return publicKeyBytes;
+      return Secp256k1.getPublicKey(decodedPrivateKey);
 
     } catch (Exception e) {
       LOGGER.warn(null, e);

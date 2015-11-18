@@ -62,9 +62,7 @@ public class ClusterCommand implements BaseCommand {
     try {
       JsonFactory jsonFact = new JsonFactory();
       JsonParser jsonParser = jsonFact.createParser(commandString);
-      ClusterCommand clusterCommand =
-          new ObjectMapper().readValue(jsonParser, ClusterCommand.class);
-      return clusterCommand;
+      return new ObjectMapper().readValue(jsonParser, ClusterCommand.class);
     } catch (IOException e) {
       LOGGER.warn(null, e);
       return null;
@@ -76,19 +74,19 @@ public class ClusterCommand implements BaseCommand {
    */
   public static boolean handleCommand(ClusterCommand command) {
     switch (command.commandType) {
-      case Heartbeat:
+      case HEARTBEAT:
         LOGGER.debug("Got heartbeat for: " + command);
         command.getServer().forEach(server -> {
           if (ClusterInfo.getInstance().addServer(server, true)) {
             ClusterCommand response = new ClusterCommand();
-            response.setCommandType(ClusterCommandType.KnownServers);
+            response.setCommandType(ClusterCommandType.KNOWNSERVERS);
             response.getServer().addAll(ClusterInfo.getInstance().getServers());
             String commandResponse = Coordinator.broadcastCommand(response, server);
             LOGGER.debug(commandResponse);
           }
         });
         return true;
-      case KnownServers:
+      case KNOWNSERVERS:
         LOGGER.debug("Got list of known servers: " + command);
         command.getServer().forEach(server -> {
           ClusterInfo.getInstance().addServer(server, server.isOriginator());
