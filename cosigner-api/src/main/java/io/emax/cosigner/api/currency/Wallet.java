@@ -42,6 +42,8 @@ public interface Wallet {
    */
   Iterable<String> getAddresses(String name);
 
+  // TODO Add an option to exclude the server-side keys, and specify your own req number of sigs.
+  // This would allow a "bring-your-own-keys" setup if done correctly.
   /**
    * Provides a multi-sig account for the given addresses. There may be additional addresses
    * involved if provided in the currency configuration. The order of the addresses may matter
