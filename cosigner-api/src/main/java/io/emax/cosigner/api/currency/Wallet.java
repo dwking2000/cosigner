@@ -6,14 +6,14 @@ import java.util.Date;
 
 /**
  * Wallet interface.
- * 
+ *
  * @author Tom
  *
  */
 public interface Wallet {
   /**
    * Returns a new regular address.
-   * 
+   *
    * @param name Name associated to the account, for deterministic addresses.
    * @return Public key/address of the account.
    */
@@ -21,14 +21,14 @@ public interface Wallet {
 
   /**
    * Returns a new regular address.
-   * 
+   *
    * <p>This version skips the first N addresses.
    */
   String createAddress(String name, int skipNumber);
 
   /**
    * Register a non-cosigner address for the account.
-   * 
+   *
    * <p>Some crypto-currency wallets need to be watching for addresses in order to calculate
    * balance. This will allow us to track this data for addresses not created with cosigner.
    */
@@ -37,18 +37,16 @@ public interface Wallet {
   /**
    * Returns all multi-sig addresses stored for the provided wallet name, they should be
    * deterministic.
-   * 
+   *
    * @param name User key the addresses belong to.
    */
   Iterable<String> getAddresses(String name);
 
-  // TODO Add an option to exclude the server-side keys, and specify your own req number of sigs.
-  // This would allow a "bring-your-own-keys" setup if done correctly.
   /**
    * Provides a multi-sig account for the given addresses. There may be additional addresses
    * involved if provided in the currency configuration. The order of the addresses may matter
    * depending on the currency.
-   * 
+   *
    * @param addresses Addresses to include in the multi-sig script.
    * @param name Associate the account with this user key
    */
@@ -89,7 +87,7 @@ public interface Wallet {
    * Sign the provided transaction with the provided address' private keys if available Any existing
    * signing validation should be called before calling this interface I.E. Amount range,
    * transaction counts for the day, untrusted recipient, etc...
-   * 
+   *
    * @return Same transaction with new signature data
    */
   String signTransaction(String transaction, String address);
@@ -97,14 +95,14 @@ public interface Wallet {
   /**
    * Sign the provided transaction, the address' private key will be generated with the provided
    * account name.
-   * 
+   *
    * @return Same transaction with new signature data
    */
   String signTransaction(String transaction, String address, String name);
 
   /**
    * Submits the provided transaction to the network.
-   * 
+   *
    * @return Transaction identifier to allow for tracking
    */
   String sendTransaction(String transaction);
@@ -232,7 +230,7 @@ public interface Wallet {
 
   /**
    * List transactions from a given address
-   * 
+   *
    * @param address address to lookup transactions for.
    * @param numberToReturn Number of transactions to return.
    * @param skipNumber Skip the first skipNumber results for pagination.

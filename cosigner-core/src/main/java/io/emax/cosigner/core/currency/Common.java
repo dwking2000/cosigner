@@ -74,7 +74,7 @@ public class Common {
 
   /**
    * List all currencies that are currently loaded in cosigner.
-   * 
+   *
    * @return String list of currencies.
    */
   public static String listCurrencies() {
@@ -109,7 +109,7 @@ public class Common {
 
   /**
    * Get a new address for the provided currency & user key.
-   * 
+   *
    * @param params {@link CurrencyParameters} with the currency code and user key filled in.
    * @return Address that the user can use to deposit funds, for which we can generate the private
    *         keys.
@@ -120,6 +120,9 @@ public class Common {
 
     String userAccount = currency.getWallet().createAddress(currencyParams.getUserKey());
     LinkedList<String> accounts = new LinkedList<>();
+    if (currencyParams.getAccount() != null) {
+      accounts.addAll(currencyParams.getAccount());
+    }
     accounts.add(userAccount);
     String userMultiAccount =
         currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
@@ -131,7 +134,7 @@ public class Common {
 
   /**
    * List all addresses that we have generated for the given user key and currency.
-   * 
+   *
    * @param params {@link CurrencyParameters} with the currency code and user key filled in.
    * @return All addresses that cosigner can generate the private key for belonging to that user
    *         key.
@@ -150,9 +153,9 @@ public class Common {
 
   /**
    * List transactions for the given address and currency.
-   * 
+   *
    * <p>Will only return data for addresses that belong to cosigner.
-   * 
+   *
    * @param params {@link CurrencyParameters} with the currency code and addresses filled in.
    * @return List of transactions that affect each account.
    */
@@ -173,7 +176,7 @@ public class Common {
 
   /**
    * Returns the combined balance of all addresses provided in the parameters.
-   * 
+   *
    * @param params {@link CurrencyParameters} with the currency code and addresses filled in.
    * @return Sum of all balances for the provided addresses.
    */
@@ -217,12 +220,12 @@ public class Common {
 
   /**
    * Sets up a monitor for the given addresses.
-   * 
+   *
    * <p>A monitor provides periodic balance updates, along with all known transactions when
    * initialized, and any new transactions that come in while it's active. Transactions can be
    * distinguished from balance updates in that the transaction data portion of the response has
    * data, it contains the transaction hash.
-   * 
+   *
    * @param params {@link CurrencyParameters} with the currency code and addresses filled in. If
    *        using a REST callback, the callback needs to be filled in as well.
    * @param responseSocket If this has been called using a web socket, pass the socket in here and
@@ -370,10 +373,10 @@ public class Common {
 
   /**
    * Create and sign a transaction.
-   * 
+   *
    * <p>This only signs the transaction with the user's key, showing that the user has requested the
    * transaction. The server keys are not used until the approve stage.
-   * 
+   *
    * @param params {@link CurrencyParameters} with the currency code, user key, senders, recipients
    *        and amounts filled in.
    * @return The transaction string that was requested.
@@ -428,10 +431,10 @@ public class Common {
 
   /**
    * Approve a transaction that's been signed off on by the user.
-   * 
+   *
    * <p>This stage signs the transaction with the server keys after running it through any sanity
    * checks and validation required.
-   * 
+   *
    * @param params {@link CurrencyParameters} with the currency code, user key, senders, recipients
    *        and amounts filled in. The transaction data should be filled in with the response from
    *        prepareTransaction.
@@ -485,7 +488,7 @@ public class Common {
 
   /**
    * Submits a transaction for processing on the network.
-   * 
+   *
    * @param params {@link CurrencyParameters} with the currency and transaction data filled in. The
    *        transaction data required is the result from the approveTransaction stage.
    * @return The transaction hash/ID.

@@ -250,24 +250,29 @@ public class CommonTest extends TestCase {
 
     try {
       currencies.forEach(currency -> {
-        System.out.println("For " + currency);
-        CurrencyParameters parms = new CurrencyParameters();
-        parms.setCurrencySymbol(currency);
-        parms.setUserKey(userKey);
+        try {
+          System.out.println("For " + currency);
+          CurrencyParameters parms = new CurrencyParameters();
+          parms.setCurrencySymbol(currency);
+          parms.setUserKey(userKey);
 
-        String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
-        String address = Common.getNewAddress(parmsString);
+          String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
+          String address = Common.getNewAddress(parmsString);
 
-        parms.setAccount(Arrays.asList(address));
-        address = Common.getNewAddress(parmsString);
-        CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
-        accountData.setAmount("5.0");
-        accountData.setRecipientAddress(address);
-        parms.setReceivingAccount(Arrays.asList(accountData));
-        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
+          parms.setAccount(Arrays.asList(address));
+          address = Common.getNewAddress(parmsString);
+          CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+          accountData.setAmount("5.0");
+          accountData.setRecipientAddress(address);
+          parms.setReceivingAccount(Arrays.asList(accountData));
+          parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
-        String tx = Common.prepareTransaction(parmsString);
-        System.out.println(tx);
+          String tx = Common.prepareTransaction(parmsString);
+          System.out.println(tx);
+        } catch (Exception e) {
+          LOGGER.debug(null, e);
+          fail("Exception when preparing a transaction.");
+        }
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
