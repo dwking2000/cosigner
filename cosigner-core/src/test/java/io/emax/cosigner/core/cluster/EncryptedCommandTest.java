@@ -1,6 +1,7 @@
 package io.emax.cosigner.core.cluster;
 
 import io.emax.cosigner.api.core.CurrencyParameters;
+import io.emax.cosigner.api.core.Server;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.core.cluster.commands.CurrencyCommand;

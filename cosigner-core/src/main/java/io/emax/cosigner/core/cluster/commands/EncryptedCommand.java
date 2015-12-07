@@ -5,10 +5,10 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import io.emax.cosigner.api.core.Server;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.crypto.Aes;
 import io.emax.cosigner.common.crypto.Secp256k1;
-import io.emax.cosigner.core.cluster.Server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

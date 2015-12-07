@@ -23,9 +23,9 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   private static int maxDeterministicAddresses = 100;
   private static String daemonUser;
   private static String daemonPassword;
-  private static BigDecimal maxAmountPerHour;
-  private static BigDecimal maxAmountPerDay;
-  private static BigDecimal maxAmountPerTransaction;
+  private static BigDecimal maxAmountPerHour = BigDecimal.ZERO;
+  private static BigDecimal maxAmountPerDay = BigDecimal.ZERO;
+  private static BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
 
   // Ideally we'll prompt for this or something more secure than a properties
   // file...
@@ -147,7 +147,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
 
   /**
    * Returns addresses that will be appended to list of signers used in multi-sig address.
-   * 
+   *
    * @return Array of addresses.
    */
   public String[] getMultiSigAccounts() {

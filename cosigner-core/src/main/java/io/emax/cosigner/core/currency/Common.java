@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.emax.cosigner.api.core.CurrencyPackage;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.api.core.CurrencyParametersRecipient;
+import io.emax.cosigner.api.core.Server;
 import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.SigningType;
 import io.emax.cosigner.api.currency.Wallet.Recipient;
@@ -16,7 +17,6 @@ import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
-import io.emax.cosigner.core.cluster.Server;
 import io.emax.cosigner.core.cluster.commands.CurrencyCommand;
 import io.emax.cosigner.core.cluster.commands.CurrencyCommandType;
 

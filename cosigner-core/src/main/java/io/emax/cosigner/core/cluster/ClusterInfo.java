@@ -2,6 +2,7 @@ package io.emax.cosigner.core.cluster;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.emax.cosigner.api.core.Server;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.core.CosignerApplication;
@@ -83,7 +84,7 @@ public class ClusterInfo {
 
   /**
    * Add a server discovered via beacon.
-   * 
+   *
    * <p>Servers announced via beacon may not have the most up to date cluster keys. When we get a
    * message for one we need to respond with a signed heartbeat. This will trigger the server to add
    * us if the keys match, and send us its known hosts.
@@ -103,7 +104,7 @@ public class ClusterInfo {
 
   /**
    * Add a server to our known hosts.
-   * 
+   *
    * <p>Returns true or false depending on whether the server's signature is acceptable or not.
    */
   public boolean addServer(Server server, boolean wasHeartbeat) {

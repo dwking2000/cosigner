@@ -1,7 +1,7 @@
 package io.emax.cosigner.core.resources;
 
+import io.emax.cosigner.api.core.Server;
 import io.emax.cosigner.core.cluster.ClusterInfo;
-import io.emax.cosigner.core.cluster.Server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,21 +13,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-// TODO Create an admin utility that uses a second JKS to manage cluster admin vs. client library.
-// Admin should be able to change Server settings that are safe to change like:
-// address clients can reach it
-// cluster key
-// manually add a node
-// Maybe temporarily disable a currency? vs. full disable like in the config. -- Only thing not done
-// at the moment.
-// Needs to be able to see the cluster status
-@Path("/admin")
+@Path("/")
 public class AdminResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(AdminResource.class);
 
   /**
    * Add a node to the current cluster.
-   * 
+   *
    * @param newServer Server information
    * @return If the server is added, it will return the same data back. Otherwise an appropriate
    *         status message is returned.
@@ -51,7 +43,7 @@ public class AdminResource {
 
   /**
    * Lists all cosigner nodes already in the cluster.
-   * 
+   *
    * @return Cluster information.
    */
   @GET

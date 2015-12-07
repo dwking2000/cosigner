@@ -1,4 +1,4 @@
-package io.emax.cosigner.core.cluster;
+package io.emax.cosigner.api.core;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

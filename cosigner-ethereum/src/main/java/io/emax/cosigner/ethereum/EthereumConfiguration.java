@@ -24,9 +24,9 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
   private static int minSignatures = 2;
   private static String contractAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
   private static String[] multiSigAccounts = {"4839540a0ae3242fadf288622f7de1a9278a5858"};
-  private static BigDecimal maxAmountPerHour;
-  private static BigDecimal maxAmountPerDay;
-  private static BigDecimal maxAmountPerTransaction;
+  private static BigDecimal maxAmountPerHour = BigDecimal.ZERO;
+  private static BigDecimal maxAmountPerDay = BigDecimal.ZERO;
+  private static BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
   // Ideally we'll prompt for this or something more secure than a properties
   // file...
   private static String serverPrivateKey =
@@ -161,7 +161,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
 
   /**
    * Lists addresses that should be appended to the signers when creating new multi-sig addresses.
-   * 
+   *
    * @return Array of addresses
    */
   public String[] getMultiSigAddresses() {

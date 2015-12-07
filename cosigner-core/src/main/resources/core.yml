@@ -1,7 +1,5 @@
 server:
   applicationConnectors:
-    - type: http
-      port: 8080
     - type: https
       port: 8443
       keyStorePath: ./cosigner.jks
@@ -17,8 +15,20 @@ server:
       needClientAuth: true
       allowRenegotiation: false
   adminConnectors:
-    - type: http
-      port: 8081
+    - type: https
+      port: 8445
+      keyStorePath: ./cosigner.jks
+      keyStorePassword: cosigner
+      keyStoreType: JKS
+      keyManagerPassword: cosigner
+      trustStorePath: ./cosigner.jks
+      trustStorePassword: cosigner
+      trustStoreType: JKS
+      certAlias: cosigner
+      validateCerts: false
+      validatePeers: false
+      needClientAuth: true
+      allowRenegotiation: false
 
 logging:
   level: INFO

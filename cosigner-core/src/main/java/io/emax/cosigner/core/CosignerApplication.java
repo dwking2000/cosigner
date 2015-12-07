@@ -1,5 +1,7 @@
 package io.emax.cosigner.core;
 
+import io.dropwizard.jersey.DropwizardResourceConfig;
+import io.dropwizard.jersey.setup.JerseyContainerHolder;
 import io.dropwizard.setup.Environment;
 import io.emax.cosigner.api.core.CurrencyPackage;
 import io.emax.cosigner.api.validation.Validator;
@@ -11,6 +13,7 @@ import io.emax.cosigner.validator.BasicValidator;
 
 import org.atmosphere.cpr.ApplicationConfig;
 import org.atmosphere.cpr.AtmosphereServlet;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,6 +119,14 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
 
     // Register Admin endpoints (REST)
     final AdminResource adminResource = new AdminResource();
-    environment.jersey().register(adminResource);
+    final DropwizardResourceConfig jerseyConfig =
+        new DropwizardResourceConfig(environment.metrics());
+    JerseyContainerHolder jerseyContainerHolder =
+        new JerseyContainerHolder(new ServletContainer(jerseyConfig));
+
+    jerseyConfig.register(adminResource);
+
+    environment.admin().addServlet("admin resources", jerseyContainerHolder.getContainer())
+        .addMapping("/admin/*");
   }
 }

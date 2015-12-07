@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import io.emax.cosigner.api.core.Server;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.CosignerConfiguration;
 import io.emax.cosigner.core.cluster.commands.BaseCommand;
@@ -145,10 +146,10 @@ public class Coordinator {
 
   /**
    * Broadcast a command to a remote server.
-   * 
+   *
    * <p>Example: Send a signature command to the alternate cosigner server. It will respond with
    * signed data.
-   * 
+   *
    * @param command Command to broadcast.
    * @param server Server to attempt to send the command to.
    * @return Reply from the server.
