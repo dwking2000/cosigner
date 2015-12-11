@@ -1,5 +1,6 @@
 package io.emax.cosigner.ethereum;
 
+import io.emax.cosigner.api.core.ServerStatus;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.common.ByteUtilities;
@@ -773,12 +774,12 @@ public class EthereumWallet implements Wallet, Validatable {
     return txDetail;
   }
 
-  public String getWalletStatus() {
+  public ServerStatus getWalletStatus() {
     try {
       ethereumRpc.eth_blockNumber();
-      return "connected";
+      return ServerStatus.CONNECTED;
     } catch (Exception e) {
-      return "disconnected";
+      return ServerStatus.DISCONNECTED;
     }
   }
 }

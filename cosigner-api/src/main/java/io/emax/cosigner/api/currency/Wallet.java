@@ -1,5 +1,7 @@
 package io.emax.cosigner.api.currency;
 
+import io.emax.cosigner.api.core.ServerStatus;
+
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
@@ -238,5 +240,5 @@ public interface Wallet {
    */
   TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber);
 
-  String getWalletStatus();
+  ServerStatus getWalletStatus();
 }

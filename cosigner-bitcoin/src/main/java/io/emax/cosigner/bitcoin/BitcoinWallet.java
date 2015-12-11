@@ -1,5 +1,6 @@
 package io.emax.cosigner.bitcoin;
 
+import io.emax.cosigner.api.core.ServerStatus;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
@@ -593,12 +594,12 @@ public class BitcoinWallet implements Wallet, Validatable {
   }
 
   @Override
-  public String getWalletStatus() {
+  public ServerStatus getWalletStatus() {
     try {
       bitcoindRpc.getblockchaininfo().getChain().toString();
-      return "connected";
+      return ServerStatus.CONNECTED;
     } catch (Exception e) {
-      return "disconnected";
+      return ServerStatus.DISCONNECTED;
     }
   }
 }

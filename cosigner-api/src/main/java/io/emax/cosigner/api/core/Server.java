@@ -18,7 +18,7 @@ public class Server {
   @JsonProperty
   private long lastCommunication;
   @JsonProperty
-  private HashMap<String, String> currencyStatus;
+  private HashMap<String, ServerStatus> currencyStatus;
   @JsonProperty
   private String sigR;
   @JsonProperty
@@ -74,11 +74,11 @@ public class Server {
     this.lastCommunication = lastCommunication;
   }
 
-  public HashMap<String, String> getCurrencyStatus() {
+  public HashMap<String, ServerStatus> getCurrencyStatus() {
     return currencyStatus;
   }
 
-  public void setCurrencyStatus(HashMap<String, String> currencyStatus) {
+  public void setCurrencyStatus(HashMap<String, ServerStatus> currencyStatus) {
     this.currencyStatus = currencyStatus;
   }
 

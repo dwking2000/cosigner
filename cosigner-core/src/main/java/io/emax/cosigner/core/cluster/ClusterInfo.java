@@ -3,6 +3,7 @@ package io.emax.cosigner.core.cluster;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.emax.cosigner.api.core.Server;
+import io.emax.cosigner.api.core.ServerStatus;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.core.CosignerApplication;
@@ -41,9 +42,9 @@ public class ClusterInfo {
     this.thisServer.setOriginator(true);
     this.thisServer.setServerId(ServerKey.getServerId());
     this.setClusterKey(ByteUtilities.toHexString(Secp256k1.generatePrivateKey()));
-    this.thisServer.setCurrencyStatus(new HashMap<String, String>());
+    this.thisServer.setCurrencyStatus(new HashMap<String, ServerStatus>());
     CosignerApplication.getCurrencies().forEach((currency, currencyPackage) -> {
-      this.thisServer.getCurrencyStatus().put(currency, "unknown");
+      this.thisServer.getCurrencyStatus().put(currency, ServerStatus.UNKNOWN);
     });
 
     servers.add(thisServer);
