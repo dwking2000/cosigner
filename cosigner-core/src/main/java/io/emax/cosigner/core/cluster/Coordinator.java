@@ -135,6 +135,8 @@ public class Coordinator {
             String response = broadcastCommand(command, server);
             LOGGER.debug("Response: " + response);
           });
+
+          cluster.updateCurrencyStatus();
         }
 
       });

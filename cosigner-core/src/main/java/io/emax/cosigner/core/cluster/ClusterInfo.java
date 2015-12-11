@@ -14,6 +14,7 @@ import org.bouncycastle.crypto.digests.SHA3Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,6 +41,10 @@ public class ClusterInfo {
     this.thisServer.setOriginator(true);
     this.thisServer.setServerId(ServerKey.getServerId());
     this.setClusterKey(ByteUtilities.toHexString(Secp256k1.generatePrivateKey()));
+    this.thisServer.setCurrencyStatus(new HashMap<String, String>());
+    CosignerApplication.getCurrencies().forEach((currency, currencyPackage) -> {
+      this.thisServer.getCurrencyStatus().put(currency, "unknown");
+    });
 
     servers.add(thisServer);
   }
@@ -77,6 +82,15 @@ public class ClusterInfo {
     thisServer.setSigR(signatures[0]);
     thisServer.setSigS(signatures[1]);
     thisServer.setSigV(signatures[2]);
+
+    servers.remove(thisServer);
+    servers.add(thisServer);
+  }
+
+  public void updateCurrencyStatus() {
+    CosignerApplication.getCurrencies().forEach((currency, currencyPackage) -> {
+      thisServer.getCurrencyStatus().put(currency, currencyPackage.getWallet().getWalletStatus());
+    });
 
     servers.remove(thisServer);
     servers.add(thisServer);

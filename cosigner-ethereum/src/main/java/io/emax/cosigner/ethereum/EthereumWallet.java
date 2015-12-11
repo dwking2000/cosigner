@@ -58,7 +58,7 @@ public class EthereumWallet implements Wallet, Validatable {
 
   /**
    * Ethereum wallet.
-   * 
+   *
    * <p>Provides wallet access to the Ethereum network via a geth node.
    */
   public EthereumWallet() {
@@ -771,5 +771,14 @@ public class EthereumWallet implements Wallet, Validatable {
     }
 
     return txDetail;
+  }
+
+  public String getWalletStatus() {
+    try {
+      ethereumRpc.eth_blockNumber();
+      return "connected";
+    } catch (Exception e) {
+      return "disconnected";
+    }
   }
 }

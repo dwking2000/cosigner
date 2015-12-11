@@ -2,6 +2,8 @@ package io.emax.cosigner.api.core;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.HashMap;
+
 public class Server {
   @JsonProperty
   private String serverLocation;
@@ -15,6 +17,8 @@ public class Server {
   private String serverId;
   @JsonProperty
   private long lastCommunication;
+  @JsonProperty
+  private HashMap<String, String> currencyStatus;
   @JsonProperty
   private String sigR;
   @JsonProperty
@@ -68,6 +72,14 @@ public class Server {
 
   public void setLastCommunication(long lastCommunication) {
     this.lastCommunication = lastCommunication;
+  }
+
+  public HashMap<String, String> getCurrencyStatus() {
+    return currencyStatus;
+  }
+
+  public void setCurrencyStatus(HashMap<String, String> currencyStatus) {
+    this.currencyStatus = currencyStatus;
   }
 
   public String getSigR() {

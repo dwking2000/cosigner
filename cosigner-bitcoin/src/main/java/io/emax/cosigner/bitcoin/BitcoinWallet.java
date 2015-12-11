@@ -591,4 +591,14 @@ public class BitcoinWallet implements Wallet, Validatable {
     txDetails.setToAddress(recipients.toArray(new String[0]));
     return txDetails;
   }
+
+  @Override
+  public String getWalletStatus() {
+    try {
+      bitcoindRpc.getblockchaininfo().getChain().toString();
+      return "connected";
+    } catch (Exception e) {
+      return "disconnected";
+    }
+  }
 }

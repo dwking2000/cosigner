@@ -29,7 +29,7 @@ public class BitcoinTools {
 
   /**
    * Generate a deterministic set of private keys based on a secret key.
-   * 
+   *
    * @param userKeyPart Expect these to be hex strings without the leading 0x identifier. When
    *        combined with serverKeyPart, it provides the seed for the private keys.
    * @param serverKeyPart Expect these to be hex strings without the leading 0x identifier. When
@@ -116,7 +116,7 @@ public class BitcoinTools {
   /**
    * Encodes the userKey secret so that it can be referenced and stored in bitcoind's wallet without
    * revealing what the original value is.
-   * 
+   *
    * @param key User key secret value.
    * @return Encoded/hashed version of the key.
    */
@@ -133,7 +133,7 @@ public class BitcoinTools {
 
   /**
    * Convert a private key into its corresponding public address.
-   * 
+   *
    * @param privateKey Private key
    * @return Public bitcoin address.
    */
@@ -186,7 +186,7 @@ public class BitcoinTools {
 
   /**
    * Decodes a bitcoin address and returns the RIPEMD-160 that it contains.
-   * 
+   *
    * @param address Bitcoin address
    * @return RIPEMD-160 hash of the public key.
    */
@@ -220,7 +220,7 @@ public class BitcoinTools {
 
   /**
    * Converts a RIPEMD-160 address to a base58 encoded one with checksums.
-   * 
+   *
    * @param addressBytes RIPEMD-160 address
    * @param networkBytes Network bytes that identify which network this address belongs to.
    * @return Address that bitcoind can import.
@@ -246,7 +246,7 @@ public class BitcoinTools {
 
   /**
    * Decodes an address and checks if it's a P2SH.
-   * 
+   *
    * @param address Bitcoin address
    * @return True if it's a P2SH address, false otherwise.
    */
@@ -280,7 +280,7 @@ public class BitcoinTools {
 
   /**
    * Converts a bitcoin-encoded private key to its corresponding public key.
-   * 
+   *
    * @param privateKey Bitcoin-encoded private key.
    * @return ECDSA public key.
    */

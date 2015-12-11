@@ -237,4 +237,6 @@ public interface Wallet {
    * @return Transaction Details
    */
   TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber);
+
+  String getWalletStatus();
 }
