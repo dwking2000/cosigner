@@ -566,25 +566,31 @@ public class EthereumWallet implements Wallet, Validatable {
       }
     } else {
       int rounds = 1;
-      if (addressRounds.containsKey(name)) {
-        rounds = addressRounds.get(name);
-      } else {
-        // Generate rounds
-        createAddress(name);
-        rounds = addressRounds.get(name);
+      if (address != null) {
+        if (addressRounds.containsKey(name)) {
+          rounds = addressRounds.get(name);
+        } else {
+          // Generate rounds
+          createAddress(name);
+          rounds = addressRounds.get(name);
+        }
       }
 
       String privateKey = "";
-      for (int i = 1; i <= rounds; i++) {
-        String privateKeyCheck =
-            EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), i);
-        if (EthereumTools.getPublicAddress(privateKeyCheck).equalsIgnoreCase(address)) {
-          privateKey = privateKeyCheck;
-          break;
+      if (address != null) {
+        for (int i = 1; i <= rounds; i++) {
+          String privateKeyCheck =
+              EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), i);
+          if (EthereumTools.getPublicAddress(privateKeyCheck).equalsIgnoreCase(address)) {
+            privateKey = privateKeyCheck;
+            break;
+          }
         }
-      }
-      if (privateKey.isEmpty()) {
-        return new byte[0][0];
+        if (privateKey.isEmpty()) {
+          return new byte[0][0];
+        }
+      } else {
+        privateKey = name;
       }
 
       // Sign and return it

@@ -103,6 +103,21 @@ public interface Wallet {
   String signTransaction(String transaction, String address, String name);
 
   /**
+   * Get the data we need to sign from the TX.
+   */
+  Iterable<Iterable<String>> getSigString(String transaction, String address);
+
+  /**
+   * Sign the provided transaction with a private key.
+   */
+  Iterable<Iterable<String>> signWithPrivateKey(Iterable<Iterable<String>> data, String privateKey);
+
+  /**
+   * Update transaction with new signature.
+   */
+  String applySignature(String transaction, String address, Iterable<Iterable<String>> signatureData);
+
+  /**
    * Submits the provided transaction to the network.
    *
    * @return Transaction identifier to allow for tracking

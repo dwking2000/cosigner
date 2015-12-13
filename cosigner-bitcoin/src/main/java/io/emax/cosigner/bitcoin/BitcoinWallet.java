@@ -317,143 +317,194 @@ public class BitcoinWallet implements Wallet, Validatable {
 
       LOGGER.debug("We can sign for " + userAddress);
 
-      // We have the private key, now get all the unspent inputs so we have the redeemScripts.
-      Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
-          config.getMaxConfirmations(), new String[] {});
-
-      RawTransaction rawTx = RawTransaction.parse(transaction);
-      final byte[] addressData = BitcoinTools.getPublicKeyBytes(privateKey);
-      final byte[] privateKeyBytes =
-          ByteUtilities.toByteArray(BitcoinTools.decodeAddress(privateKey));
-
-      for (RawInput input : rawTx.getInputs()) {
-        for (Outpoint output : outputs) {
-          LOGGER.debug("Looking for outputs we can sign");
-          if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
-              && output.getOutputIndex() == input.getTxIndex()) {
-            OutpointDetails outpoint = new OutpointDetails();
-            outpoint.setTransactionId(output.getTransactionId());
-            outpoint.setOutputIndex(output.getOutputIndex());
-            outpoint.setScriptPubKey(output.getScriptPubKey());
-            outpoint.setRedeemScript(multiSigRedeemScripts.get(output.getAddress()));
-
-            if (output.getAddress().equalsIgnoreCase(address)) {
-              RawTransaction signingTx = RawTransaction.stripInputScripts(rawTx);
-              byte[] sigData = new byte[] {};
-
-              LOGGER.debug("Found an output, matching to inputs in the transaction");
-              for (RawInput sigInput : signingTx.getInputs()) {
-                if (sigInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
-                    && sigInput.getTxIndex() == outpoint.getOutputIndex()) {
-                  // This is the input we're processing, fill it and sign it
-                  if (BitcoinTools.isMultiSigAddress(address)) {
-                    sigInput.setScript(outpoint.getRedeemScript());
-                  } else {
-                    sigInput.setScript(outpoint.getScriptPubKey());
-                  }
-
-                  byte[] hashTypeBytes =
-                      ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(1).toByteArray());
-                  hashTypeBytes = ByteUtilities.leftPad(hashTypeBytes, 4, (byte) 0x00);
-                  hashTypeBytes = ByteUtilities.flipEndian(hashTypeBytes);
-                  String sigString = signingTx.encode() + ByteUtilities.toHexString(hashTypeBytes);
-                  LOGGER.debug("Signing: " + sigString);
-
-                  try {
-                    sigData = ByteUtilities.toByteArray(sigString);
-                    MessageDigest md = MessageDigest.getInstance("SHA-256");
-                    sigData = md.digest(md.digest(sigData));
-                  } catch (Exception e) {
-                    LOGGER.error(null, e);
-                  }
-
-                  byte[][] sigResults = Secp256k1.signTransaction(sigData, privateKeyBytes);
-                  StringBuilder signature = new StringBuilder();
-                  // Only want R & S, don't need V
-                  for (int i = 0; i < 2; i++) {
-                    byte[] sig = sigResults[i];
-                    signature.append("02");
-                    byte[] sigBytes = sig;
-                    byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
-                    sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
-                    signature.append(ByteUtilities.toHexString(sigSize));
-                    signature.append(ByteUtilities.toHexString(sigBytes));
-                  }
-
-                  byte[] sigBytes = ByteUtilities.toByteArray(signature.toString());
-                  byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
-                  sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
-                  String signatureString =
-                      ByteUtilities.toHexString(sigSize) + signature.toString();
-                  signatureString = "30" + signatureString;
-
-                  sigData = ByteUtilities.toByteArray(signatureString);
-                  break;
-                }
-              }
-
-              // Determine how we need to format the sig data
-              if (BitcoinTools.isMultiSigAddress(address)) {
-                for (RawInput signedInput : rawTx.getInputs()) {
-                  if (signedInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
-                      && signedInput.getTxIndex() == outpoint.getOutputIndex()) {
-
-                    // Merge the new signature with existing ones.
-                    signedInput.stripMultiSigRedeemScript(outpoint.getRedeemScript());
-
-                    String scriptData = signedInput.getScript();
-                    if (scriptData.isEmpty()) {
-                      scriptData += "00";
-                    }
-
-                    byte[] dataSize = RawTransaction.writeVariableStackInt(sigData.length + 1);
-                    scriptData += ByteUtilities.toHexString(dataSize);
-                    scriptData += ByteUtilities.toHexString(sigData);
-                    scriptData += "01";
-
-                    byte[] redeemScriptBytes =
-                        ByteUtilities.toByteArray(outpoint.getRedeemScript());
-                    dataSize = RawTransaction.writeVariableStackInt(redeemScriptBytes.length);
-                    scriptData += ByteUtilities.toHexString(dataSize);
-                    scriptData += ByteUtilities.toHexString(redeemScriptBytes);
-
-                    signedInput.setScript(scriptData);
-                    break;
-                  }
-                }
-              } else {
-                for (RawInput signedInput : rawTx.getInputs()) {
-                  if (signedInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
-                      && signedInput.getTxIndex() == outpoint.getOutputIndex()) {
-
-                    // Sig then pubkey
-                    String scriptData = "";
-                    byte[] dataSize = RawTransaction.writeVariableStackInt(sigData.length + 1);
-                    scriptData += ByteUtilities.toHexString(dataSize);
-                    scriptData += ByteUtilities.toHexString(sigData);
-                    scriptData += "01"; // SIGHASH.ALL
-
-                    dataSize = RawTransaction.writeVariableStackInt(addressData.length);
-                    scriptData += ByteUtilities.toHexString(dataSize);
-                    scriptData += ByteUtilities.toHexString(addressData);
-
-                    signedInput.setScript(scriptData);
-                    break;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
       signedTransaction = new SignedTransaction();
-      signedTransaction.setTransaction(rawTx.encode());
+      Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
+      signatureData = signWithPrivateKey(signatureData, privateKey);
+      signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
     } else {
       signedTransaction =
           bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[] {}, null, SigHash.ALL);
     }
 
     return signedTransaction.getTransaction();
+  }
+
+  @Override
+  public Iterable<Iterable<String>> getSigString(String transaction, String address) {
+    LinkedList<Iterable<String>> signatureData = new LinkedList<>();
+    Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
+        config.getMaxConfirmations(), new String[] {});
+
+    RawTransaction rawTx = RawTransaction.parse(transaction);
+    for (RawInput input : rawTx.getInputs()) {
+      for (Outpoint output : outputs) {
+        LOGGER.debug("Looking for outputs we can sign");
+        if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
+            && output.getOutputIndex() == input.getTxIndex()) {
+          OutpointDetails outpoint = new OutpointDetails();
+          outpoint.setTransactionId(output.getTransactionId());
+          outpoint.setOutputIndex(output.getOutputIndex());
+          outpoint.setScriptPubKey(output.getScriptPubKey());
+          outpoint.setRedeemScript(multiSigRedeemScripts.get(output.getAddress()));
+
+          if (output.getAddress().equalsIgnoreCase(address)) {
+            RawTransaction signingTx = RawTransaction.stripInputScripts(rawTx);
+            byte[] sigData = new byte[] {};
+
+            LOGGER.debug("Found an output, matching to inputs in the transaction");
+            for (RawInput sigInput : signingTx.getInputs()) {
+              if (sigInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
+                  && sigInput.getTxIndex() == outpoint.getOutputIndex()) {
+                // This is the input we're processing, fill it and sign it
+                if (BitcoinTools.isMultiSigAddress(address)) {
+                  sigInput.setScript(outpoint.getRedeemScript());
+                } else {
+                  sigInput.setScript(outpoint.getScriptPubKey());
+                }
+
+                byte[] hashTypeBytes =
+                    ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(1).toByteArray());
+                hashTypeBytes = ByteUtilities.leftPad(hashTypeBytes, 4, (byte) 0x00);
+                hashTypeBytes = ByteUtilities.flipEndian(hashTypeBytes);
+                String sigString = signingTx.encode() + ByteUtilities.toHexString(hashTypeBytes);
+                LOGGER.debug("Signing: " + sigString);
+
+                try {
+                  sigData = ByteUtilities.toByteArray(sigString);
+                  MessageDigest md = MessageDigest.getInstance("SHA-256");
+                  sigData = md.digest(md.digest(sigData));
+                  LinkedList<String> inputSigData = new LinkedList<>();
+                  inputSigData.add(input.getTxHash());
+                  inputSigData.add(((Integer) input.getTxIndex()).toString());
+                  inputSigData.add(output.getRedeemScript());
+                  inputSigData.add(ByteUtilities.toHexString(sigData));
+                  signatureData.add(inputSigData);
+                } catch (Exception e) {
+                  LOGGER.error(null, e);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return signatureData;
+  }
+
+  @Override
+  public Iterable<Iterable<String>> signWithPrivateKey(Iterable<Iterable<String>> data,
+      String privateKey) {
+    final byte[] addressData = BitcoinTools.getPublicKeyBytes(privateKey);
+    final byte[] privateKeyBytes =
+        ByteUtilities.toByteArray(BitcoinTools.decodeAddress(privateKey));
+
+    Iterator<Iterable<String>> signatureData = data.iterator();
+    LinkedList<Iterable<String>> signatures = new LinkedList<>();
+    while (signatureData.hasNext()) {
+      Iterator<String> signatureEntry = signatureData.next().iterator();
+      LinkedList<String> signatureResults = new LinkedList<>();
+      // Hash
+      signatureResults.add(signatureEntry.next());
+      // Index
+      signatureResults.add(signatureEntry.next());
+      // Redeem Script
+      signatureResults.add(signatureEntry.next());
+      signatureResults.add(ByteUtilities.toHexString(addressData));
+      // Sig string
+      byte[] sigData = ByteUtilities.toByteArray(signatureEntry.next());
+
+      byte[][] sigResults = Secp256k1.signTransaction(sigData, privateKeyBytes);
+      StringBuilder signature = new StringBuilder();
+      // Only want R & S, don't need V
+      for (int i = 0; i < 2; i++) {
+        byte[] sig = sigResults[i];
+        signature.append("02");
+        byte[] sigBytes = sig;
+        byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
+        sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
+        signature.append(ByteUtilities.toHexString(sigSize));
+        signature.append(ByteUtilities.toHexString(sigBytes));
+      }
+
+      byte[] sigBytes = ByteUtilities.toByteArray(signature.toString());
+      byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
+      sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
+      String signatureString = ByteUtilities.toHexString(sigSize) + signature.toString();
+      signatureString = "30" + signatureString;
+
+      signatureResults.add(signatureString);
+      signatures.add(signatureResults);
+
+    }
+    return signatures;
+  }
+
+  @Override
+  public String applySignature(String transaction, String address,
+      Iterable<Iterable<String>> signatureData) {
+    Iterator<Iterable<String>> signatures = signatureData.iterator();
+    RawTransaction rawTx = RawTransaction.parse(transaction);
+    while (signatures.hasNext()) {
+      Iterable<String> signature = signatures.next();
+      Iterator<String> sigDataIterator = signature.iterator();
+      rawTx = RawTransaction.parse(transaction);
+      String signedTxHash = sigDataIterator.next();
+      String signedTxIndex = sigDataIterator.next();
+      String signedTxRedeemScript = sigDataIterator.next();
+      byte[] addressData = ByteUtilities.toByteArray(sigDataIterator.next());
+      byte[] sigData = ByteUtilities.toByteArray(sigDataIterator.next());
+
+      // Determine how we need to format the sig data
+      if (BitcoinTools.isMultiSigAddress(address)) {
+        for (RawInput signedInput : rawTx.getInputs()) {
+          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash)
+              && ((Integer) signedInput.getTxIndex()).toString().equalsIgnoreCase(signedTxIndex)) {
+            // Merge the new signature with existing ones.
+            signedInput.stripMultiSigRedeemScript(signedTxRedeemScript);
+
+            String scriptData = signedInput.getScript();
+            if (scriptData.isEmpty()) {
+              scriptData += "00";
+            }
+
+            byte[] dataSize = RawTransaction.writeVariableStackInt(sigData.length + 1);
+            scriptData += ByteUtilities.toHexString(dataSize);
+            scriptData += ByteUtilities.toHexString(sigData);
+            scriptData += "01";
+
+            byte[] redeemScriptBytes = ByteUtilities.toByteArray(signedTxRedeemScript);
+            dataSize = RawTransaction.writeVariableStackInt(redeemScriptBytes.length);
+            scriptData += ByteUtilities.toHexString(dataSize);
+            scriptData += ByteUtilities.toHexString(redeemScriptBytes);
+
+            signedInput.setScript(scriptData);
+            break;
+          }
+        }
+      } else {
+        for (RawInput signedInput : rawTx.getInputs()) {
+          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash)
+              && ((Integer) signedInput.getTxIndex()).toString().equalsIgnoreCase(signedTxIndex)) {
+
+            // Sig then pubkey
+            String scriptData = "";
+            byte[] dataSize = RawTransaction.writeVariableStackInt(sigData.length + 1);
+            scriptData += ByteUtilities.toHexString(dataSize);
+            scriptData += ByteUtilities.toHexString(sigData);
+            scriptData += "01"; // SIGHASH.ALL
+
+            dataSize = RawTransaction.writeVariableStackInt(addressData.length);
+            scriptData += ByteUtilities.toHexString(dataSize);
+            scriptData += ByteUtilities.toHexString(addressData);
+
+            signedInput.setScript(scriptData);
+            break;
+          }
+        }
+      }
+      transaction = rawTx.encode();
+    }
+    return rawTx.encode();
   }
 
   @Override
