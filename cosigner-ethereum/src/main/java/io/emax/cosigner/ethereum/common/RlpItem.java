@@ -1,7 +1,8 @@
 package io.emax.cosigner.ethereum.common;
 
+import io.emax.cosigner.common.ByteUtilities;
+
 import java.io.Serializable;
-import java.util.Arrays;
 
 public class RlpItem implements RlpEntity, Serializable {
   private static final long serialVersionUID = 1L;
@@ -44,8 +45,8 @@ public class RlpItem implements RlpEntity, Serializable {
 
   @Override
   public String toString() {
-    return "RLPItem [encodedContents=" + Arrays.toString(encodedContents) + ", decodedContents="
-        + Arrays.toString(decodedContents) + "]";
+    return "RLPItem [encodedContents=" + ByteUtilities.toHexString(encodedContents)
+        + ", decodedContents=" + ByteUtilities.toHexString(decodedContents) + "]";
   }
 
   @Override

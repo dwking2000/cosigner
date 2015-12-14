@@ -22,6 +22,7 @@ public class ByteUtilities {
    * Convert a byte array into its hex string equivalent.
    */
   public static String toHexString(byte[] data) {
+    if(data == null) return "";
     char[] chars = new char[data.length * 2];
     for (int i = 0; i < data.length; i++) {
       chars[i * 2] = HEX_DIGITS[(data[i] >> 4) & 0xf];
@@ -68,7 +69,7 @@ public class ByteUtilities {
 
   /**
    * Reverse the endian-ness of a byte array.
-   * 
+   *
    * @param data Byte array to flip
    * @return Flipped array
    */
@@ -86,7 +87,7 @@ public class ByteUtilities {
 
   /**
    * Pad a byte array with leading bytes.
-   * 
+   *
    * @param data Data that needs padding
    * @param size The final desired size of the data.
    * @param pad The byte value to use in padding the data.
@@ -110,7 +111,7 @@ public class ByteUtilities {
 
   /**
    * Reads a section of a byte array and returns it as its own byte array, not unlike a substring.
-   * 
+   *
    * @param data Byte array to read from.
    * @param start Starting position of the desired data.
    * @param size Size of the data.

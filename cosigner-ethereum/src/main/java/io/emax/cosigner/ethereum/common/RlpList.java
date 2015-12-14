@@ -1,5 +1,7 @@
 package io.emax.cosigner.ethereum.common;
 
+import io.emax.cosigner.common.ByteUtilities;
+
 import org.bouncycastle.util.Arrays;
 
 import java.util.LinkedList;
@@ -49,8 +51,8 @@ public class RlpList extends LinkedList<RlpEntity> implements RlpEntity {
   @Override
   public String toString() {
     StringBuilder output = new StringBuilder();
-    output.append("RLPList [encodedContents=" + java.util.Arrays.toString(encodedContents)
-        + ", decodedContents=" + java.util.Arrays.toString(decodedContents));
+    output.append("RLPList [encodedContents=" + ByteUtilities.toHexString(encodedContents)
+        + ", decodedContents=" + ByteUtilities.toHexString(decodedContents));
 
     for (RlpEntity entity : this) {
       output.append("\n {" + entity.toString() + "}");

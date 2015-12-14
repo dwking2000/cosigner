@@ -115,7 +115,8 @@ public interface Wallet {
   /**
    * Update transaction with new signature.
    */
-  String applySignature(String transaction, String address, Iterable<Iterable<String>> signatureData);
+  String applySignature(String transaction, String address,
+      Iterable<Iterable<String>> signatureData);
 
   /**
    * Submits the provided transaction to the network.

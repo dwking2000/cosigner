@@ -407,13 +407,13 @@ public class EthereumWallet implements Wallet, Validatable {
     if (name == null) {
       for (int i = 0; i < config.getMultiSigAddresses().length; i++) {
         sigData = getSigString(transaction, config.getMultiSigAddresses()[i]);
-        sigData = signTx(sigData, null, config.getMultiSigAddresses()[i]);
+        sigData = signTx(sigData, config.getMultiSigAddresses()[i], null);
         transaction = applySignature(transaction, address, sigData);
       }
     } else {
       String translatedAddress = reverseMsigContracts.get(address.toLowerCase(Locale.US));
       sigData = getSigString(transaction, translatedAddress);
-      sigData = signTx(sigData, name, translatedAddress);
+      sigData = signTx(sigData, translatedAddress, name);
     }
     return applySignature(transaction, address, sigData);
   }
@@ -512,14 +512,13 @@ public class EthereumWallet implements Wallet, Validatable {
    * address provided.
    */
   public Iterable<Iterable<String>> getSigString(String transaction, String address) {
-    try {
-      // Turn the tx into a useful data structure.
-      RawTransaction decodedTransaction =
-          RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
-      String txRecipient =
-          ByteUtilities.toHexString(decodedTransaction.getTo().getDecodedContents());
+    // Turn the tx into a useful data structure.
+    RawTransaction decodedTransaction =
+        RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
+    String txRecipient = ByteUtilities.toHexString(decodedTransaction.getTo().getDecodedContents());
 
-      LinkedList<Iterable<String>> sigStrings = new LinkedList<>();
+    LinkedList<Iterable<String>> sigStrings = new LinkedList<>();
+    try {
       if (reverseMsigContracts.containsKey(txRecipient.toLowerCase(Locale.US))) {
         ContractInformation contractInfo =
             msigContracts.get(reverseMsigContracts.get(txRecipient.toLowerCase(Locale.US)));
@@ -529,8 +528,6 @@ public class EthereumWallet implements Wallet, Validatable {
             "Signing transaction for contract version: " + contract.getClass().getCanonicalName());
 
         MultiSigContractParametersInterface contractParams = contract.getContractParameters();
-        // TODO Check what happens when sending a default/non-contract deposit to the contract
-        // address.
         contractParams.decode(decodedTransaction.getData().getDecodedContents());
         String hashBytes = String.format("%64s", "0").replace(' ', '0');
         for (int j = 0; j < contractParams.getAddress().size(); j++) {
@@ -554,19 +551,23 @@ public class EthereumWallet implements Wallet, Validatable {
         msigString.add(hashBytes);
         sigStrings.add(msigString);
       }
-
-      String txCount =
-          ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.LATEST.toString());
-      LinkedList<String> txString = new LinkedList<>();
-      txString.add(transaction);
-      txString.add(txCount);
-      sigStrings.add(txString);
-
-      return sigStrings;
     } catch (IllegalAccessException | InstantiationException e) {
-      LOGGER.error(null, e);
-      return null;
+      LOGGER.error("Error matching contract class", e);
+      return new LinkedList<Iterable<String>>();
+    } catch (Exception e) {
+      LOGGER.debug("Non-contract tx sent to contract address", e);
     }
+
+    String txCount =
+        ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.LATEST.toString());
+    LinkedList<String> txString = new LinkedList<>();
+    txString.add(transaction);
+    txString.add(txCount);
+    sigStrings.add(txString);
+
+    LOGGER.debug(sigStrings.toString());
+
+    return sigStrings;
   }
 
   public Iterable<Iterable<String>> signWithPrivateKey(Iterable<Iterable<String>> data,
@@ -579,24 +580,33 @@ public class EthereumWallet implements Wallet, Validatable {
    */
   public Iterable<Iterable<String>> signTx(Iterable<Iterable<String>> data, String address,
       String privateKey) {
-    try {
-      LinkedList<Iterable<String>> signedData = new LinkedList<>();
-      LinkedList<Iterable<String>> listedData = new LinkedList<>();
-      data.forEach(listedData::add);
-      LinkedList<String> msigData = new LinkedList<>();
-      LinkedList<String> txData = new LinkedList<>();
-      // Check if there are two entries, if there are, the first one should be mSig data.
-      int txDataLocation = 0;
-      if (listedData.size() == 2) {
-        txDataLocation++;
-        listedData.get(0).forEach(msigData::add);
-      }
-      listedData.get(txDataLocation).forEach(txData::add);
+    LOGGER.debug("Attempting to sign: " + address + data.toString());
 
+    LinkedList<Iterable<String>> signedData = new LinkedList<>();
+    LinkedList<Iterable<String>> listedData = new LinkedList<>();
+    data.forEach(listedData::add);
+    LinkedList<String> msigData = new LinkedList<>();
+    LinkedList<String> txData = new LinkedList<>();
+    // Check if there are two entries, if there are, the first one should be mSig data.
+    int txDataLocation = 0;
+    if (listedData.size() == 2) {
+      txDataLocation++;
+      listedData.get(0).forEach(msigData::add);
+    }
+    listedData.get(txDataLocation).forEach(txData::add);
+
+    try {
       // Sign mSig if there is any
       if (msigData.size() > 0) {
         String sigBytes = msigData.getLast();
         byte[][] sigData = signData(sigBytes, address, privateKey);
+        if (sigData.length < 3) {
+          LinkedList<String> signature = new LinkedList<>();
+          signature.add(txData.getFirst());
+          LinkedList<Iterable<String>> result = new LinkedList<>();
+          result.add(signature);
+          return result;
+        }
         LinkedList<String> msigSig = new LinkedList<>();
         msigSig.add(ByteUtilities.toHexString(sigData[0]));
         msigSig.add(ByteUtilities.toHexString(sigData[1]));
@@ -637,6 +647,13 @@ public class EthereumWallet implements Wallet, Validatable {
       String sigString = ByteUtilities.toHexString(rawTx.getSigBytes());
       sigString = EthereumTools.hashSha3(sigString);
       byte[][] sigData = signData(sigString, address, privateKey);
+      if (sigData.length < 3) {
+        LinkedList<String> signature = new LinkedList<>();
+        signature.add(txData.getFirst());
+        LinkedList<Iterable<String>> result = new LinkedList<>();
+        result.add(signature);
+        return result;
+      }
 
       rawTx.getSigR().setDecodedContents(sigData[0]);
       rawTx.getSigS().setDecodedContents(sigData[1]);
@@ -650,14 +667,23 @@ public class EthereumWallet implements Wallet, Validatable {
       return result;
     } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
       LOGGER.warn(null, e);
-      return null;
+      LinkedList<String> signature = new LinkedList<>();
+      signature.add(txData.getFirst());
+      LinkedList<Iterable<String>> result = new LinkedList<>();
+      result.add(signature);
+      return result;
     }
   }
 
+  @Override
   public String applySignature(String transaction, String address,
       Iterable<Iterable<String>> signatureData) {
     // This is taken care of in the signing process for Ethereum, so we can just return the data.
-    return signatureData.iterator().next().iterator().next();
+    try {
+      return signatureData.iterator().next().iterator().next();
+    } catch (Exception e) {
+      return "";
+    }
   }
 
   @Override
