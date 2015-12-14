@@ -402,19 +402,19 @@ public class Common {
     // Authorize it with the user account
     String initalTx = currencyParams.getTransactionData();
 
-    // Try to validate it, don't sign if it fails.
-    for (Validator validator : CosignerApplication.getValidators()) {
-      if (!validator.validateTransaction(currency, initalTx)) {
-        return initalTx;
-      }
-    }
-
     currencyParams.setTransactionData(currency.getWallet().signTransaction(initalTx,
         currencyParams.getAccount().get(0), currencyParams.getUserKey()));
 
     // If the userKey/address combo don't work then we stop here.
     if (currencyParams.getTransactionData().equalsIgnoreCase(initalTx)) {
       return initalTx;
+    }
+
+    // Try to validate it, don't sign if it fails.
+    for (Validator validator : CosignerApplication.getValidators()) {
+      if (!validator.validateTransaction(currency, currencyParams.getTransactionData())) {
+        return initalTx;
+      }
     }
 
     // Send it if it's a sign-each and there's more than one signature

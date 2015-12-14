@@ -73,6 +73,7 @@ public class EthereumWallet implements Wallet, Validatable {
 
   private static synchronized void syncMultiSigAddresses() {
     try {
+      LOGGER.debug("Synchronizing contract accounts with network...");
       String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
           DefaultBlock.LATEST.toString());
       int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
@@ -91,6 +92,8 @@ public class EthereumWallet implements Wallet, Validatable {
         String contractCode = ethereumRpc.eth_getCode("0x" + contract.toLowerCase(Locale.US),
             DefaultBlock.LATEST.toString());
 
+        contractCode = contractCode.substring(2);
+        LOGGER.debug("Contract code: " + contractCode);
         Class<?> contractType = MultiSigContract.class;
         while (MultiSigContractInterface.class.isAssignableFrom(contractType)) {
           MultiSigContractInterface contractParams =
@@ -798,12 +801,17 @@ public class EthereumWallet implements Wallet, Validatable {
     txDetail.setAmount(new BigDecimal(new BigInteger(1, tx.getValue().getDecodedContents())));
     txDetail.setAmount(txDetail.getAmount().divide(BigDecimal.valueOf(config.getWeiMultiplier())));
 
-    String senderKey =
-        ByteUtilities.toHexString(Secp256k1.recoverPublicKey(tx.getSigR().getDecodedContents(),
-            tx.getSigS().getDecodedContents(), tx.getSigV().getDecodedContents(),
-            tx.getSigBytes()));
-    String sender = EthereumTools.getPublicAddress(senderKey, false);
-    txDetail.setFromAddress(new String[] {sender});
+    try {
+      String senderKey =
+          ByteUtilities.toHexString(Secp256k1.recoverPublicKey(tx.getSigR().getDecodedContents(),
+              tx.getSigS().getDecodedContents(), tx.getSigV().getDecodedContents(),
+              tx.getSigBytes()));
+      String sender = EthereumTools.getPublicAddress(senderKey, false);
+      txDetail.setFromAddress(new String[] {sender});
+    } catch (ArrayIndexOutOfBoundsException e) {
+      LOGGER.debug("Unsigned transaction, can't determine sender", e);
+      txDetail.setFromAddress(new String[] {});
+    }
 
     txDetail
         .setToAddress(new String[] {ByteUtilities.toHexString(tx.getTo().getDecodedContents())});
@@ -820,12 +828,14 @@ public class EthereumWallet implements Wallet, Validatable {
         MultiSigContractParametersInterface multiSig = contract.getContractParameters();
         multiSig.decode(inputData);
 
+        LOGGER.debug("TXDetail: " + txDetail.toString());
         if (multiSig.getFunction().equalsIgnoreCase(contract.getExecuteFunctionAddress())) {
           txDetail.setFromAddress(txDetail.getToAddress());
           txDetail.setToAddress(new String[0]);
           txDetail.setAmount(BigDecimal.ZERO);
           for (int j = 0; j < multiSig.getAddress().size(); j++) {
-            List<String> recipients = Arrays.asList(txDetail.getToAddress());
+            LinkedList<String> recipients = new LinkedList<>();
+            recipients.addAll(Arrays.asList(txDetail.getToAddress()));
             recipients.add(multiSig.getAddress().get(j));
             txDetail.setToAddress(recipients.toArray(new String[0]));
 
@@ -835,7 +845,7 @@ public class EthereumWallet implements Wallet, Validatable {
           }
         }
       }
-    } catch (InstantiationException | IllegalAccessException e) {
+    } catch (ArrayIndexOutOfBoundsException | InstantiationException | IllegalAccessException e) {
       LOGGER.debug("Unable to decode tx data", e);
     }
 
