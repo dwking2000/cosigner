@@ -207,6 +207,7 @@ public class BitcoinWallet implements Wallet, Validatable {
 
       // Force tx amount > amount due so there should be enough to pay fees
       if (subTotal.compareTo(recipient.getAmount()) > 0) {
+        LOGGER.debug("Recipient: " + recipient.getRecipientAddress());
         txnOutput.put(recipient.getRecipientAddress(), recipient.getAmount());
         subTotal = subTotal.subtract(recipient.getAmount());
         if (recipients.hasNext()) {
@@ -257,7 +258,9 @@ public class BitcoinWallet implements Wallet, Validatable {
     txnOutput.forEach((address, amount) -> {
       RawOutput rawOutput = new RawOutput();
       rawOutput.setAmount(amount.multiply(BigDecimal.valueOf(100000000)).longValue());
+      LOGGER.debug("Address: " + address);
       String decodedAddress = BitcoinTools.decodeAddress(address);
+      LOGGER.debug("Decoded address: " + decodedAddress);
       byte[] addressBytes = ByteUtilities.toByteArray(decodedAddress);
       String scriptData = "";
       if (!BitcoinTools.isMultiSigAddress(address)) {
@@ -322,6 +325,7 @@ public class BitcoinWallet implements Wallet, Validatable {
       signatureData = signWithPrivateKey(signatureData, privateKey);
       signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
     } else {
+      LOGGER.debug("Asking bitcoind to sign...");
       signedTransaction =
           bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[] {}, null, SigHash.ALL);
     }

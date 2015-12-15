@@ -20,6 +20,9 @@ public class BasicValidator implements Validator {
 
   @Override
   public boolean validateTransaction(CurrencyPackage currency, String transaction) {
+    LOGGER.debug("currency: " + currency.toString());
+    LOGGER.debug("currency Wallet: " + currency.getWallet());
+    LOGGER.debug("currency Wallet Class: " + currency.getWallet().getClass());
     if (!Validatable.class.isAssignableFrom(currency.getWallet().getClass())) {
       // Wallet can not be validated.
       LOGGER.debug("Tried validating: " + currency.getConfiguration().getCurrencySymbol()

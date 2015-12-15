@@ -108,7 +108,7 @@ public class BitcoinTools {
         return NOKEY;
       }
     } catch (RuntimeException e) {
-      LOGGER.error(null, e);
+      LOGGER.debug(null, e);
       return NOKEY;
     }
   }
@@ -198,7 +198,7 @@ public class BitcoinTools {
           ByteUtilities.readBytes(decodedNetworkAddress, 1, decodedNetworkAddress.length - 5);
 
       byte[] checksumBytes =
-          ByteUtilities.readBytes(decodedNetworkAddress, decodedNetworkAddress.length - 5, 4);
+          ByteUtilities.readBytes(decodedNetworkAddress, decodedNetworkAddress.length - 4, 4);
 
       String checksumString =
           ByteUtilities.toHexString(networkBytes) + ByteUtilities.toHexString(addressBytes);
@@ -207,8 +207,15 @@ public class BitcoinTools {
       MessageDigest md = MessageDigest.getInstance(SHA256);
       md.reset();
       byte[] calculatedCheckum = Arrays.copyOfRange(md.digest(md.digest(checksumData)), 0, 4);
+      LOGGER.debug("Address: " + address);
+      LOGGER.debug("DecodedAddress: " + ByteUtilities.toHexString(decodedNetworkAddress));
+      LOGGER.debug("NetworkBytes: " + ByteUtilities.toHexString(networkBytes));
+      LOGGER.debug("AddressBytes: " + ByteUtilities.toHexString(addressBytes));
+      LOGGER.debug("ChecksumBytes: " + ByteUtilities.toHexString(checksumBytes));
+      LOGGER.debug("CalculatedChecksum: " + ByteUtilities.toHexString(calculatedCheckum));
       if (!ByteUtilities.toHexString(calculatedCheckum)
           .equalsIgnoreCase(ByteUtilities.toHexString(checksumBytes))) {
+        LOGGER.debug("Badchecksum on: " + ByteUtilities.toHexString(addressBytes));
         return "";
       }
       return ByteUtilities.toHexString(addressBytes);
