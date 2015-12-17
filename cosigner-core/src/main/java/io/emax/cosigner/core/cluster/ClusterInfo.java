@@ -88,6 +88,9 @@ public class ClusterInfo {
     servers.add(thisServer);
   }
 
+  /**
+   * Causes the server to update its currency status.
+   */
   public void updateCurrencyStatus() {
     CosignerApplication.getCurrencies().forEach((currency, currencyPackage) -> {
       thisServer.getCurrencyStatus().put(currency, currencyPackage.getWallet().getWalletStatus());

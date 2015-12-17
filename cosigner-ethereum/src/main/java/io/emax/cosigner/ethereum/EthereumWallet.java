@@ -175,6 +175,16 @@ public class EthereumWallet implements Wallet, Validatable {
   }
 
   @Override
+  public String generatePrivateKey() {
+    return ByteUtilities.toHexString(Secp256k1.generatePrivateKey());
+  }
+
+  @Override
+  public String createAddressFromKey(String privateKey) {
+    return EthereumTools.getPublicAddress(privateKey);
+  }
+
+  @Override
   public Iterable<String> getAddresses(String name) {
     int maxRounds = 1;
     if (addressRounds.containsKey(name)) {

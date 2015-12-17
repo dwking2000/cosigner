@@ -22,7 +22,9 @@ public class ByteUtilities {
    * Convert a byte array into its hex string equivalent.
    */
   public static String toHexString(byte[] data) {
-    if(data == null) return "";
+    if (data == null) {
+      return "";
+    }
     char[] chars = new char[data.length * 2];
     for (int i = 0; i < data.length; i++) {
       chars[i * 2] = HEX_DIGITS[(data[i] >> 4) & 0xf];

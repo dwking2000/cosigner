@@ -94,6 +94,17 @@ public class BitcoinWallet implements Wallet, Validatable {
   }
 
   @Override
+  public String generatePrivateKey() {
+    String key = ByteUtilities.toHexString(Secp256k1.generatePrivateKey());
+    return BitcoinTools.encodePrivateKey(key);
+  }
+
+  @Override
+  public String createAddressFromKey(String privateKey) {
+    return BitcoinTools.getPublicAddress(privateKey);
+  }
+
+  @Override
   public Iterable<String> getAddresses(String name) {
     // Hash the user's key so it's not stored in the wallet
     String internalName = BitcoinTools.encodeUserKey(name);

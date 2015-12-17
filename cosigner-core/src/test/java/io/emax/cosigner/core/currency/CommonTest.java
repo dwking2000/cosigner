@@ -282,6 +282,74 @@ public class CommonTest extends TestCase {
 
   @SuppressWarnings("unchecked")
   @Test
+  public void testSignAndApply() {
+    System.out.println("");
+    System.out.println("Sign and apply a transaction for all currencies.");
+
+    LinkedList<String> currencies = new LinkedList<>();
+    try {
+      String currenciesString = Common.listCurrencies();
+      currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
+    } catch (Exception e) {
+      LOGGER.debug(null, e);
+      fail("Problem listing currencies.");
+    }
+
+    try {
+      currencies.forEach(currency -> {
+        try {
+          System.out.println("For " + currency);
+          CurrencyParameters parms = new CurrencyParameters();
+          parms.setCurrencySymbol(currency);
+          parms.setUserKey(userKey);
+
+          CurrencyPackage currencyPackage = Common.lookupCurrency(parms);
+          String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
+          String privateKey = currencyPackage.getWallet().generatePrivateKey();
+          String address = currencyPackage.getWallet().createAddressFromKey(privateKey);
+
+          parms.setAccount(Arrays.asList(address));
+          address = Common.getNewAddress(parmsString);
+          CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+          accountData.setAmount("5.0");
+          accountData.setRecipientAddress(address);
+          parms.setReceivingAccount(Arrays.asList(accountData));
+          parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
+
+          String tx = Common.prepareTransaction(parmsString);
+          System.out.println(tx);
+
+          parms.setTransactionData(tx);
+          parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
+          String sigData = Common.getSignatureString(parmsString);
+          System.out.println(sigData);
+
+          Iterable<Iterable<String>> signatureData = (Iterable<Iterable<String>>)Json.objectifyString(Iterable.class, sigData);
+          signatureData = currencyPackage.getWallet().signWithPrivateKey(signatureData, privateKey);
+          sigData = Json.stringifyObject(Iterable.class, signatureData);
+          System.out.println(sigData);
+
+          LinkedList<String> sigApplication = new LinkedList<>();
+          sigApplication.add(tx);
+          sigApplication.add(sigData);
+          parms.setTransactionData(Json.stringifyObject(Iterable.class, sigApplication));
+          parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
+          tx = Common.applySignature(parmsString);
+          System.out.println(tx);
+
+        } catch (Exception e) {
+          LOGGER.debug(null, e);
+          fail("Exception when preparing a transaction.");
+        }
+      });
+    } catch (Exception e) {
+      LOGGER.debug(null, e);
+      fail("Exception when preparing up a transaction");
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
   public void testApproveTransaction() {
     System.out.println("");
     System.out.println("Approving a transaction for all currencies.");

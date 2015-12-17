@@ -62,6 +62,14 @@ public class WebSocketResource extends OnMessage<String> {
         LOGGER.debug("[PrepareTransaction:WSRequest]");
         arg0.write(Common.prepareTransaction(arg1));
         break;
+      case "/getsignaturestring":
+        LOGGER.debug("[GetSignatureString:WSRequest]");
+        arg0.write(Common.getSignatureString(arg1));
+        break;
+      case "/applysignature":
+        LOGGER.debug("[ApplySignature:WSRequest]");
+        arg0.write(Common.applySignature(arg1));
+        break;
       case "/approvetransaction":
         LOGGER.debug("[ApproveTransaction:WSRequest]");
         arg0.write(Common.approveTransaction(arg1, true));

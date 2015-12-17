@@ -37,6 +37,16 @@ public interface Wallet {
   boolean registerAddress(String address);
 
   /**
+   * Generate a private key compatible with the wallet.
+   */
+  String generatePrivateKey();
+
+  /**
+   * Generate a wallet compatible address from a private key.
+   */
+  String createAddressFromKey(String privateKey);
+
+  /**
    * Returns all multi-sig addresses stored for the provided wallet name, they should be
    * deterministic.
    *

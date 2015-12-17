@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -64,7 +65,10 @@ public class Common {
     }
   }
 
-  private static CurrencyPackage lookupCurrency(CurrencyParameters params) {
+  /**
+   * Lookup the currency package declared in the parameters.
+   */
+  public static CurrencyPackage lookupCurrency(CurrencyParameters params) {
     if (CosignerApplication.getCurrencies().containsKey(params.getCurrencySymbol())) {
       return CosignerApplication.getCurrencies().get(params.getCurrencySymbol());
     } else {
@@ -427,6 +431,48 @@ public class Common {
     String response = currencyParams.getTransactionData();
     LOGGER.debug("[Response] " + response);
     return response;
+  }
+
+  /**
+   * Get the data needed to create an offline signature for the transaction.
+   */
+  public static String getSignatureString(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
+    CurrencyPackage currency = lookupCurrency(currencyParams);
+
+    String address = "";
+    if (currencyParams.getAccount() != null && currencyParams.getAccount().size() > 0) {
+      address = currencyParams.getAccount().get(0);
+    }
+
+    Iterable<Iterable<String>> sigData =
+        currency.getWallet().getSigString(currencyParams.getTransactionData(), address);
+
+    String result = Json.stringifyObject(Iterable.class, sigData);
+    return result;
+  }
+
+  /**
+   * Apply an offline signature to a transaction.
+   */
+  @SuppressWarnings("unchecked")
+  public static String applySignature(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
+    CurrencyPackage currency = lookupCurrency(currencyParams);
+
+    String address = "";
+    if (currencyParams.getAccount() != null && currencyParams.getAccount().size() > 0) {
+      address = currencyParams.getAccount().get(0);
+    }
+
+    Iterator<String> txList = ((Iterable<String>) Json.objectifyString(Iterable.class,
+        currencyParams.getTransactionData())).iterator();
+    String tx = txList.next();
+    Iterable<Iterable<String>> sigData =
+        (Iterable<Iterable<String>>) Json.objectifyString(Iterable.class, txList.next());
+
+    String result = currency.getWallet().applySignature(tx, address, sigData);
+    return result;
   }
 
   /**

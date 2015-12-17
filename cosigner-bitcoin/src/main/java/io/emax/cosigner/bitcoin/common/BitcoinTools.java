@@ -76,41 +76,48 @@ public class BitcoinTools {
           privateKeyCheck = new BigInteger(1, privateKeyAttempt);
         }
       }
-
-      String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
-          .getChain() == BlockChainName.main ? NetworkBytes.PRIVATEKEY.toString()
-              : NetworkBytes.PRIVATEKEY_TEST.toString();
-
-      // Encode in format bitcoind is expecting
-      byte[] privateKey = ByteUtilities.toByteArray(networkBytes);
-      byte[] privateKey2 = new byte[privateKey.length + privateKeyAttempt.length];
-      System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
-      System.arraycopy(privateKeyAttempt, 0, privateKey2, privateKey.length,
-          privateKeyAttempt.length);
-      privateKey = new byte[privateKey2.length];
-      System.arraycopy(privateKey2, 0, privateKey, 0, privateKey2.length);
-
-      try {
-        MessageDigest md = MessageDigest.getInstance(SHA256);
-        md.update(privateKey);
-        byte[] checksumHash = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
-
-        privateKey2 = new byte[privateKey.length + checksumHash.length];
-        System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
-        System.arraycopy(checksumHash, 0, privateKey2, privateKey.length, checksumHash.length);
-        privateKey = new byte[privateKey2.length];
-        System.arraycopy(privateKey2, 0, privateKey, 0, privateKey2.length);
-
-        return Base58.encode(privateKey);
-
-      } catch (NoSuchAlgorithmException e) {
-        LOGGER.error(null, e);
-        return NOKEY;
-      }
+      return encodePrivateKey(ByteUtilities.toHexString(privateKeyAttempt));
     } catch (RuntimeException e) {
       LOGGER.debug(null, e);
       return NOKEY;
     }
+  }
+
+  /**
+   * Encodes a raw public key in a bitcoind compatible format.
+   */
+  public static String encodePrivateKey(String privateKeyString) {
+    String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
+        .getChain() == BlockChainName.main ? NetworkBytes.PRIVATEKEY.toString()
+            : NetworkBytes.PRIVATEKEY_TEST.toString();
+
+    // Encode in format bitcoind is expecting
+    byte[] privateKeyAttempt = ByteUtilities.toByteArray(privateKeyString);
+    byte[] privateKey = ByteUtilities.toByteArray(networkBytes);
+    byte[] privateKey2 = new byte[privateKey.length + privateKeyAttempt.length];
+    System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
+    System.arraycopy(privateKeyAttempt, 0, privateKey2, privateKey.length,
+        privateKeyAttempt.length);
+    privateKey = new byte[privateKey2.length];
+    System.arraycopy(privateKey2, 0, privateKey, 0, privateKey2.length);
+
+    try {
+      MessageDigest md = MessageDigest.getInstance(SHA256);
+      md.update(privateKey);
+      byte[] checksumHash = Arrays.copyOfRange(md.digest(md.digest()), 0, 4);
+
+      privateKey2 = new byte[privateKey.length + checksumHash.length];
+      System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
+      System.arraycopy(checksumHash, 0, privateKey2, privateKey.length, checksumHash.length);
+      privateKey = new byte[privateKey2.length];
+      System.arraycopy(privateKey2, 0, privateKey, 0, privateKey2.length);
+
+      return Base58.encode(privateKey);
+    } catch (NoSuchAlgorithmException e) {
+      LOGGER.error(null, e);
+      return NOKEY;
+    }
+
   }
 
   /**
@@ -197,9 +204,6 @@ public class BitcoinTools {
       byte[] addressBytes =
           ByteUtilities.readBytes(decodedNetworkAddress, 1, decodedNetworkAddress.length - 5);
 
-      byte[] checksumBytes =
-          ByteUtilities.readBytes(decodedNetworkAddress, decodedNetworkAddress.length - 4, 4);
-
       String checksumString =
           ByteUtilities.toHexString(networkBytes) + ByteUtilities.toHexString(addressBytes);
       byte[] checksumData = ByteUtilities.toByteArray(checksumString);
@@ -211,6 +215,9 @@ public class BitcoinTools {
       LOGGER.debug("DecodedAddress: " + ByteUtilities.toHexString(decodedNetworkAddress));
       LOGGER.debug("NetworkBytes: " + ByteUtilities.toHexString(networkBytes));
       LOGGER.debug("AddressBytes: " + ByteUtilities.toHexString(addressBytes));
+
+      byte[] checksumBytes =
+          ByteUtilities.readBytes(decodedNetworkAddress, decodedNetworkAddress.length - 4, 4);
       LOGGER.debug("ChecksumBytes: " + ByteUtilities.toHexString(checksumBytes));
       LOGGER.debug("CalculatedChecksum: " + ByteUtilities.toHexString(calculatedCheckum));
       if (!ByteUtilities.toHexString(calculatedCheckum)

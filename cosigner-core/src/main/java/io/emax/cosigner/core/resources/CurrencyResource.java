@@ -19,7 +19,7 @@ public class CurrencyResource {
 
   /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @return Common.listCurrencies()
    */
   @GET
@@ -34,7 +34,7 @@ public class CurrencyResource {
 
   /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @return Common.registerAddress()
    */
   @POST
@@ -49,7 +49,7 @@ public class CurrencyResource {
 
   /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.getNewAddress()
    */
@@ -65,7 +65,7 @@ public class CurrencyResource {
 
   /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.listAllAddresses()
    */
@@ -81,7 +81,7 @@ public class CurrencyResource {
 
   /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.listTransactions()
    */
@@ -97,7 +97,7 @@ public class CurrencyResource {
 
   /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.getBalance()
    */
@@ -113,7 +113,7 @@ public class CurrencyResource {
 
   /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.monitorBalance()
    */
@@ -129,7 +129,7 @@ public class CurrencyResource {
 
   /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.prepareTransaction()
    */
@@ -144,8 +144,34 @@ public class CurrencyResource {
   }
 
   /**
+   * Get signature data needed to sign an offline transaction.
+   */
+  @POST
+  @Path("/GetSignatureString")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getSignatureString(String params) {
+    LOGGER.debug("[GetSignatureString:Request]");
+    Response response = Response.ok(Common.getSignatureString(params)).build();
+    LOGGER.debug("[GetSignatureString:Response] " + response.toString());
+    return response;
+  }
+
+  /**
+   * Apply an offline signature to a transaction.
+   */
+  @POST
+  @Path("/ApplySignature")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response applySignature(String params) {
+    LOGGER.debug("[ApplySignature:Request]");
+    Response response = Response.ok(Common.applySignature(params)).build();
+    LOGGER.debug("[ApplySignature:Response] " + response.toString());
+    return response;
+  }
+
+  /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.approveTransaction()
    */
@@ -161,7 +187,7 @@ public class CurrencyResource {
 
   /**
    * REST end-point for the {@link Common} currency methods.
-   * 
+   *
    * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.submitTransaction()
    */
