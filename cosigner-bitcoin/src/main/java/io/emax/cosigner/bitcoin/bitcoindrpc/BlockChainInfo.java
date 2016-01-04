@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 /**
  * Information about the current state of the local block chain.
- * 
+ *
  * @author dquintela
  */
 public class BlockChainInfo {
@@ -53,6 +53,9 @@ public class BlockChainInfo {
 
   @JsonProperty("pruned")
   private String pruned;
+
+  @JsonProperty("softforks")
+  private SoftForks[] softforks;
 
   /**
    * Estimate of what percentage of the block chain transactions have been verified so far, starting
@@ -148,6 +151,20 @@ public class BlockChainInfo {
 
   public String getPruned() {
     return pruned;
+  }
+
+  /**
+   * @return the softforks
+   */
+  public SoftForks[] getSoftforks() {
+    return softforks;
+  }
+
+  /**
+   * @param softforks the softforks to set
+   */
+  public void setSoftforks(SoftForks[] softforks) {
+    this.softforks = softforks;
   }
 
   public BigDecimal getVerificationprogress() {
