@@ -35,4 +35,18 @@ ADDRESS=$(java -jar ${CLIENTLIB} getNewAddress BTC ${USERKEY} | tail -n 1)
 echo ${ADDRESS}
 
 echo ""
-echo "Sending money.... eventually"
+echo "Fund the account."
+
+CURLURL="http://${BITCOIND_PORT_18332_TCP_ADDR}:${BITCOIND_PORT_18332_TCP_PORT}"
+curl --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "generate", "params": [101] }' ${CURLURL}
+curl --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d "{\"jsonrpc\": \"2.0\", \"id\": \"curl\", \"method\": \"sendtoaddress\", \"params\": [\"${ADDRESS}\", 5] }" ${CURLURL}
+curl --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "generate", "params": [10] }' ${CURLURL}
+
+echo "Generating a second address..."
+ADDRESS2=$(java -jar ${CLIENTLIB} getNewAddress BTC ${USERKEY} | tail -n 1)
+echo ${ADDRESS2}
+
+echo "Preparing a transaction to second address..."
+TX=$(java -jar ${CLIENTLIB} prepareTransaction BTC ${ADDRESS} ${ADDRESS2} 3 | tail -n 1)
+echo ${TX}
+

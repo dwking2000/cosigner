@@ -32,6 +32,8 @@ functional:
   hostname: functional
   links:
     - cosigner
+    - bitcoind
+    - geth
   environment:
     BITCOIN_FAUCET:
     ETHER_FAUCET:

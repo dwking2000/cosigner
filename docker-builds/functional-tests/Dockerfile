@@ -4,7 +4,7 @@ MAINTAINER Tom Robichaud <tom@emax.io>
 RUN mkdir -p /opt/functional/
 
 RUN apt-get update
-RUN apt-get install -y openssl git maven
+RUN apt-get install -y openssl git maven curl
 RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 
 RUN git clone https://github.com/EMAXio/cosigner.git /opt/functional/cosigner/
@@ -30,3 +30,4 @@ EXPOSE 8443
 EXPOSE 8445
 
 ENTRYPOINT ["./cosigner-client.sh"]
+#ENTRYPOINT ["/bin/bash"]
