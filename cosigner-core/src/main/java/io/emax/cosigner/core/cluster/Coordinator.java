@@ -74,15 +74,17 @@ public class Coordinator {
       // Register a ZMQ REP socket
       Context context = ZMQ.context(1);
       responder = context.socket(ZMQ.REP);
+      // Don't wait if there are no messages.
+      responder.setReceiveTimeOut(1);
       responder.bind("tcp://" + cluster.getThisServer().getServerLocation() + ":"
           + cluster.getThisServer().getServerRpcPort());
 
-      Observable.interval(5, TimeUnit.MILLISECONDS).map(tick -> responder.recvStr())
+      Observable.interval(1, TimeUnit.SECONDS).map(tick -> responder.recvStr())
           .subscribe(new Action1<String>() {
             @Override
             public void call(String commandString) {
               // Try to decode it as one of the known command types
-              if (commandString.isEmpty()) {
+              if (commandString == null || commandString.isEmpty()) {
                 return;
               }
               LOGGER.debug("Got a remote command: " + commandString);
