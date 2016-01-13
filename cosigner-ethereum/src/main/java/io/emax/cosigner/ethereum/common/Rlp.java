@@ -19,7 +19,7 @@ public class Rlp {
 
   /**
    * Parse a byte array into its RLP components.
-   * 
+   *
    * @param input Byte-encoded RLP entity.
    * @return RLP data structure.
    */
@@ -68,12 +68,12 @@ public class Rlp {
 
   /**
    * Encodes an RLP item into a byte array.
-   * 
+   *
    * @param item RLP data that needs to be encoded.
    * @return Byte array with RLP information added.
    */
   public static byte[] encodeItem(byte[] item) {
-    if (item.length == 1 && (int) (0xFF & item[0]) != 0 && (int) (0xFF & item[0]) < SHORT_ITEM) {
+    if (item.length == 1 && (0xFF & item[0]) != 0 && (0xFF & item[0]) < SHORT_ITEM) {
       return item;
     } else if (item.length < THRESHOLD) {
       byte[] encodedItem = new byte[1 + item.length];
@@ -93,7 +93,7 @@ public class Rlp {
 
   /**
    * Encodes an RLP list into a byte array, including items inside the list.
-   * 
+   *
    * @param list RLP data that needs to be encoded.
    * @return Byte array with RLP information added.
    */
@@ -103,8 +103,8 @@ public class Rlp {
       byte[] encodedItem = item.encode();
       byte[] encodedListMerger = new byte[encodedListData.length + encodedItem.length];
       System.arraycopy(encodedListData, 0, encodedListMerger, 0, encodedListData.length);
-      System.arraycopy(encodedItem, 0, encodedListMerger, encodedListData.length,
-          encodedItem.length);
+      System
+          .arraycopy(encodedItem, 0, encodedListMerger, encodedListData.length, encodedItem.length);
       encodedListData = Arrays.copyOf(encodedListMerger, encodedListMerger.length);
     }
 
@@ -119,8 +119,8 @@ public class Rlp {
       byte[] encodedItem = new byte[1 + itemSize.length + encodedListData.length];
       encodedItem[0] = (byte) (LONG_LIST + itemSize.length);
       System.arraycopy(itemSize, 0, encodedItem, 1, itemSize.length);
-      System.arraycopy(encodedListData, 0, encodedItem, 1 + itemSize.length,
-          encodedListData.length);
+      System
+          .arraycopy(encodedListData, 0, encodedItem, 1 + itemSize.length, encodedListData.length);
       return encodedItem;
     }
   }

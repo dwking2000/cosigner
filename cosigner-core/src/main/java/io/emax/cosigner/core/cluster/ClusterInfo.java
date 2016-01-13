@@ -27,7 +27,7 @@ public class ClusterInfo {
   private Server thisServer = new Server();
 
   // Static resolver
-  private static ClusterInfo clusterInfo = new ClusterInfo();
+  private static final ClusterInfo clusterInfo = new ClusterInfo();
 
   public static ClusterInfo getInstance() {
     return clusterInfo;
@@ -42,10 +42,10 @@ public class ClusterInfo {
     this.thisServer.setOriginator(true);
     this.thisServer.setServerId(ServerKey.getServerId());
     this.setClusterKey(ByteUtilities.toHexString(Secp256k1.generatePrivateKey()));
-    this.thisServer.setCurrencyStatus(new HashMap<String, ServerStatus>());
-    CosignerApplication.getCurrencies().forEach((currency, currencyPackage) -> {
-      this.thisServer.getCurrencyStatus().put(currency, ServerStatus.UNKNOWN);
-    });
+    this.thisServer.setCurrencyStatus(new HashMap<>());
+    CosignerApplication.getCurrencies().forEach(
+        (currency, currencyPackage) -> this.thisServer.getCurrencyStatus()
+            .put(currency, ServerStatus.UNKNOWN));
 
     servers.add(thisServer);
   }
@@ -142,9 +142,11 @@ public class ClusterInfo {
     byte[] hashedBytes = new byte[256 / 8];
     sha3.doFinal(hashedBytes, 0);
 
-    String recoveredPublicKey = ByteUtilities.toHexString(Secp256k1.recoverPublicKey(
-        ByteUtilities.toByteArray(server.getSigR()), ByteUtilities.toByteArray(server.getSigS()),
-        ByteUtilities.toByteArray(server.getSigV()), hashedBytes));
+    String recoveredPublicKey = ByteUtilities.toHexString(Secp256k1
+        .recoverPublicKey(ByteUtilities.toByteArray(server.getSigR()),
+            ByteUtilities.toByteArray(server.getSigS()),
+            ByteUtilities.toByteArray(server.getSigV()),
+            hashedBytes));
 
     String publicKey =
         ByteUtilities.toHexString(Secp256k1.getPublicKey(ByteUtilities.toByteArray(clusterKey)));

@@ -97,10 +97,7 @@ public final class RawInput {
     } else if (!txHash.equals(other.txHash)) {
       return false;
     }
-    if (txIndex != other.txIndex) {
-      return false;
-    }
-    return true;
+    return txIndex == other.txIndex;
   }
 
   @Override
@@ -111,7 +108,7 @@ public final class RawInput {
 
   /**
    * Encodes this input as a byte array.
-   * 
+   *
    * @return Hex string representing the input.
    */
   public String encode() {
@@ -150,7 +147,7 @@ public final class RawInput {
 
   /**
    * Parses a hex string that represents an input, and converts it into a RawInput
-   * 
+   *
    * @param txData Hex string representing the input
    * @return RawInput generated from the input.
    */
@@ -187,7 +184,7 @@ public final class RawInput {
 
   /**
    * Returns the size of the encoded data
-   * 
+   *
    * @return Size of the encoded data.
    */
   public long getDataSize() {
@@ -198,7 +195,7 @@ public final class RawInput {
 
   /**
    * Copies the current RawInput
-   * 
+   *
    * @return A new copy of this RawInput.
    */
   public RawInput copy() {
@@ -216,7 +213,7 @@ public final class RawInput {
   /**
    * Removes the multi-sig redeem script from the input signature so that more signatures can be
    * appended.
-   * 
+   *
    * @param redeemScript Script that we want to remove.
    */
   public void stripMultiSigRedeemScript(String redeemScript) {

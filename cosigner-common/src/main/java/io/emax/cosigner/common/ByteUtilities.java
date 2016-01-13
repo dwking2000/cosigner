@@ -38,11 +38,11 @@ public class ByteUtilities {
    */
   public static byte[] toByteArray(String data) {
     if (data == null) {
-      return new byte[] {};
+      return new byte[]{};
     }
 
     if (data.length() == 0) {
-      return new byte[] {};
+      return new byte[]{};
     }
 
     while (data.length() < 2) {
@@ -92,7 +92,7 @@ public class ByteUtilities {
    *
    * @param data Data that needs padding
    * @param size The final desired size of the data.
-   * @param pad The byte value to use in padding the data.
+   * @param pad  The byte value to use in padding the data.
    * @return A padded array.
    */
   public static byte[] leftPad(byte[] data, int size, byte pad) {
@@ -114,9 +114,9 @@ public class ByteUtilities {
   /**
    * Reads a section of a byte array and returns it as its own byte array, not unlike a substring.
    *
-   * @param data Byte array to read from.
+   * @param data  Byte array to read from.
    * @param start Starting position of the desired data.
-   * @param size Size of the data.
+   * @param size  Size of the data.
    * @return Byte array containing the desired data.
    */
   public static byte[] readBytes(byte[] data, int start, int size) {

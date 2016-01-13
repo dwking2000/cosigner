@@ -2,9 +2,8 @@ package io.emax.cosigner.api.currency;
 
 /**
  * Common configuration that each currency needs to provide to cosigner-core.
- * 
- * @author Tom
  *
+ * @author Tom
  */
 public interface CurrencyConfiguration {
   /**

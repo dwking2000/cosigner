@@ -2,14 +2,14 @@ package io.emax.cosigner.bitcoin.bitcoindrpc;
 
 public enum NetworkBytes {
 
-  P2SH("05"), 
-  P2PKH("00"), 
-  PRIVATEKEY("80"), 
-  P2SH_TEST("C4"), 
-  P2PKH_TEST("6F"), 
+  P2SH("05"),
+  P2PKH("00"),
+  PRIVATEKEY("80"),
+  P2SH_TEST("C4"),
+  P2PKH_TEST("6F"),
   PRIVATEKEY_TEST("EF");
 
-  private String value;
+  private final String value;
 
   NetworkBytes(String value) {
     this.value = value;
@@ -26,7 +26,7 @@ public enum NetworkBytes {
 
   /**
    * Look up an enum based on the string value it represents.
-   * 
+   *
    * @param value String value to lookup
    * @return Enum that corresponds to the string
    */

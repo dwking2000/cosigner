@@ -14,14 +14,14 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
-  private HashSet<String> monitoredAddresses = new HashSet<>();
-  private HashMap<String, String> accountBalances = new HashMap<>();
-  private HashSet<TransactionDetails> accountTransactions = new HashSet<>();
-  private HashSet<TransactionDetails> newAccountTransactions = new HashSet<>();
-  private Observable<Map<String, String>> observableBalances =
+  private final HashSet<String> monitoredAddresses = new HashSet<>();
+  private final HashMap<String, String> accountBalances = new HashMap<>();
+  private final HashSet<TransactionDetails> accountTransactions = new HashSet<>();
+  private final HashSet<TransactionDetails> newAccountTransactions = new HashSet<>();
+  private final Observable<Map<String, String>> observableBalances =
       Observable.interval(1, TimeUnit.MINUTES).map(tick -> accountBalances);
 
-  private Observable<Set<TransactionDetails>> observableTransactions =
+  private final Observable<Set<TransactionDetails>> observableTransactions =
       Observable.interval(1, TimeUnit.MINUTES).map(tick -> {
         HashSet<TransactionDetails> txs = new HashSet<>();
         txs.addAll(newAccountTransactions);
@@ -29,10 +29,10 @@ public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
         return txs;
       });
 
-  private Subscription balanceSubscription =
+  private final Subscription balanceSubscription =
       Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
 
-  private BitcoinWallet wallet;
+  private final BitcoinWallet wallet;
 
   public BitcoinMonitor() {
     wallet = new BitcoinWallet();
@@ -48,24 +48,20 @@ public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
     return true;
   }
 
-  private boolean updateTransactions() {
+  private void updateTransactions() {
     HashSet<TransactionDetails> details = new HashSet<>();
-    monitoredAddresses.forEach(address -> {
-      Arrays.asList(wallet.getTransactions(address, 100, 0)).forEach(tx -> {
-        details.add(tx);
-      });
-    });
+    monitoredAddresses.forEach(
+        address -> Arrays.asList(wallet.getTransactions(address, 100, 0)).forEach(details::add));
 
     // Remove the intersection
     details.removeAll(accountTransactions);
     accountTransactions.addAll(details);
     newAccountTransactions.addAll(details);
-    return true;
   }
 
   @Override
   public void addAddresses(Iterable<String> addresses) {
-    addresses.forEach(address -> monitoredAddresses.add(address));
+    addresses.forEach(monitoredAddresses::add);
   }
 
   @Override
@@ -76,7 +72,7 @@ public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
   @Override
   public Iterable<String> listAddresses() {
     LinkedList<String> addresses = new LinkedList<>();
-    monitoredAddresses.forEach(address -> addresses.add(address));
+    monitoredAddresses.forEach(addresses::add);
     return null;
   }
 

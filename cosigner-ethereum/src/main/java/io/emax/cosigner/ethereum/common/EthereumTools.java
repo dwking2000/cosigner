@@ -21,12 +21,14 @@ public class EthereumTools {
 
   /**
    * Generates a deterministic random number that can be used as a private key in ECDSA.
-   * 
-   * @param userKeyPart Expect these to be hex strings without the leading 0x identifier. This
-   *        combined with the serverKeyPart is used as a seed to generate the private keys.
+   *
+   * @param userKeyPart   Expect these to be hex strings without the leading 0x identifier. This
+   *                      combined with the serverKeyPart is used as a seed to generate the private
+   *                      keys.
    * @param serverKeyPart Expect these to be hex strings without the leading 0x identifier. This
-   *        combined with the userKeyPart is used as a seed to generate the private keys.
-   * @param rounds Number of private keys to skip while generating them.
+   *                      combined with the userKeyPart is used as a seed to generate the private
+   *                      keys.
+   * @param rounds        Number of private keys to skip while generating them.
    * @return A private key encoded in a hex string.
    */
   public static String getDeterministicPrivateKey(String userKeyPart, String serverKeyPart,
@@ -74,7 +76,7 @@ public class EthereumTools {
 
   /**
    * Generates a SHA-3 hash on the provided data.
-   * 
+   *
    * @param data Hex data encoded in a string.
    * @return Hash encoded in a hex string.
    */
@@ -90,10 +92,10 @@ public class EthereumTools {
 
   /**
    * Obscures the userKey which is sensitive data.
-   * 
+   *
    * <p>Intended to be used when the key needs to be identified but also exported, to the geth node
    * for example.
-   * 
+   *
    * @param key User secret that needs to be hidden
    * @return Hashed user key
    */
@@ -114,10 +116,10 @@ public class EthereumTools {
 
   /**
    * Converts a private key, or public key, to the public address used in Ethereum.
-   * 
-   * @param key Key being converted.
+   *
+   * @param key          Key being converted.
    * @param isPrivateKey Do we need to convert from a private key to public, or is it already a
-   *        public key.
+   *                     public key.
    * @return The public address that people using Ethereum are used to seeing.
    */
   public static String getPublicAddress(String key, boolean isPrivateKey) {
@@ -151,7 +153,7 @@ public class EthereumTools {
 
   /**
    * Convert a private key into the corresponding public one.
-   * 
+   *
    * @param privateKey Private key being converted.
    * @return Public key that corresponds to the input.
    */

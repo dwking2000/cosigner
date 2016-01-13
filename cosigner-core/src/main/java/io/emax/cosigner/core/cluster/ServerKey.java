@@ -34,9 +34,8 @@ public class ServerKey {
       // Sign it.
       byte[][] signature =
           Secp256k1.signTransaction(hashedBytes, ByteUtilities.toByteArray(clusterKey));
-      Arrays.asList(signature).forEach(sigValue -> {
-        rsvValues.add(ByteUtilities.toHexString(sigValue));
-      });
+      Arrays.asList(signature)
+          .forEach(sigValue -> rsvValues.add(ByteUtilities.toHexString(sigValue)));
 
       // Recovery ID is bad, try again.
       if (rsvValues.get(2).equalsIgnoreCase("ff")) {
@@ -46,7 +45,7 @@ public class ServerKey {
       }
     }
 
-    return rsvValues.toArray(new String[0]);
+    return rsvValues.toArray(new String[rsvValues.size()]);
   }
 
   /**

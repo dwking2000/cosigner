@@ -3,7 +3,6 @@ package io.emax.cosigner.common.crypto;
 import io.emax.cosigner.common.ByteUtilities;
 
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
-import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
@@ -97,8 +96,8 @@ public class Secp256k1 {
       for (BigInteger sigChunk : sig) {
         sigData.add(sigChunk.toByteArray());
       }
-      sigData.add(new byte[] {recoveryId});
-      return sigData.toArray(new byte[][] {});
+      sigData.add(new byte[]{recoveryId});
+      return sigData.toArray(new byte[][]{});
 
     } catch (Exception e) {
       LOGGER.error(null, e);
@@ -108,7 +107,7 @@ public class Secp256k1 {
 
   /**
    * Determine the recovery ID for the given signature and public key.
-   * 
+   *
    * <p>Any signed message can resolve to one of two public keys due to the nature ECDSA. The
    * recovery ID provides information about which one it is, allowing confirmation that the message
    * was signed by a specific key.</p>
@@ -148,7 +147,6 @@ public class Secp256k1 {
         return (byte) (0xFF & recoveryId);
       } catch (Exception e) {
         LOGGER.error(null, e);
-        continue;
       }
     }
 
@@ -201,8 +199,8 @@ public class Secp256k1 {
           new ECPrivateKeyParameters(new BigInteger(1, privateKey), domain);
 
       ECDHBasicAgreement agreement = new ECDHBasicAgreement();
-      agreement.init((CipherParameters) prvkey);
-      byte[] password = agreement.calculateAgreement((CipherParameters) pubKey).toByteArray();
+      agreement.init(prvkey);
+      byte[] password = agreement.calculateAgreement(pubKey).toByteArray();
 
       return Aes.generateKey(ByteUtilities.toHexString(password), password);
 

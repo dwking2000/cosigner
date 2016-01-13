@@ -3,7 +3,6 @@ package io.emax.cosigner.ethereum.gethrpc.multisig;
 import java.math.BigInteger;
 import java.util.List;
 
-
 public interface MultiSigContractParametersInterface {
 
   // Getters & Setters
@@ -37,14 +36,14 @@ public interface MultiSigContractParametersInterface {
 
   /**
    * Encode the parameters into the byte array that the contract is expecting.
-   * 
+   *
    * @return Byte array encoding of the parameters.
    */
   byte[] encode();
 
   /**
    * Decode a byte array of parameters into this data structure for easier manipulation.
-   * 
+   *
    * @param data Byte array representation of the parameters
    * @return Data structure of parameters.
    */

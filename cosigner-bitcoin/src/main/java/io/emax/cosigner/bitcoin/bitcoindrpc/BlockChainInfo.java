@@ -154,14 +154,14 @@ public class BlockChainInfo {
   }
 
   /**
-   * @return the softforks
+   * Softforks.
    */
   public SoftForks[] getSoftforks() {
     return softforks;
   }
 
   /**
-   * @param softforks the softforks to set
+   * Softforks.
    */
   public void setSoftforks(SoftForks[] softforks) {
     this.softforks = softforks;
@@ -224,7 +224,8 @@ public class BlockChainInfo {
     return "BlockChainInfo [chain=" + chain + ", blocks=" + blocks + ", headers=" + headers
         + ", bestblockhash=" + bestblockhash + ", difficulty=" + difficulty
         + ", verificationprogress=" + verificationprogress + ", chainwork=" + chainwork
-        + ", pruned=" + pruned + "]";
+        + ", pruned="
+        + pruned + "]";
   }
 
 }

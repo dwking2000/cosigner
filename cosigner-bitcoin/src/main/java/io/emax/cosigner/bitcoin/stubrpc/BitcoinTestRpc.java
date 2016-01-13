@@ -76,7 +76,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public String[] getaddressesbyaccount(String accountName) {
-    return new String[] {};
+    return new String[]{};
   }
 
   @Override
@@ -112,12 +112,12 @@ public class BitcoinTestRpc implements BitcoindRpc {
     scriptData += "88ac";
     output.setScriptPubKey(scriptData);
 
-    return new Output[] {output};
+    return new Output[]{output};
   }
 
   @Override
   public Payment[] listtransactions(String account, int numberToReturn, int numberToSkip,
       boolean includeWatchOnly) {
-    return new Payment[] {};
+    return new Payment[]{};
   }
 }

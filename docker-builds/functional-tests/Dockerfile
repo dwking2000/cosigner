@@ -16,6 +16,9 @@ RUN cp /opt/emax/cosigner.jks /opt/functional/cosigner-client/target/
 RUN mv /opt/functional/cosigner-client/target/cosigner-client.properties /opt/functional/cosigner-client/target/cosigner-client.properties.original
 RUN sed 's/localhost/${COSIGNER_PORT_8443_TCP_ADDR}/g' < /opt/functional/cosigner-client/target/cosigner-client.properties.original > /opt/functional/cosigner-client/target/cosigner-client.properties
 
+RUN cd /usr/bin && wget -O jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+RUN chmod 555 /usr/bin/jq
+
 ADD cosigner-client.sh /opt/functional/cosigner-client.sh
 RUN chmod 555 /opt/functional/cosigner-client.sh
 

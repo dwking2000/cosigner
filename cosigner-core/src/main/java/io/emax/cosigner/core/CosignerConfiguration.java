@@ -51,5 +51,4 @@ public class CosignerConfiguration extends io.dropwizard.Configuration {
     this.enabledCurrencies = enabledCurrencies;
   }
 
-  
 }

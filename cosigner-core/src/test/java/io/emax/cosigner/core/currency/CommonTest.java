@@ -1,12 +1,5 @@
 package io.emax.cosigner.core.currency;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.emax.cosigner.api.core.CurrencyPackage;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.api.core.CurrencyParametersRecipient;
@@ -19,40 +12,38 @@ import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
-import junit.framework.TestCase;
 
-public class CommonTest extends TestCase {
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.LinkedList;
+
+public class CommonTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(CommonTest.class);
 
   // General
   private String userKey;
 
-  // Bitcoin
-  private Wallet bitcoinWallet;
-  private Monitor bitcoinMonitor;
-  private CurrencyConfiguration bitcoinConfig;
-
-  // Ethereum
-  private Wallet ethereumWallet;
-  private Monitor ethereumMonitor;
-  private CurrencyConfiguration ethereumConfig;
-
-  @Override
+  @Before
   public void setUp() {
     // General setup
     userKey = "deadbeef";
 
     // Bitcoin
     BitcoinResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
-    bitcoinWallet = new io.emax.cosigner.bitcoin.BitcoinWallet();
-    bitcoinMonitor = new io.emax.cosigner.bitcoin.BitcoinMonitor();
-    bitcoinConfig = new io.emax.cosigner.bitcoin.BitcoinConfiguration();
+    Wallet bitcoinWallet = new io.emax.cosigner.bitcoin.BitcoinWallet();
+    Monitor bitcoinMonitor = new io.emax.cosigner.bitcoin.BitcoinMonitor();
+    CurrencyConfiguration bitcoinConfig = new io.emax.cosigner.bitcoin.BitcoinConfiguration();
 
     // Ethereum
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    ethereumWallet = new io.emax.cosigner.ethereum.EthereumWallet();
-    ethereumMonitor = new io.emax.cosigner.ethereum.EthereumMonitor();
-    ethereumConfig = new io.emax.cosigner.ethereum.EthereumConfiguration();
+    Wallet ethereumWallet = new io.emax.cosigner.ethereum.EthereumWallet();
+    Monitor ethereumMonitor = new io.emax.cosigner.ethereum.EthereumMonitor();
+    CurrencyConfiguration ethereumConfig = new io.emax.cosigner.ethereum.EthereumConfiguration();
 
     // Register currency packages
     CurrencyPackage bitcoinPackage = new CurrencyPackage();
@@ -65,10 +56,10 @@ public class CommonTest extends TestCase {
     ethereumPackage.setMonitor(ethereumMonitor);
     ethereumPackage.setWallet(ethereumWallet);
 
-    CosignerApplication.getCurrencies().put(bitcoinPackage.getConfiguration().getCurrencySymbol(),
-        bitcoinPackage);
-    CosignerApplication.getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(),
-        ethereumPackage);
+    CosignerApplication.getCurrencies()
+        .put(bitcoinPackage.getConfiguration().getCurrencySymbol(), bitcoinPackage);
+    CosignerApplication.getCurrencies()
+        .put(ethereumPackage.getConfiguration().getCurrencySymbol(), ethereumPackage);
 
   }
 
@@ -79,16 +70,13 @@ public class CommonTest extends TestCase {
 
     try {
       String currenciesString = Common.listCurrencies();
-      @SuppressWarnings("unchecked")
-      LinkedList<String> currencies =
+      @SuppressWarnings("unchecked") LinkedList<String> currencies =
           (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
 
-      currencies.forEach(currency -> {
-        System.out.println("Found currency: " + currency);
-      });
+      currencies.forEach(currency -> System.out.println("Found currency: " + currency));
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Problem listing currencies.");
+      Assert.fail("Problem listing currencies.");
     }
   }
 
@@ -104,7 +92,7 @@ public class CommonTest extends TestCase {
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Problem listing currencies.");
+      Assert.fail("Problem listing currencies.");
     }
 
     try {
@@ -120,7 +108,7 @@ public class CommonTest extends TestCase {
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Exception when creating addresses");
+      Assert.fail("Exception when creating addresses");
     }
   }
 
@@ -136,7 +124,7 @@ public class CommonTest extends TestCase {
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Problem listing currencies.");
+      Assert.fail("Problem listing currencies.");
     }
 
     try {
@@ -151,13 +139,11 @@ public class CommonTest extends TestCase {
 
         LinkedList<String> addresses =
             (LinkedList<String>) Json.objectifyString(LinkedList.class, addressString);
-        addresses.forEach(address -> {
-          System.out.println(address);
-        });
+        addresses.forEach(System.out::println);
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Exception when listing addresses");
+      Assert.fail("Exception when listing addresses");
     }
   }
 
@@ -173,7 +159,7 @@ public class CommonTest extends TestCase {
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Problem listing currencies.");
+      Assert.fail("Problem listing currencies.");
     }
 
     try {
@@ -186,14 +172,14 @@ public class CommonTest extends TestCase {
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
 
-        parms.setAccount(Arrays.asList(address));
+        parms.setAccount(Collections.singletonList(address));
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String balance = Common.getBalance(parmsString);
         System.out.println(balance);
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Exception when checking balances");
+      Assert.fail("Exception when checking balances");
     }
   }
 
@@ -209,7 +195,7 @@ public class CommonTest extends TestCase {
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Problem listing currencies.");
+      Assert.fail("Problem listing currencies.");
     }
 
     try {
@@ -222,14 +208,14 @@ public class CommonTest extends TestCase {
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
 
-        parms.setAccount(Arrays.asList(address));
+        parms.setAccount(Collections.singletonList(address));
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String balance = Common.monitorBalance(parmsString, null);
         System.out.println(balance);
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Exception when setting up a monitor");
+      Assert.fail("Exception when setting up a monitor");
     }
   }
 
@@ -245,7 +231,7 @@ public class CommonTest extends TestCase {
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Problem listing currencies.");
+      Assert.fail("Problem listing currencies.");
     }
 
     try {
@@ -259,24 +245,24 @@ public class CommonTest extends TestCase {
           String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
           String address = Common.getNewAddress(parmsString);
 
-          parms.setAccount(Arrays.asList(address));
+          parms.setAccount(Collections.singletonList(address));
           address = Common.getNewAddress(parmsString);
           CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
           accountData.setAmount("5.0");
           accountData.setRecipientAddress(address);
-          parms.setReceivingAccount(Arrays.asList(accountData));
+          parms.setReceivingAccount(Collections.singletonList(accountData));
           parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
           String tx = Common.prepareTransaction(parmsString);
           System.out.println(tx);
         } catch (Exception e) {
           LOGGER.debug(null, e);
-          fail("Exception when preparing a transaction.");
+          Assert.fail("Exception when preparing a transaction.");
         }
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Exception when preparing up a transaction");
+      Assert.fail("Exception when preparing up a transaction");
     }
   }
 
@@ -292,7 +278,7 @@ public class CommonTest extends TestCase {
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Problem listing currencies.");
+      Assert.fail("Problem listing currencies.");
     }
 
     try {
@@ -308,12 +294,12 @@ public class CommonTest extends TestCase {
           String privateKey = currencyPackage.getWallet().generatePrivateKey();
           String address = currencyPackage.getWallet().createAddressFromKey(privateKey);
 
-          parms.setAccount(Arrays.asList(address));
+          parms.setAccount(Collections.singletonList(address));
           address = Common.getNewAddress(parmsString);
           CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
           accountData.setAmount("5.0");
           accountData.setRecipientAddress(address);
-          parms.setReceivingAccount(Arrays.asList(accountData));
+          parms.setReceivingAccount(Collections.singletonList(accountData));
           parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
           String tx = Common.prepareTransaction(parmsString);
@@ -324,7 +310,8 @@ public class CommonTest extends TestCase {
           String sigData = Common.getSignatureString(parmsString);
           System.out.println(sigData);
 
-          Iterable<Iterable<String>> signatureData = (Iterable<Iterable<String>>)Json.objectifyString(Iterable.class, sigData);
+          Iterable<Iterable<String>> signatureData =
+              (Iterable<Iterable<String>>) Json.objectifyString(Iterable.class, sigData);
           signatureData = currencyPackage.getWallet().signWithPrivateKey(signatureData, privateKey);
           sigData = Json.stringifyObject(Iterable.class, signatureData);
           System.out.println(sigData);
@@ -339,12 +326,12 @@ public class CommonTest extends TestCase {
 
         } catch (Exception e) {
           LOGGER.debug(null, e);
-          fail("Exception when preparing a transaction.");
+          Assert.fail("Exception when preparing a transaction.");
         }
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Exception when preparing up a transaction");
+      Assert.fail("Exception when preparing up a transaction");
     }
   }
 
@@ -360,7 +347,7 @@ public class CommonTest extends TestCase {
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Problem listing currencies.");
+      Assert.fail("Problem listing currencies.");
     }
 
     try {
@@ -373,12 +360,12 @@ public class CommonTest extends TestCase {
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
 
-        parms.setAccount(Arrays.asList(address));
+        parms.setAccount(Collections.singletonList(address));
         address = Common.getNewAddress(parmsString);
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);
-        parms.setReceivingAccount(Arrays.asList(accountData));
+        parms.setReceivingAccount(Collections.singletonList(accountData));
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         String tx = Common.prepareTransaction(parmsString);
@@ -390,7 +377,7 @@ public class CommonTest extends TestCase {
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Exception when preparing up a transaction");
+      Assert.fail("Exception when preparing up a transaction");
     }
   }
 
@@ -406,7 +393,7 @@ public class CommonTest extends TestCase {
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Problem listing currencies.");
+      Assert.fail("Problem listing currencies.");
     }
 
     try {
@@ -419,12 +406,12 @@ public class CommonTest extends TestCase {
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
 
-        parms.setAccount(Arrays.asList(address));
+        parms.setAccount(Collections.singletonList(address));
         address = Common.getNewAddress(parmsString);
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);
-        parms.setReceivingAccount(Arrays.asList(accountData));
+        parms.setReceivingAccount(Collections.singletonList(accountData));
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         String tx = Common.prepareTransaction(parmsString);
@@ -440,7 +427,7 @@ public class CommonTest extends TestCase {
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Exception when preparing up a transaction");
+      Assert.fail("Exception when preparing up a transaction");
     }
   }
 

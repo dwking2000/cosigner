@@ -7,21 +7,21 @@ import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
 import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import junit.framework.TestCase;
-
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.util.Collections;
 
-public class WalletTest extends TestCase {
+public class WalletTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(WalletTest.class);
   private EthereumWallet wallet;
   private String userKey;
 
-  @Override
+  @Before
   public void setUp() {
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
     wallet = new EthereumWallet();
@@ -37,21 +37,22 @@ public class WalletTest extends TestCase {
       // Get a new address
       String singleAddress = wallet.createAddress(userKey);
       System.out.println("Single Address Test: " + singleAddress);
-      String multiAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
+      String multiAddress =
+          wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
       System.out.println("Multi Address Test: " + multiAddress);
 
       // Generating a second set of addresses
       singleAddress = wallet.createAddress(userKey);
       System.out.println("Single Address Test: " + singleAddress);
-      multiAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
+      multiAddress = wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
       System.out.println("Multi Address Test: " + multiAddress);
 
       // Send some money
       Recipient recipient = new Recipient();
       recipient.setAmount(BigDecimal.valueOf(50));
       recipient.setRecipientAddress(multiAddress);
-      String txString =
-          wallet.createTransaction(Arrays.asList(singleAddress), Arrays.asList(recipient));
+      String txString = wallet.createTransaction(Collections.singletonList(singleAddress),
+          Collections.singletonList(recipient));
       System.out
           .println("50 ether from " + singleAddress + " to " + multiAddress + ": " + txString);
       txString = wallet.signTransaction(txString, singleAddress, userKey);
@@ -63,7 +64,8 @@ public class WalletTest extends TestCase {
       recipient = new Recipient();
       recipient.setAmount(BigDecimal.valueOf(25.3));
       recipient.setRecipientAddress(singleAddress);
-      txString = wallet.createTransaction(Arrays.asList(multiAddress), Arrays.asList(recipient));
+      txString = wallet.createTransaction(Collections.singletonList(multiAddress),
+          Collections.singletonList(recipient));
       System.out
           .println("25.3 ether from " + multiAddress + " to " + singleAddress + ": " + txString);
       txString = wallet.signTransaction(txString, multiAddress, userKey);
@@ -75,8 +77,7 @@ public class WalletTest extends TestCase {
       System.out.println("Balance of " + multiAddress + ": " + balance);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Simple operation test failed!");
-      return;
+      Assert.fail("Simple operation test failed!");
     }
   }
 
@@ -88,26 +89,26 @@ public class WalletTest extends TestCase {
       // Get a new address
       String singleAddress = wallet.createAddress(userKey);
       System.out.println("Single Address Test: " + singleAddress);
-      String multiAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
+      String multiAddress =
+          wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
       System.out.println("Multi Address Test: " + multiAddress);
 
       // Send some money from the multi-sig to create the alternate tx
       Recipient recipient = new Recipient();
       recipient.setAmount(BigDecimal.valueOf(25.3));
       recipient.setRecipientAddress(singleAddress);
-      String txString =
-          wallet.createTransaction(Arrays.asList(multiAddress), Arrays.asList(recipient));
+      String txString = wallet.createTransaction(Collections.singletonList(multiAddress),
+          Collections.singletonList(recipient));
       System.out
           .println("25.3 ether from " + multiAddress + " to " + singleAddress + ": " + txString);
       String signedTxString = wallet.signTransaction(txString, multiAddress, "bad" + userKey);
       System.out.println("Signed TX: " + signedTxString);
 
       // If the key is missing the result should be the same TX string we submitted
-      assertEquals(txString, signedTxString);
+      Assert.assertEquals(txString, signedTxString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Missing key test should not throw exceptions!");
-      return;
+      Assert.fail("Missing key test should not throw exceptions!");
     }
   }
 
@@ -119,15 +120,16 @@ public class WalletTest extends TestCase {
       // Get a new address
       String singleAddress = wallet.createAddress(userKey);
       System.out.println("Single Address Test: " + singleAddress);
-      String multiAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
+      String multiAddress =
+          wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
       System.out.println("Multi Address Test: " + multiAddress);
 
       // Send some money from the multi-sig to create the alternate tx
       Recipient recipient = new Recipient();
       recipient.setAmount(BigDecimal.valueOf(25.3));
       recipient.setRecipientAddress(singleAddress);
-      String txString =
-          wallet.createTransaction(Arrays.asList(multiAddress), Arrays.asList(recipient));
+      String txString = wallet.createTransaction(Collections.singletonList(multiAddress),
+          Collections.singletonList(recipient));
       System.out
           .println("25.3 ether from " + multiAddress + " to " + singleAddress + ": " + txString);
       String signedTxString = wallet.signTransaction(txString, multiAddress, userKey);
@@ -135,7 +137,7 @@ public class WalletTest extends TestCase {
 
       // If the key is missing the result should be the same TX string we submitted, we want the
       // signature data to be there too
-      assertTrue(!txString.equalsIgnoreCase(signedTxString));
+      Assert.assertTrue(!txString.equalsIgnoreCase(signedTxString));
 
       // See if we can recover the signing key...
       RawTransaction txStructure =
@@ -146,18 +148,18 @@ public class WalletTest extends TestCase {
       sigBytesString = EthereumTools.hashSha3(sigBytesString);
       sigBytes = ByteUtilities.toByteArray(sigBytesString);
 
-      String signingAddress = ByteUtilities.toHexString(Secp256k1.recoverPublicKey(
-          txStructure.getSigR().getDecodedContents(), txStructure.getSigS().getDecodedContents(),
-          new byte[] {(byte) (txStructure.getSigV().getDecodedContents()[0] - 27)}, sigBytes));
+      String signingAddress = ByteUtilities.toHexString(Secp256k1
+          .recoverPublicKey(txStructure.getSigR().getDecodedContents(),
+              txStructure.getSigS().getDecodedContents(),
+              new byte[]{(byte) (txStructure.getSigV().getDecodedContents()[0] - 27)}, sigBytes));
       signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
       System.out.println("Signed by: " + signingAddress);
 
-      assertEquals(signingAddress, singleAddress);
+      Assert.assertEquals(signingAddress, singleAddress);
 
     } catch (Exception e) {
       LOGGER.debug(null, e);
-      fail("Missing key test should not throw exceptions!");
-      return;
+      Assert.fail("Missing key test should not throw exceptions!");
     }
   }
 
@@ -172,6 +174,6 @@ public class WalletTest extends TestCase {
       foundPreExisting = true;
     }
 
-    assertTrue(foundPreExisting);
+    Assert.assertTrue(foundPreExisting);
   }
 }

@@ -8,7 +8,7 @@ public class MultiSig {
    */
   @JsonProperty("address")
   private String address;
-  
+
   /**
    * The multisig redeem script encoded as hex.
    */

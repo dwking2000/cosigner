@@ -42,10 +42,10 @@ echo ""
 echo "Funding the account with 5 BTC"
 
 CURLURL="http://${BITCOIND_PORT_18332_TCP_ADDR}:${BITCOIND_PORT_18332_TCP_PORT}"
-curl -s --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "generate", "params": [101] }' ${CURLURL} ${OUTPUTSINK}
+curl -s --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "generate", "params": [101] }' ${CURLURL} 
 curl -s --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d "{\"jsonrpc\": \"2.0\", \"id\": \"curl\", \"method\": \"sendtoaddress\", \"params\": [\"${ADDRESS}\", 5] }" \
-${CURLURL} ${OUTPUTSINK}
-curl -s --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "generate", "params": [10] }' ${CURLURL} ${OUTPUTSINK}
+${CURLURL} 
+curl -s --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "generate", "params": [10] }' ${CURLURL} 
 
 echo ""
 echo "Generating a second address..."
@@ -76,7 +76,7 @@ echo ${TXID}
 
 echo ""
 echo "Generating confirmations..."
-curl -s --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "generate", "params": [10] }' ${CURLURL} ${OUTPUTSINK}
+curl -s --user bitcoinrpc:changeit -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "generate", "params": [10] }' ${CURLURL} 
 
 echo ""
 echo "Checking balances..."
@@ -88,5 +88,57 @@ echo "${ADDRESS2}: ${ADD2BALANCE}"
 #========================ETHEREUM===============================
 echo ""
 echo "Testing Ethereum (ETH)"
-echo "Not done yet...."
+
+echo ""
+echo "Getting coinbase"
+CURLURL="http://${GETH_PORT_8101_TCP_ADDR}:${GETH_PORT_8101_TCP_PORT}"
+COINBASE=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "eth_coinbase", "params": [] }' ${CURLURL} | jq '.result' | sed 's/^"//g' | sed 's/"$//g' | sed 's/^0x//g')
+echo ${COINBASE}
+
+echo ""
+echo "Generating address"
+ADDRESS=$(java -jar ${CLIENTLIB} getNewAddress ETH ${USERKEY} | tail -n 1)
+echo ${ADDRESS}
+
+echo ""
+echo "Waiting for block generation..."
+sleep 5
+
+echo ""
+echo "Generating second address"
+ADDRESS2=$(java -jar ${CLIENTLIB} getNewAddress ETH ${USERKEY} | tail -n 1)
+echo ${ADDRESS2}
+
+echo ""
+echo "Waiting for block generation..."
+sleep 5
+
+echo ""
+echo "Funding address"
+TX=$(java -jar ${CLIENTLIB} prepareTransaction ETH ${COINBASE} ${ADDRESS} 10 | tail -n 1)
+SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction ETH ${TX} | tail -n 1)
+TXID=$(java -jar ${CLIENTLIB} sendTransaction ETH ${SIGNEDTX} | tail -n 1)
+
+echo ""
+echo "Waiting for block generation..."
+sleep 5
+
+echo ""
+echo "Generate tx between addresses"
+TX=$(java -jar ${CLIENTLIB} prepareTransaction ETH ${ADDRESS} ${ADDRESS2} 5 ${USERKEY} | tail -n 1)
+echo ${TX}
+
+echo ""
+echo "Sign tx"
+SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction ETH ${TX} | tail -n 1)
+echo ${SIGNEDTX}
+
+echo ""
+echo "Submit tx"
+TXID=$(java -jar ${CLIENTLIB} sendTransaction ETH ${TXID} | tail -n 1)
+echo ${TXID}
+
+echo ""
+echo "Waiting for block generation..."
+sleep 5
 

@@ -92,5 +92,4 @@ public class ContractInformation {
         + contractPayload + ", contractVersion=" + contractVersion + "]";
   }
 
-
 }

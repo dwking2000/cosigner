@@ -1,23 +1,25 @@
 package io.emax.cosigner.ethereum;
 
-import java.util.Arrays;
+import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import rx.Subscription;
+
+import java.util.Collections;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.junit.Test;
-
-import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
-import junit.framework.TestCase;
-import rx.Subscription;
-
-public class MonitorTest extends TestCase {
+public class MonitorTest {
   private EthereumWallet wallet;
   private EthereumMonitor monitor;
   private String userKey;
   private int balanceCounter;
 
-  @Override
+  @Before
   public void setUp() {
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
     wallet = new EthereumWallet();
@@ -33,15 +35,16 @@ public class MonitorTest extends TestCase {
     // Get addresses
     String singleAddress = wallet.createAddress(userKey);
     System.out.println("Single Address Test: " + singleAddress);
-    String multiAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
+    String multiAddress =
+        wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
     System.out.println("Multi Address Test: " + multiAddress);
-    monitor.addAddresses(Arrays.asList(multiAddress));
+    monitor.addAddresses(Collections.singletonList(multiAddress));
 
     singleAddress = wallet.createAddress(userKey);
     System.out.println("Single Address Test: " + singleAddress);
-    multiAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
+    multiAddress = wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
     System.out.println("Multi Address Test: " + multiAddress);
-    monitor.addAddresses(Arrays.asList(multiAddress));
+    monitor.addAddresses(Collections.singletonList(multiAddress));
 
     System.out.println("Waiting for balance updates (2 minutes)... ");
     System.out.println("Time: " + new Date());
@@ -68,6 +71,6 @@ public class MonitorTest extends TestCase {
       Thread.sleep(10 * 1000);
     }
 
-    assertTrue(balanceCounter > 0);
+    Assert.assertTrue(balanceCounter > 0);
   }
 }

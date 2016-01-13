@@ -238,7 +238,8 @@ public class Transaction {
   public String toString() {
     return "Transaction [hash=" + hash + ", nonce=" + nonce + ", blockHash=" + blockHash
         + ", blockNumber=" + blockNumber + ", transactionIndex=" + transactionIndex + ", from="
-        + from + ", to=" + to + ", value=" + value + ", gasPrice=" + gasPrice + ", gas=" + gas
-        + ", input=" + input + "]";
+        + from
+        + ", to=" + to + ", value=" + value + ", gasPrice=" + gasPrice + ", gas=" + gas + ", input="
+        + input + "]";
   }
 }

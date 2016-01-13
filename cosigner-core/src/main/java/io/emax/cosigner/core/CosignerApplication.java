@@ -61,7 +61,8 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
   }
 
   @Override
-  public void run(CosignerConfiguration config, Environment environment) throws Exception {
+  public void run(CosignerConfiguration config, Environment environment)
+      throws Exception {
     CosignerApplication.setConfig(config);
 
     // Initialize ClusterInfo
@@ -92,9 +93,7 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
           removeThese.add(symbol);
         }
       });
-      removeThese.forEach(symbol -> {
-        getCurrencies().remove(symbol);
-      });
+      removeThese.forEach(symbol -> getCurrencies().remove(symbol));
     }
 
     LOGGER.info("Currencies enabled for cosigner: " + getCurrencies().keySet());
@@ -106,8 +105,8 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     AtmosphereServlet websocketServlet = new AtmosphereServlet();
     websocketServlet.framework().addInitParameter("com.sun.jersey.config.property.packages",
         "io.emax.cosigner.core.resources.WebSocketResource");
-    websocketServlet.framework().addInitParameter(ApplicationConfig.WEBSOCKET_CONTENT_TYPE,
-        "application/json");
+    websocketServlet.framework()
+        .addInitParameter(ApplicationConfig.WEBSOCKET_CONTENT_TYPE, "application/json");
     websocketServlet.framework().addInitParameter(ApplicationConfig.WEBSOCKET_SUPPORT, "true");
     ServletRegistration.Dynamic servletHolder =
         environment.servlets().addServlet("ws", websocketServlet);

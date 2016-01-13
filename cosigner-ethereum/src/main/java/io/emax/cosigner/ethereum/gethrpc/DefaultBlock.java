@@ -4,7 +4,7 @@ public enum DefaultBlock {
 
   EARLIEST("earliest"), PENDING("pending"), LATEST("latest");
 
-  private String value;
+  private final String value;
 
   DefaultBlock(String value) {
     this.value = value;
@@ -21,7 +21,7 @@ public enum DefaultBlock {
 
   /**
    * Provides a mapping from string to enum
-   * 
+   *
    * @param value String value that the enum represents.
    * @return Enum that corresponds to the string.
    */

@@ -20,23 +20,23 @@ import java.util.Arrays;
 
 /**
  * Base58 is a way to encode Bitcoin addresses (or arbitrary data) as alphanumeric strings.
- * 
+ *
  * <p>Note that this is not the same base58 as used by Flickr, which you may find referenced around
  * the Internet.
- * 
+ *
  * <p>You may want to consider working with {@link VersionedChecksummedBytes} instead, which adds
  * support for testing the prefix and suffix bytes commonly found in addresses.
- * 
+ *
  * <p>Satoshi explains: why base-58 instead of standard base-64 encoding? <ul> <li>Don't want 0OIl
  * characters that look the same in some fonts and could be used to create visually identical
  * looking account numbers.</li> <li>A string with non-alphanumeric characters is not as easily
  * accepted as an account number. </li> <li>E-mail usually won't line-break if there's no
  * punctuation to break at.</li> <li>Doubleclicking selects the whole number as one word if it's all
  * alphanumeric.</li> </ul>
- * 
+ *
  * <p>However, note that the encoding/decoding runs in O(n&sup2;) time, so it is not useful for
  * large data.
- * 
+ *
  * <p>The basic idea of the encoding is to treat the data bytes as a large number represented using
  * base-256 digits, convert the number to be represented using base-58 digits, preserve the exact
  * number of leading zeros (which are otherwise lost during the mathematical operations on the
@@ -74,7 +74,7 @@ public class Base58 {
     input = Arrays.copyOf(input, input.length); // since we modify it in-place
     char[] encoded = new char[input.length * 2]; // upper bound
     int outputStart = encoded.length;
-    for (int inputStart = zeros; inputStart < input.length;) {
+    for (int inputStart = zeros; inputStart < input.length; ) {
       encoded[--outputStart] = ALPHABET[divmod(input, inputStart, 256, 58)];
       if (input[inputStart] == 0) {
         ++inputStart; // optimization - skip leading zeros
@@ -121,7 +121,7 @@ public class Base58 {
     // Convert base-58 digits to base-256 digits.
     byte[] decoded = new byte[input.length()];
     int outputStart = decoded.length;
-    for (int inputStart = zeros; inputStart < input58.length;) {
+    for (int inputStart = zeros; inputStart < input58.length; ) {
       decoded[--outputStart] = divmod(input58, inputStart, 58, 256);
       if (input58[inputStart] == 0) {
         ++inputStart; // optimization - skip leading zeros
@@ -171,11 +171,11 @@ public class Base58 {
    * specified base, by the given divisor. The given number is modified in-place to contain the
    * quotient, and the return value is the remainder.
    *
-   * @param number the number to divide
+   * @param number     the number to divide
    * @param firstDigit the index within the array of the first non-zero digit (this is used for
-   *        optimization by skipping the leading zeros)
-   * @param base the base in which the number's digits are represented (up to 256)
-   * @param divisor the number to divide by (up to 256)
+   *                   optimization by skipping the leading zeros)
+   * @param base       the base in which the number's digits are represented (up to 256)
+   * @param divisor    the number to divide by (up to 256)
    * @return the remainder of the division operation
    */
   private static byte divmod(byte[] number, int firstDigit, int base, int divisor) {

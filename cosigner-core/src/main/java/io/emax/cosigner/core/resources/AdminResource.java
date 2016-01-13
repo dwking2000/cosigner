@@ -22,12 +22,13 @@ public class AdminResource {
    *
    * @param newServer Server information
    * @return If the server is added, it will return the same data back. Otherwise an appropriate
-   *         status message is returned.
+   * status message is returned.
    */
   @POST
   @Path("/AddNode")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response addNode(Server newServer) {
+  public Response addNode(
+      Server newServer) {
     LOGGER.debug("[AddNode:Request]");
     ClusterInfo cluster = ClusterInfo.getInstance();
 

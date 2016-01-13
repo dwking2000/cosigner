@@ -13,7 +13,8 @@ public class SignedTransaction {
   private String transaction;
 
   /**
-   * The value true if transaction is fully signed; the value false if more signatures are required.
+   * The value true if transaction is fully signed; the value false if more signatures are
+   * required.
    */
   @JsonProperty("complete")
   private boolean complete;
@@ -39,7 +40,7 @@ public class SignedTransaction {
 
   /**
    * Any errors that may have occured in signing.
-   * 
+   *
    * @return Array of errors.
    */
   public Errors[] getErrors() {

@@ -52,8 +52,8 @@ public class Aes {
   public static byte[] generateKey(String password, byte[] salt) {
     try {
       PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray(), salt, 50, 256);
-      SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithSHA256And256BitAES-CBC-BC",
-          new BouncyCastleProvider());
+      SecretKeyFactory keyFactory = SecretKeyFactory
+          .getInstance("PBEWithSHA256And256BitAES-CBC-BC", new BouncyCastleProvider());
       SecretKeySpec secretKey =
           new SecretKeySpec(keyFactory.generateSecret(pbeKeySpec).getEncoded(), "AES");
 

@@ -59,7 +59,7 @@ public class CurrencyCommand implements BaseCommand {
 
   /**
    * Parse a JSON string that represents a CurrencyCommand.
-   * 
+   *
    * @param commandString JSON string to parse.
    * @return CurrencyCommand that the string represents.
    */
@@ -76,7 +76,7 @@ public class CurrencyCommand implements BaseCommand {
 
   /**
    * Attempt to handle the request in a currency command.
-   * 
+   *
    * @param command The command received.
    * @return The string response to return to the requestor.
    */

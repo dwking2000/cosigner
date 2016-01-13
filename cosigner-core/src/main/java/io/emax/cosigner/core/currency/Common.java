@@ -32,6 +32,7 @@ import rx.Subscription;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -40,9 +41,9 @@ import java.util.List;
 public class Common {
   private static final Logger LOGGER = LoggerFactory.getLogger(Common.class);
 
-  private static HashMap<String, Subscription> balanceSubscriptions = new HashMap<>();
-  private static HashMap<String, Subscription> transactionSubscriptions = new HashMap<>();
-  private static HashMap<String, Monitor> monitors = new HashMap<>();
+  private static final HashMap<String, Subscription> balanceSubscriptions = new HashMap<>();
+  private static final HashMap<String, Subscription> transactionSubscriptions = new HashMap<>();
+  private static final HashMap<String, Monitor> monitors = new HashMap<>();
 
   private static CurrencyParameters convertParams(String params) {
     try {
@@ -83,9 +84,7 @@ public class Common {
    */
   public static String listCurrencies() {
     List<String> currencies = new LinkedList<>();
-    CosignerApplication.getCurrencies().keySet().forEach(currency -> {
-      currencies.add(currency);
-    });
+    CosignerApplication.getCurrencies().keySet().forEach(currencies::add);
 
     String currencyString = Json.stringifyObject(LinkedList.class, currencies);
 
@@ -116,7 +115,7 @@ public class Common {
    *
    * @param params {@link CurrencyParameters} with the currency code and user key filled in.
    * @return Address that the user can use to deposit funds, for which we can generate the private
-   *         keys.
+   * keys.
    */
   public static String getNewAddress(String params) {
     CurrencyParameters currencyParams = convertParams(params);
@@ -128,12 +127,10 @@ public class Common {
       accounts.addAll(currencyParams.getAccount());
     }
     accounts.add(userAccount);
-    String userMultiAccount =
-        currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
-    String response = userMultiAccount;
 
-    LOGGER.debug("[Response] " + response);
-    return response;
+    LOGGER.debug("[Response] " + currency.getWallet()
+        .getMultiSigAddress(accounts, currencyParams.getUserKey()));
+    return currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
   }
 
   /**
@@ -141,7 +138,7 @@ public class Common {
    *
    * @param params {@link CurrencyParameters} with the currency code and user key filled in.
    * @return All addresses that cosigner can generate the private key for belonging to that user
-   *         key.
+   * key.
    */
   public static String listAllAddresses(String params) {
     CurrencyParameters currencyParams = convertParams(params);
@@ -168,9 +165,8 @@ public class Common {
     CurrencyPackage currency = lookupCurrency(currencyParams);
 
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
-    currencyParams.getAccount().forEach(account -> {
-      txDetails.addAll(Arrays.asList(currency.getWallet().getTransactions(account, 100, 0)));
-    });
+    currencyParams.getAccount().forEach(account -> txDetails
+        .addAll(Arrays.asList(currency.getWallet().getTransactions(account, 100, 0))));
 
     String response = Json.stringifyObject(LinkedList.class, txDetails);
 
@@ -230,12 +226,13 @@ public class Common {
    * distinguished from balance updates in that the transaction data portion of the response has
    * data, it contains the transaction hash.
    *
-   * @param params {@link CurrencyParameters} with the currency code and addresses filled in. If
-   *        using a REST callback, the callback needs to be filled in as well.
+   * @param params         {@link CurrencyParameters} with the currency code and addresses filled
+   *                       in. If using a REST callback, the callback needs to be filled in as
+   *                       well.
    * @param responseSocket If this has been called using a web socket, pass the socket in here and
-   *        the data will be written to is as it's available.
+   *                       the data will be written to is as it's available.
    * @return An empty {@link CurrencyParameters} object is returned when the monitor is set up. The
-   *         actual data is sent through the socket or callback.
+   * actual data is sent through the socket or callback.
    */
   public static String monitorBalance(String params, AtmosphereResponse responseSocket) {
     CurrencyParameters currencyParams = convertParams(params);
@@ -257,17 +254,16 @@ public class Common {
         balanceMap.forEach((address, balance) -> {
           try {
             CurrencyParameters responseParms = new CurrencyParameters();
-            responseParms.setAccount(new LinkedList<String>());
+            responseParms.setAccount(new LinkedList<>());
             responseParms.getAccount().add(address);
             CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
             accountData.setAmount(balance);
             accountData.setRecipientAddress(address);
-            responseParms.setReceivingAccount(Arrays.asList(accountData));
+            responseParms.setReceivingAccount(Collections.singletonList(accountData));
             responseSocket.write(Json.stringifyObject(CurrencyParameters.class, responseParms));
           } catch (Exception e) {
             LOGGER.debug(null, e);
             cleanUpSubscriptions(responseSocket.uuid());
-            return;
           }
         });
       });
@@ -278,7 +274,7 @@ public class Common {
             transactionSet.forEach(transaction -> {
               try {
                 CurrencyParameters responseParms = new CurrencyParameters();
-                responseParms.setAccount(new LinkedList<String>());
+                responseParms.setAccount(new LinkedList<>());
                 responseParms.getAccount().addAll(Arrays.asList(transaction.getFromAddress()));
                 LinkedList<CurrencyParametersRecipient> receivers = new LinkedList<>();
                 Arrays.asList(transaction.getToAddress()).forEach(address -> {
@@ -293,7 +289,6 @@ public class Common {
               } catch (Exception e) {
                 LOGGER.debug(null, e);
                 cleanUpSubscriptions(responseSocket.uuid());
-                return;
               }
             });
           });
@@ -308,12 +303,12 @@ public class Common {
         balanceMap.forEach((address, balance) -> {
           try {
             CurrencyParameters responseParms = new CurrencyParameters();
-            responseParms.setAccount(new LinkedList<String>());
+            responseParms.setAccount(new LinkedList<>());
             responseParms.getAccount().add(address);
             CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
             accountData.setAmount(balance);
             accountData.setRecipientAddress(address);
-            responseParms.setReceivingAccount(Arrays.asList(accountData));
+            responseParms.setReceivingAccount(Collections.singletonList(accountData));
 
             HttpPost httpPost = new HttpPost(currencyParams.getCallback());
             httpPost.addHeader("content-type", "application/json");
@@ -326,7 +321,6 @@ public class Common {
           } catch (Exception e) {
             LOGGER.debug(null, e);
             cleanUpSubscriptions(currencyParams.getCallback());
-            return;
           }
         });
       });
@@ -337,7 +331,7 @@ public class Common {
             transactionSet.forEach(transaction -> {
               try {
                 CurrencyParameters responseParms = new CurrencyParameters();
-                responseParms.setAccount(new LinkedList<String>());
+                responseParms.setAccount(new LinkedList<>());
                 responseParms.getAccount().addAll(Arrays.asList(transaction.getFromAddress()));
                 LinkedList<CurrencyParametersRecipient> receivers = new LinkedList<>();
                 Arrays.asList(transaction.getToAddress()).forEach(address -> {
@@ -360,7 +354,6 @@ public class Common {
               } catch (Exception e) {
                 LOGGER.debug(null, e);
                 cleanUpSubscriptions(currencyParams.getCallback());
-                return;
               }
             });
           });
@@ -378,11 +371,12 @@ public class Common {
   /**
    * Create and sign a transaction.
    *
-   * <p>This only signs the transaction with the user's key, showing that the user has requested the
+   * <p>This only signs the transaction with the user's key, showing that the user has requested
+   * the
    * transaction. The server keys are not used until the approve stage.
    *
    * @param params {@link CurrencyParameters} with the currency code, user key, senders, recipients
-   *        and amounts filled in.
+   *               and amounts filled in.
    * @return The transaction string that was requested.
    */
   public static String prepareTransaction(String params) {
@@ -407,8 +401,9 @@ public class Common {
     String initalTx = currencyParams.getTransactionData();
     LOGGER.debug("Wallet.CreateTransaction Result: " + initalTx);
 
-    currencyParams.setTransactionData(currency.getWallet().signTransaction(initalTx,
-        currencyParams.getAccount().get(0), currencyParams.getUserKey()));
+    currencyParams.setTransactionData(currency.getWallet()
+        .signTransaction(initalTx, currencyParams.getAccount().get(0),
+            currencyParams.getUserKey()));
     LOGGER.debug("Sign with userKey: " + currencyParams.getTransactionData());
 
     // If the userKey/address combo don't work then we stop here.
@@ -425,8 +420,8 @@ public class Common {
 
     // Send it if it's a sign-each and there's more than one signature
     // required (we're at 1/X)
-    if (currency.getConfiguration().getMinSignatures() > 1
-        && currency.getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
+    if (currency.getConfiguration().getMinSignatures() > 1 && currency.getConfiguration()
+        .getSigningType().equals(SigningType.SENDEACH)) {
       submitTransaction(Json.stringifyObject(CurrencyParameters.class, currencyParams));
     }
 
@@ -450,8 +445,7 @@ public class Common {
     Iterable<Iterable<String>> sigData =
         currency.getWallet().getSigString(currencyParams.getTransactionData(), address);
 
-    String result = Json.stringifyObject(Iterable.class, sigData);
-    return result;
+    return Json.stringifyObject(Iterable.class, sigData);
   }
 
   /**
@@ -467,14 +461,15 @@ public class Common {
       address = currencyParams.getAccount().get(0);
     }
 
-    Iterator<String> txList = ((Iterable<String>) Json.objectifyString(Iterable.class,
-        currencyParams.getTransactionData())).iterator();
+    Iterator<String> txList =
+        ((Iterable<String>) Json
+            .objectifyString(Iterable.class, currencyParams.getTransactionData()))
+            .iterator();
     String tx = txList.next();
     Iterable<Iterable<String>> sigData =
         (Iterable<Iterable<String>>) Json.objectifyString(Iterable.class, txList.next());
 
-    String result = currency.getWallet().applySignature(tx, address, sigData);
-    return result;
+    return currency.getWallet().applySignature(tx, address, sigData);
   }
 
   /**
@@ -483,11 +478,12 @@ public class Common {
    * <p>This stage signs the transaction with the server keys after running it through any sanity
    * checks and validation required.
    *
-   * @param params {@link CurrencyParameters} with the currency code, user key, senders, recipients
-   *        and amounts filled in. The transaction data should be filled in with the response from
-   *        prepareTransaction.
+   * @param params        {@link CurrencyParameters} with the currency code, user key, senders,
+   *                      recipients and amounts filled in. The transaction data should be filled
+   *                      in
+   *                      with the response from prepareTransaction.
    * @param sendToRemotes Indicates whether cosigner should attempt to request signature from any
-   *        other cosigner servers in the cluster.
+   *                      other cosigner servers in the cluster.
    * @return Signed transaction string
    */
   public static String approveTransaction(String params, boolean sendToRemotes) {
@@ -502,8 +498,9 @@ public class Common {
             return currencyParams.getTransactionData();
           }
         }
-        currencyParams.setTransactionData(currency.getWallet().signTransaction(
-            currencyParams.getTransactionData(), currencyParams.getAccount().get(0)));
+        currencyParams.setTransactionData(currency.getWallet()
+            .signTransaction(currencyParams.getTransactionData(),
+                currencyParams.getAccount().get(0)));
       } else if (sendToRemotes) {
         try {
           CurrencyCommand command = new CurrencyCommand();
@@ -517,8 +514,8 @@ public class Common {
             currencyParams.setTransactionData(command.getCurrencyParams().getTransactionData());
 
             // If it's send-each and the remote actually signed it, send it.
-            if (!originalTx.equalsIgnoreCase(currencyParams.getTransactionData())
-                && currency.getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
+            if (!originalTx.equalsIgnoreCase(currencyParams.getTransactionData()) && currency
+                .getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
               submitTransaction(Json.stringifyObject(CurrencyParameters.class, currencyParams));
             }
           }
@@ -538,7 +535,7 @@ public class Common {
    * Submits a transaction for processing on the network.
    *
    * @param params {@link CurrencyParameters} with the currency and transaction data filled in. The
-   *        transaction data required is the result from the approveTransaction stage.
+   *               transaction data required is the result from the approveTransaction stage.
    * @return The transaction hash/ID.
    */
   public static String submitTransaction(String params) {

@@ -9,9 +9,8 @@ import java.util.Set;
 
 /**
  * Continuously polls for account balances at an acceptable rate for the currency.
- * 
- * @author Tom
  *
+ * @author Tom
  */
 public interface Monitor {
 
@@ -42,7 +41,7 @@ public interface Monitor {
 
   /**
    * Get the most up to date list of balances for any monitored accounts.
-   * 
+   *
    * @return Map of (Address, Balance)
    */
   Map<String, String> getBalances();

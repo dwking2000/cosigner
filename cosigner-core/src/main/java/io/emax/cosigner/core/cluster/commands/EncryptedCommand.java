@@ -19,8 +19,8 @@ import java.util.HashMap;
 public class EncryptedCommand implements BaseCommand {
   private static final Logger LOGGER = LoggerFactory.getLogger(EncryptedCommand.class);
   // Track nonces for other servers in both directions.
-  private static HashMap<String, Long> incomingNonces = new HashMap<>();
-  private static HashMap<String, Long> outgoingNonces = new HashMap<>();
+  private static final HashMap<String, Long> incomingNonces = new HashMap<>();
+  private static final HashMap<String, Long> outgoingNonces = new HashMap<>();
 
   private Server sender;
   private String payload;
@@ -50,9 +50,8 @@ public class EncryptedCommand implements BaseCommand {
       data = ByteUtilities.toHexString(decryptedPayload.toJson().getBytes("UTF-8"));
       this.sender = sender;
 
-      byte[] myKey = senderKey;
       byte[] otherKey = ByteUtilities.toByteArray(recipient.getServerId());
-      byte[] sharedKey = Secp256k1.generateSharedSecret(myKey, otherKey);
+      byte[] sharedKey = Secp256k1.generateSharedSecret(senderKey, otherKey);
       this.payload = Aes.encrypt(sharedKey, ByteUtilities.toByteArray(iv), data);
     } catch (Exception e) {
       LOGGER.error(null, e);
@@ -114,8 +113,7 @@ public class EncryptedCommand implements BaseCommand {
   public static String handleCommand(byte[] recipientKey, EncryptedCommand command) {
     try {
       byte[] senderKey = ByteUtilities.toByteArray(command.getSender().getServerId());
-      byte[] myKey = recipientKey;
-      byte[] sharedKey = Secp256k1.generateSharedSecret(myKey, senderKey);
+      byte[] sharedKey = Secp256k1.generateSharedSecret(recipientKey, senderKey);
 
       // Decrypt the payload
       String data =

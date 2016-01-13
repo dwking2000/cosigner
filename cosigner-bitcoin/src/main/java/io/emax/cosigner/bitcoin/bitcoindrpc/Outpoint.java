@@ -10,7 +10,7 @@ public class Outpoint {
    */
   @JsonProperty("txid")
   private String transactionId;
-  
+
   /**
    * The output index number (vout) of the outpoint; the first output in a transaction is index 0.
    */
@@ -129,7 +129,8 @@ public class Outpoint {
     return "Outpoint [transactionId=" + transactionId + ", outputIndex=" + outputIndex
         + ", address=" + address + ", account=" + account + ", scriptPubKey=" + scriptPubKey
         + ", redeemScript=" + redeemScript + ", amount=" + amount + ", confirmations="
-        + confirmations + ", spendable=" + spendable + "]";
+        + confirmations
+        + ", spendable=" + spendable + "]";
   }
 
   @Override

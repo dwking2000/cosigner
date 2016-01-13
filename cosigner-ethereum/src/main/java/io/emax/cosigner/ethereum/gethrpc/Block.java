@@ -207,7 +207,7 @@ public class Block {
 
   /**
    * Get the transactions that are present in this block.
-   * 
+   *
    * @return Array of transactions.
    */
   public Transaction[] getTransactions() {
@@ -223,7 +223,7 @@ public class Block {
 
   /**
    * Get the uncles that were present for this block.
-   * 
+   *
    * @return Array of block hashes of the uncles present for this block.
    */
   public String[] getUncles() {
@@ -397,10 +397,7 @@ public class Block {
     } else if (!transactionsRoot.equals(other.transactionsRoot)) {
       return false;
     }
-    if (!Arrays.equals(uncles, other.uncles)) {
-      return false;
-    }
-    return true;
+    return Arrays.equals(uncles, other.uncles);
   }
 
   @Override
@@ -408,7 +405,8 @@ public class Block {
     return "Block [number=" + number + ", hash=" + hash + ", parentHash=" + parentHash + ", nonce="
         + nonce + ", sha3Uncles=" + sha3Uncles + ", logsBloom=" + logsBloom + ", transactionsRoot="
         + transactionsRoot + ", stateRoot=" + stateRoot + ", receiptsRoot=" + receiptRoot
-        + ", miner=" + miner + ", difficulty=" + difficulty + ", totalDifficulty=" + totalDifficulty
+        + ", miner="
+        + miner + ", difficulty=" + difficulty + ", totalDifficulty=" + totalDifficulty
         + ", extraData=" + extraData + ", size=" + size + ", gasLimit=" + gasLimit + ", gasUsed="
         + gasUsed + ", timestamp=" + timestamp + ", transactions=" + Arrays.toString(transactions)
         + ", uncles=" + Arrays.toString(uncles) + "]";

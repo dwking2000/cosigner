@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Coordinator {
   private static final Logger LOGGER = LoggerFactory.getLogger(Coordinator.class);
-  private static Coordinator coordinator = new Coordinator();
+  private static final Coordinator coordinator = new Coordinator();
   private static final int REQUEST_TIMEOUT = 1500;
   private Socket responder;
 
@@ -45,7 +45,6 @@ public class Coordinator {
       JsonFactory jsonFact = new JsonFactory();
       ClusterInfo cluster = ClusterInfo.getInstance();
       CosignerConfiguration config = CosignerApplication.getConfig();
-
 
       ObjectMapper mapper = new ObjectMapper(jsonFact);
       ObjectWriter writer = mapper.writerFor(Server.class);
@@ -76,8 +75,9 @@ public class Coordinator {
       responder = context.socket(ZMQ.REP);
       // Don't wait if there are no messages.
       responder.setReceiveTimeOut(1);
-      responder.bind("tcp://" + cluster.getThisServer().getServerLocation() + ":"
-          + cluster.getThisServer().getServerRpcPort());
+      responder.bind(
+          "tcp://" + cluster.getThisServer().getServerLocation() + ":" + cluster.getThisServer()
+              .getServerRpcPort());
 
       Observable.interval(1, TimeUnit.SECONDS).map(tick -> responder.recvStr())
           .subscribe(new Action1<String>() {
@@ -155,7 +155,7 @@ public class Coordinator {
    * signed data.
    *
    * @param command Command to broadcast.
-   * @param server Server to attempt to send the command to.
+   * @param server  Server to attempt to send the command to.
    * @return Reply from the server.
    */
   public static String broadcastCommand(BaseCommand command, Server server) {
@@ -183,8 +183,9 @@ public class Coordinator {
     // If it's not a ClusterCommand, encrypt it. ClusterCommands only identify servers, and
     // they're checked for signatures.
     if (command.getClass() != ClusterCommand.class) {
-      command = new EncryptedCommand(ClusterInfo.getInstance().getThisServer(),
-          ServerKey.getMykey(), server, command.toJson());
+      command =
+          new EncryptedCommand(ClusterInfo.getInstance().getThisServer(), ServerKey.getMykey(),
+              server, command.toJson());
     }
 
     String commandString = command.toJson();

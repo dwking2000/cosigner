@@ -2,9 +2,7 @@ package io.emax.cosigner.validator;
 
 import org.junit.Test;
 
-import junit.framework.TestCase;
-
-public class BasicValidatorTest extends TestCase {
+public class BasicValidatorTest {
   @Test
   public void testValidator() {
     // TODO create a test wallet/config to use

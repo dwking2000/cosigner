@@ -52,7 +52,8 @@ public class Output extends Outpoint {
   public String toString() {
     return "Output [address=" + address + ", account=" + account + ", scriptPubKey=" + scriptPubKey
         + ", redeemScript=" + redeemScript + ", amount=" + amount + ", confirmations="
-        + confirmations + ", spendable=" + spendable + "]";
+        + confirmations
+        + ", spendable=" + spendable + "]";
   }
 
   public String getAddress() {
@@ -175,9 +176,6 @@ public class Output extends Outpoint {
     } else if (!scriptPubKey.equals(other.scriptPubKey)) {
       return false;
     }
-    if (spendable != other.spendable) {
-      return false;
-    }
-    return true;
+    return spendable == other.spendable;
   }
 }

@@ -66,10 +66,7 @@ public final class RawOutput {
     } else if (!script.equals(other.script)) {
       return false;
     }
-    if (scriptSize != other.scriptSize) {
-      return false;
-    }
-    return true;
+    return scriptSize == other.scriptSize;
   }
 
   @Override
@@ -80,7 +77,7 @@ public final class RawOutput {
 
   /**
    * Encodes this output into a hex string.
-   * 
+   *
    * @return Hex string represnting the output.
    */
   public String encode() {
@@ -107,7 +104,7 @@ public final class RawOutput {
 
   /**
    * Parses a hex string representing an output and converts it into a RawOutput
-   * 
+   *
    * @param txData String representing the output.
    * @return Corresponding output object.
    */
@@ -133,7 +130,7 @@ public final class RawOutput {
 
   /**
    * Size of the output when encoded to a hex string.
-   * 
+   *
    * @return Size of the encoded output.
    */
   public long getDataSize() {
@@ -144,7 +141,7 @@ public final class RawOutput {
 
   /**
    * Creates a copy of this output.
-   * 
+   *
    * @return A copy of the current output.
    */
   public RawOutput copy() {

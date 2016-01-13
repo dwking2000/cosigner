@@ -29,6 +29,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -42,14 +43,15 @@ import java.util.regex.Pattern;
 
 public class BitcoinWallet implements Wallet, Validatable {
   private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinWallet.class);
-  private static BitcoinConfiguration config = new BitcoinConfiguration();
-  private static BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
+  private static final BitcoinConfiguration config = new BitcoinConfiguration();
+  private static final BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
   private static final String PUBKEY_PREFIX = "PK-";
   @SuppressWarnings("unused")
-  private static Subscription multiSigSubscription = Observable.interval(1, TimeUnit.MINUTES)
-      .onErrorReturn(null).subscribe(tick -> scanForAddresses());
+  private static Subscription multiSigSubscription =
+      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> scanForAddresses());
 
-  private static HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
+  private static final HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
   @Override
   public String createAddress(String name) {
@@ -71,8 +73,8 @@ public class BitcoinWallet implements Wallet, Validatable {
 
     while (oldAddress && rounds <= config.getMaxDeterministicAddresses()) {
       oldAddress = false;
-      for (int i = 0; i < existingAddresses.length; i++) {
-        if (existingAddresses[i].equalsIgnoreCase(newAddress)) {
+      for (String existingAddress : existingAddresses) {
+        if (existingAddress.equalsIgnoreCase(newAddress)) {
           oldAddress = true;
           rounds++;
           privateKey =
@@ -131,7 +133,7 @@ public class BitcoinWallet implements Wallet, Validatable {
       Matcher matcher = pattern.matcher(account);
       if (matcher.matches()) {
         String pubKey = matcher.group(1);
-        generateMultiSigAddress(Arrays.asList(new String[] {pubKey}), null);
+        generateMultiSigAddress(Collections.singletonList(pubKey), null);
       }
     });
   }
@@ -148,8 +150,8 @@ public class BitcoinWallet implements Wallet, Validatable {
       if (!userPrivateKey.equalsIgnoreCase(BitcoinTools.NOKEY)) {
         userAddress = BitcoinTools.getPublicAddress(userPrivateKey);
 
-        while (!address.equalsIgnoreCase(userAddress)
-            && rounds <= config.getMaxDeterministicAddresses()) {
+        while (!address.equalsIgnoreCase(userAddress) && rounds <= config
+            .getMaxDeterministicAddresses()) {
           rounds++;
           userPrivateKey =
               BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
@@ -171,13 +173,14 @@ public class BitcoinWallet implements Wallet, Validatable {
     }
 
     String[] addressArray = new String[multisigAddresses.size()];
-    MultiSig newAddress = bitcoindRpc.createmultisig(config.getMinSignatures(),
-        multisigAddresses.toArray(addressArray));
+    MultiSig newAddress = bitcoindRpc
+        .createmultisig(config.getMinSignatures(), multisigAddresses.toArray(addressArray));
     if (name != null && !name.isEmpty()) {
       // Bitcoind refuses to connect the address it has to the p2sh script even when provided.
       // Simplest to just load it, it still doesn't have the private keys.
-      bitcoindRpc.addmultisigaddress(config.getMinSignatures(),
-          multisigAddresses.toArray(addressArray), BitcoinTools.encodeUserKey(name));
+      bitcoindRpc
+          .addmultisigaddress(config.getMinSignatures(), multisigAddresses.toArray(addressArray),
+              BitcoinTools.encodeUserKey(name));
     }
 
     multiSigRedeemScripts.put(newAddress.getAddress(), newAddress.getRedeemScript());
@@ -188,8 +191,9 @@ public class BitcoinWallet implements Wallet, Validatable {
   @Override
   public String getBalance(String address) {
     BigDecimal balance = BigDecimal.ZERO;
-    Output[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
-        config.getMaxConfirmations(), new String[] {address});
+    Output[] outputs = bitcoindRpc
+        .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(),
+            new String[]{address});
     for (Output output : outputs) {
       balance = balance.add(output.getAmount());
     }
@@ -201,8 +205,9 @@ public class BitcoinWallet implements Wallet, Validatable {
     List<String> fromAddresses = new LinkedList<>();
     fromAddress.forEach(fromAddresses::add);
     String[] addresses = new String[fromAddresses.size()];
-    Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
-        config.getMaxConfirmations(), fromAddresses.toArray(addresses));
+    Outpoint[] outputs = bitcoindRpc
+        .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(),
+            fromAddresses.toArray(addresses));
 
     List<Outpoint> usedOutputs = new LinkedList<>();
     Map<String, BigDecimal> txnOutput = new HashMap<>();
@@ -311,10 +316,9 @@ public class BitcoinWallet implements Wallet, Validatable {
       privateKey =
           BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
       userAddress = BitcoinTools.getPublicAddress(privateKey);
-      while (!userAddress.equalsIgnoreCase(address)
-          && !generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
-              .equalsIgnoreCase(address)
-          && rounds < config.getMaxDeterministicAddresses()) {
+      while (!userAddress.equalsIgnoreCase(address) && !generateMultiSigAddress(
+          Collections.singletonList(userAddress), name).equalsIgnoreCase(address) && rounds < config
+          .getMaxDeterministicAddresses()) {
         rounds++;
         privateKey =
             BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
@@ -322,9 +326,8 @@ public class BitcoinWallet implements Wallet, Validatable {
       }
 
       // If we hit max addresses/user bail out
-      if (!userAddress.equalsIgnoreCase(address)
-          && !generateMultiSigAddress(Arrays.asList(new String[] {userAddress}), name)
-              .equalsIgnoreCase(address)) {
+      if (!userAddress.equalsIgnoreCase(address) && !generateMultiSigAddress(
+          Collections.singletonList(userAddress), name).equalsIgnoreCase(address)) {
         LOGGER.debug("Too many rounds, failed to sign");
         return transaction;
       }
@@ -338,7 +341,7 @@ public class BitcoinWallet implements Wallet, Validatable {
     } else {
       LOGGER.debug("Asking bitcoind to sign...");
       signedTransaction =
-          bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[] {}, null, SigHash.ALL);
+          bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[]{}, null, SigHash.ALL);
     }
 
     return signedTransaction.getTransaction();
@@ -347,8 +350,8 @@ public class BitcoinWallet implements Wallet, Validatable {
   @Override
   public Iterable<Iterable<String>> getSigString(String transaction, String address) {
     LinkedList<Iterable<String>> signatureData = new LinkedList<>();
-    Outpoint[] outputs = bitcoindRpc.listunspent(config.getMinConfirmations(),
-        config.getMaxConfirmations(), new String[] {});
+    Outpoint[] outputs = bitcoindRpc
+        .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(), new String[]{});
 
     RawTransaction rawTx = RawTransaction.parse(transaction);
     for (RawInput input : rawTx.getInputs()) {
@@ -364,7 +367,7 @@ public class BitcoinWallet implements Wallet, Validatable {
 
           if (output.getAddress().equalsIgnoreCase(address)) {
             RawTransaction signingTx = RawTransaction.stripInputScripts(rawTx);
-            byte[] sigData = new byte[] {};
+            byte[] sigData = new byte[]{};
 
             LOGGER.debug("Found an output, matching to inputs in the transaction");
             for (RawInput sigInput : signingTx.getInputs()) {
@@ -434,11 +437,10 @@ public class BitcoinWallet implements Wallet, Validatable {
       for (int i = 0; i < 2; i++) {
         byte[] sig = sigResults[i];
         signature.append("02");
-        byte[] sigBytes = sig;
-        byte[] sigSize = BigInteger.valueOf(sigBytes.length).toByteArray();
+        byte[] sigSize = BigInteger.valueOf(sig.length).toByteArray();
         sigSize = ByteUtilities.stripLeadingNullBytes(sigSize);
         signature.append(ByteUtilities.toHexString(sigSize));
-        signature.append(ByteUtilities.toHexString(sigBytes));
+        signature.append(ByteUtilities.toHexString(sig));
       }
 
       byte[] sigBytes = ByteUtilities.toByteArray(signature.toString());
@@ -472,8 +474,8 @@ public class BitcoinWallet implements Wallet, Validatable {
       // Determine how we need to format the sig data
       if (BitcoinTools.isMultiSigAddress(address)) {
         for (RawInput signedInput : rawTx.getInputs()) {
-          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash)
-              && ((Integer) signedInput.getTxIndex()).toString().equalsIgnoreCase(signedTxIndex)) {
+          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && ((Integer) signedInput
+              .getTxIndex()).toString().equalsIgnoreCase(signedTxIndex)) {
             // Merge the new signature with existing ones.
             signedInput.stripMultiSigRedeemScript(signedTxRedeemScript);
 
@@ -498,8 +500,8 @@ public class BitcoinWallet implements Wallet, Validatable {
         }
       } else {
         for (RawInput signedInput : rawTx.getInputs()) {
-          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash)
-              && ((Integer) signedInput.getTxIndex()).toString().equalsIgnoreCase(signedTxIndex)) {
+          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && ((Integer) signedInput
+              .getTxIndex()).toString().equalsIgnoreCase(signedTxIndex)) {
 
             // Sig then pubkey
             String scriptData = "";
@@ -560,9 +562,9 @@ public class BitcoinWallet implements Wallet, Validatable {
                 senders.add(null);
               }
             });
-            detail.setFromAddress(senders.toArray(new String[] {}));
+            detail.setFromAddress(senders.toArray(new String[senders.size()]));
 
-            detail.setToAddress(new String[] {address});
+            detail.setToAddress(new String[]{address});
             detail.setTxHash(payment.getTxid());
 
             txDetails.add(detail);
@@ -581,8 +583,8 @@ public class BitcoinWallet implements Wallet, Validatable {
               detail.setTxDate(payment.getBlocktime());
               detail.setTxHash(payment.getTxid());
               detail.setAmount(payment.getAmount());
-              detail.setFromAddress(new String[] {address});
-              detail.setToAddress(new String[] {payment.getAddress()});
+              detail.setFromAddress(new String[]{address});
+              detail.setToAddress(new String[]{payment.getAddress()});
 
               txDetails.add(detail);
             }
@@ -616,10 +618,8 @@ public class BitcoinWallet implements Wallet, Validatable {
       }
     }
 
-    removeThese.forEach(detail -> {
-      txDetails.remove(detail);
-    });
-    return txDetails.toArray(new TransactionDetails[0]);
+    removeThese.forEach(txDetails::remove);
+    return txDetails.toArray(new TransactionDetails[txDetails.size()]);
   }
 
   @Override
@@ -654,8 +654,8 @@ public class BitcoinWallet implements Wallet, Validatable {
 
     TransactionDetails txDetails = new TransactionDetails();
     txDetails.setAmount(totalAmount);
-    txDetails.setFromAddress(senders.toArray(new String[0]));
-    txDetails.setToAddress(recipients.toArray(new String[0]));
+    txDetails.setFromAddress(senders.toArray(new String[senders.size()]));
+    txDetails.setToAddress(recipients.toArray(new String[recipients.size()]));
     return txDetails;
   }
 

@@ -4,7 +4,7 @@ import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractParametersInte
 
 public class MultiSigContractV2
     extends io.emax.cosigner.ethereum.gethrpc.multisig.v1.MultiSigContractV1 {
-  private static String initData =
+  private static final String initData =
       "6060604052604051610850380380610850833981016040528051608051910190"
           + "600060018190555b825181101560bb5782818151811015600257906020019060"
           + "2002015160066000506000836001018152602001908152602001600020600061"
@@ -73,7 +73,7 @@ public class MultiSigContractV2
           + "61074c575060025481166000145b156107635760028054821790556003805460"
           + "010190555b6001939093019261068056";
 
-  private static String contractPayload =
+  private static final String contractPayload =
       "606060405236156100405760e060020a60003504632f54bf6e81146100425780"
           + "63a0e67e2b14610068578063a17ecf9e146100db578063c11bf4e31461026757"
           + "5b005b61032e600435600160a060020a03811660009081526005602052604081"
@@ -135,10 +135,10 @@ public class MultiSigContractV2
           + "074c575060025481166000145b15610763576002805482179055600380546001"
           + "0190555b6001939093019261068056";
 
-  private static String executeFunctionAddress = "c11bf4e3";
-  private static String killFunctionAddress = "a17ecf9e";
-  private static String isOwnerFunctionAddress = "2f54bf6e";
-  private static String getOwnersFunctionAddress = "a0e67e2b";
+  private static final String executeFunctionAddress = "c11bf4e3";
+  private static final String killFunctionAddress = "a17ecf9e";
+  private static final String isOwnerFunctionAddress = "2f54bf6e";
+  private static final String getOwnersFunctionAddress = "a0e67e2b";
 
   @Override
   public String getInitData() {

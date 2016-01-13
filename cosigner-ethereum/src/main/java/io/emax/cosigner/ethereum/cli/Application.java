@@ -6,21 +6,21 @@ import io.emax.cosigner.ethereum.EthereumWallet;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 
 /**
  * Command line option for running the library.
- * 
- * @author Tom
  *
+ * @author Tom
  */
 public class Application {
   /**
    * Command line interface that provides basic access to wallet.
-   * 
+   *
    * @param args Commands, run with none to see usage.
    * @throws InterruptedException Monitor and transaction usage requires time to load data, sleep
-   *         throws this exception.
+   *                              throws this exception.
    */
   public static void main(String[] args) throws InterruptedException {
     if (args.length < 1) {
@@ -64,9 +64,7 @@ public class Application {
         if (args.length >= 2) {
           accountName = args[args.length - 1];
         }
-        for (int i = 1; i < args.length - 1; i++) {
-          addressList.add(args[i]);
-        }
+        addressList.addAll(Arrays.asList(args).subList(1, args.length - 1));
         System.out.println(wallet.getMultiSigAddress(addressList, accountName));
         break;
       case "getBalance":
@@ -82,13 +80,12 @@ public class Application {
         if (args.length >= 3) {
           accountName = args[args.length - 2];
         }
-        for (int i = 1; i < args.length - 2; i++) {
-          addressList.add(args[i]);
-        }
+        addressList.addAll(Arrays.asList(args).subList(1, args.length - 2));
         Recipient recipient = new Recipient();
         recipient.setAmount(amount);
         recipient.setRecipientAddress(accountName);
-        System.out.println(wallet.createTransaction(addressList, Arrays.asList(recipient)));
+        System.out
+            .println(wallet.createTransaction(addressList, Collections.singletonList(recipient)));
         break;
       case "signTransaction":
         if (args.length == 4) {
@@ -120,21 +117,18 @@ public class Application {
         System.out.println("*It will pause for several minutes to evaluate the network,"
             + " a full run can take 8+ minutes*");
         System.out.println("Adding " + accountName + " to monitor...");
-        monitor.addAddresses(Arrays.asList(accountName));
+        monitor.addAddresses(Collections.singletonList(accountName));
         System.out.println("Initial values...");
-        monitor.getBalances().forEach((balanceAddress, balance) -> {
-          System.out.println(balanceAddress + ": " + balance);
-        });
+        monitor.getBalances().forEach(
+            (balanceAddress, balance) -> System.out.println(balanceAddress + ": " + balance));
         System.out.println("2 minute sleep to load...");
         Thread.sleep(1000 * 120L);
-        monitor.getBalances().forEach((balanceAddress, balance) -> {
-          System.out.println(balanceAddress + ": " + balance);
-        });
+        monitor.getBalances().forEach(
+            (balanceAddress, balance) -> System.out.println(balanceAddress + ": " + balance));
         monitor.getObservableBalances().subscribe(balanceMap -> {
           System.out.println("Observable updated:");
-          balanceMap.forEach((balanceAddress, balance) -> {
-            System.out.println(balanceAddress + ": " + balance);
-          });
+          balanceMap.forEach(
+              (balanceAddress, balance) -> System.out.println(balanceAddress + ": " + balance));
         });
         System.out.println("60 second sleep...");
         Thread.sleep(60 * 1000L);
@@ -155,9 +149,7 @@ public class Application {
         }
         System.out.println("Waiting 2 minutes to let txHistory build...");
         Thread.sleep(2 * 60 * 1000L);
-        Arrays.asList(wallet.getTransactions(accountName, 100, 0)).forEach(tx -> {
-          System.out.println(tx);
-        });
+        Arrays.asList(wallet.getTransactions(accountName, 100, 0)).forEach(System.out::println);
         break;
       default:
         System.out.println("Method not valid or not supported yet");

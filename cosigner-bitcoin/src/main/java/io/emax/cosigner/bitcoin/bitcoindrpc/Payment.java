@@ -9,24 +9,37 @@ import java.util.List;
 
 /**
  * A payment or internal accounting entry.
- * 
+ *
  * @author dquintela
  */
 public class Payment {
   public enum PaymentCategory {
-    /** if sending payment. */
+    /**
+     * if sending payment.
+     */
     send,
-    /** if this wallet received payment in a regular transaction. */
+    /**
+     * if this wallet received payment in a regular transaction.
+     */
     receive,
-    /** if a matured and spendable coinbase. */
+    /**
+     * if a matured and spendable coinbase.
+     */
     generate,
-    /** if a coinbase that is not spendable yet. */
+    /**
+     * if a coinbase that is not spendable yet.
+     */
     immature,
-    /** if a coinbase from a block that’s not in the local best block chain. */
+    /**
+     * if a coinbase from a block that’s not in the local best block chain.
+     */
     orphan,
-    /** if an off-block-chain move made with the move RPC. */
+    /**
+     * if an off-block-chain move made with the move RPC.
+     */
     move
   }
+
 
   /**
    * The account which the payment was credited to or debited from. May be an empty string ("") for
@@ -116,7 +129,7 @@ public class Payment {
   /**
    * An array containing the TXIDs of other transactions that spend the same inputs (UTXOs) as this
    * transaction. Array may be empty.
-   * 
+   *
    * <p>The TXID of a conflicting transaction, encoded as hex in RPC byte order
    */
   @JsonProperty("walletconflicts")
@@ -260,7 +273,7 @@ public class Payment {
   }
 
   public void setWalletconflicts(List<String> walletconflicts) {
-    this.walletconflicts = new LinkedList<String>();
+    this.walletconflicts = new LinkedList<>();
     this.walletconflicts.addAll(walletconflicts);
   }
 

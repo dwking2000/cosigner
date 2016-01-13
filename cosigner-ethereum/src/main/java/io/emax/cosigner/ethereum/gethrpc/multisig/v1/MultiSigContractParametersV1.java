@@ -98,8 +98,9 @@ public class MultiSigContractParametersV1 implements MultiSigContractParametersI
     StringBuilder encodedData = new StringBuilder();
     encodedData.append(this.function);
     // nonce
-    encodedData.append(String.format("%64s", ByteUtilities.toHexString(this.nonce.toByteArray()))
-        .replace(' ', '0'));
+    encodedData.append(
+        String.format("%64s", ByteUtilities.toHexString(this.nonce.toByteArray()))
+            .replace(' ', '0'));
 
     // address
     encodedData.append(
@@ -107,107 +108,72 @@ public class MultiSigContractParametersV1 implements MultiSigContractParametersI
             .replace(' ', '0'));
 
     // value
-    encodedData
-        .append(String
-            .format("%64s",
-                ByteUtilities.toHexString(
-                    BigInteger.valueOf(7 * 32 + 32 * this.address.size()).toByteArray()))
+    encodedData.append(String.format("%64s", ByteUtilities
+        .toHexString(BigInteger.valueOf(7 * 32 + 32 * this.address.size()).toByteArray()))
         .replace(' ', '0'));
 
     // sigV
-    encodedData.append(String
-        .format("%64s",
-            ByteUtilities.toHexString(BigInteger
-                .valueOf(8 * 32 + 32 * (this.address.size() + this.value.size())).toByteArray()))
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(
+        BigInteger.valueOf(8 * 32 + 32 * (this.address.size() + this.value.size())).toByteArray()))
         .replace(' ', '0'));
 
     // sigR
-    encodedData
-        .append(
-            String
-                .format("%64s",
-                    ByteUtilities.toHexString(BigInteger
-                        .valueOf(9 * 32
-                            + 32 * (this.address.size() + this.value.size() + this.sigV.size()))
-                    .toByteArray()))
-                .replace(' ', '0'));
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(
+        BigInteger
+            .valueOf(9 * 32 + 32 * (this.address.size() + this.value.size() + this.sigV.size()))
+            .toByteArray())).replace(' ', '0'));
 
     // sigS
-    encodedData
-        .append(String
-            .format("%64s",
-                ByteUtilities.toHexString(BigInteger.valueOf(10 * 32 + 32 * (this.address.size()
-                    + this.value.size() + this.sigV.size() + this.sigR.size())).toByteArray()))
-        .replace(' ', '0'));
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(BigInteger.valueOf(
+        10 * 32 + 32 * (this.address.size() + this.value.size() + this.sigV.size() + this.sigR
+            .size())).toByteArray())).replace(' ', '0'));
 
     // address[]
-    encodedData.append(String
-        .format("%64s",
-            ByteUtilities.toHexString(ByteUtilities
-                .stripLeadingNullBytes(BigInteger.valueOf(this.address.size()).toByteArray())))
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(
+        ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(this.address.size()).toByteArray())))
         .replace(' ', '0'));
     for (String address : address) {
       encodedData.append(String.format("%64s", address).replace(' ', '0'));
     }
 
     // value[]
-    encodedData.append(String
-        .format("%64s",
-            ByteUtilities.toHexString(ByteUtilities
-                .stripLeadingNullBytes(BigInteger.valueOf(this.value.size()).toByteArray())))
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(
+        ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(this.value.size()).toByteArray())))
         .replace(' ', '0'));
     for (BigInteger value : value) {
-      encodedData
-          .append(String
-              .format("%64s",
-                  ByteUtilities
-                      .toHexString(ByteUtilities.stripLeadingNullBytes(value.toByteArray())))
-              .replace(' ', '0'));
+      encodedData.append(String.format("%64s",
+          ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(value.toByteArray())))
+          .replace(' ', '0'));
     }
 
     // sigV[]
-    encodedData.append(String
-        .format("%64s",
-            ByteUtilities.toHexString(ByteUtilities
-                .stripLeadingNullBytes(BigInteger.valueOf(this.sigV.size()).toByteArray())))
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(
+        ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(this.sigV.size()).toByteArray())))
         .replace(' ', '0'));
     for (BigInteger sigv : sigV) {
-      encodedData
-          .append(String
-              .format("%64s",
-                  ByteUtilities
-                      .toHexString(ByteUtilities.stripLeadingNullBytes(sigv.toByteArray())))
-              .replace(' ', '0'));
+      encodedData.append(String.format("%64s",
+          ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(sigv.toByteArray())))
+          .replace(' ', '0'));
     }
 
     // sigR[]
-    encodedData.append(String
-        .format("%64s",
-            ByteUtilities.toHexString(ByteUtilities
-                .stripLeadingNullBytes(BigInteger.valueOf(this.sigR.size()).toByteArray())))
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(
+        ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(this.sigR.size()).toByteArray())))
         .replace(' ', '0'));
     for (BigInteger sigr : sigR) {
-      encodedData
-          .append(String
-              .format("%64s",
-                  ByteUtilities
-                      .toHexString(ByteUtilities.stripLeadingNullBytes(sigr.toByteArray())))
-              .replace(' ', '0'));
+      encodedData.append(String.format("%64s",
+          ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(sigr.toByteArray())))
+          .replace(' ', '0'));
     }
 
     // sigS[]
-    encodedData.append(String
-        .format("%64s",
-            ByteUtilities.toHexString(ByteUtilities
-                .stripLeadingNullBytes(BigInteger.valueOf(this.sigS.size()).toByteArray())))
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(
+        ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(this.sigS.size()).toByteArray())))
         .replace(' ', '0'));
     for (BigInteger sigs : sigS) {
-      encodedData
-          .append(String
-              .format("%64s",
-                  ByteUtilities
-                      .toHexString(ByteUtilities.stripLeadingNullBytes(sigs.toByteArray())))
-              .replace(' ', '0'));
+      encodedData.append(String.format("%64s",
+          ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(sigs.toByteArray())))
+          .replace(' ', '0'));
     }
 
     return ByteUtilities.toByteArray(encodedData.toString());
@@ -260,7 +226,6 @@ public class MultiSigContractParametersV1 implements MultiSigContractParametersI
       valueBytes = Arrays.copyOfRange(data, dataLocation, dataLocation + 32);
       this.value.add(new BigInteger(1, valueBytes));
     }
-
 
     // 32 for sigV array pointer
     // Get the pointer

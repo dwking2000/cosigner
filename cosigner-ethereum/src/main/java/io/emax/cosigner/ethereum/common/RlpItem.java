@@ -14,7 +14,7 @@ public class RlpItem implements RlpEntity, Serializable {
   }
 
   public RlpItem() {
-    this.setDecodedContents(new byte[] {});
+    this.setDecodedContents(new byte[]{});
   }
 
   @Override

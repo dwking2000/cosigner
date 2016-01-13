@@ -15,9 +15,9 @@ public class Json {
 
   /**
    * Convert a JSON string to the object that it represents.
-   * 
+   *
    * @param objectType Class that we're converting this string to.
-   * @param str String containing the JSON representation.
+   * @param str        String containing the JSON representation.
    * @return Object that was reconstructed from the JSON.
    */
   public static Object objectifyString(Class<?> objectType, String str) {
@@ -33,9 +33,9 @@ public class Json {
 
   /**
    * Convert an object to a JSON representation of itself.
-   * 
+   *
    * @param objectType Object type we're writing.
-   * @param obj Object we're writing.
+   * @param obj        Object we're writing.
    * @return JSON representation of the object.
    */
   public static String stringifyObject(Class<?> objectType, Object obj) {

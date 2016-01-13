@@ -13,9 +13,8 @@ import java.util.regex.Pattern;
 
 /**
  * Utility class to convert between a raw transaction and the data structure represented here.
- * 
- * @author dorgky
  *
+ * @author dorgky
  */
 public final class RawTransaction {
   private int version;
@@ -123,22 +122,20 @@ public final class RawTransaction {
     } else if (!outputs.equals(other.outputs)) {
       return false;
     }
-    if (version != other.version) {
-      return false;
-    }
-    return true;
+    return version == other.version;
   }
 
   @Override
   public String toString() {
     return "RawTransaction [version=" + version + ", inputCount=" + inputCount + ", inputs="
         + inputs + ", outputCount=" + outputCount + ", outputs=" + outputs + ", lockTime="
-        + lockTime + "]";
+        + lockTime
+        + "]";
   }
 
   /**
    * Returns a String representing the raw transaction.
-   * 
+   *
    * @return Hex string representing the raw transaction.
    */
   public String encode() {
@@ -183,7 +180,7 @@ public final class RawTransaction {
 
   /**
    * Decode a raw trasaction.
-   * 
+   *
    * @param txData Hex string representing the transaction.
    * @return Corresponding RawTransaction object.
    */
@@ -256,8 +253,8 @@ public final class RawTransaction {
 
   /**
    * Parse a byte array of data to extract a variable length integer.
-   * 
-   * @param data Byte array that contains the integer.
+   *
+   * @param data  Byte array that contains the integer.
    * @param start Position of integer in the byte array.
    * @return Information about the integer
    */
@@ -293,8 +290,8 @@ public final class RawTransaction {
   /**
    * Similar to variable integers, this reads a variable integer that is being pushed on the stack
    * in a script.
-   * 
-   * @param data Byte array containing the data to be pushed.
+   *
+   * @param data  Byte array containing the data to be pushed.
    * @param start Position of the integer.
    * @return Information about the value and size of the integer.
    */
@@ -334,7 +331,7 @@ public final class RawTransaction {
 
   /**
    * Encode an integer into a byte array with variable length encoding.
-   * 
+   *
    * @param data Integer data to encode.
    * @return Byte array representation.
    */
@@ -360,16 +357,14 @@ public final class RawTransaction {
     intData = ByteUtilities.leftPad(intData, newData.length - 1, (byte) 0x00);
     intData = ByteUtilities.flipEndian(intData);
 
-    for (int i = 0; i < (newData.length - 1); i++) {
-      newData[i + 1] = intData[i];
-    }
+    System.arraycopy(intData, 0, newData, 1, newData.length - 1);
 
     return newData;
   }
 
   /**
    * Encode a stack push integer into a byte array with variable length encoding.
-   * 
+   *
    * @param data Integer data to encode.
    * @return Byte array representation.
    */
@@ -395,16 +390,14 @@ public final class RawTransaction {
     intData = ByteUtilities.leftPad(intData, newData.length - 1, (byte) 0x00);
     intData = ByteUtilities.flipEndian(intData);
 
-    for (int i = 0; i < (newData.length - 1); i++) {
-      newData[i + 1] = intData[i];
-    }
+    System.arraycopy(intData, 0, newData, 1, newData.length - 1);
 
     return newData;
   }
 
   /**
    * Creates a copy of the current raw transaction.
-   * 
+   *
    * @return A copy of the current object.
    */
   public RawTransaction copy() {
@@ -426,7 +419,7 @@ public final class RawTransaction {
 
   /**
    * Strips the inputs of their scripts, preparing them for signing.
-   * 
+   *
    * @param tx Transaction to prepare for signing.
    * @return Transaction with no script attached to its inputs.
    */
@@ -443,7 +436,7 @@ public final class RawTransaction {
 
   /**
    * Parses non-standard signature scripts for signing.
-   * 
+   *
    * @param originalScript The script provided in the original output.
    * @return The altered script which will be used in signing.
    */
@@ -509,7 +502,7 @@ public final class RawTransaction {
 
   /**
    * Assuming standard scripts, return the address.
-   * 
+   *
    * @param script Standard script to be decoded.
    * @return The address that the redeem script corresponds to.
    */
@@ -520,9 +513,11 @@ public final class RawTransaction {
     if (matcher.matches()) {
       String addressBytes = matcher.group(1);
 
-      String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
-          .getChain() == BlockChainName.main ? NetworkBytes.P2PKH.toString()
-              : NetworkBytes.P2PKH_TEST.toString();
+      String networkBytes =
+          BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
+              == BlockChainName.main
+              ? NetworkBytes.P2PKH.toString() :
+              NetworkBytes.P2PKH_TEST.toString();
 
       return BitcoinTools.encodeAddress(addressBytes, networkBytes);
     }
@@ -532,9 +527,10 @@ public final class RawTransaction {
     if (matcher.matches()) {
       String addressBytes = matcher.group(1);
 
-      String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
-          .getChain() == BlockChainName.main ? NetworkBytes.P2SH.toString()
-              : NetworkBytes.P2SH_TEST.toString();
+      String networkBytes =
+          BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
+              == BlockChainName.main ? NetworkBytes.P2SH.toString() :
+              NetworkBytes.P2SH_TEST.toString();
 
       return BitcoinTools.encodeAddress(addressBytes, networkBytes);
     }

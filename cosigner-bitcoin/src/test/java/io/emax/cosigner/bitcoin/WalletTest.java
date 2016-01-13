@@ -4,21 +4,21 @@ import io.emax.cosigner.api.currency.Wallet.Recipient;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction;
 import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import junit.framework.TestCase;
-
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.util.Collections;
 
-public class WalletTest extends TestCase {
+public class WalletTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(WalletTest.class);
   private BitcoinWallet wallet;
   private String userKey;
 
-  @Override
+  @Before
   public void setUp() {
     BitcoinResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
     wallet = new BitcoinWallet();
@@ -38,8 +38,8 @@ public class WalletTest extends TestCase {
       Recipient recipient = new Recipient();
       recipient.setAmount(BigDecimal.valueOf(20));
       recipient.setRecipientAddress(secondAddress);
-      String txString =
-          wallet.createTransaction(Arrays.asList(firstAddress), Arrays.asList(recipient));
+      String txString = wallet.createTransaction(Collections.singletonList(firstAddress),
+          Collections.singletonList(recipient));
       System.out.println("20 BTC from " + firstAddress + " to " + secondAddress + ": " + txString);
       System.out.println(RawTransaction.parse(txString));
       txString = wallet.signTransaction(txString, firstAddress, userKey);
@@ -49,7 +49,7 @@ public class WalletTest extends TestCase {
       System.out.println("TX ID: " + txString);
     } catch (Exception e) {
       LOGGER.error(null, e);
-      fail("Simple wallet test failed!");
+      Assert.fail("Simple wallet test failed!");
     }
   }
 
@@ -60,7 +60,8 @@ public class WalletTest extends TestCase {
     try {
       String singleAddress = wallet.createAddress(userKey);
       System.out.println("Single Address: " + singleAddress);
-      String multiSigAddress = wallet.getMultiSigAddress(Arrays.asList(singleAddress), userKey);
+      String multiSigAddress =
+          wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
       System.out.println("Multi-sig Address: " + multiSigAddress);
 
       String balance = wallet.getBalance(singleAddress);
@@ -69,7 +70,7 @@ public class WalletTest extends TestCase {
       System.out.println("Balance for " + multiSigAddress + ": " + balance);
     } catch (Exception e) {
       LOGGER.error(null, e);
-      fail("Balance test failed");
+      Assert.fail("Balance test failed");
     }
   }
 }

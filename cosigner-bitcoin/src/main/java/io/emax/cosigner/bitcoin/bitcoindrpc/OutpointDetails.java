@@ -27,7 +27,7 @@ public class OutpointDetails {
 
   /**
    * Create a new outpoint based on an output
-   * 
+   *
    * @param output Output with transaction data.
    */
   public OutpointDetails(Output output) {
@@ -44,11 +44,11 @@ public class OutpointDetails {
 
   /**
    * Create a new outpoint based on transaction data.
-   * 
+   *
    * @param transactionId Transaction hash this outpoint represents.
-   * @param outputIndex Index of the output in the given transaction.
-   * @param scriptPubKey Script that was used on the output.
-   * @param redeemScript Redeem script that was used if this is a P2SH output.
+   * @param outputIndex   Index of the output in the given transaction.
+   * @param scriptPubKey  Script that was used on the output.
+   * @param redeemScript  Redeem script that was used if this is a P2SH output.
    */
   public OutpointDetails(String transactionId, long outputIndex, String scriptPubKey,
       String redeemScript) {

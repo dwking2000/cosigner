@@ -51,11 +51,11 @@ public class RlpList extends LinkedList<RlpEntity> implements RlpEntity {
   @Override
   public String toString() {
     StringBuilder output = new StringBuilder();
-    output.append("RLPList [encodedContents=" + ByteUtilities.toHexString(encodedContents)
-        + ", decodedContents=" + ByteUtilities.toHexString(decodedContents));
+    output.append("RLPList [encodedContents=").append(ByteUtilities.toHexString(encodedContents))
+        .append(", decodedContents=").append(ByteUtilities.toHexString(decodedContents));
 
     for (RlpEntity entity : this) {
-      output.append("\n {" + entity.toString() + "}");
+      output.append("\n {").append(entity.toString()).append("}");
     }
 
     output.append("]");

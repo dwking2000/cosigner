@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 public class AdminConnector {
   private static final Logger LOGGER = LoggerFactory.getLogger(AdminConnector.class);
-  private ClientConfiguration config = new ClientConfiguration();
+  private final ClientConfiguration config = new ClientConfiguration();
   private HttpClient httpClient = new HttpClient();
 
   /**

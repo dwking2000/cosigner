@@ -8,15 +8,15 @@ import io.emax.cosigner.ethereum.common.RlpList;
 public class RawTransaction extends RlpList {
   private static final long serialVersionUID = 1L;
 
-  private RlpItem nonce = new RlpItem();
-  private RlpItem gasPrice = new RlpItem();
-  private RlpItem gasLimit = new RlpItem();
-  private RlpItem to = new RlpItem();
-  private RlpItem value = new RlpItem();
-  private RlpItem data = new RlpItem();
-  private RlpItem sigV = new RlpItem();
-  private RlpItem sigR = new RlpItem();
-  private RlpItem sigS = new RlpItem();
+  private final RlpItem nonce = new RlpItem();
+  private final RlpItem gasPrice = new RlpItem();
+  private final RlpItem gasLimit = new RlpItem();
+  private final RlpItem to = new RlpItem();
+  private final RlpItem value = new RlpItem();
+  private final RlpItem data = new RlpItem();
+  private final RlpItem sigV = new RlpItem();
+  private final RlpItem sigR = new RlpItem();
+  private final RlpItem sigS = new RlpItem();
 
   /**
    * Raw transaction that is sent over the Ethereum network.
@@ -75,7 +75,7 @@ public class RawTransaction extends RlpList {
 
   /**
    * The bytes that need to be signed for the transaction to be valid.
-   * 
+   *
    * @return Byte array of data that will be checked against the signature.
    */
   public byte[] getSigBytes() {
@@ -92,7 +92,7 @@ public class RawTransaction extends RlpList {
 
   /**
    * Parse a raw transaction from a byte representation into a useful data structure.
-   * 
+   *
    * @param bytes Bytes representing the transaction.
    * @return Data structure built from the raw bytes.
    */

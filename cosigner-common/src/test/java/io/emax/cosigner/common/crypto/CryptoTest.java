@@ -2,13 +2,12 @@ package io.emax.cosigner.common.crypto;
 
 import io.emax.cosigner.common.ByteUtilities;
 
+import org.junit.Assert;
 import org.junit.Test;
-
-import junit.framework.TestCase;
 
 import java.io.UnsupportedEncodingException;
 
-public class CryptoTest extends TestCase {
+public class CryptoTest {
   @Test
   public void testSharedSecret() throws UnsupportedEncodingException {
     System.out.println("Testing shared secret.");
@@ -26,7 +25,7 @@ public class CryptoTest extends TestCase {
     String otherSecret = ByteUtilities.toHexString(otherSharedSecret);
     System.out.println("My Secret: " + mySecret);
     System.out.println("Other secret: " + otherSecret);
-    assertEquals(mySecret, otherSecret);
+    Assert.assertEquals(mySecret, otherSecret);
 
     byte[] iv = Aes.generateIv();
 
@@ -39,6 +38,6 @@ public class CryptoTest extends TestCase {
     decryptedData = new String(ByteUtilities.toByteArray(decryptedData), "UTF-8");
     System.out.println("Decrypted with the other key: " + decryptedData);
 
-    assertEquals(encryptThis, decryptedData);
+    Assert.assertEquals(encryptThis, decryptedData);
   }
 }

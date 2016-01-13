@@ -10,7 +10,6 @@ import java.util.Date;
  * Wallet interface.
  *
  * @author Tom
- *
  */
 public interface Wallet {
   /**
@@ -60,7 +59,7 @@ public interface Wallet {
    * depending on the currency.
    *
    * @param addresses Addresses to include in the multi-sig script.
-   * @param name Associate the account with this user key
+   * @param name      Associate the account with this user key
    */
   String getMultiSigAddress(Iterable<String> addresses, String name);
 
@@ -259,9 +258,9 @@ public interface Wallet {
   /**
    * List transactions from a given address
    *
-   * @param address address to lookup transactions for.
+   * @param address        address to lookup transactions for.
    * @param numberToReturn Number of transactions to return.
-   * @param skipNumber Skip the first skipNumber results for pagination.
+   * @param skipNumber     Skip the first skipNumber results for pagination.
    * @return Transaction Details
    */
   TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber);

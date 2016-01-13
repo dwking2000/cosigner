@@ -75,9 +75,10 @@ public class CurrencyParameters {
   public String toString() {
     return "CurrencyParameters [currencySymbol=" + currencySymbol + ", userKey=" + userKey
         + ", account=" + account + ", callback=" + callback + ", receivingAccount="
-        + receivingAccount + ", transactionData=" + transactionData + ", getCurrencySymbol()="
-        + getCurrencySymbol() + ", getUserKey()=" + getUserKey() + ", getAccount()=" + getAccount()
-        + ", getCallback()=" + getCallback() + ", getReceivingAccount()=" + getReceivingAccount()
+        + receivingAccount
+        + ", transactionData=" + transactionData + ", getCurrencySymbol()=" + getCurrencySymbol()
+        + ", getUserKey()=" + getUserKey() + ", getAccount()=" + getAccount() + ", getCallback()="
+        + getCallback() + ", getReceivingAccount()=" + getReceivingAccount()
         + ", getTransactionData()=" + getTransactionData() + ", hashCode()=" + hashCode()
         + ", getClass()=" + getClass() + ", toString()=" + super.toString() + "]";
   }

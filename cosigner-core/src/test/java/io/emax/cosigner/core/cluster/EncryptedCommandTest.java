@@ -8,13 +8,12 @@ import io.emax.cosigner.core.cluster.commands.CurrencyCommand;
 import io.emax.cosigner.core.cluster.commands.CurrencyCommandType;
 import io.emax.cosigner.core.cluster.commands.EncryptedCommand;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-import junit.framework.TestCase;
+import java.util.Collections;
 
-import java.util.Arrays;
-
-public class EncryptedCommandTest extends TestCase {
+public class EncryptedCommandTest {
   @Test
   public void testCommand() {
     System.out.println("Testing command encryption.");
@@ -38,14 +37,14 @@ public class EncryptedCommandTest extends TestCase {
       System.out.println("Error with java security. This should be ok if all other tests pass.");
       return;
     }
-    assertEquals(mySecret, otherSecret);
+    Assert.assertEquals(mySecret, otherSecret);
 
     // Create, encrypt, and decrypt a command to verify it.
     CurrencyCommand command = new CurrencyCommand();
     CurrencyParameters params = new CurrencyParameters();
 
     params.setCurrencySymbol("TEST");
-    params.setAccount(Arrays.asList("TESTADDRESS"));
+    params.setAccount(Collections.singletonList("TESTADDRESS"));
     params.setUserKey("TESTKEY");
 
     command.setCommandType(CurrencyCommandType.SIGN);
@@ -69,6 +68,6 @@ public class EncryptedCommandTest extends TestCase {
     CurrencyCommand decryptedCommand = CurrencyCommand.parseCommandString(decryptedCommandString);
     System.out.println("Decrypted command: " + decryptedCommand);
 
-    assertEquals(command.toJson(), decryptedCommand.toJson());
+    Assert.assertEquals(command.toJson(), decryptedCommand.toJson());
   }
 }

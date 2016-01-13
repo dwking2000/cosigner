@@ -138,10 +138,7 @@ public class Server {
     if (serverListeningPort != other.serverListeningPort) {
       return false;
     }
-    if (serverRpcPort != other.serverRpcPort) {
-      return false;
-    }
-    return true;
+    return serverRpcPort == other.serverRpcPort;
   }
 
   @Override

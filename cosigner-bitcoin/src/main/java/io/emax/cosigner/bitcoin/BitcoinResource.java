@@ -15,12 +15,12 @@ import java.net.URL;
 
 /**
  * Static connection to a bitcoind RPC server.
- * 
+ *
  * @author Tom
  */
 public class BitcoinResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinResource.class);
-  private static BitcoinResource serverResource = new BitcoinResource();
+  private static final BitcoinResource serverResource = new BitcoinResource();
   private BitcoinConfiguration config;
   private JsonRpcHttpClient client;
   private BitcoindRpc bitcoindRpc;
@@ -59,7 +59,7 @@ public class BitcoinResource {
 
   /**
    * Get an RPC object that is connected to a bitcoind node.
-   * 
+   *
    * @return RPC object
    */
   public BitcoindRpc getBitcoindRpc() {

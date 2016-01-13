@@ -13,13 +13,12 @@ import java.net.URL;
 
 /**
  * Static connection to a geth RPC server.
- * 
+ *
  * @author Tom
  */
 public class EthereumResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumResource.class);
-  private static EthereumResource serverResource = new EthereumResource();
-  private EthereumConfiguration config;
+  private static final EthereumResource serverResource = new EthereumResource();
   private JsonRpcHttpClient client;
   private EthereumRpc ethereumRpc;
 
@@ -28,7 +27,7 @@ public class EthereumResource {
   }
 
   private EthereumResource() {
-    this.config = new EthereumConfiguration();
+    EthereumConfiguration config = new EthereumConfiguration();
     try {
       this.client = new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()));
     } catch (MalformedURLException e) {
@@ -46,7 +45,7 @@ public class EthereumResource {
 
   /**
    * Returns an RPC connector that should be pointing to the geth node.
-   * 
+   *
    * @return RPC connector
    */
   public EthereumRpc getGethRpc() {

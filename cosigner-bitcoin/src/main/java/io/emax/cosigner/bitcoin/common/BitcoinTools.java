@@ -30,11 +30,11 @@ public class BitcoinTools {
   /**
    * Generate a deterministic set of private keys based on a secret key.
    *
-   * @param userKeyPart Expect these to be hex strings without the leading 0x identifier. When
-   *        combined with serverKeyPart, it provides the seed for the private keys.
+   * @param userKeyPart   Expect these to be hex strings without the leading 0x identifier. When
+   *                      combined with serverKeyPart, it provides the seed for the private keys.
    * @param serverKeyPart Expect these to be hex strings without the leading 0x identifier. When
-   *        combined with userKeyPart, it provides the seed for the private keys.
-   * @param rounds Number of keys to skip when generating the private key.
+   *                      combined with userKeyPart, it provides the seed for the private keys.
+   * @param rounds        Number of keys to skip when generating the private key.
    * @return The private key that this data generates.
    */
   public static String getDeterministicPrivateKey(String userKeyPart, String serverKeyPart,
@@ -87,17 +87,19 @@ public class BitcoinTools {
    * Encodes a raw public key in a bitcoind compatible format.
    */
   public static String encodePrivateKey(String privateKeyString) {
-    String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
-        .getChain() == BlockChainName.main ? NetworkBytes.PRIVATEKEY.toString()
-            : NetworkBytes.PRIVATEKEY_TEST.toString();
+    String networkBytes =
+        BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
+            == BlockChainName.main
+            ? NetworkBytes.PRIVATEKEY.toString() :
+            NetworkBytes.PRIVATEKEY_TEST.toString();
 
     // Encode in format bitcoind is expecting
     byte[] privateKeyAttempt = ByteUtilities.toByteArray(privateKeyString);
     byte[] privateKey = ByteUtilities.toByteArray(networkBytes);
     byte[] privateKey2 = new byte[privateKey.length + privateKeyAttempt.length];
     System.arraycopy(privateKey, 0, privateKey2, 0, privateKey.length);
-    System.arraycopy(privateKeyAttempt, 0, privateKey2, privateKey.length,
-        privateKeyAttempt.length);
+    System
+        .arraycopy(privateKeyAttempt, 0, privateKey2, privateKey.length, privateKeyAttempt.length);
     privateKey = new byte[privateKey2.length];
     System.arraycopy(privateKey2, 0, privateKey, 0, privateKey2.length);
 
@@ -159,17 +161,20 @@ public class BitcoinTools {
       ripemd.doFinal(publicRipemdKeyBytes, 0);
 
       // Add network bytes
-      String networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo()
-          .getChain() == BlockChainName.main ? NetworkBytes.P2PKH.toString()
-              : NetworkBytes.P2PKH_TEST.toString();
+      String networkBytes =
+          BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
+              == BlockChainName.main
+              ? NetworkBytes.P2PKH.toString() :
+              NetworkBytes.P2PKH_TEST.toString();
 
       byte[] networkPublicKeyBytes = ByteUtilities.toByteArray(networkBytes);
       byte[] networkPublicKeyBytes2 =
           new byte[networkPublicKeyBytes.length + publicRipemdKeyBytes.length];
       System.arraycopy(networkPublicKeyBytes, 0, networkPublicKeyBytes2, 0,
           networkPublicKeyBytes.length);
-      System.arraycopy(publicRipemdKeyBytes, 0, networkPublicKeyBytes2,
-          networkPublicKeyBytes.length, publicRipemdKeyBytes.length);
+      System
+          .arraycopy(publicRipemdKeyBytes, 0, networkPublicKeyBytes2, networkPublicKeyBytes.length,
+              publicRipemdKeyBytes.length);
       networkPublicKeyBytes = new byte[networkPublicKeyBytes2.length];
       System.arraycopy(networkPublicKeyBytes2, 0, networkPublicKeyBytes, 0,
           networkPublicKeyBytes2.length);
@@ -275,12 +280,8 @@ public class BitcoinTools {
       byte[] networkBytes = ByteUtilities.readBytes(decodedNetworkAddress, 0, 1);
 
       String networkString = ByteUtilities.toHexString(networkBytes);
-      if (networkString.equalsIgnoreCase(NetworkBytes.P2SH.toString())
-          || networkString.equalsIgnoreCase(NetworkBytes.P2SH_TEST.toString())) {
-        return true;
-      }
-
-      return false;
+      return networkString.equalsIgnoreCase(NetworkBytes.P2SH.toString()) || networkString
+          .equalsIgnoreCase(NetworkBytes.P2SH_TEST.toString());
 
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -304,8 +305,8 @@ public class BitcoinTools {
       byte[] networkPrivateKeyBytes = new byte[decodedPrivateKey.length - 4];
       byte[] privateKeyChecksum = new byte[4];
 
-      System.arraycopy(decodedPrivateKey, 0, networkPrivateKeyBytes, 0,
-          decodedPrivateKey.length - 4);
+      System
+          .arraycopy(decodedPrivateKey, 0, networkPrivateKeyBytes, 0, decodedPrivateKey.length - 4);
       System.arraycopy(decodedPrivateKey, decodedPrivateKey.length - 4, privateKeyChecksum, 0, 4);
 
       // Is it valid?

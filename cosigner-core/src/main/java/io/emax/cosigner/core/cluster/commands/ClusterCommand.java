@@ -88,9 +88,8 @@ public class ClusterCommand implements BaseCommand {
         return true;
       case KNOWNSERVERS:
         LOGGER.debug("Got list of known servers: " + command);
-        command.getServer().forEach(server -> {
-          ClusterInfo.getInstance().addServer(server, server.isOriginator());
-        });
+        command.getServer()
+            .forEach(server -> ClusterInfo.getInstance().addServer(server, server.isOriginator()));
         return true;
       default:
         return false;
