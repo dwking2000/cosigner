@@ -405,9 +405,11 @@ public class Common {
 
     // Authorize it with the user account
     String initalTx = currencyParams.getTransactionData();
+    LOGGER.debug("Wallet.CreateTransaction Result: " + initalTx);
 
     currencyParams.setTransactionData(currency.getWallet().signTransaction(initalTx,
         currencyParams.getAccount().get(0), currencyParams.getUserKey()));
+    LOGGER.debug("Sign with userKey: " + currencyParams.getTransactionData());
 
     // If the userKey/address combo don't work then we stop here.
     if (currencyParams.getTransactionData().equalsIgnoreCase(initalTx)) {
