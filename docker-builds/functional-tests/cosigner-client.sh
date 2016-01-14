@@ -54,8 +54,8 @@ echo ${ADDRESS2}
 
 echo ""
 echo "Checking balances..."
-ADD1BALANCE=$(java -jar ${CLIENTLIB} getBalance BTC ${ADDRESS} tail -n 1)
-ADD2BALANCE=$(java -jar ${CLIENTLIB} getBalance BTC ${ADDRESS2} tail -n 1)
+ADD1BALANCE=$(java -jar ${CLIENTLIB} getBalance BTC ${ADDRESS} | tail -n 1)
+ADD2BALANCE=$(java -jar ${CLIENTLIB} getBalance BTC ${ADDRESS2} | tail -n 1)
 echo "${ADDRESS}: ${ADD1BALANCE}"
 echo "${ADDRESS2}: ${ADD2BALANCE}"
 
@@ -65,8 +65,8 @@ TX=$(java -jar ${CLIENTLIB} prepareTransaction BTC ${ADDRESS} ${ADDRESS2} 3 ${US
 echo ${TX}
 
 echo ""
-echo "Signing the TX (Configuration could mean nothing changes)..."
-SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction BTC ${TX} | tail -n 1)
+echo "Signing the TX..."
+SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction BTC ${TX} ${ADDRESS} | tail -n 1)
 echo ${SIGNEDTX}
 
 echo ""
@@ -89,9 +89,24 @@ echo "${ADDRESS2}: ${ADD2BALANCE}"
 echo ""
 echo "Testing Ethereum (ETH)"
 
+CURLURL="http://${GETH_PORT_8101_TCP_ADDR}:${GETH_PORT_8101_TCP_PORT}"
+
+waitBlock () {
+  echo ""
+  CURRBLOCK=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "eth_blockNumber", "params": []}'  ${CURLURL} | jq '.result' | sed 's/^"//g' | sed 's/"$//g' | sed 's/^0x//g')
+  BLOCK=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "eth_blockNumber", "params": []}'  ${CURLURL} | jq '.result' | sed 's/^"//g' | sed 's/"$//g' | sed 's/^0x//g')
+  while [ ${CURRBLOCK} == ${BLOCK} ]; do
+    echo "Waiting for block generation..."
+    sleep 5
+    BLOCK=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "eth_blockNumber", "params": []}'  ${CURLURL} | jq '.result' | sed 's/^"//g' | sed 's/"$//g' | sed 's/^0x//g')
+    echo "Starting block: " ${CURRBLOCK}
+    echo "New block number: " ${BLOCK}
+  done
+  return 0
+}
+
 echo ""
 echo "Getting coinbase"
-CURLURL="http://${GETH_PORT_8101_TCP_ADDR}:${GETH_PORT_8101_TCP_PORT}"
 COINBASE=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "eth_coinbase", "params": [] }' ${CURLURL} | jq '.result' | sed 's/^"//g' | sed 's/"$//g' | sed 's/^0x//g')
 echo ${COINBASE}
 
@@ -100,28 +115,66 @@ echo "Generating address"
 ADDRESS=$(java -jar ${CLIENTLIB} getNewAddress ETH ${USERKEY} | tail -n 1)
 echo ${ADDRESS}
 
-echo ""
-echo "Waiting for block generation..."
-sleep 5
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
 
 echo ""
 echo "Generating second address"
 ADDRESS2=$(java -jar ${CLIENTLIB} getNewAddress ETH ${USERKEY} | tail -n 1)
 echo ${ADDRESS2}
 
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+
 echo ""
-echo "Waiting for block generation..."
-sleep 5
+echo "Checking balances..."
+ADD1BALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${ADDRESS} | tail -n 1)
+ADD2BALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${ADDRESS2} | tail -n 1)
+echo "${ADDRESS}: ${ADD1BALANCE}"
+echo "${ADDRESS2}: ${ADD2BALANCE}"
 
 echo ""
 echo "Funding address"
-TX=$(java -jar ${CLIENTLIB} prepareTransaction ETH ${COINBASE} ${ADDRESS} 10 | tail -n 1)
-SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction ETH ${TX} | tail -n 1)
+TX=$(java -jar ${CLIENTLIB} prepareTransaction ETH ${COINBASE} ${ADDRESS} 50 | tail -n 1)
+echo ${TX}
+SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction ETH ${TX} ${COINBASE} | tail -n 1)
+echo ${SIGNEDTX}
 TXID=$(java -jar ${CLIENTLIB} sendTransaction ETH ${SIGNEDTX} | tail -n 1)
+echo ${TXID}
+
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
 
 echo ""
-echo "Waiting for block generation..."
-sleep 5
+echo "Checking balances..."
+ADD1BALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${ADDRESS} | tail -n 1)
+ADD2BALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${ADDRESS2} | tail -n 1)
+echo "${ADDRESS}: ${ADD1BALANCE}"
+echo "${ADDRESS2}: ${ADD2BALANCE}"
 
 echo ""
 echo "Generate tx between addresses"
@@ -130,15 +183,39 @@ echo ${TX}
 
 echo ""
 echo "Sign tx"
-SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction ETH ${TX} | tail -n 1)
+SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction ETH ${TX} ${ADDRESS} | tail -n 1)
 echo ${SIGNEDTX}
 
 echo ""
 echo "Submit tx"
-TXID=$(java -jar ${CLIENTLIB} sendTransaction ETH ${TXID} | tail -n 1)
+TXID=$(java -jar ${CLIENTLIB} sendTransaction ETH ${SIGNEDTX} | tail -n 1)
 echo ${TXID}
 
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+
 echo ""
-echo "Waiting for block generation..."
-sleep 5
+echo "Checking balances..."
+ADD1BALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${ADDRESS} | tail -n 1)
+ADD2BALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${ADDRESS2} | tail -n 1)
+echo "${ADDRESS}: ${ADD1BALANCE}"
+echo "${ADDRESS2}: ${ADD2BALANCE}"
 

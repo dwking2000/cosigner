@@ -79,7 +79,7 @@ public class Coordinator {
           "tcp://" + cluster.getThisServer().getServerLocation() + ":" + cluster.getThisServer()
               .getServerRpcPort());
 
-      Observable.interval(1, TimeUnit.SECONDS).map(tick -> responder.recvStr())
+      Observable.interval(50, TimeUnit.MILLISECONDS).map(tick -> responder.recvStr())
           .subscribe(new Action1<String>() {
             @Override
             public void call(String commandString) {

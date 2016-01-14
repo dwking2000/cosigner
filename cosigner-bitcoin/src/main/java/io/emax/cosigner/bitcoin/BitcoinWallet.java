@@ -432,6 +432,14 @@ public class BitcoinWallet implements Wallet, Validatable {
       byte[] sigData = ByteUtilities.toByteArray(signatureEntry.next());
 
       byte[][] sigResults = Secp256k1.signTransaction(sigData, privateKeyBytes);
+      // BIP62
+      BigInteger lowSlimit =
+          new BigInteger("007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0", 16);
+      BigInteger ourSvalue = new BigInteger(1, sigResults[1]);
+      while (ourSvalue.compareTo(lowSlimit) > 0) {
+        sigResults = Secp256k1.signTransaction(sigData, privateKeyBytes);
+        ourSvalue = new BigInteger(1, sigResults[1]);
+      }
       StringBuilder signature = new StringBuilder();
       // Only want R & S, don't need V
       for (int i = 0; i < 2; i++) {

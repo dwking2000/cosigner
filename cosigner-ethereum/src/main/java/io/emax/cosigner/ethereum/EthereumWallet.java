@@ -72,8 +72,14 @@ public class EthereumWallet implements Wallet, Validatable {
     }
   }
 
-  private static synchronized void syncMultiSigAddresses() {
+  private static boolean synching = false;
+
+  private static void syncMultiSigAddresses() {
+    if (synching) {
+      return;
+    }
     try {
+      synching = true;
       LOGGER.debug("Synchronizing contract accounts with network...");
       String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
           DefaultBlock.LATEST.toString());
@@ -141,6 +147,8 @@ public class EthereumWallet implements Wallet, Validatable {
       }
     } catch (InstantiationException | IllegalAccessException e) {
       LOGGER.debug(null, e);
+    } finally {
+      synching = false;
     }
   }
 
@@ -427,7 +435,13 @@ public class EthereumWallet implements Wallet, Validatable {
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
-    Iterable<Iterable<String>> sigData = null;
+    // Prepare sigData so that if we can't sign, it returns the original.
+    LinkedList<String> txData = new LinkedList<>();
+    txData.add(transaction);
+    LinkedList<Iterable<String>> wrappedTxdata = new LinkedList<>();
+    wrappedTxdata.add(txData);
+    Iterable<Iterable<String>> sigData = wrappedTxdata;
+
     if (name == null && reverseMsigContracts.containsKey(address.toLowerCase(Locale.US))) {
       for (int i = 0; i < config.getMultiSigAddresses().length; i++) {
         if (config.getMultiSigAddresses()[i].isEmpty()) {
@@ -447,10 +461,7 @@ public class EthereumWallet implements Wallet, Validatable {
       sigData = signTx(sigData, translatedAddress, name);
     }
 
-    return
-
-        applySignature(transaction, address, sigData);
-
+    return applySignature(transaction, address, sigData);
   }
 
   private byte[][] signData(String data, String address, String name) {
@@ -458,6 +469,7 @@ public class EthereumWallet implements Wallet, Validatable {
       // Catch errors here
       String sig = "";
       try {
+        LOGGER.debug("Asking geth to sign for 0x" + address);
         sig = ethereumRpc.eth_sign("0x" + address, data);
       } catch (Exception e) {
         LOGGER.warn(null, e);
@@ -517,8 +529,8 @@ public class EthereumWallet implements Wallet, Validatable {
       byte[] sigS;
       do {
         byte[][] signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
-        sigR = signedBytes[0];
-        sigS = signedBytes[1];
+        sigR = ByteUtilities.stripLeadingNullBytes(signedBytes[0]);
+        sigS = ByteUtilities.stripLeadingNullBytes(signedBytes[1]);
         sigV = signedBytes[2];
 
         if (sigV[0] != 0 && sigV[0] != 1) {
@@ -868,6 +880,8 @@ public class EthereumWallet implements Wallet, Validatable {
                 BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
                     .divide(BigDecimal.valueOf(config.getWeiMultiplier()))));
           }
+
+          LOGGER.debug("Updated TXDetail: " + txDetail.toString());
         }
       }
     } catch (ArrayIndexOutOfBoundsException | InstantiationException | IllegalAccessException e) {
