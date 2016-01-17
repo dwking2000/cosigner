@@ -87,11 +87,17 @@ public class BitcoinTools {
    * Encodes a raw public key in a bitcoind compatible format.
    */
   public static String encodePrivateKey(String privateKeyString) {
-    String networkBytes =
-        BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
-            == BlockChainName.main
-            ? NetworkBytes.PRIVATEKEY.toString() :
-            NetworkBytes.PRIVATEKEY_TEST.toString();
+    String networkBytes = "";
+    try {
+      networkBytes =
+          BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
+              == BlockChainName.main
+              ? NetworkBytes.PRIVATEKEY.toString() :
+              NetworkBytes.PRIVATEKEY_TEST.toString();
+    } catch (Exception e) {
+      LOGGER.debug("No network connection, assuming regular network", e);
+      networkBytes = NetworkBytes.PRIVATEKEY.toString();
+    }
 
     // Encode in format bitcoind is expecting
     byte[] privateKeyAttempt = ByteUtilities.toByteArray(privateKeyString);
