@@ -292,7 +292,7 @@ public class CommonTest {
           CurrencyPackage currencyPackage = Common.lookupCurrency(parms);
           String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
           String privateKey = currencyPackage.getWallet().generatePrivateKey();
-          String address = currencyPackage.getWallet().createAddressFromKey(privateKey);
+          String address = currencyPackage.getWallet().createAddressFromKey(privateKey, true);
 
           parms.setAccount(Collections.singletonList(address));
           address = Common.getNewAddress(parmsString);
