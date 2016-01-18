@@ -42,6 +42,10 @@ public class WebSocketResource extends OnMessage<String> {
         LOGGER.debug("[GetNewAccount:WSRequest]");
         arg0.write(Common.getNewAddress(arg1));
         break;
+      case "/generateaddressfromkey":
+        LOGGER.debug("[GenerateAddressFromKey:WSRequest]");
+        arg0.write(Common.generateAddressFromKey(arg1));
+        break;
       case "/listalladdresses":
         LOGGER.debug("[ListAllAccounts:WSRequest]");
         arg0.write(Common.listAllAddresses(arg1));

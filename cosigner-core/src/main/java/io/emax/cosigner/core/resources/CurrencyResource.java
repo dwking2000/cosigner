@@ -56,11 +56,20 @@ public class CurrencyResource {
   @POST
   @Path("/GetNewAddress")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getNewAccount(
-      String params) {
+  public Response getNewAccount(String params) {
     LOGGER.debug("[GetNewAccount:Request]");
     Response response = Response.ok(Common.getNewAddress(params)).build();
     LOGGER.debug("[GetNewAccount:Response] " + response.toString());
+    return response;
+  }
+
+  @POST
+  @Path("/GenerateAddressFromKey")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response generateAddressFromKey(String params) {
+    LOGGER.debug("[GenerateAddressFromKey:Request]");
+    Response response = Response.ok(Common.generateAddressFromKey(params)).build();
+    LOGGER.debug("[GenerateAddressFromKey:Response] " + response.toString());
     return response;
   }
 
@@ -105,8 +114,7 @@ public class CurrencyResource {
   @POST
   @Path("/GetBalance")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getBalance(
-      String params) {
+  public Response getBalance(String params) {
     LOGGER.debug("[GetBalance:Request]");
     Response response = Response.ok(Common.getBalance(params)).build();
     LOGGER.debug("[GetBalance:Response] " + response.toString());

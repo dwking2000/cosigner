@@ -147,14 +147,20 @@ public class BitcoinTools {
   }
 
   /**
-   * Convert a private key into its corresponding public address.
+   * Convert a key into its corresponding public address.
    *
-   * @param privateKey Private key
+   * @param key          Key to convert
+   * @param isPrivateKey Is this private or public
    * @return Public bitcoin address.
    */
-  public static String getPublicAddress(String privateKey) {
+  public static String getPublicAddress(String key, boolean isPrivateKey) {
     try {
-      byte[] publicKeyBytes = getPublicKeyBytes(privateKey);
+      byte[] publicKeyBytes;
+      if (isPrivateKey) {
+        publicKeyBytes = getPublicKeyBytes(key);
+      } else {
+        publicKeyBytes = ByteUtilities.toByteArray(key);
+      }
 
       MessageDigest md = MessageDigest.getInstance(SHA256);
       md.reset();

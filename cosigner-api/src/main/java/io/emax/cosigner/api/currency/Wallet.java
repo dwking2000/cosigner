@@ -41,9 +41,14 @@ public interface Wallet {
   String generatePrivateKey();
 
   /**
-   * Generate a wallet compatible address from a private key.
+   * Generate public key from a private one.
    */
-  String createAddressFromKey(String privateKey);
+  String generatePublicKey(String privateKey);
+  
+  /**
+   * Generate a wallet compatible address from a private or public key.
+   */
+  String createAddressFromKey(String key, boolean isPrivateKey);
 
   /**
    * Returns all multi-sig addresses stored for the provided wallet name, they should be

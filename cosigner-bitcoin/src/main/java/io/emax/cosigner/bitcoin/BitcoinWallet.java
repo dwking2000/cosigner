@@ -63,7 +63,7 @@ public class BitcoinWallet implements Wallet, Validatable {
     int rounds = 1 + skipNumber;
     String privateKey =
         BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-    String newAddress = BitcoinTools.getPublicAddress(privateKey);
+    String newAddress = BitcoinTools.getPublicAddress(privateKey, true);
     String pubKey = BitcoinTools.getPublicKey(privateKey);
     // Hash the user's key so it's not stored in the wallet
     String internalName = PUBKEY_PREFIX + pubKey;
@@ -79,7 +79,7 @@ public class BitcoinWallet implements Wallet, Validatable {
           rounds++;
           privateKey =
               BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-          newAddress = BitcoinTools.getPublicAddress(privateKey);
+          newAddress = BitcoinTools.getPublicAddress(privateKey, true);
           break;
         }
       }
@@ -102,8 +102,13 @@ public class BitcoinWallet implements Wallet, Validatable {
   }
 
   @Override
-  public String createAddressFromKey(String privateKey) {
-    return BitcoinTools.getPublicAddress(privateKey);
+  public String createAddressFromKey(String key, boolean isPrivateKey) {
+    return BitcoinTools.getPublicAddress(key, isPrivateKey);
+  }
+
+  @Override
+  public String generatePublicKey(String privateKey) {
+    return ByteUtilities.toHexString(BitcoinTools.getPublicKeyBytes(privateKey));
   }
 
   @Override
@@ -148,14 +153,14 @@ public class BitcoinWallet implements Wallet, Validatable {
 
       String userAddress = BitcoinTools.NOKEY;
       if (!userPrivateKey.equalsIgnoreCase(BitcoinTools.NOKEY)) {
-        userAddress = BitcoinTools.getPublicAddress(userPrivateKey);
+        userAddress = BitcoinTools.getPublicAddress(userPrivateKey, true);
 
         while (!address.equalsIgnoreCase(userAddress) && rounds <= config
             .getMaxDeterministicAddresses()) {
           rounds++;
           userPrivateKey =
               BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-          userAddress = BitcoinTools.getPublicAddress(userPrivateKey);
+          userAddress = BitcoinTools.getPublicAddress(userPrivateKey, true);
         }
       }
 
@@ -315,14 +320,14 @@ public class BitcoinWallet implements Wallet, Validatable {
       LOGGER.debug("User key has value, trying to determine private key");
       privateKey =
           BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-      userAddress = BitcoinTools.getPublicAddress(privateKey);
+      userAddress = BitcoinTools.getPublicAddress(privateKey, true);
       while (!userAddress.equalsIgnoreCase(address) && !generateMultiSigAddress(
           Collections.singletonList(userAddress), name).equalsIgnoreCase(address) && rounds < config
           .getMaxDeterministicAddresses()) {
         rounds++;
         privateKey =
             BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
-        userAddress = BitcoinTools.getPublicAddress(privateKey);
+        userAddress = BitcoinTools.getPublicAddress(privateKey, true);
       }
 
       // If we hit max addresses/user bail out

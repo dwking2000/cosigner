@@ -133,6 +133,17 @@ public class Common {
     return currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
   }
 
+  public static String generateAddressFromKey(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
+    CurrencyPackage currency = lookupCurrency(currencyParams);
+
+    String publicKey = currencyParams.getUserKey();
+    String publicAddress = currency.getWallet().createAddressFromKey(publicKey, false);
+
+    LOGGER.debug("[Response] " + publicAddress);
+    return publicAddress;
+  }
+
   /**
    * List all addresses that we have generated for the given user key and currency.
    *
@@ -371,8 +382,7 @@ public class Common {
   /**
    * Create and sign a transaction.
    *
-   * <p>This only signs the transaction with the user's key, showing that the user has requested
-   * the
+   * <p>This only signs the transaction with the user's key, showing that the user has requested the
    * transaction. The server keys are not used until the approve stage.
    *
    * @param params {@link CurrencyParameters} with the currency code, user key, senders, recipients
@@ -461,10 +471,8 @@ public class Common {
       address = currencyParams.getAccount().get(0);
     }
 
-    Iterator<String> txList =
-        ((Iterable<String>) Json
-            .objectifyString(Iterable.class, currencyParams.getTransactionData()))
-            .iterator();
+    Iterator<String> txList = ((Iterable<String>) Json
+        .objectifyString(Iterable.class, currencyParams.getTransactionData())).iterator();
     String tx = txList.next();
     Iterable<Iterable<String>> sigData =
         (Iterable<Iterable<String>>) Json.objectifyString(Iterable.class, txList.next());
@@ -479,8 +487,7 @@ public class Common {
    * checks and validation required.
    *
    * @param params        {@link CurrencyParameters} with the currency code, user key, senders,
-   *                      recipients and amounts filled in. The transaction data should be filled
-   *                      in
+   *                      recipients and amounts filled in. The transaction data should be filled in
    *                      with the response from prepareTransaction.
    * @param sendToRemotes Indicates whether cosigner should attempt to request signature from any
    *                      other cosigner servers in the cluster.
