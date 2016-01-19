@@ -321,7 +321,7 @@ public class BitcoinWallet implements Wallet, Validatable {
       privateKey =
           BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
       userAddress = BitcoinTools.getPublicAddress(privateKey, true);
-      while (!userAddress.equalsIgnoreCase(address) && !generateMultiSigAddress(
+      while (!(userAddress != null && userAddress.equalsIgnoreCase(address)) && !generateMultiSigAddress(
           Collections.singletonList(userAddress), name).equalsIgnoreCase(address) && rounds < config
           .getMaxDeterministicAddresses()) {
         rounds++;
@@ -331,7 +331,7 @@ public class BitcoinWallet implements Wallet, Validatable {
       }
 
       // If we hit max addresses/user bail out
-      if (!userAddress.equalsIgnoreCase(address) && !generateMultiSigAddress(
+      if (!(userAddress != null && userAddress.equalsIgnoreCase(address)) && !generateMultiSigAddress(
           Collections.singletonList(userAddress), name).equalsIgnoreCase(address)) {
         LOGGER.debug("Too many rounds, failed to sign");
         return transaction;
@@ -372,7 +372,7 @@ public class BitcoinWallet implements Wallet, Validatable {
 
           if (output.getAddress().equalsIgnoreCase(address)) {
             RawTransaction signingTx = RawTransaction.stripInputScripts(rawTx);
-            byte[] sigData = new byte[]{};
+            byte[] sigData;
 
             LOGGER.debug("Found an output, matching to inputs in the transaction");
             for (RawInput sigInput : signingTx.getInputs()) {
@@ -398,7 +398,7 @@ public class BitcoinWallet implements Wallet, Validatable {
                   sigData = md.digest(md.digest(sigData));
                   LinkedList<String> inputSigData = new LinkedList<>();
                   inputSigData.add(input.getTxHash());
-                  inputSigData.add(((Integer) input.getTxIndex()).toString());
+                  inputSigData.add(Integer.toString(input.getTxIndex()));
                   inputSigData.add(output.getRedeemScript());
                   inputSigData.add(ByteUtilities.toHexString(sigData));
                   signatureData.add(inputSigData);
@@ -487,8 +487,8 @@ public class BitcoinWallet implements Wallet, Validatable {
       // Determine how we need to format the sig data
       if (BitcoinTools.isMultiSigAddress(address)) {
         for (RawInput signedInput : rawTx.getInputs()) {
-          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && ((Integer) signedInput
-              .getTxIndex()).toString().equalsIgnoreCase(signedTxIndex)) {
+          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer.toString(signedInput
+              .getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
             // Merge the new signature with existing ones.
             signedInput.stripMultiSigRedeemScript(signedTxRedeemScript);
 
@@ -513,8 +513,8 @@ public class BitcoinWallet implements Wallet, Validatable {
         }
       } else {
         for (RawInput signedInput : rawTx.getInputs()) {
-          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && ((Integer) signedInput
-              .getTxIndex()).toString().equalsIgnoreCase(signedTxIndex)) {
+          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer.toString(signedInput
+              .getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
 
             // Sig then pubkey
             String scriptData = "";
@@ -590,7 +590,7 @@ public class BitcoinWallet implements Wallet, Validatable {
             String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
             String scriptAddress = RawTransaction.decodeRedeemScript(script);
 
-            if (scriptAddress.equalsIgnoreCase(address)) {
+            if (scriptAddress != null && scriptAddress.equalsIgnoreCase(address)) {
               TransactionDetails detail = new TransactionDetails();
 
               detail.setTxDate(payment.getBlocktime());

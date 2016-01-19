@@ -75,7 +75,7 @@ public class EthereumMonitor implements io.emax.cosigner.api.currency.Monitor {
   public Iterable<String> listAddresses() {
     LinkedList<String> addresses = new LinkedList<>();
     monitoredAddresses.forEach(addresses::add);
-    return null;
+    return addresses;
   }
 
   @Override

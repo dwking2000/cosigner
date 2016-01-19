@@ -15,12 +15,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 public class EncryptedCommand implements BaseCommand {
   private static final Logger LOGGER = LoggerFactory.getLogger(EncryptedCommand.class);
   // Track nonces for other servers in both directions.
-  private static final HashMap<String, Long> incomingNonces = new HashMap<>();
-  private static final HashMap<String, Long> outgoingNonces = new HashMap<>();
+  private static final Map<String, Long> incomingNonces = new HashMap<>();
+  private static final Map<String, Long> outgoingNonces = new HashMap<>();
 
   private Server sender;
   private String payload;

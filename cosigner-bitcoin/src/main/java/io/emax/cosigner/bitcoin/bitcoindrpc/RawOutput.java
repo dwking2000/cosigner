@@ -119,8 +119,8 @@ public final class RawOutput {
     output.setAmount(new BigInteger(1, satoshiBytes).longValue());
 
     VariableInt varScriptSize = RawTransaction.readVariableInt(rawTx, buffPointer);
-    buffPointer += varScriptSize.getSize();
-    output.setScriptSize(varScriptSize.getValue());
+    buffPointer += varScriptSize != null ? varScriptSize.getSize() : 0;
+    output.setScriptSize(varScriptSize != null ? varScriptSize.getValue() : 0);
 
     byte[] scriptBytes = ByteUtilities.readBytes(rawTx, buffPointer, (int) output.getScriptSize());
     output.setScript(ByteUtilities.toHexString(scriptBytes));

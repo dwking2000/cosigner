@@ -157,14 +157,17 @@ public class BlockChainInfo {
    * Softforks.
    */
   public SoftForks[] getSoftforks() {
-    return softforks;
+    SoftForks[] returnArray = new SoftForks[softforks.length];
+    System.arraycopy(softforks, 0, returnArray, 0, softforks.length);
+    return returnArray;
   }
 
   /**
    * Softforks.
    */
   public void setSoftforks(SoftForks[] softforks) {
-    this.softforks = softforks;
+    this.softforks = new SoftForks[softforks.length];
+    System.arraycopy(softforks, 0, this.softforks, 0, this.softforks.length);
   }
 
   public BigDecimal getVerificationprogress() {

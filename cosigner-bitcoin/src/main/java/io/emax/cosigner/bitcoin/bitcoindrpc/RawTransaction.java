@@ -19,9 +19,9 @@ import java.util.regex.Pattern;
 public final class RawTransaction {
   private int version;
   private long inputCount = 0;
-  private LinkedList<RawInput> inputs = new LinkedList<>();
+  private List<RawInput> inputs = new LinkedList<>();
   private long outputCount = 0;
-  private LinkedList<RawOutput> outputs = new LinkedList<>();
+  private List<RawOutput> outputs = new LinkedList<>();
   private long lockTime;
 
   public int getVersion() {
@@ -196,8 +196,8 @@ public final class RawTransaction {
 
     // Number of inputs
     VariableInt varInputCount = readVariableInt(rawTx, buffPointer);
-    buffPointer += varInputCount.getSize();
-    tx.setInputCount(varInputCount.getValue());
+    buffPointer += varInputCount != null ? varInputCount.getSize() : 0;
+    tx.setInputCount(varInputCount != null ? varInputCount.getValue() : 0);
 
     // Parse inputs
     for (long i = 0; i < tx.getInputCount(); i++) {
@@ -209,8 +209,8 @@ public final class RawTransaction {
 
     // Get the number of outputs
     VariableInt varOutputCount = readVariableInt(rawTx, buffPointer);
-    buffPointer += varOutputCount.getSize();
-    tx.setOutputCount(varOutputCount.getValue());
+    buffPointer += varOutputCount != null ? varOutputCount.getSize() : 0;
+    tx.setOutputCount(varOutputCount != null ? varOutputCount.getValue() : 0);
 
     // Parse outputs
     for (long i = 0; i < tx.getOutputCount(); i++) {
@@ -222,7 +222,7 @@ public final class RawTransaction {
 
     // Parse lock time
     byte[] lockBytes = ByteUtilities.readBytes(rawTx, buffPointer, 4);
-    buffPointer += 4;
+    //buffPointer += 4;
     lockBytes = ByteUtilities.flipEndian(lockBytes);
     tx.setLockTime(new BigInteger(1, lockBytes).longValue());
 

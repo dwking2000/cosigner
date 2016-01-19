@@ -167,15 +167,15 @@ public final class RawInput {
     input.setTxIndex(new BigInteger(1, indexBytes).intValue());
 
     VariableInt varScriptSize = RawTransaction.readVariableInt(rawTx, buffPointer);
-    buffPointer += varScriptSize.getSize();
-    input.setScriptSize(varScriptSize.getValue());
+    buffPointer += varScriptSize != null ? varScriptSize.getSize() : 0;
+    input.setScriptSize(varScriptSize != null ? varScriptSize.getValue() : 0);
 
     byte[] scriptBytes = ByteUtilities.readBytes(rawTx, buffPointer, (int) input.getScriptSize());
     buffPointer += input.getScriptSize();
     input.setScript(ByteUtilities.toHexString(scriptBytes));
 
     byte[] sequenceBytes = ByteUtilities.readBytes(rawTx, buffPointer, 4);
-    buffPointer += 4;
+    //buffPointer += 4;
     sequenceBytes = ByteUtilities.flipEndian(sequenceBytes);
     input.setSequence(new BigInteger(1, sequenceBytes).intValue());
 
@@ -224,10 +224,11 @@ public final class RawInput {
     String stackItem;
     while (bufferPointer < myScript.length) {
       stackItemSize = RawTransaction.readVariableStackInt(myScript, bufferPointer);
-      bufferPointer += stackItemSize.getSize();
+      bufferPointer += stackItemSize != null ? stackItemSize.getSize() : 0;
       stackItem = ByteUtilities.toHexString(
-          ByteUtilities.readBytes(myScript, bufferPointer, (int) stackItemSize.getValue()));
-      bufferPointer += stackItemSize.getValue();
+          ByteUtilities.readBytes(myScript, bufferPointer, (int) (stackItemSize != null ?
+              stackItemSize.getValue() : 0)));
+      bufferPointer += stackItemSize != null ? stackItemSize.getValue() : 0;
       if (!stackItem.equalsIgnoreCase(redeemScript)) {
         stackItems.add(stackItem);
       }

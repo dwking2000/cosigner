@@ -98,7 +98,7 @@ public class RawTransaction extends RlpList {
    */
   public static RawTransaction parseBytes(byte[] bytes) {
     RlpEntity entity = Rlp.parseArray(bytes);
-    if (!entity.getClass().equals(RlpList.class)) {
+    if (!(entity != null && entity.getClass().equals(RlpList.class))) {
       return null;
     }
 

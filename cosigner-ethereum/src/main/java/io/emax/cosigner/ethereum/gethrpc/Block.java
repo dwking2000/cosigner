@@ -238,166 +238,100 @@ public class Block {
   }
 
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((difficulty == null) ? 0 : difficulty.hashCode());
-    result = prime * result + ((extraData == null) ? 0 : extraData.hashCode());
-    result = prime * result + ((gasLimit == null) ? 0 : gasLimit.hashCode());
-    result = prime * result + ((gasUsed == null) ? 0 : gasUsed.hashCode());
-    result = prime * result + ((hash == null) ? 0 : hash.hashCode());
-    result = prime * result + ((logsBloom == null) ? 0 : logsBloom.hashCode());
-    result = prime * result + ((miner == null) ? 0 : miner.hashCode());
-    result = prime * result + ((nonce == null) ? 0 : nonce.hashCode());
-    result = prime * result + ((number == null) ? 0 : number.hashCode());
-    result = prime * result + ((parentHash == null) ? 0 : parentHash.hashCode());
-    result = prime * result + ((receiptRoot == null) ? 0 : receiptRoot.hashCode());
-    result = prime * result + ((sha3Uncles == null) ? 0 : sha3Uncles.hashCode());
-    result = prime * result + ((size == null) ? 0 : size.hashCode());
-    result = prime * result + ((stateRoot == null) ? 0 : stateRoot.hashCode());
-    result = prime * result + ((timestamp == null) ? 0 : timestamp.hashCode());
-    result = prime * result + ((totalDifficulty == null) ? 0 : totalDifficulty.hashCode());
-    result = prime * result + Arrays.hashCode(transactions);
-    result = prime * result + ((transactionsRoot == null) ? 0 : transactionsRoot.hashCode());
-    result = prime * result + Arrays.hashCode(uncles);
-    return result;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Block block = (Block) o;
+
+    if (number != null ? !number.equals(block.number) : block.number != null) {
+      return false;
+    }
+    if (hash != null ? !hash.equals(block.hash) : block.hash != null) {
+      return false;
+    }
+    if (parentHash != null ? !parentHash.equals(block.parentHash) : block.parentHash != null) {
+      return false;
+    }
+    if (nonce != null ? !nonce.equals(block.nonce) : block.nonce != null) {
+      return false;
+    }
+    if (sha3Uncles != null ? !sha3Uncles.equals(block.sha3Uncles) : block.sha3Uncles != null) {
+      return false;
+    }
+    if (logsBloom != null ? !logsBloom.equals(block.logsBloom) : block.logsBloom != null) {
+      return false;
+    }
+    if (transactionsRoot != null ? !transactionsRoot.equals(block.transactionsRoot) :
+        block.transactionsRoot != null) {
+      return false;
+    }
+    if (stateRoot != null ? !stateRoot.equals(block.stateRoot) : block.stateRoot != null) {
+      return false;
+    }
+    if (receiptRoot != null ? !receiptRoot.equals(block.receiptRoot) : block.receiptRoot != null) {
+      return false;
+    }
+    if (miner != null ? !miner.equals(block.miner) : block.miner != null) {
+      return false;
+    }
+    if (difficulty != null ? !difficulty.equals(block.difficulty) : block.difficulty != null) {
+      return false;
+    }
+    if (totalDifficulty != null ? !totalDifficulty.equals(block.totalDifficulty) :
+        block.totalDifficulty != null) {
+      return false;
+    }
+    if (extraData != null ? !extraData.equals(block.extraData) : block.extraData != null) {
+      return false;
+    }
+    if (size != null ? !size.equals(block.size) : block.size != null) {
+      return false;
+    }
+    if (gasLimit != null ? !gasLimit.equals(block.gasLimit) : block.gasLimit != null) {
+      return false;
+    }
+    if (gasUsed != null ? !gasUsed.equals(block.gasUsed) : block.gasUsed != null) {
+      return false;
+    }
+    if (timestamp != null ? !timestamp.equals(block.timestamp) : block.timestamp != null) {
+      return false;
+    }
+    // Probably incorrect - comparing Object[] arrays with Arrays.equals
+    if (!Arrays.equals(transactions, block.transactions)) {
+      return false;
+    }
+    // Probably incorrect - comparing Object[] arrays with Arrays.equals
+    return Arrays.equals(uncles, block.uncles);
+
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    Block other = (Block) obj;
-    if (difficulty == null) {
-      if (other.difficulty != null) {
-        return false;
-      }
-    } else if (!difficulty.equals(other.difficulty)) {
-      return false;
-    }
-    if (extraData == null) {
-      if (other.extraData != null) {
-        return false;
-      }
-    } else if (!extraData.equals(other.extraData)) {
-      return false;
-    }
-    if (gasLimit == null) {
-      if (other.gasLimit != null) {
-        return false;
-      }
-    } else if (!gasLimit.equals(other.gasLimit)) {
-      return false;
-    }
-    if (gasUsed == null) {
-      if (other.gasUsed != null) {
-        return false;
-      }
-    } else if (!gasUsed.equals(other.gasUsed)) {
-      return false;
-    }
-    if (hash == null) {
-      if (other.hash != null) {
-        return false;
-      }
-    } else if (!hash.equals(other.hash)) {
-      return false;
-    }
-    if (logsBloom == null) {
-      if (other.logsBloom != null) {
-        return false;
-      }
-    } else if (!logsBloom.equals(other.logsBloom)) {
-      return false;
-    }
-    if (miner == null) {
-      if (other.miner != null) {
-        return false;
-      }
-    } else if (!miner.equals(other.miner)) {
-      return false;
-    }
-    if (nonce == null) {
-      if (other.nonce != null) {
-        return false;
-      }
-    } else if (!nonce.equals(other.nonce)) {
-      return false;
-    }
-    if (number == null) {
-      if (other.number != null) {
-        return false;
-      }
-    } else if (!number.equals(other.number)) {
-      return false;
-    }
-    if (parentHash == null) {
-      if (other.parentHash != null) {
-        return false;
-      }
-    } else if (!parentHash.equals(other.parentHash)) {
-      return false;
-    }
-    if (receiptRoot == null) {
-      if (other.receiptRoot != null) {
-        return false;
-      }
-    } else if (!receiptRoot.equals(other.receiptRoot)) {
-      return false;
-    }
-    if (sha3Uncles == null) {
-      if (other.sha3Uncles != null) {
-        return false;
-      }
-    } else if (!sha3Uncles.equals(other.sha3Uncles)) {
-      return false;
-    }
-    if (size == null) {
-      if (other.size != null) {
-        return false;
-      }
-    } else if (!size.equals(other.size)) {
-      return false;
-    }
-    if (stateRoot == null) {
-      if (other.stateRoot != null) {
-        return false;
-      }
-    } else if (!stateRoot.equals(other.stateRoot)) {
-      return false;
-    }
-    if (timestamp == null) {
-      if (other.timestamp != null) {
-        return false;
-      }
-    } else if (!timestamp.equals(other.timestamp)) {
-      return false;
-    }
-    if (totalDifficulty == null) {
-      if (other.totalDifficulty != null) {
-        return false;
-      }
-    } else if (!totalDifficulty.equals(other.totalDifficulty)) {
-      return false;
-    }
-    if (!Arrays.equals(transactions, other.transactions)) {
-      return false;
-    }
-    if (transactionsRoot == null) {
-      if (other.transactionsRoot != null) {
-        return false;
-      }
-    } else if (!transactionsRoot.equals(other.transactionsRoot)) {
-      return false;
-    }
-    return Arrays.equals(uncles, other.uncles);
+  public int hashCode() {
+    int result = number != null ? number.hashCode() : 0;
+    result = 31 * result + (hash != null ? hash.hashCode() : 0);
+    result = 31 * result + (parentHash != null ? parentHash.hashCode() : 0);
+    result = 31 * result + (nonce != null ? nonce.hashCode() : 0);
+    result = 31 * result + (sha3Uncles != null ? sha3Uncles.hashCode() : 0);
+    result = 31 * result + (logsBloom != null ? logsBloom.hashCode() : 0);
+    result = 31 * result + (transactionsRoot != null ? transactionsRoot.hashCode() : 0);
+    result = 31 * result + (stateRoot != null ? stateRoot.hashCode() : 0);
+    result = 31 * result + (receiptRoot != null ? receiptRoot.hashCode() : 0);
+    result = 31 * result + (miner != null ? miner.hashCode() : 0);
+    result = 31 * result + (difficulty != null ? difficulty.hashCode() : 0);
+    result = 31 * result + (totalDifficulty != null ? totalDifficulty.hashCode() : 0);
+    result = 31 * result + (extraData != null ? extraData.hashCode() : 0);
+    result = 31 * result + (size != null ? size.hashCode() : 0);
+    result = 31 * result + (gasLimit != null ? gasLimit.hashCode() : 0);
+    result = 31 * result + (gasUsed != null ? gasUsed.hashCode() : 0);
+    result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+    result = 31 * result + Arrays.hashCode(transactions);
+    result = 31 * result + Arrays.hashCode(uncles);
+    return result;
   }
 
   @Override

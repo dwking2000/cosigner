@@ -52,7 +52,7 @@ public class ByteUtilities {
     if (data.substring(0, 2).equalsIgnoreCase("0x")) {
       data = data.substring(2);
     }
-    if (data.length() % 2 == 1) {
+    if (data.length() % 2 != 0) {
       data = "0" + data;
     }
 

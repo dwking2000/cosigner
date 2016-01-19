@@ -91,7 +91,7 @@ public class BitcoinTools {
    * Encodes a raw public key in a bitcoind compatible format.
    */
   public static String encodePrivateKey(String privateKeyString) {
-    String networkBytes = "";
+    String networkBytes;
     try {
       networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
           == BlockChainName.main ? NetworkBytes.PRIVATEKEY.toString() :

@@ -133,7 +133,7 @@ public class Payment {
    * <p>The TXID of a conflicting transaction, encoded as hex in RPC byte order
    */
   @JsonProperty("walletconflicts")
-  private LinkedList<String> walletconflicts = new LinkedList<>();
+  private List<String> walletconflicts = new LinkedList<>();
 
   /**
    * A Unix epoch time when the transaction was added to the wallet.
@@ -326,157 +326,99 @@ public class Payment {
   }
 
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((account == null) ? 0 : account.hashCode());
-    result = prime * result + ((address == null) ? 0 : address.hashCode());
-    result = prime * result + ((amount == null) ? 0 : amount.hashCode());
-    result = prime * result + ((blockhash == null) ? 0 : blockhash.hashCode());
-    result = prime * result + ((blockindex == null) ? 0 : blockindex.hashCode());
-    result = prime * result + ((blocktime == null) ? 0 : blocktime.hashCode());
-    result = prime * result + ((category == null) ? 0 : category.hashCode());
-    result = prime * result + ((comment == null) ? 0 : comment.hashCode());
-    result = prime * result + (int) (confirmations ^ (confirmations >>> 32));
-    result = prime * result + ((fee == null) ? 0 : fee.hashCode());
-    result = prime * result + (generated ? 1231 : 1237);
-    result = prime * result + (involvesWatchonly ? 1231 : 1237);
-    result = prime * result + ((otheraccount == null) ? 0 : otheraccount.hashCode());
-    result = prime * result + ((time == null) ? 0 : time.hashCode());
-    result = prime * result + ((timereceived == null) ? 0 : timereceived.hashCode());
-    result = prime * result + ((to == null) ? 0 : to.hashCode());
-    result = prime * result + ((txid == null) ? 0 : txid.hashCode());
-    result = prime * result + vout;
-    result = prime * result + ((walletconflicts == null) ? 0 : walletconflicts.hashCode());
-    return result;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Payment payment = (Payment) o;
+
+    if (vout != payment.vout) {
+      return false;
+    }
+    if (confirmations != payment.confirmations) {
+      return false;
+    }
+    if (generated != payment.generated) {
+      return false;
+    }
+    if (involvesWatchonly != payment.involvesWatchonly) {
+      return false;
+    }
+    if (account != null ? !account.equals(payment.account) : payment.account != null) {
+      return false;
+    }
+    if (address != null ? !address.equals(payment.address) : payment.address != null) {
+      return false;
+    }
+    if (category != payment.category) {
+      return false;
+    }
+    if (amount != null ? !amount.equals(payment.amount) : payment.amount != null) {
+      return false;
+    }
+    if (fee != null ? !fee.equals(payment.fee) : payment.fee != null) {
+      return false;
+    }
+    if (blockhash != null ? !blockhash.equals(payment.blockhash) : payment.blockhash != null) {
+      return false;
+    }
+    if (blockindex != null ? !blockindex.equals(payment.blockindex) : payment.blockindex != null) {
+      return false;
+    }
+    if (blocktime != null ? !blocktime.equals(payment.blocktime) : payment.blocktime != null) {
+      return false;
+    }
+    if (txid != null ? !txid.equals(payment.txid) : payment.txid != null) {
+      return false;
+    }
+    if (walletconflicts != null ? !walletconflicts.equals(payment.walletconflicts) :
+        payment.walletconflicts != null) {
+      return false;
+    }
+    if (time != null ? !time.equals(payment.time) : payment.time != null) {
+      return false;
+    }
+    if (timereceived != null ? !timereceived.equals(payment.timereceived) :
+        payment.timereceived != null) {
+      return false;
+    }
+    if (comment != null ? !comment.equals(payment.comment) : payment.comment != null) {
+      return false;
+    }
+    if (to != null ? !to.equals(payment.to) : payment.to != null) {
+      return false;
+    }
+    return otheraccount != null ? otheraccount.equals(payment.otheraccount) :
+        payment.otheraccount == null;
+
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    Payment other = (Payment) obj;
-    if (account == null) {
-      if (other.account != null) {
-        return false;
-      }
-    } else if (!account.equals(other.account)) {
-      return false;
-    }
-    if (address == null) {
-      if (other.address != null) {
-        return false;
-      }
-    } else if (!address.equals(other.address)) {
-      return false;
-    }
-    if (amount == null) {
-      if (other.amount != null) {
-        return false;
-      }
-    } else if (!amount.equals(other.amount)) {
-      return false;
-    }
-    if (blockhash == null) {
-      if (other.blockhash != null) {
-        return false;
-      }
-    } else if (!blockhash.equals(other.blockhash)) {
-      return false;
-    }
-    if (blockindex == null) {
-      if (other.blockindex != null) {
-        return false;
-      }
-    } else if (!blockindex.equals(other.blockindex)) {
-      return false;
-    }
-    if (blocktime == null) {
-      if (other.blocktime != null) {
-        return false;
-      }
-    } else if (!blocktime.equals(other.blocktime)) {
-      return false;
-    }
-    if (category != other.category) {
-      return false;
-    }
-    if (comment == null) {
-      if (other.comment != null) {
-        return false;
-      }
-    } else if (!comment.equals(other.comment)) {
-      return false;
-    }
-    if (confirmations != other.confirmations) {
-      return false;
-    }
-    if (fee == null) {
-      if (other.fee != null) {
-        return false;
-      }
-    } else if (!fee.equals(other.fee)) {
-      return false;
-    }
-    if (generated != other.generated) {
-      return false;
-    }
-    if (involvesWatchonly != other.involvesWatchonly) {
-      return false;
-    }
-    if (otheraccount == null) {
-      if (other.otheraccount != null) {
-        return false;
-      }
-    } else if (!otheraccount.equals(other.otheraccount)) {
-      return false;
-    }
-    if (time == null) {
-      if (other.time != null) {
-        return false;
-      }
-    } else if (!time.equals(other.time)) {
-      return false;
-    }
-    if (timereceived == null) {
-      if (other.timereceived != null) {
-        return false;
-      }
-    } else if (!timereceived.equals(other.timereceived)) {
-      return false;
-    }
-    if (to == null) {
-      if (other.to != null) {
-        return false;
-      }
-    } else if (!to.equals(other.to)) {
-      return false;
-    }
-    if (txid == null) {
-      if (other.txid != null) {
-        return false;
-      }
-    } else if (!txid.equals(other.txid)) {
-      return false;
-    }
-    if (vout != other.vout) {
-      return false;
-    }
-    if (walletconflicts == null) {
-      if (other.walletconflicts != null) {
-        return false;
-      }
-    } else if (!walletconflicts.equals(other.walletconflicts)) {
-      return false;
-    }
-    return true;
+  public int hashCode() {
+    int result = account != null ? account.hashCode() : 0;
+    result = 31 * result + (address != null ? address.hashCode() : 0);
+    result = 31 * result + (category != null ? category.hashCode() : 0);
+    result = 31 * result + (amount != null ? amount.hashCode() : 0);
+    result = 31 * result + vout;
+    result = 31 * result + (fee != null ? fee.hashCode() : 0);
+    result = 31 * result + (int) (confirmations ^ (confirmations >>> 32));
+    result = 31 * result + (generated ? 1 : 0);
+    result = 31 * result + (blockhash != null ? blockhash.hashCode() : 0);
+    result = 31 * result + (blockindex != null ? blockindex.hashCode() : 0);
+    result = 31 * result + (blocktime != null ? blocktime.hashCode() : 0);
+    result = 31 * result + (txid != null ? txid.hashCode() : 0);
+    result = 31 * result + (walletconflicts != null ? walletconflicts.hashCode() : 0);
+    result = 31 * result + (time != null ? time.hashCode() : 0);
+    result = 31 * result + (timereceived != null ? timereceived.hashCode() : 0);
+    result = 31 * result + (comment != null ? comment.hashCode() : 0);
+    result = 31 * result + (to != null ? to.hashCode() : 0);
+    result = 31 * result + (otheraccount != null ? otheraccount.hashCode() : 0);
+    result = 31 * result + (involvesWatchonly ? 1 : 0);
+    return result;
   }
 
   @Override

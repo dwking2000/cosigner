@@ -26,7 +26,7 @@ public class AdminApplication {
     }
 
     AdminConnector adminConnection = new AdminConnector();
-    Server server = new Server();
+    Server server;
     String stringInput = "";
     switch (args[0]) {
       case "ListNodes":
