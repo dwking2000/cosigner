@@ -145,8 +145,7 @@ public class ClusterInfo {
     String recoveredPublicKey = ByteUtilities.toHexString(Secp256k1
         .recoverPublicKey(ByteUtilities.toByteArray(server.getSigR()),
             ByteUtilities.toByteArray(server.getSigS()),
-            ByteUtilities.toByteArray(server.getSigV()),
-            hashedBytes));
+            ByteUtilities.toByteArray(server.getSigV()), hashedBytes));
 
     String publicKey =
         ByteUtilities.toHexString(Secp256k1.getPublicKey(ByteUtilities.toByteArray(clusterKey)));

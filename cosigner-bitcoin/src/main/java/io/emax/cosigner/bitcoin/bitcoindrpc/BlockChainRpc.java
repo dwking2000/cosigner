@@ -34,8 +34,7 @@ public interface BlockChainRpc {
    * best block chain.
    *
    * @param blockHeight The height of the block whose header hash should be returned. The height of
-   *                    the hardcoded
-   *                    genesis block is 0
+   *                    the hardcoded genesis block is 0
    */
   @JsonRpcMethod("getblockhash")
   String getBlockHash(long blockHeight);

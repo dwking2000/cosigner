@@ -27,8 +27,7 @@ public class AdminResource {
   @POST
   @Path("/AddNode")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response addNode(
-      Server newServer) {
+  public Response addNode(Server newServer) {
     LOGGER.debug("[AddNode:Request]");
     ClusterInfo cluster = ClusterInfo.getInstance();
 

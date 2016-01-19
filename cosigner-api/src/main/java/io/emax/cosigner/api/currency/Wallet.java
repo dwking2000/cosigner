@@ -44,7 +44,7 @@ public interface Wallet {
    * Generate public key from a private one.
    */
   String generatePublicKey(String privateKey);
-  
+
   /**
    * Generate a wallet compatible address from a private or public key.
    */

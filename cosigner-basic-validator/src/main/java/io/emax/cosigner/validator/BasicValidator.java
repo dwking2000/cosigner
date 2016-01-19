@@ -74,8 +74,8 @@ public class BasicValidator implements Validator {
       return false;
     }
     if (validatorConfig.getMaxAmountPerDay().compareTo(BigDecimal.ZERO) != 0
-        &&
-        dailyTotal.add(txDetail.getAmount()).compareTo(validatorConfig.getMaxAmountPerDay()) > 0) {
+        && dailyTotal.add(txDetail.getAmount()).compareTo(validatorConfig.getMaxAmountPerDay())
+        > 0) {
       LOGGER.info("Transaction value exceeds daily limit.");
       return false;
     }

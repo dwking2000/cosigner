@@ -19,9 +19,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>0.8.2</dropwizard.version>
-        <emax.version>0.0.1-SNAPSHOT</emax.version>
-        <jetty.version>9.2.9.v20150224</jetty.version>
     </properties>
 
     <build>
@@ -109,27 +106,27 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-client</artifactId>
-            <version>${jetty.version}</version>
+            <version>9.2.13.v20150730</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty.websocket</groupId>
             <artifactId>websocket-client</artifactId>
-            <version>${jetty.version}</version>
+            <version>9.2.13.v20150730</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-client</artifactId>
-            <version>${dropwizard.version}</version>
+            <version>0.9.1</version>
         </dependency>
         <dependency>
             <groupId>io.emax</groupId>
             <artifactId>cosigner-api</artifactId>
-            <version>${emax.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.emax</groupId>
             <artifactId>cosigner-common</artifactId>
-            <version>${emax.version}</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

@@ -224,8 +224,7 @@ public class BlockChainInfo {
     return "BlockChainInfo [chain=" + chain + ", blocks=" + blocks + ", headers=" + headers
         + ", bestblockhash=" + bestblockhash + ", difficulty=" + difficulty
         + ", verificationprogress=" + verificationprogress + ", chainwork=" + chainwork
-        + ", pruned="
-        + pruned + "]";
+        + ", pruned=" + pruned + "]";
   }
 
 }

@@ -63,6 +63,9 @@ public class CurrencyResource {
     return response;
   }
 
+  /**
+   * Generates a currency-specific address from a public key.
+   */
   @POST
   @Path("/GenerateAddressFromKey")
   @Produces(MediaType.APPLICATION_JSON)

@@ -39,6 +39,10 @@ public class BitcoinTools {
    */
   public static String getDeterministicPrivateKey(String userKeyPart, String serverKeyPart,
       int rounds) {
+    if (userKeyPart == null) {
+      return NOKEY;
+    }
+
     SecureRandom secureRandom;
     try {
       secureRandom =
@@ -89,11 +93,9 @@ public class BitcoinTools {
   public static String encodePrivateKey(String privateKeyString) {
     String networkBytes = "";
     try {
-      networkBytes =
-          BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
-              == BlockChainName.main
-              ? NetworkBytes.PRIVATEKEY.toString() :
-              NetworkBytes.PRIVATEKEY_TEST.toString();
+      networkBytes = BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
+          == BlockChainName.main ? NetworkBytes.PRIVATEKEY.toString() :
+          NetworkBytes.PRIVATEKEY_TEST.toString();
     } catch (Exception e) {
       LOGGER.debug("No network connection, assuming regular network", e);
       networkBytes = NetworkBytes.PRIVATEKEY.toString();
@@ -175,8 +177,7 @@ public class BitcoinTools {
       // Add network bytes
       String networkBytes =
           BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
-              == BlockChainName.main
-              ? NetworkBytes.P2PKH.toString() :
+              == BlockChainName.main ? NetworkBytes.P2PKH.toString() :
               NetworkBytes.P2PKH_TEST.toString();
 
       byte[] networkPublicKeyBytes = ByteUtilities.toByteArray(networkBytes);

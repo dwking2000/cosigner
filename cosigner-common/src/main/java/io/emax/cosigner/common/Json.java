@@ -20,7 +20,7 @@ public class Json {
    * @param str        String containing the JSON representation.
    * @return Object that was reconstructed from the JSON.
    */
-  public static Object objectifyString(Class<?> objectType, String str) {
+  public static Object objectifyString(Class objectType, String str) {
     try {
       JsonFactory jsonFact = new JsonFactory();
       JsonParser jsonParser = jsonFact.createParser(str);
@@ -38,7 +38,7 @@ public class Json {
    * @param obj        Object we're writing.
    * @return JSON representation of the object.
    */
-  public static String stringifyObject(Class<?> objectType, Object obj) {
+  public static String stringifyObject(Class objectType, Object obj) {
     try {
       JsonFactory jsonFact = new JsonFactory();
       ObjectMapper mapper = new ObjectMapper(jsonFact);

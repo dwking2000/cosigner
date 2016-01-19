@@ -27,8 +27,7 @@ public interface RawTransactionRpc {
    * @return the unsigned raw transaction in hex
    */
   @JsonRpcMethod("createrawtransaction")
-  String createrawtransaction(Outpoint[] unspentOutputs,
-      Map<String, BigDecimal> addressAmounts);
+  String createrawtransaction(Outpoint[] unspentOutputs, Map<String, BigDecimal> addressAmounts);
 
   /**
    * GetRawTransaction.
@@ -69,8 +68,7 @@ public interface RawTransactionRpc {
    * field may contain an informative error message
    */
   @JsonRpcMethod("sendrawtransaction")
-  String sendrawtransaction(String transaction,
-      boolean allowHighFees);
+  String sendrawtransaction(String transaction, boolean allowHighFees);
 
   /**
    * SignRawTransaction.
@@ -92,7 +90,7 @@ public interface RawTransactionRpc {
    *                    SINGLE|ANYONECANPAY
    */
   @JsonRpcMethod("signrawtransaction")
-  SignedTransaction signrawtransaction(String transaction,
-      OutpointDetails[] outputs, String[] privateKeys, SigHash sigHash);
+  SignedTransaction signrawtransaction(String transaction, OutpointDetails[] outputs,
+      String[] privateKeys, SigHash sigHash);
 
 }

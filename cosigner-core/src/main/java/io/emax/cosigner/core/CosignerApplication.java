@@ -9,10 +9,9 @@ import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
 import io.emax.cosigner.core.resources.AdminResource;
 import io.emax.cosigner.core.resources.CurrencyResource;
+import io.emax.cosigner.core.resources.websocket.WebSocketSocket;
 import io.emax.cosigner.validator.BasicValidator;
 
-import org.atmosphere.cpr.ApplicationConfig;
-import org.atmosphere.cpr.AtmosphereServlet;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,8 +60,7 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
   }
 
   @Override
-  public void run(CosignerConfiguration config, Environment environment)
-      throws Exception {
+  public void run(CosignerConfiguration config, Environment environment) throws Exception {
     CosignerApplication.setConfig(config);
 
     // Initialize ClusterInfo
@@ -102,14 +100,8 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     validators.add(validator);
 
     // Register WebSocket endpoints -- Everything after /ws/*
-    AtmosphereServlet websocketServlet = new AtmosphereServlet();
-    websocketServlet.framework().addInitParameter("com.sun.jersey.config.property.packages",
-        "io.emax.cosigner.core.resources.WebSocketResource");
-    websocketServlet.framework()
-        .addInitParameter(ApplicationConfig.WEBSOCKET_CONTENT_TYPE, "application/json");
-    websocketServlet.framework().addInitParameter(ApplicationConfig.WEBSOCKET_SUPPORT, "true");
     ServletRegistration.Dynamic servletHolder =
-        environment.servlets().addServlet("ws", websocketServlet);
+        environment.servlets().addServlet("ws", WebSocketSocket.class);
     servletHolder.addMapping("/ws/*");
 
     // Register REST endpoints -- Everything with /rs/*

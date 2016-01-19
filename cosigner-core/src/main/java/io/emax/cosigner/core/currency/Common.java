@@ -23,7 +23,7 @@ import io.emax.cosigner.core.cluster.commands.CurrencyCommandType;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
-import org.atmosphere.cpr.AtmosphereResponse;
+import org.eclipse.jetty.websocket.api.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,6 +133,9 @@ public class Common {
     return currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
   }
 
+  /**
+   * Generates a currency-specific address from a public key.
+   */
   public static String generateAddressFromKey(String params) {
     CurrencyParameters currencyParams = convertParams(params);
     CurrencyPackage currency = lookupCurrency(currencyParams);
@@ -245,7 +248,7 @@ public class Common {
    * @return An empty {@link CurrencyParameters} object is returned when the monitor is set up. The
    * actual data is sent through the socket or callback.
    */
-  public static String monitorBalance(String params, AtmosphereResponse responseSocket) {
+  public static String monitorBalance(String params, Session responseSocket) {
     CurrencyParameters currencyParams = convertParams(params);
     CurrencyPackage currency = lookupCurrency(currencyParams);
 
@@ -259,7 +262,7 @@ public class Common {
     // Web socket was passed to us
     if (responseSocket != null) {
 
-      cleanUpSubscriptions(responseSocket.uuid());
+      cleanUpSubscriptions(responseSocket.toString());
 
       Subscription wsBalanceSubscription = monitor.getObservableBalances().subscribe(balanceMap -> {
         balanceMap.forEach((address, balance) -> {
@@ -271,14 +274,17 @@ public class Common {
             accountData.setAmount(balance);
             accountData.setRecipientAddress(address);
             responseParms.setReceivingAccount(Collections.singletonList(accountData));
-            responseSocket.write(Json.stringifyObject(CurrencyParameters.class, responseParms));
+            LOGGER.debug("Sending balance update...");
+            responseSocket.getRemote()
+                .sendString(Json.stringifyObject(CurrencyParameters.class, responseParms));
+            responseSocket.getRemote().flush();
           } catch (Exception e) {
             LOGGER.debug(null, e);
-            cleanUpSubscriptions(responseSocket.uuid());
+            cleanUpSubscriptions(responseSocket.toString());
           }
         });
       });
-      balanceSubscriptions.put(responseSocket.uuid(), wsBalanceSubscription);
+      balanceSubscriptions.put(responseSocket.toString(), wsBalanceSubscription);
 
       Subscription wsTransactionSubscription =
           monitor.getObservableTransactions().subscribe(transactionSet -> {
@@ -296,16 +302,18 @@ public class Common {
                 });
                 responseParms.setReceivingAccount(receivers);
                 responseParms.setTransactionData(transaction.getTxHash());
-                responseSocket.write(Json.stringifyObject(CurrencyParameters.class, responseParms));
+                responseSocket.getRemote()
+                    .sendString(Json.stringifyObject(CurrencyParameters.class, responseParms));
+                responseSocket.getRemote().flush();
               } catch (Exception e) {
                 LOGGER.debug(null, e);
-                cleanUpSubscriptions(responseSocket.uuid());
+                cleanUpSubscriptions(responseSocket.toString());
               }
             });
           });
 
-      transactionSubscriptions.put(responseSocket.uuid(), wsTransactionSubscription);
-      monitors.put(responseSocket.uuid(), monitor);
+      transactionSubscriptions.put(responseSocket.toString(), wsTransactionSubscription);
+      monitors.put(responseSocket.toString(), monitor);
     } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
       // It's a REST callback
       cleanUpSubscriptions(currencyParams.getCallback());

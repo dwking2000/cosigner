@@ -52,8 +52,7 @@ public class Output extends Outpoint {
   public String toString() {
     return "Output [address=" + address + ", account=" + account + ", scriptPubKey=" + scriptPubKey
         + ", redeemScript=" + redeemScript + ", amount=" + amount + ", confirmations="
-        + confirmations
-        + ", spendable=" + spendable + "]";
+        + confirmations + ", spendable=" + spendable + "]";
   }
 
   public String getAddress() {

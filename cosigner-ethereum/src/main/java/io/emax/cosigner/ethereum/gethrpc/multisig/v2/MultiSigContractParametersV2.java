@@ -99,9 +99,8 @@ public class MultiSigContractParametersV2
     StringBuilder encodedData = new StringBuilder();
     encodedData.append(this.function);
     // nonce
-    encodedData.append(
-        String.format("%64s", ByteUtilities.toHexString(this.nonce.toByteArray()))
-            .replace(' ', '0'));
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(this.nonce.toByteArray()))
+        .replace(' ', '0'));
 
     // address
     encodedData.append(
@@ -119,10 +118,9 @@ public class MultiSigContractParametersV2
         .replace(' ', '0'));
 
     // sigR
-    encodedData.append(String.format("%64s", ByteUtilities.toHexString(
-        BigInteger
-            .valueOf(9 * 32 + 32 * (this.address.size() + this.value.size() + this.sigV.size()))
-            .toByteArray())).replace(' ', '0'));
+    encodedData.append(String.format("%64s", ByteUtilities.toHexString(BigInteger
+        .valueOf(9 * 32 + 32 * (this.address.size() + this.value.size() + this.sigV.size()))
+        .toByteArray())).replace(' ', '0'));
 
     // sigS
     encodedData.append(String.format("%64s", ByteUtilities.toHexString(BigInteger.valueOf(

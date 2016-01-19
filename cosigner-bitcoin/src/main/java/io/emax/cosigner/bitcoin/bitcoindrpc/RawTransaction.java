@@ -129,8 +129,7 @@ public final class RawTransaction {
   public String toString() {
     return "RawTransaction [version=" + version + ", inputCount=" + inputCount + ", inputs="
         + inputs + ", outputCount=" + outputCount + ", outputs=" + outputs + ", lockTime="
-        + lockTime
-        + "]";
+        + lockTime + "]";
   }
 
   /**
@@ -515,8 +514,7 @@ public final class RawTransaction {
 
       String networkBytes =
           BitcoinResource.getResource().getBitcoindRpc().getblockchaininfo().getChain()
-              == BlockChainName.main
-              ? NetworkBytes.P2PKH.toString() :
+              == BlockChainName.main ? NetworkBytes.P2PKH.toString() :
               NetworkBytes.P2PKH_TEST.toString();
 
       return BitcoinTools.encodeAddress(addressBytes, networkBytes);

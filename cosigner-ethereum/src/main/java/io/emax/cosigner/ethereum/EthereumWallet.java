@@ -240,9 +240,8 @@ public class EthereumWallet implements Wallet, Validatable {
     LOGGER.debug("Generating new contract...");
     // Create the TX data structure
     RawTransaction tx = new RawTransaction();
-    tx.getGasPrice().setDecodedContents(
-        ByteUtilities
-            .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
+    tx.getGasPrice().setDecodedContents(ByteUtilities
+        .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
     tx.getGasLimit().setDecodedContents(ByteUtilities
         .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
 
@@ -372,9 +371,8 @@ public class EthereumWallet implements Wallet, Validatable {
 
     // Create the transaction structure and serialize it
     RawTransaction tx = new RawTransaction();
-    tx.getGasPrice().setDecodedContents(
-        ByteUtilities
-            .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
+    tx.getGasPrice().setDecodedContents(ByteUtilities
+        .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
     tx.getGasLimit().setDecodedContents(ByteUtilities
         .stripLeadingNullBytes(BigInteger.valueOf(config.getSimpleTxGas()).toByteArray()));
     tx.getTo().setDecodedContents(ByteUtilities
@@ -774,9 +772,8 @@ public class EthereumWallet implements Wallet, Validatable {
                 .get(reverseMsigContracts.get(txDetail.getToAddress()[0].toLowerCase(Locale.US)));
             MultiSigContractInterface contract =
                 (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
-            LOGGER.debug(
-                "Found transaction for contract version: "
-                    + contract.getClass().getCanonicalName());
+            LOGGER.debug("Found transaction for contract version: " + contract.getClass()
+                .getCanonicalName());
 
             byte[] inputData = ByteUtilities.toByteArray(tx.getInput());
             MultiSigContractParametersInterface multiSig = contract.getContractParameters();
@@ -855,8 +852,7 @@ public class EthereumWallet implements Wallet, Validatable {
       txDetail.setFromAddress(new String[]{});
     }
 
-    txDetail
-        .setToAddress(new String[]{ByteUtilities.toHexString(tx.getTo().getDecodedContents())});
+    txDetail.setToAddress(new String[]{ByteUtilities.toHexString(tx.getTo().getDecodedContents())});
 
     // Check if the recipient/data show that we're talking to a contract.
     try {
