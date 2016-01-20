@@ -157,6 +157,19 @@ public class CurrencyResource {
   }
 
   /**
+   * Get list of addresses that could sign a transaction.
+   */
+  @POST
+  @Path("/GetSignersForTransaction")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getSignersForTransaction(String params) {
+    LOGGER.debug("[GetSignersForTransaction:Request]");
+    Response response = Response.ok(Common.getSignersForTransaction(params)).build();
+    LOGGER.debug("[GetSignersForTransaction:Response] " + response.toString());
+    return response;
+  }
+
+  /**
    * Get signature data needed to sign an offline transaction.
    */
   @POST

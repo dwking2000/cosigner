@@ -11,7 +11,7 @@ import java.util.Date;
  *
  * @author Tom
  */
-public interface Wallet {
+public interface Wallet extends OfflineWallet {
   /**
    * Returns a new regular address.
    *
@@ -34,16 +34,6 @@ public interface Wallet {
    * balance. This will allow us to track this data for addresses not created with cosigner.
    */
   boolean registerAddress(String address);
-
-  /**
-   * Generate a private key compatible with the wallet.
-   */
-  String generatePrivateKey();
-
-  /**
-   * Generate public key from a private one.
-   */
-  String generatePublicKey(String privateKey);
 
   /**
    * Generate a wallet compatible address from a private or public key.
@@ -100,6 +90,11 @@ public interface Wallet {
   String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses);
 
   /**
+   * Get the list of addresses that are signers for this transaction.
+   */
+  Iterable<String> getSignersForTransaction(String transaction);
+
+  /**
    * Sign the provided transaction with the provided address' private keys if available Any existing
    * signing validation should be called before calling this interface I.E. Amount range,
    * transaction counts for the day, untrusted recipient, etc...
@@ -120,11 +115,6 @@ public interface Wallet {
    * Get the data we need to sign from the TX.
    */
   Iterable<Iterable<String>> getSigString(String transaction, String address);
-
-  /**
-   * Sign the provided transaction with a private key.
-   */
-  Iterable<Iterable<String>> signWithPrivateKey(Iterable<Iterable<String>> data, String privateKey);
 
   /**
    * Update transaction with new signature.

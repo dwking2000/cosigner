@@ -5,11 +5,10 @@ bitcoind:
 
 geth:
   build: ../geth 
-  cpuset: "0"
   ports:
     - "30303:30303"
   environment:
-    GETHOPTS: "--mine --minerthreads 1"
+    GETHOPTS: "--mine --minerthreads 2"
 
 cosigner:
   build: ../../

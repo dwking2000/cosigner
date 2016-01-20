@@ -225,9 +225,8 @@ public final class RawInput {
     while (bufferPointer < myScript.length) {
       stackItemSize = RawTransaction.readVariableStackInt(myScript, bufferPointer);
       bufferPointer += stackItemSize != null ? stackItemSize.getSize() : 0;
-      stackItem = ByteUtilities.toHexString(
-          ByteUtilities.readBytes(myScript, bufferPointer, (int) (stackItemSize != null ?
-              stackItemSize.getValue() : 0)));
+      stackItem = ByteUtilities.toHexString(ByteUtilities.readBytes(myScript, bufferPointer,
+          (int) (stackItemSize != null ? stackItemSize.getValue() : 0)));
       bufferPointer += stackItemSize != null ? stackItemSize.getValue() : 0;
       if (!stackItem.equalsIgnoreCase(redeemScript)) {
         stackItems.add(stackItem);

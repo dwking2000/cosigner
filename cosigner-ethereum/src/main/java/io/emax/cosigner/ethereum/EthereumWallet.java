@@ -72,7 +72,7 @@ public class EthereumWallet implements Wallet, Validatable {
     }
   }
 
-  private static boolean synching = false;
+  private static volatile boolean synching = false;
 
   private static void syncMultiSigAddresses() {
     if (synching) {
@@ -289,6 +289,7 @@ public class EthereumWallet implements Wallet, Validatable {
 
     // Sign it with our contract creator, creator needs funds to pay for the creation
     String rawTx = ByteUtilities.toHexString(tx.encode());
+    LOGGER.debug("Attempting to create contract with account: " + config.getContractAccount());
     String signedTx = signTransaction(rawTx, config.getContractAccount());
 
     // Signature failed, we got the same thing back
@@ -303,7 +304,7 @@ public class EthereumWallet implements Wallet, Validatable {
     RlpList contractAddress = new RlpList();
     RlpItem contractCreator = new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
     contractAddress.add(contractCreator);
-    contractAddress.add(tx != null ? tx.getNonce() : null);
+    contractAddress.add(tx.getNonce());
 
     // Figure out the contract address and store it in lookup tables for future use
     String contract = EthereumTools.hashSha3(ByteUtilities.toHexString(contractAddress.encode()))
@@ -317,12 +318,14 @@ public class EthereumWallet implements Wallet, Validatable {
       return "";
     }
 
+    // Make sure it's sent first.
+    sendTransaction(signedTx);
+
     // Otherwise, register it
     msigContracts.put(userAddress, new ContractInformation(contract.toLowerCase(Locale.US),
         new MultiSigContract().getContractPayload(), MultiSigContract.class));
     reverseMsigContracts.put(contract.toLowerCase(Locale.US), userAddress);
 
-    sendTransaction(signedTx);
     return contract;
   }
 
@@ -431,6 +434,55 @@ public class EthereumWallet implements Wallet, Validatable {
   }
 
   @Override
+  public Iterable<String> getSignersForTransaction(String transaction) {
+    RawTransaction tx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
+    String contractAddress =
+        ByteUtilities.toHexString(tx.getTo().getDecodedContents()).toLowerCase(Locale.US);
+
+    // We can only give information on the contracts we control.
+    if (reverseMsigContracts.containsKey(contractAddress)) {
+      try {
+        String userAddress = reverseMsigContracts.get(contractAddress);
+        ContractInformation contractInfo = msigContracts.get(userAddress);
+        MultiSigContractInterface contract =
+            (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
+
+        MultiSigContractParametersInterface contractParams = contract.getContractParameters();
+        contractParams.decode(tx.getData().getDecodedContents());
+
+        CallData callData = new CallData();
+        callData.setTo("0x" + contractAddress);
+        callData.setData("0x" + contract.getGetOwnersFunctionAddress());
+        callData.setGas("100000"); // Doesn't matter, just can't be nil
+        callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
+        String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+
+        LinkedList<String> addresses = new LinkedList<>();
+        byte[] callBytes = ByteUtilities.toByteArray(response);
+        int bufferPointer = 32; // skip first value, we know it just points to the next one.
+        byte[] sizeBytes = Arrays.copyOfRange(callBytes, bufferPointer, bufferPointer + 32);
+        bufferPointer += 32;
+        int numAddresses = new BigInteger(1, sizeBytes).intValue();
+        for (int j = 0; j < numAddresses; j++) {
+          byte[] addressBytes = Arrays.copyOfRange(callBytes, bufferPointer, bufferPointer + 32);
+          bufferPointer += 32;
+          userAddress =
+              ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(addressBytes));
+          userAddress = String.format("%40s", userAddress).replace(' ', '0');
+          addresses.add(userAddress);
+        }
+
+        return addresses;
+      } catch (Exception e) {
+        LOGGER.debug("Something went wrong with decoding the contract.", e);
+        return new LinkedList<String>();
+      }
+    } else {
+      return new LinkedList<String>();
+    }
+  }
+
+  @Override
   public String signTransaction(String transaction, String address) {
     LOGGER.debug("Attempting to sign for address: " + address);
     return signTransaction(transaction, address, null);
@@ -472,7 +524,7 @@ public class EthereumWallet implements Wallet, Validatable {
       // Catch errors here
       String sig;
       try {
-        LOGGER.debug("Asking geth to sign for 0x" + address);
+        LOGGER.debug("Asking geth to sign " + data + " for 0x" + address);
         sig = ethereumRpc.eth_sign("0x" + address, data);
       } catch (Exception e) {
         LOGGER.warn(null, e);
@@ -480,11 +532,17 @@ public class EthereumWallet implements Wallet, Validatable {
       }
 
       try {
+        LOGGER.debug("Decoding sig result: " + sig);
         byte[] sigBytes = ByteUtilities.toByteArray(sig);
         byte[] sigR = Arrays.copyOfRange(sigBytes, 0, 32);
         byte[] sigS = Arrays.copyOfRange(sigBytes, 32, 64);
         byte[] sigV = Arrays.copyOfRange(sigBytes, 64, 65);
         sigV[0] += 27;
+
+        String signingAddress = ByteUtilities.toHexString(
+            Secp256k1.recoverPublicKey(sigR, sigS, sigV, ByteUtilities.toByteArray(data)));
+        signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
+        LOGGER.debug("Appears to be signed by: " + signingAddress);
 
         return new byte[][]{sigR, sigS, sigV};
       } catch (Exception e) {
@@ -562,48 +620,52 @@ public class EthereumWallet implements Wallet, Validatable {
    * address provided.
    */
   public Iterable<Iterable<String>> getSigString(String transaction, String address) {
+    return getSigString(transaction, address, true);
+  }
+
+  public Iterable<Iterable<String>> getSigString(String transaction, String address,
+      boolean withAnyMsig) {
     // Turn the tx into a useful data structure.
     RawTransaction decodedTransaction =
         RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
-    String txRecipient = ByteUtilities.toHexString(
-        decodedTransaction != null ? decodedTransaction.getTo().getDecodedContents() : new byte[0]);
+    String txRecipient = ByteUtilities.toHexString(decodedTransaction.getTo().getDecodedContents());
 
     LinkedList<Iterable<String>> sigStrings = new LinkedList<>();
-    try {
-      if (reverseMsigContracts.containsKey(txRecipient.toLowerCase(Locale.US))) {
-        ContractInformation contractInfo =
-            msigContracts.get(reverseMsigContracts.get(txRecipient.toLowerCase(Locale.US)));
-        MultiSigContractInterface contract =
-            (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
-        LOGGER.debug(
-            "Signing transaction for contract version: " + contract.getClass().getCanonicalName());
+    if (withAnyMsig) {
+      try {
+        if (reverseMsigContracts.containsKey(txRecipient.toLowerCase(Locale.US))) {
+          ContractInformation contractInfo =
+              msigContracts.get(reverseMsigContracts.get(txRecipient.toLowerCase(Locale.US)));
+          MultiSigContractInterface contract =
+              (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
+          LOGGER.debug("Signing transaction for contract version: " + contract.getClass()
+              .getCanonicalName());
 
-        MultiSigContractParametersInterface contractParams = contract.getContractParameters();
-        contractParams.decode(
-            decodedTransaction != null ? decodedTransaction.getData().getDecodedContents() :
-                new byte[0]);
-        String hashBytes = String.format("%64s", "0").replace(' ', '0');
-        for (int j = 0; j < contractParams.getAddress().size(); j++) {
-          String addressString =
-              String.format("%40s", contractParams.getAddress().get(j)).replace(' ', '0');
-          hashBytes = hashBytes + addressString.substring(addressString.length() - 40);
-          hashBytes += String.format("%64s", ByteUtilities.toHexString(
-              ByteUtilities.stripLeadingNullBytes(contractParams.getValue().get(j).toByteArray())))
-              .replace(' ', '0') + String.format("%64s", ByteUtilities.toHexString(
-              ByteUtilities.stripLeadingNullBytes(contractParams.getNonce().toByteArray())))
-              .replace(' ', '0');
-          hashBytes = EthereumTools.hashSha3(hashBytes);
+          MultiSigContractParametersInterface contractParams = contract.getContractParameters();
+          contractParams.decode(decodedTransaction.getData().getDecodedContents());
+          String hashBytes = String.format("%64s", "0").replace(' ', '0');
+          for (int j = 0; j < contractParams.getAddress().size(); j++) {
+            String addressString =
+                String.format("%40s", contractParams.getAddress().get(j)).replace(' ', '0');
+            hashBytes = hashBytes + addressString.substring(addressString.length() - 40);
+            hashBytes += String.format("%64s", ByteUtilities.toHexString(ByteUtilities
+                .stripLeadingNullBytes(contractParams.getValue().get(j).toByteArray())))
+                .replace(' ', '0') + String.format("%64s", ByteUtilities.toHexString(
+                ByteUtilities.stripLeadingNullBytes(contractParams.getNonce().toByteArray())))
+                .replace(' ', '0');
+            hashBytes = EthereumTools.hashSha3(hashBytes);
+          }
+          LinkedList<String> msigString = new LinkedList<>();
+          msigString.add(contract.getClass().getCanonicalName());
+          msigString.add(hashBytes);
+          sigStrings.add(msigString);
         }
-        LinkedList<String> msigString = new LinkedList<>();
-        msigString.add(contract.getClass().getCanonicalName());
-        msigString.add(hashBytes);
-        sigStrings.add(msigString);
+      } catch (IllegalAccessException | InstantiationException e) {
+        LOGGER.error("Error matching contract class", e);
+        return new LinkedList<>();
+      } catch (Exception e) {
+        LOGGER.debug("Non-contract tx sent to contract address", e);
       }
-    } catch (IllegalAccessException | InstantiationException e) {
-      LOGGER.error("Error matching contract class", e);
-      return new LinkedList<>();
-    } catch (Exception e) {
-      LOGGER.debug("Non-contract tx sent to contract address", e);
     }
 
     String txCount =
@@ -646,6 +708,7 @@ public class EthereumWallet implements Wallet, Validatable {
     try {
       // Sign mSig if there is any
       if (msigData.size() > 0) {
+        LOGGER.debug("Reading mSig data");
         String sigBytes = msigData.getLast();
         byte[][] sigData = signData(sigBytes, address, privateKey);
         if (sigData.length < 3) {
@@ -660,6 +723,8 @@ public class EthereumWallet implements Wallet, Validatable {
         msigSig.add(ByteUtilities.toHexString(sigData[1]));
         msigSig.add(ByteUtilities.toHexString(sigData[2]));
         signedData.add(msigSig);
+      } else {
+        LOGGER.debug("No mSig data to process.");
       }
 
       // Rebuild the TX if there is any mSig data
@@ -673,7 +738,7 @@ public class EthereumWallet implements Wallet, Validatable {
                 .loadClass(contractVersion).newInstance();
 
         MultiSigContractParametersInterface contractParms = contract.getContractParameters();
-        contractParms.decode(rawTx != null ? rawTx.getData().getDecodedContents() : new byte[0]);
+        contractParms.decode(rawTx.getData().getDecodedContents());
 
         Iterator<String> msigSig = signedData.getFirst().iterator();
         contractParms.getSigR().add(new BigInteger(1, ByteUtilities.toByteArray(msigSig.next())));
@@ -693,7 +758,10 @@ public class EthereumWallet implements Wallet, Validatable {
       }
 
       String sigString = ByteUtilities.toHexString(rawTx.getSigBytes());
+      LOGGER.debug("Tx: " + ByteUtilities.toHexString(rawTx.encode()));
+      LOGGER.debug("SigBytes: " + sigString);
       sigString = EthereumTools.hashSha3(sigString);
+      LOGGER.debug("Hashed: " + sigString);
       byte[][] sigData = signData(sigString, address, privateKey);
       if (sigData.length < 3) {
         LinkedList<String> signature = new LinkedList<>();
@@ -736,6 +804,33 @@ public class EthereumWallet implements Wallet, Validatable {
 
   @Override
   public String sendTransaction(String transaction) {
+    // If this is one of ours, re-sign the whole tx with the contract account.
+    RawTransaction decodedTransaction =
+        RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
+    String txRecipient = ByteUtilities.toHexString(decodedTransaction.getTo().getDecodedContents());
+
+    try {
+      if (reverseMsigContracts.containsKey(txRecipient.toLowerCase(Locale.US))) {
+        ContractInformation contractInfo =
+            msigContracts.get(reverseMsigContracts.get(txRecipient.toLowerCase(Locale.US)));
+        MultiSigContractInterface contract =
+            (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
+
+        MultiSigContractParametersInterface contractParams = contract.getContractParameters();
+        contractParams.decode(decodedTransaction.getData().getDecodedContents());
+
+        if (contractParams.getFunction().equalsIgnoreCase(contract.getExecuteFunctionAddress())) {
+          // This is a transfer request, re-sign it so that fees can be paid.
+          LOGGER.debug("Re-signing TX for fees: " + transaction);
+          Iterable<Iterable<String>> sigData =
+              getSigString(transaction, config.getContractAccount(), false);
+          sigData = signTx(sigData, config.getContractAccount(), null);
+          transaction = applySignature(transaction, config.getContractAccount(), sigData);
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Non-contract tx sent to contract address", e);
+    }
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
@@ -841,15 +936,12 @@ public class EthereumWallet implements Wallet, Validatable {
   public TransactionDetails decodeRawTransaction(String transaction) {
     RawTransaction tx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
     TransactionDetails txDetail = new TransactionDetails();
-    txDetail.setAmount(new BigDecimal(new BigInteger(1,
-        tx != null ? tx.getValue().getDecodedContents() : new byte[0])));
+    txDetail.setAmount(new BigDecimal(new BigInteger(1, tx.getValue().getDecodedContents())));
     txDetail.setAmount(txDetail.getAmount().divide(BigDecimal.valueOf(config.getWeiMultiplier())));
 
     try {
       String senderKey = ByteUtilities.toHexString(Secp256k1
-          .recoverPublicKey(
-              tx != null ? tx.getSigR().getDecodedContents() : new byte[0],
-              tx != null ? tx.getSigS().getDecodedContents() : new byte[0],
+          .recoverPublicKey(tx.getSigR().getDecodedContents(), tx.getSigS().getDecodedContents(),
               tx.getSigV().getDecodedContents(), tx.getSigBytes()));
       String sender = EthereumTools.getPublicAddress(senderKey, false);
       txDetail.setFromAddress(new String[]{sender});
@@ -858,8 +950,8 @@ public class EthereumWallet implements Wallet, Validatable {
       txDetail.setFromAddress(new String[]{});
     }
 
-    txDetail.setToAddress(new String[]{ByteUtilities.toHexString(
-        tx != null ? tx.getTo().getDecodedContents() : new byte[0])});
+    txDetail.setToAddress(new String[]{
+        ByteUtilities.toHexString(tx.getTo().getDecodedContents())});
 
     // Check if the recipient/data show that we're talking to a contract.
     try {
@@ -869,7 +961,7 @@ public class EthereumWallet implements Wallet, Validatable {
         MultiSigContractInterface contract =
             (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
 
-        byte[] inputData = tx != null ? tx.getData().getDecodedContents() : new byte[0];
+        byte[] inputData = tx.getData().getDecodedContents();
         MultiSigContractParametersInterface multiSig = contract.getContractParameters();
         multiSig.decode(inputData);
 

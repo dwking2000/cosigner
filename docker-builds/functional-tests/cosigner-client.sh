@@ -9,6 +9,17 @@ USERKEY=deadbeef
 echo "Cosigner functional tests"
 echo ""
 
+echo "Waiting for cosigner to start..."
+cat < /dev/tcp/${COSIGNER_PORT_8443_TCP_ADDR}/8443
+CATRES=$?
+echo ${CATRES}
+while [ ${CATRES} -ne 0 ]; do
+  sleep 5
+  cat < /dev/tcp/${COSIGNER_PORT_8443_TCP_ADDR}/8443
+  CATRES=$?
+  echo ${CATRES}
+done
+
 #========================SETUP===============================
 echo "Configuration: "
 cat cosigner-client.properties
@@ -111,6 +122,24 @@ COINBASE=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "
 echo ${COINBASE}
 
 echo ""
+echo "Waiting 10 blocks for coinbase to generate funds before starting..."
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+
+echo ""
+echo "Checking coinbase balance"
+CBBALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${COINBASE} | tail -n 1)
+echo ${CBBALANCE}
+
+echo ""
 echo "Generating address"
 ADDRESS=$(java -jar ${CLIENTLIB} getNewAddress ETH ${USERKEY} | tail -n 1)
 echo ${ADDRESS}
@@ -160,14 +189,6 @@ waitBlock
 waitBlock
 waitBlock
 waitBlock
-waitBlock
-waitBlock
-waitBlock
-waitBlock
-waitBlock
-waitBlock
-waitBlock
-waitBlock
 
 echo ""
 echo "Checking balances..."
@@ -191,14 +212,6 @@ echo "Submit tx"
 TXID=$(java -jar ${CLIENTLIB} sendTransaction ETH ${SIGNEDTX} | tail -n 1)
 echo ${TXID}
 
-waitBlock
-waitBlock
-waitBlock
-waitBlock
-waitBlock
-waitBlock
-waitBlock
-waitBlock
 waitBlock
 waitBlock
 waitBlock

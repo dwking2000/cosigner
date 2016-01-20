@@ -238,15 +238,15 @@ public class Block {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
 
-    Block block = (Block) o;
+    Block block = (Block) obj;
 
     if (number != null ? !number.equals(block.number) : block.number != null) {
       return false;

@@ -288,7 +288,7 @@ public final class RawTransaction {
 
   /**
    * Similar to variable integers, this reads a variable integer that is being pushed on the stack
-   * in a script.
+   * in a signature script.
    *
    * @param data  Byte array containing the data to be pushed.
    * @param start Position of the integer.
@@ -315,6 +315,54 @@ public final class RawTransaction {
       // Just process the byte and advance
       varInt.setSize(1);
       varInt.setValue(0);
+      return varInt;
+    }
+
+    if (varInt.getSize() == 0) {
+      return null;
+    }
+
+    byte[] newData = ByteUtilities.readBytes(data, start + 1, varInt.getSize() - 1);
+    newData = ByteUtilities.flipEndian(newData);
+    varInt.setValue(new BigInteger(1, newData).longValue());
+    return varInt;
+  }
+
+  /**
+   * Similar to variable integers, this reads a variable integer that is being pushed on the stack
+   * in a redeem script.
+   *
+   * @param data  Byte array containing the data to be pushed.
+   * @param start Position of the integer.
+   * @return Information about the value and size of the integer, -1 if not a push OP.
+   */
+  public static VariableInt readOpCodeInt(byte[] data, int start) {
+    int checkSize = 0xFF & data[start];
+    VariableInt varInt = new VariableInt();
+    varInt.setSize(0);
+
+    if (checkSize == 0x00) {
+      varInt.setSize(1);
+      varInt.setValue(checkSize);
+      return varInt;
+    }
+
+    if (checkSize >= 0x51 && checkSize <= 0x60) {
+      varInt.setSize(1);
+      varInt.setValue(checkSize - 0x50);
+      return varInt;
+    }
+
+    if (checkSize == 0x4C) {
+      varInt.setSize(2);
+    } else if (checkSize == 0x4D) {
+      varInt.setSize(3);
+    } else if (checkSize == 0x4E) {
+      varInt.setSize(5);
+    } else {
+      // Just process the byte and advance
+      varInt.setSize(1);
+      varInt.setValue(checkSize);
       return varInt;
     }
 
@@ -502,10 +550,10 @@ public final class RawTransaction {
   /**
    * Assuming standard scripts, return the address.
    *
-   * @param script Standard script to be decoded.
+   * @param script Standard pubkey script to be decoded.
    * @return The address that the redeem script corresponds to.
    */
-  public static String decodeRedeemScript(String script) {
+  public static String decodePubKeyScript(String script) {
     // Regular address
     Pattern pattern = Pattern.compile("^76a914(.{40})88ac$");
     Matcher matcher = pattern.matcher(script);
@@ -534,5 +582,54 @@ public final class RawTransaction {
     }
 
     return null;
+  }
+
+  /**
+   * Assuming standard scripts, decodes a multi-sig redeem script into its public keys.
+   */
+  public static Iterable<String> decodeRedeemScript(String script) {
+    byte[] scriptBytes = ByteUtilities.toByteArray(script);
+    int buffPointer = 0;
+
+    LinkedList<Long> stack = new LinkedList<>();
+    LinkedList<String> publicKeys = new LinkedList<>();
+    VariableInt varInt;
+    while ((varInt = readOpCodeInt(scriptBytes, buffPointer)) != null) {
+      buffPointer += varInt.getSize();
+
+      if (varInt.getSize() == 1 && varInt.getValue() > 16) {
+        // We got an opcode.
+        if (varInt.getValue() == 0xae) {
+          // OP_CHECKMULTISIG, process the stack.
+          long numberKeys = stack.getLast();
+          stack.removeLast();
+
+          if (numberKeys > stack.size()) {
+            // Data's garabage, we won't even try to read it. Bail out.
+            return new LinkedList<>();
+          }
+
+          for (int i = 0; i < numberKeys; i++) {
+            long longKey = stack.getLast();
+            stack.removeLast();
+
+            byte[] keyBytes = BigInteger.valueOf(longKey).toByteArray();
+            keyBytes = ByteUtilities.stripLeadingNullBytes(keyBytes);
+            publicKeys.add(ByteUtilities.toHexString(keyBytes));
+          }
+
+          return publicKeys;
+        } else {
+          // Non-standard script. Bail out.
+          return new LinkedList<>();
+        }
+      } else {
+        // Push it.
+        stack.add(varInt.getValue());
+      }
+    }
+
+    // We ran out of script without seeing what we expected. Bail out.
+    return new LinkedList<>();
   }
 }

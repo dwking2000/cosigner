@@ -58,6 +58,10 @@ public class WebSocketResource extends WebSocketAdapter {
           LOGGER.debug("[PrepareTransaction:WSRequest]");
           getRemote().sendString(Common.prepareTransaction(arg1));
           break;
+        case "/getsignersfortransaction":
+          LOGGER.debug("[GetSignersForTransaction:WSRequest]");
+          getRemote().sendString(Common.getSignersForTransaction(arg1));
+          break;
         case "/getsignaturestring":
           LOGGER.debug("[GetSignatureString:WSRequest]");
           getRemote().sendString(Common.getSignatureString(arg1));

@@ -128,9 +128,10 @@ public class Common {
     }
     accounts.add(userAccount);
 
-    LOGGER.debug("[Response] " + currency.getWallet()
-        .getMultiSigAddress(accounts, currencyParams.getUserKey()));
-    return currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
+    String response =
+        currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
+    LOGGER.debug("[Response] " + response);
+    return response;
   }
 
   /**
@@ -419,13 +420,16 @@ public class Common {
     String initalTx = currencyParams.getTransactionData();
     LOGGER.debug("Wallet.CreateTransaction Result: " + initalTx);
 
-    currencyParams.setTransactionData(currency.getWallet()
-        .signTransaction(initalTx, currencyParams.getAccount().get(0),
-            currencyParams.getUserKey()));
-    LOGGER.debug("Sign with userKey: " + currencyParams.getTransactionData());
+    if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
+      currencyParams.setTransactionData(currency.getWallet()
+          .signTransaction(initalTx, currencyParams.getAccount().get(0),
+              currencyParams.getUserKey()));
+      LOGGER.debug("Sign with userKey: " + currencyParams.getTransactionData());
+    }
 
     // If the userKey/address combo don't work then we stop here.
     if (currencyParams.getTransactionData().equalsIgnoreCase(initalTx)) {
+      LOGGER.debug("No userKey signature, returning unsigned TX: " + initalTx);
       return initalTx;
     }
 
@@ -446,6 +450,19 @@ public class Common {
     String response = currencyParams.getTransactionData();
     LOGGER.debug("[Response] " + response);
     return response;
+  }
+
+  /**
+   * Get list of addresses that could sign this transaction.
+   */
+  public static String getSignersForTransaction(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
+    CurrencyPackage currency = lookupCurrency(currencyParams);
+
+    Iterable<String> signers =
+        currency.getWallet().getSignersForTransaction(currencyParams.getTransactionData());
+
+    return Json.stringifyObject(Iterable.class, signers);
   }
 
   /**
@@ -513,13 +530,24 @@ public class Common {
             return currencyParams.getTransactionData();
           }
         }
+
+        // Apply user-key signature first if it exists.
+        if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
+          currencyParams.setTransactionData(currency.getWallet()
+              .signTransaction(currencyParams.getTransactionData(),
+                  currencyParams.getAccount().get(0), currencyParams.getUserKey()));
+        }
+
         currencyParams.setTransactionData(currency.getWallet()
             .signTransaction(currencyParams.getTransactionData(),
                 currencyParams.getAccount().get(0)));
       } else if (sendToRemotes) {
         try {
           CurrencyCommand command = new CurrencyCommand();
-          command.setCurrencyParams(currencyParams);
+          CurrencyParameters copyParams = convertParams(params);
+          // Don't want every server trying to sign with the user-key.
+          copyParams.setUserKey("");
+          command.setCurrencyParams(copyParams);
           command.setCommandType(CurrencyCommandType.SIGN);
           command =
               CurrencyCommand.parseCommandString(Coordinator.broadcastCommand(command, server));

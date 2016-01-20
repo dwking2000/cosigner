@@ -7,6 +7,7 @@ geth:
   build: ./docker-builds/geth 
   ports:
     - "30303:30303"
+    - "8101:8101"
 
 cosigner:
   build: ./
@@ -24,8 +25,8 @@ cosigner:
     - geth
   environment:
     BITCOIND_MSIG_ACCOUNTS: 
-    GETH_CONTRACT_ACCOUNT: 8f5cfa007280808f2bdaa68aee98a7267d823338
-    GETH_MSIG_ACCOUNTS: 8f5cfa007280808f2bdaa68aee98a7267d823338
+    GETH_CONTRACT_ACCOUNT: 
+    GETH_MSIG_ACCOUNTS: 
 
 cosigner2:
   build: ./

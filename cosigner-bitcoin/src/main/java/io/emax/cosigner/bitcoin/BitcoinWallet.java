@@ -304,6 +304,30 @@ public class BitcoinWallet implements Wallet, Validatable {
   }
 
   @Override
+  public Iterable<String> getSignersForTransaction(String transaction) {
+    RawTransaction tx = RawTransaction.parse(transaction);
+    LinkedList<String> addresses = new LinkedList<>();
+
+    Outpoint[] outputs = bitcoindRpc
+        .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(), new String[]{});
+
+    tx.getInputs().forEach(input -> {
+      for (Outpoint output : outputs) {
+        if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
+            && output.getOutputIndex() == input.getTxIndex()) {
+
+          String redeemScript = multiSigRedeemScripts.get(output.getAddress());
+          Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
+          publicKeys.forEach(key -> {
+            addresses.add(BitcoinTools.getPublicAddress(key, false));
+          });
+        }
+      }
+    });
+    return addresses;
+  }
+
+  @Override
   public String signTransaction(String transaction, String address) {
     return signTransaction(transaction, address, null);
   }
@@ -321,9 +345,9 @@ public class BitcoinWallet implements Wallet, Validatable {
       privateKey =
           BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
       userAddress = BitcoinTools.getPublicAddress(privateKey, true);
-      while (!(userAddress != null && userAddress.equalsIgnoreCase(address)) && !generateMultiSigAddress(
-          Collections.singletonList(userAddress), name).equalsIgnoreCase(address) && rounds < config
-          .getMaxDeterministicAddresses()) {
+      while (!(userAddress != null && userAddress.equalsIgnoreCase(address))
+          && !generateMultiSigAddress(Collections.singletonList(userAddress), name)
+          .equalsIgnoreCase(address) && rounds < config.getMaxDeterministicAddresses()) {
         rounds++;
         privateKey =
             BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
@@ -331,8 +355,9 @@ public class BitcoinWallet implements Wallet, Validatable {
       }
 
       // If we hit max addresses/user bail out
-      if (!(userAddress != null && userAddress.equalsIgnoreCase(address)) && !generateMultiSigAddress(
-          Collections.singletonList(userAddress), name).equalsIgnoreCase(address)) {
+      if (!(userAddress != null && userAddress.equalsIgnoreCase(address))
+          && !generateMultiSigAddress(Collections.singletonList(userAddress), name)
+          .equalsIgnoreCase(address)) {
         LOGGER.debug("Too many rounds, failed to sign");
         return transaction;
       }
@@ -487,8 +512,8 @@ public class BitcoinWallet implements Wallet, Validatable {
       // Determine how we need to format the sig data
       if (BitcoinTools.isMultiSigAddress(address)) {
         for (RawInput signedInput : rawTx.getInputs()) {
-          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer.toString(signedInput
-              .getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
+          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer
+              .toString(signedInput.getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
             // Merge the new signature with existing ones.
             signedInput.stripMultiSigRedeemScript(signedTxRedeemScript);
 
@@ -513,8 +538,8 @@ public class BitcoinWallet implements Wallet, Validatable {
         }
       } else {
         for (RawInput signedInput : rawTx.getInputs()) {
-          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer.toString(signedInput
-              .getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
+          if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer
+              .toString(signedInput.getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
 
             // Sig then pubkey
             String scriptData = "";
@@ -568,7 +593,7 @@ public class BitcoinWallet implements Wallet, Validatable {
                 String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
                 RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
                 String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
-                String scriptAddress = RawTransaction.decodeRedeemScript(script);
+                String scriptAddress = RawTransaction.decodePubKeyScript(script);
                 senders.add(scriptAddress);
               } catch (Exception e) {
                 LOGGER.debug(null, e);
@@ -588,7 +613,7 @@ public class BitcoinWallet implements Wallet, Validatable {
             String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
             RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
             String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
-            String scriptAddress = RawTransaction.decodeRedeemScript(script);
+            String scriptAddress = RawTransaction.decodePubKeyScript(script);
 
             if (scriptAddress != null && scriptAddress.equalsIgnoreCase(address)) {
               TransactionDetails detail = new TransactionDetails();
@@ -643,14 +668,14 @@ public class BitcoinWallet implements Wallet, Validatable {
       String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
       RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
       String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
-      String scriptAddress = RawTransaction.decodeRedeemScript(script);
+      String scriptAddress = RawTransaction.decodePubKeyScript(script);
       senders.add(scriptAddress);
     });
 
     Set<String> recipients = new HashSet<>();
     List<Long> satoshis = new LinkedList<>();
     tx.getOutputs().forEach(output -> {
-      String scriptAddress = RawTransaction.decodeRedeemScript(output.getScript());
+      String scriptAddress = RawTransaction.decodePubKeyScript(output.getScript());
       if (senders.contains(scriptAddress)) {
         // Skip if it's change returned.
         return;
