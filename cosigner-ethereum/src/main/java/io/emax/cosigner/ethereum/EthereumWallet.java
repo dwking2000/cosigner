@@ -94,7 +94,7 @@ public class EthereumWallet implements Wallet, Validatable {
         contractAddress.add(nonce);
 
         String contract =
-            EthereumTools.hashSha3(ByteUtilities.toHexString(contractAddress.encode()))
+            EthereumTools.hashKeccak(ByteUtilities.toHexString(contractAddress.encode()))
                 .substring(96 / 4, 256 / 4);
         String contractCode = ethereumRpc
             .eth_getCode("0x" + contract.toLowerCase(Locale.US), DefaultBlock.LATEST.toString());
@@ -307,7 +307,7 @@ public class EthereumWallet implements Wallet, Validatable {
     contractAddress.add(tx.getNonce());
 
     // Figure out the contract address and store it in lookup tables for future use
-    String contract = EthereumTools.hashSha3(ByteUtilities.toHexString(contractAddress.encode()))
+    String contract = EthereumTools.hashKeccak(ByteUtilities.toHexString(contractAddress.encode()))
         .substring(96 / 4, 256 / 4);
 
     LOGGER.debug("Expecting new contract address of " + contract + " with tx: " + RawTransaction
@@ -537,12 +537,14 @@ public class EthereumWallet implements Wallet, Validatable {
         byte[] sigR = Arrays.copyOfRange(sigBytes, 0, 32);
         byte[] sigS = Arrays.copyOfRange(sigBytes, 32, 64);
         byte[] sigV = Arrays.copyOfRange(sigBytes, 64, 65);
-        sigV[0] += 27;
 
         String signingAddress = ByteUtilities.toHexString(
             Secp256k1.recoverPublicKey(sigR, sigS, sigV, ByteUtilities.toByteArray(data)));
         signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
         LOGGER.debug("Appears to be signed by: " + signingAddress);
+
+        // Adjust for expected format.
+        sigV[0] += 27;
 
         return new byte[][]{sigR, sigS, sigV};
       } catch (Exception e) {
@@ -653,8 +655,11 @@ public class EthereumWallet implements Wallet, Validatable {
                 .replace(' ', '0') + String.format("%64s", ByteUtilities.toHexString(
                 ByteUtilities.stripLeadingNullBytes(contractParams.getNonce().toByteArray())))
                 .replace(' ', '0');
-            hashBytes = EthereumTools.hashSha3(hashBytes);
+            LOGGER.debug("Hashing: " + hashBytes);
+            hashBytes = EthereumTools.hashKeccak(hashBytes);
+            LOGGER.debug("Result: " + hashBytes);
           }
+          LOGGER.debug("Calculated contract sig-hash: " + hashBytes);
           LinkedList<String> msigString = new LinkedList<>();
           msigString.add(contract.getClass().getCanonicalName());
           msigString.add(hashBytes);
@@ -760,7 +765,7 @@ public class EthereumWallet implements Wallet, Validatable {
       String sigString = ByteUtilities.toHexString(rawTx.getSigBytes());
       LOGGER.debug("Tx: " + ByteUtilities.toHexString(rawTx.encode()));
       LOGGER.debug("SigBytes: " + sigString);
-      sigString = EthereumTools.hashSha3(sigString);
+      sigString = EthereumTools.hashKeccak(sigString);
       LOGGER.debug("Hashed: " + sigString);
       byte[][] sigData = signData(sigString, address, privateKey);
       if (sigData.length < 3) {
@@ -950,8 +955,7 @@ public class EthereumWallet implements Wallet, Validatable {
       txDetail.setFromAddress(new String[]{});
     }
 
-    txDetail.setToAddress(new String[]{
-        ByteUtilities.toHexString(tx.getTo().getDecodedContents())});
+    txDetail.setToAddress(new String[]{ByteUtilities.toHexString(tx.getTo().getDecodedContents())});
 
     // Check if the recipient/data show that we're talking to a contract.
     try {

@@ -8,7 +8,7 @@ geth:
   ports:
     - "30303:30303"
   environment:
-    GETHOPTS: "--mine --minerthreads 2"
+    GETHOPTS: "--verbosity 3 --mine --minerthreads 1"
 
 cosigner:
   build: ../../

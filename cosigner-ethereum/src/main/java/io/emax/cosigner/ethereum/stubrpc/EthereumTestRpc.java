@@ -36,7 +36,7 @@ public class EthereumTestRpc implements EthereumRpc {
   @Override
   public String eth_sendRawTransaction(String transaction) {
     txCounter++;
-    return EthereumTools.hashSha3(transaction);
+    return EthereumTools.hashKeccak(transaction);
   }
 
   @Override

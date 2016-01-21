@@ -4,6 +4,7 @@ import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.crypto.Secp256k1;
 
 import org.bouncycastle.crypto.digests.SHA3Digest;
+import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,13 +81,13 @@ public class EthereumTools {
    * @param data Hex data encoded in a string.
    * @return Hash encoded in a hex string.
    */
-  public static String hashSha3(String data) {
+  public static String hashKeccak(String data) {
+    //public static String hashKeccak(String data) {
     byte[] dataBytes = ByteUtilities.toByteArray(data);
-    SHA3Digest md = new SHA3Digest(256);
+    Keccak.DigestKeccak md = new Keccak.DigestKeccak(256);
     md.reset();
     md.update(dataBytes, 0, dataBytes.length);
-    byte[] hashedBytes = new byte[256 / 8];
-    md.doFinal(hashedBytes, 0);
+    byte[] hashedBytes = md.digest();
     return ByteUtilities.toHexString(hashedBytes);
   }
 

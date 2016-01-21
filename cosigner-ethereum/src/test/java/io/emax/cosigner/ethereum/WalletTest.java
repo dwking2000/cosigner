@@ -145,7 +145,7 @@ public class WalletTest {
 
       byte[] sigBytes = txStructure.getSigBytes();
       String sigBytesString = ByteUtilities.toHexString(sigBytes);
-      sigBytesString = EthereumTools.hashSha3(sigBytesString);
+      sigBytesString = EthereumTools.hashKeccak(sigBytesString);
       sigBytes = ByteUtilities.toByteArray(sigBytesString);
 
       String signingAddress = ByteUtilities.toHexString(Secp256k1
@@ -175,5 +175,16 @@ public class WalletTest {
     }
 
     Assert.assertTrue(foundPreExisting);
+  }
+
+  @Test
+  public void testHashing() {
+    System.out.println("");
+    System.out.println("Testing that Keccak hash is still working properly.");
+
+    String expected = "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
+    String tested = EthereumTools.hashKeccak("");
+
+    Assert.assertEquals(expected, tested);
   }
 }
