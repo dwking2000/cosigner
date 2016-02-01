@@ -403,18 +403,21 @@ public class Common {
 
     CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    // Create the transaction
-    List<String> addresses = new LinkedList<>();
-    addresses.addAll(currencyParams.getAccount());
-    LinkedList<Recipient> recipients = new LinkedList<>();
-    currencyParams.getReceivingAccount().forEach(account -> {
-      Recipient recipient = new Recipient();
-      recipient.setAmount(new BigDecimal(account.getAmount()));
-      recipient.setRecipientAddress(account.getRecipientAddress());
-      recipients.add(recipient);
-    });
-    currencyParams
-        .setTransactionData(currency.getWallet().createTransaction(addresses, recipients));
+    if (currencyParams.getTransactionData() == null || currencyParams.getTransactionData()
+        .isEmpty()) {
+      // Create the transaction
+      List<String> addresses = new LinkedList<>();
+      addresses.addAll(currencyParams.getAccount());
+      LinkedList<Recipient> recipients = new LinkedList<>();
+      currencyParams.getReceivingAccount().forEach(account -> {
+        Recipient recipient = new Recipient();
+        recipient.setAmount(new BigDecimal(account.getAmount()));
+        recipient.setRecipientAddress(account.getRecipientAddress());
+        recipients.add(recipient);
+      });
+      currencyParams
+          .setTransactionData(currency.getWallet().createTransaction(addresses, recipients));
+    }
 
     // Authorize it with the user account
     String initalTx = currencyParams.getTransactionData();
