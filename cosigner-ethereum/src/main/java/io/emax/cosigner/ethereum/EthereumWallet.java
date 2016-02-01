@@ -27,6 +27,7 @@ import rx.Subscription;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -785,6 +786,7 @@ public class EthereumWallet implements Wallet, Validatable {
       signature.add(ByteUtilities.toHexString(rawTx.encode()));
       LinkedList<Iterable<String>> result = new LinkedList<>();
       result.add(signature);
+      result.add(new LinkedList<>(Collections.singletonList(sigString)));
       return result;
     } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
       LOGGER.warn(null, e);
@@ -836,6 +838,15 @@ public class EthereumWallet implements Wallet, Validatable {
     } catch (Exception e) {
       LOGGER.debug("Non-contract tx sent to contract address", e);
     }
+
+    LOGGER.debug("TX is signed by: " + ByteUtilities.toHexString(Secp256k1
+        .recoverPublicKey(decodedTransaction.getSigR().getDecodedContents(),
+            decodedTransaction.getSigS().getDecodedContents(),
+            new byte[]{(byte) (decodedTransaction.getSigV().getDecodedContents()[0] - 27)},
+            ByteUtilities.toByteArray(EthereumTools
+                .hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes()))))));
+    LOGGER.debug("TX bytes: " + EthereumTools
+        .hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes())));
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 

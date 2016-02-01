@@ -3,7 +3,6 @@ package io.emax.cosigner.ethereum.common;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.crypto.Secp256k1;
 
-import org.bouncycastle.crypto.digests.SHA3Digest;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,11 +131,8 @@ public class EthereumTools {
         publicKeyBytes = ByteUtilities.toByteArray(key);
       }
 
-      SHA3Digest md = new SHA3Digest(256);
-      md.reset();
-      md.update(publicKeyBytes, 1, publicKeyBytes.length - 1);
-      byte[] publicShaKeyBytes = new byte[32];
-      md.doFinal(publicShaKeyBytes, 0);
+      byte[] publicShaKeyBytes = ByteUtilities
+          .toByteArray(EthereumTools.hashKeccak(ByteUtilities.toHexString(publicKeyBytes)));
 
       byte[] decodedPublicKey = Arrays.copyOfRange(publicShaKeyBytes, 96 / 8, 256 / 8);
       BigInteger publicKey = new BigInteger(1, decodedPublicKey);
