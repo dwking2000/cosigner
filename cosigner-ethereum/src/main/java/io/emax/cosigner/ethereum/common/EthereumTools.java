@@ -81,7 +81,6 @@ public class EthereumTools {
    * @return Hash encoded in a hex string.
    */
   public static String hashKeccak(String data) {
-    //public static String hashKeccak(String data) {
     byte[] dataBytes = ByteUtilities.toByteArray(data);
     Keccak.DigestKeccak md = new Keccak.DigestKeccak(256);
     md.reset();
@@ -134,6 +133,7 @@ public class EthereumTools {
       byte[] publicShaKeyBytes = ByteUtilities
           .toByteArray(EthereumTools.hashKeccak(ByteUtilities.toHexString(publicKeyBytes)));
 
+      LOGGER.debug("Got address hash: " + ByteUtilities.toHexString(publicShaKeyBytes));
       byte[] decodedPublicKey = Arrays.copyOfRange(publicShaKeyBytes, 96 / 8, 256 / 8);
       BigInteger publicKey = new BigInteger(1, decodedPublicKey);
       return publicKey.toString(16);
@@ -158,7 +158,11 @@ public class EthereumTools {
     try {
       byte[] decodedPrivateKey = new BigInteger("00" + privateKey, 16).toByteArray();
 
-      return Secp256k1.getPublicKey(decodedPrivateKey);
+      byte[] publicKey = Secp256k1.getPublicKey(decodedPrivateKey);
+      String croppedKey = ByteUtilities.toHexString(publicKey);
+      croppedKey = croppedKey.substring(2);
+      LOGGER.debug("Private key to public conversion: " + croppedKey);
+      return ByteUtilities.toByteArray(croppedKey);
 
     } catch (Exception e) {
       LOGGER.warn(null, e);

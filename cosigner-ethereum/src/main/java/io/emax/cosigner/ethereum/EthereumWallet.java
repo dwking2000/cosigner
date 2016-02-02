@@ -198,7 +198,7 @@ public class EthereumWallet implements Wallet, Validatable {
 
   @Override
   public String generatePublicKey(String privateKey) {
-    return ByteUtilities.toHexString(Secp256k1.getPublicKey(ByteUtilities.toByteArray(privateKey)));
+    return EthereumTools.getPublicKey(privateKey);
   }
 
   @Override
@@ -540,7 +540,8 @@ public class EthereumWallet implements Wallet, Validatable {
         byte[] sigV = Arrays.copyOfRange(sigBytes, 64, 65);
 
         String signingAddress = ByteUtilities.toHexString(
-            Secp256k1.recoverPublicKey(sigR, sigS, sigV, ByteUtilities.toByteArray(data)));
+            Secp256k1.recoverPublicKey(sigR, sigS, sigV, ByteUtilities.toByteArray(data)))
+            .substring(2);
         signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
         LOGGER.debug("Appears to be signed by: " + signingAddress);
 
@@ -602,7 +603,8 @@ public class EthereumWallet implements Wallet, Validatable {
         }
 
         signingAddress =
-            ByteUtilities.toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigV, sigBytes));
+            ByteUtilities.toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigV, sigBytes))
+                .substring(2);
         signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
       } while (!address.equalsIgnoreCase(signingAddress));
 
