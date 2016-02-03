@@ -231,6 +231,7 @@ public class EthereumWallet implements Wallet, Validatable {
   @Override
   public String getMultiSigAddress(Iterable<String> addresses, String name) {
     // Look for existing msig account for this address.
+    // TODO Should add all addresses provided, for user-provided keys
     String userAddress = addresses.iterator().next().toLowerCase(Locale.US);
     if (msigContracts.containsKey(userAddress.toLowerCase(Locale.US))) {
       LOGGER.debug("Found existing address: " + msigContracts.get(userAddress).getContractAddress()
@@ -268,7 +269,7 @@ public class EthereumWallet implements Wallet, Validatable {
         addressesSkipped++;
         continue;
       }
-      addressesUsed[i + 1] =
+      addressesUsed[i + 1 - addressesSkipped] =
           String.format("%64s", config.getMultiSigAddresses()[i]).replace(' ', '0');
     }
     String numberOfAddresses = ByteUtilities.toHexString(
@@ -283,8 +284,8 @@ public class EthereumWallet implements Wallet, Validatable {
     StringBuilder contractCode = new StringBuilder();
     contractCode.append(contractInit).append(accountOffset).append(requiredSigs)
         .append(numberOfAddresses);
-    for (String addr : addressesUsed) {
-      contractCode.append(addr);
+    for (int i = 0; i < addressesUsed.length - addressesSkipped; i++) {
+      contractCode.append(addressesUsed[i]);
     }
     tx.getData().setDecodedContents(ByteUtilities.toByteArray(contractCode.toString()));
 
@@ -539,9 +540,14 @@ public class EthereumWallet implements Wallet, Validatable {
         byte[] sigS = Arrays.copyOfRange(sigBytes, 32, 64);
         byte[] sigV = Arrays.copyOfRange(sigBytes, 64, 65);
 
-        String signingAddress = ByteUtilities.toHexString(
-            Secp256k1.recoverPublicKey(sigR, sigS, sigV, ByteUtilities.toByteArray(data)))
-            .substring(2);
+        String signingAddress = null;
+        try {
+          signingAddress = ByteUtilities.toHexString(
+              Secp256k1.recoverPublicKey(sigR, sigS, sigV, ByteUtilities.toByteArray(data)))
+              .substring(2);
+        } catch (Exception e) {
+          LOGGER.debug("Couldn't recover public key from signature", e);
+        }
         signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
         LOGGER.debug("Appears to be signed by: " + signingAddress);
 
@@ -602,9 +608,13 @@ public class EthereumWallet implements Wallet, Validatable {
           continue;
         }
 
-        signingAddress =
-            ByteUtilities.toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigV, sigBytes))
-                .substring(2);
+        try {
+          signingAddress =
+              ByteUtilities.toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigV, sigBytes))
+                  .substring(2);
+        } catch (Exception e) {
+          LOGGER.debug("Couldn't recover the public key", e);
+        }
         signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
       } while (!address.equalsIgnoreCase(signingAddress));
 

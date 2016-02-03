@@ -53,6 +53,7 @@ public class Common {
           new ObjectMapper().readValue(jsonParser, CurrencyParameters.class);
 
       String userKey = currencyParams.getUserKey();
+      // This is important, keep it out of the logs.
       currencyParams.setUserKey("");
       String sanitizedParams = Json.stringifyObject(CurrencyParameters.class, currencyParams);
       currencyParams.setUserKey(userKey);

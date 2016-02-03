@@ -69,6 +69,7 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     // Initialize the coordinator
     Coordinator.getInstance();
 
+    // TODO Would be nice if we could auto-load any of these if they're in ./lib/
     // Load api.currency libraries here
     // Bitcoin
     CurrencyPackage bitcoinPackage = new CurrencyPackage();

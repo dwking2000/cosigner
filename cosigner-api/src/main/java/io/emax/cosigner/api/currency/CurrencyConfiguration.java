@@ -17,5 +17,18 @@ public interface CurrencyConfiguration {
    */
   SigningType getSigningType();
 
+  /**
+   * Minimum number of signatures required in a multi-sig address.
+   */
   int getMinSignatures();
+
+  /**
+   * Indicates if the currency can send from more than one address in a single transaction.
+   */
+  boolean hasMultipleSenders();
+
+  /**
+   * Indicates if the currency can send to more than one address in a single transaction.
+   */
+  boolean hasMultipleRecipients();
 }

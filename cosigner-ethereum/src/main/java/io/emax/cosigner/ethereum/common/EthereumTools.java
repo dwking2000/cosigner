@@ -52,7 +52,7 @@ public class EthereumTools {
       userSeed[i] = (byte) (userKey[i % userKey.length] ^ serverKey[i % serverKey.length]);
     }
 
-    // Set up out private key variables
+    // Set up our private key variables
     BigInteger privateKeyCheck = BigInteger.ZERO;
     secureRandom.setSeed(userSeed);
     // Bit of magic, move this maybe. This is the max key range.

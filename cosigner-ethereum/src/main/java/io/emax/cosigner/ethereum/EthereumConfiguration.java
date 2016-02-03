@@ -159,6 +159,16 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
     return minSignatures;
   }
 
+  @Override
+  public boolean hasMultipleSenders() {
+    return false;
+  }
+
+  @Override
+  public boolean hasMultipleRecipients() {
+    return false;
+  }
+
   /**
    * Lists addresses that should be appended to the signers when creating new multi-sig addresses.
    *

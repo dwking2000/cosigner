@@ -151,7 +151,8 @@ public class WalletTest {
       String signingAddress = ByteUtilities.toHexString(Secp256k1
           .recoverPublicKey(txStructure.getSigR().getDecodedContents(),
               txStructure.getSigS().getDecodedContents(),
-              new byte[]{(byte) (txStructure.getSigV().getDecodedContents()[0] - 27)}, sigBytes));
+              new byte[]{(byte) (txStructure.getSigV().getDecodedContents()[0] - 27)}, sigBytes))
+          .substring(2);
       signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
       System.out.println("Signed by: " + signingAddress);
 
