@@ -145,6 +145,16 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
     return minSignatures;
   }
 
+  @Override
+  public boolean hasMultipleSenders() {
+    return true;
+  }
+
+  @Override
+  public boolean hasMultipleRecipients() {
+    return true;
+  }
+
   /**
    * Returns addresses that will be appended to list of signers used in multi-sig address.
    *
