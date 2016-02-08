@@ -30,7 +30,8 @@ public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
       });
 
   private final Subscription balanceSubscription =
-      Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
+      Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).onErrorReturn(null)
+          .subscribe();
 
   private final BitcoinWallet wallet;
 

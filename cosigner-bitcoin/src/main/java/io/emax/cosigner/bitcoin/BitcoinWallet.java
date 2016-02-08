@@ -196,11 +196,15 @@ public class BitcoinWallet implements Wallet, Validatable {
   @Override
   public String getBalance(String address) {
     BigDecimal balance = BigDecimal.ZERO;
-    Output[] outputs = bitcoindRpc
-        .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(),
-            new String[]{address});
-    for (Output output : outputs) {
-      balance = balance.add(output.getAmount());
+    try {
+      Output[] outputs = bitcoindRpc
+          .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(),
+              new String[]{address});
+      for (Output output : outputs) {
+        balance = balance.add(output.getAmount());
+      }
+    } catch (Exception e) {
+      LOGGER.debug(null, e);
     }
     return balance.toPlainString();
   }
