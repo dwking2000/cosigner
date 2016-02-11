@@ -75,6 +75,7 @@ public class WebSocketResource extends WebSocketAdapter {
           getRemote().sendString(Common.approveTransaction(arg1, true));
           break;
         case "/submittransaction":
+          // TODO Rename to broadcastTransaction
           LOGGER.debug("[SubmitTransaction:WSRequest]");
           getRemote().sendString(Common.submitTransaction(arg1));
           break;
