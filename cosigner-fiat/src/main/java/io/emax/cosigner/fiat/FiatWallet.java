@@ -6,12 +6,12 @@ import io.emax.cosigner.api.currency.Wallet;
 public class FiatWallet implements Wallet {
   @Override
   public String createAddress(String name) {
-    // TODO Generate a regular Ethereum address
-    return null;
+    return createAddress(name, 0);
   }
 
   @Override
   public String createAddress(String name, int skipNumber) {
+    // TODO Generate a regular Ethereum address
     return null;
   }
 
