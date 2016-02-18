@@ -4,8 +4,11 @@ import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.SigningType;
 
 public class FiatConfiguration implements CurrencyConfiguration {
+  private static String serverKey = "deadbeef";
+
   @Override
   public String getCurrencySymbol() {
+    // TODO Needs to be configurable.
     return null;
   }
 
@@ -27,5 +30,9 @@ public class FiatConfiguration implements CurrencyConfiguration {
   @Override
   public boolean hasMultipleRecipients() {
     return false;
+  }
+
+  public String getServerKey() {
+    return serverKey;
   }
 }
