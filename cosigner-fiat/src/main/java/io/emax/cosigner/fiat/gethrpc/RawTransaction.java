@@ -1,9 +1,9 @@
 package io.emax.cosigner.fiat.gethrpc;
 
-import io.emax.cosigner.ethereum.common.Rlp;
-import io.emax.cosigner.ethereum.common.RlpEntity;
-import io.emax.cosigner.ethereum.common.RlpItem;
-import io.emax.cosigner.ethereum.common.RlpList;
+import io.emax.cosigner.fiat.common.Rlp;
+import io.emax.cosigner.fiat.common.RlpEntity;
+import io.emax.cosigner.fiat.common.RlpItem;
+import io.emax.cosigner.fiat.common.RlpList;
 
 public class RawTransaction extends RlpList {
   private static final long serialVersionUID = 1L;
