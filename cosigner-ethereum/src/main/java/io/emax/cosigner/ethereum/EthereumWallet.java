@@ -249,7 +249,7 @@ public class EthereumWallet implements Wallet, Validatable {
 
     // Setup parameters for contract
     // Parameters for constructor are appended after the contract code
-    // Each value is a 64-byte hex entry, one after the next with no delimiters
+    // Each value is a 32-byte hex entry, one after the next with no delimiters
     // Addresses[] - because it's an array we provide a pointer relative to the input data start,
     // showing where you can find the data
     final String contractInit = new MultiSigContract().getInitData();
