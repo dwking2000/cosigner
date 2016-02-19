@@ -4,7 +4,6 @@ import io.emax.cosigner.api.core.ServerStatus;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.crypto.Secp256k1;
-import io.emax.cosigner.ethereum.EthereumConfiguration;
 import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
@@ -50,8 +49,7 @@ public class FiatWallet implements Wallet {
 
     while (knownAddresses.contains(publicAddress.toLowerCase(Locale.US))) {
       rounds++;
-      privateKey =
-          EthereumTools.getDeterministicPrivateKey(name, config.getServerKey(), rounds);
+      privateKey = EthereumTools.getDeterministicPrivateKey(name, config.getServerKey(), rounds);
       publicAddress = EthereumTools.getPublicAddress(privateKey);
     }
     knownAddresses.add(publicAddress);

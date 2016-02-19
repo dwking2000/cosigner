@@ -22,6 +22,7 @@ contract fiatcontract {
   mapping(uint => SigData) signatures;
 
   mapping(address => uint) balances;
+  uint totalBalance;
 
   // Transaction and signature structures
   struct Transaction {
@@ -77,8 +78,7 @@ contract fiatcontract {
   }
 
   function getOwners() public returns (address[]) {
-    address[] ownersList;
-    ownersList.length = m_numOwners;
+    address[] memory ownersList = new address[](m_numOwners);
     for(uint i = 0; i < m_numOwners; i++) {
       ownersList[i] = owners[i+1];
     }
@@ -86,10 +86,19 @@ contract fiatcontract {
     return ownersList;
   }
 
+  function getBalance(address addr) public returns (uint) {
+    return balances[addr];
+  }
+
+  function getTotalBalance() public returns (uint) {
+    return totalBalance;
+  }
+
   // constructor is given number of sigs required to do protected "onlymanyowners" transactions
   // as well as the selection of addresses capable of confirming them.
-  function multisigwallet(address _admin, address[] _owners, uint _required) {
+  function fiatcontract(address _admin, address[] _owners, uint _required) {
     lastNonce = 0;
+    totalBalance = 0;
     admin = _admin;
     for (uint i = 0; i < _owners.length; i++)
     {
@@ -100,28 +109,7 @@ contract fiatcontract {
     m_required = _required;
   }
 
-  // kills the contract sending everything to `_to`.
-  function kill(uint nonce, address[] to, uint[] value,  
-      uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
-    numTransactions = 1;
-    transactions[0].to = to[0];
-    transactions[0].value = value[0];
-    transactionNonce = nonce;      
-
-    numSignatures = sigV.length;
-    for(uint i = 0; i < sigV.length && i < 8; i++) {
-      signatures[i].sigV = sigV[i];  
-      signatures[i].sigR = sigR[i];  
-      signatures[i].sigS = sigS[i];
-    }
-
-    if(confirmTransaction()) {
-      lastNonce = transactionNonce;
-      suicide(transactions[0].to);
-    }
-  }
-
-  function execute(uint nonce, address _sender, address[] to, uint[] value,
+  function transfer(uint nonce, address _sender, address[] to, uint[] value,
       uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
     sender = _sender;
     senderSigned = false;
@@ -140,11 +128,13 @@ contract fiatcontract {
       signatures[i].sigS = sigS[i];
     }
 
-    if(confirmTransaction()) {
+    if(confirmTransaction() && senderSigned) {
       lastNonce = transactionNonce;
       for(i = 0; i < numTransactions; i++) {
-        // TODO Don't send(), update balances in map.
-        if(!transactions[i].to.send(transactions[i].value)) {
+        if(balances[sender] >= transactions[i].value) {
+          balances[sender] -= transactions[i].value;
+          balances[transactions[i].to] += transactions[i].value;
+        } else {
           // Rollback the tx if there'x a problem executing it.
           throw;
         }
@@ -152,10 +142,22 @@ contract fiatcontract {
     }
   }
 
-  // deposit
+  // try to prevent deposits
   function () {
+    throw;
   }
 
-  // TODO CreationFunction
-  // TODO DestructionFunction
+  function createTokens(uint amount) {
+    balances[admin] += amount;
+    totalBalance += amount;
+  }
+
+  function destroyTokens(uint amount) {
+    if(balances[admin] >= amount) {
+      balances[admin] -= amount;
+      totalBalance -= amount;
+    } else {
+      throw;
+    }
+  }
 }
