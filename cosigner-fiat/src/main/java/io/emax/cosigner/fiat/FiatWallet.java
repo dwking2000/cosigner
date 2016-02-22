@@ -580,5 +580,27 @@ public class FiatWallet implements Wallet {
     }
   }
 
-  // TODO Add some admin functions for creation and destruction of tokens. Figure out where we're going to put these in tooling.
+  public String generateTokens(long amount) {
+    RawTransaction tx = new RawTransaction();
+    tx.getGasPrice().setDecodedContents(ByteUtilities
+        .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
+    tx.getGasLimit().setDecodedContents(ByteUtilities
+        .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
+    tx.getData().setDecodedContents(
+        ByteUtilities.toByteArray(contractInterface.getContractParameters().createTokens(amount)));
+
+    return ByteUtilities.toHexString(tx.encode());
+  }
+
+  public String destroyTokens(long amount) {
+    RawTransaction tx = new RawTransaction();
+    tx.getGasPrice().setDecodedContents(ByteUtilities
+        .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
+    tx.getGasLimit().setDecodedContents(ByteUtilities
+        .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
+    tx.getData().setDecodedContents(
+        ByteUtilities.toByteArray(contractInterface.getContractParameters().destroyTokens(amount)));
+
+    return ByteUtilities.toHexString(tx.encode());
+  }
 }
