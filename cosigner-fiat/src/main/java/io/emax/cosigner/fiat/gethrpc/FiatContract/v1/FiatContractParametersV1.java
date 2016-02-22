@@ -240,33 +240,33 @@ public class FiatContractParametersV1 implements FiatContractParametersInterface
     readValue = bytecode.substring(bufPointer, paramSize);
     bufPointer += paramSize;
     intValue = new BigInteger("00" + readValue, 16);
-    parameters.put("nonce", Arrays.asList(intValue.toString(10)));
+    parameters.put(NONCE, Arrays.asList(intValue.toString(10)));
 
     // Sender
     readValue = bytecode.substring(bufPointer, paramSize);
     bufPointer += paramSize;
     readValue = ByteUtilities
         .toHexString(ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(readValue)));
-    parameters.put("sender", Arrays.asList(readValue));
+    parameters.put(SENDER, Arrays.asList(readValue));
 
     // Recipient
-    parameters.put("recipients", parseArray(bufPointer, bytecode, false));
+    parameters.put(RECIPIENTS, parseArray(bufPointer, bytecode, false));
     bufPointer += paramSize;
 
     // Amount
-    parameters.put("amount", parseArray(bufPointer, bytecode, true));
+    parameters.put(AMOUNT, parseArray(bufPointer, bytecode, true));
     bufPointer += paramSize;
 
     // SigV
-    parameters.put("sigV", parseArray(bufPointer, bytecode, false));
+    parameters.put(SIGV, parseArray(bufPointer, bytecode, false));
     bufPointer += paramSize;
 
     // SigR
-    parameters.put("sigR", parseArray(bufPointer, bytecode, false));
+    parameters.put(SIGR, parseArray(bufPointer, bytecode, false));
     bufPointer += paramSize;
 
     // SigS
-    parameters.put("sigS", parseArray(bufPointer, bytecode, false));
+    parameters.put(SIGS, parseArray(bufPointer, bytecode, false));
     bufPointer += paramSize;
 
     return parameters;

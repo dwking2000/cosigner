@@ -14,6 +14,7 @@ import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
 import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContract;
 import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractInterface;
+import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractParametersInterface;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +22,10 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -94,7 +97,7 @@ public class FiatWallet implements Wallet {
 
       String rawTx = ByteUtilities.toHexString(tx.encode());
       LOGGER.debug("Creating contract: " + rawTx);
-      // TODO Sign and send it.
+      sendTransaction(rawTx);
     }
   }
 
@@ -233,8 +236,12 @@ public class FiatWallet implements Wallet {
 
   @Override
   public Iterable<String> getSignersForTransaction(String transaction) {
-    // TODO Essentially only care about the sender here, if we can determine that easily
-    return null;
+    RawTransaction rawTx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
+    String contractData = ByteUtilities.toHexString(rawTx.getData().getDecodedContents());
+    Map<String, List<String>> contractDataParams =
+        contractInterface.getContractParameters().parseTransfer(contractData);
+
+    return contractDataParams.get(FiatContractParametersInterface.SENDER);
   }
 
   @Override
@@ -245,9 +252,7 @@ public class FiatWallet implements Wallet {
   @Override
   public String signTransaction(String transaction, String address, String name) {
     Iterable<Iterable<String>> sigData = getSigString(transaction, address);
-    String privateKey = null;
-    // TODO If name != null, figure out the private key.
-    sigData = signWithPrivateKey(sigData, privateKey, address);
+    sigData = signWithPrivateKey(sigData, name, address);
     return applySignature(transaction, address, sigData);
   }
 
@@ -269,9 +274,10 @@ public class FiatWallet implements Wallet {
       // Get the transaction data
       Map<String, List<String>> contractParams =
           contractInterface.getContractParameters().parseTransfer(transaction);
-      BigInteger nonce = new BigInteger(contractParams.get("nonce").get(0));
-      List<String> recipients = contractParams.get("recipients");
-      List<String> amounts = contractParams.get("amount");
+      BigInteger nonce =
+          new BigInteger(contractParams.get(FiatContractParametersInterface.NONCE).get(0));
+      List<String> recipients = contractParams.get(FiatContractParametersInterface.RECIPIENTS);
+      List<String> amounts = contractParams.get(FiatContractParametersInterface.AMOUNT);
 
       // Hash to sign is hash(previous hash + recipient + amount + nonce)
       for (int i = 0; i < recipients.size(); i++) {
@@ -308,8 +314,12 @@ public class FiatWallet implements Wallet {
   @Override
   public String applySignature(String transaction, String address,
       Iterable<Iterable<String>> signatureData) {
-    // TODO
-    return null;
+    // This is taken care of in the signing process for Ethereum, so we can just return the data.
+    try {
+      return signatureData.iterator().next().iterator().next();
+    } catch (Exception e) {
+      return "";
+    }
   }
 
   @Override
@@ -356,11 +366,218 @@ public class FiatWallet implements Wallet {
 
   private Iterable<Iterable<String>> signWithPrivateKey(Iterable<Iterable<String>> data,
       String privateKey, String address) {
-    // TODO If address == null sign with key
-    // TODO If address != null sign with address (geth sign)
-    // TODO If there is more than one outer-iterable, the first one is the contract data
-    // TODO The second and/or only outer-iterable is the transaction data
-    return null;
+    LOGGER.debug("Attempting to sign: " + address + data.toString());
+
+    LinkedList<Iterable<String>> signedData = new LinkedList<>();
+    LinkedList<Iterable<String>> listedData = new LinkedList<>();
+    data.forEach(listedData::add);
+    LinkedList<String> contractData = new LinkedList<>();
+    LinkedList<String> txData = new LinkedList<>();
+    // Check if there are two entries, if there are, the first one should be mSig data.
+    int txDataLocation = 0;
+    if (listedData.size() == 2) {
+      txDataLocation++;
+      listedData.get(0).forEach(contractData::add);
+    }
+    listedData.get(txDataLocation).forEach(txData::add);
+
+    try {
+      // Sign mSig if there is any
+      if (contractData.size() > 0) {
+        LOGGER.debug("Reading mSig data");
+        String sigBytes = contractData.getLast();
+        byte[][] sigData = signData(sigBytes, address, privateKey);
+        // Return the original TX on failure
+        if (sigData.length < 3) {
+          LinkedList<String> signature = new LinkedList<>();
+          signature.add(txData.getFirst());
+          LinkedList<Iterable<String>> result = new LinkedList<>();
+          result.add(signature);
+          return result;
+        }
+
+        LinkedList<String> msigSig = new LinkedList<>();
+        msigSig.add(ByteUtilities.toHexString(sigData[0]));
+        msigSig.add(ByteUtilities.toHexString(sigData[1]));
+        msigSig.add(ByteUtilities.toHexString(sigData[2]));
+        signedData.add(msigSig);
+      } else {
+        LOGGER.debug("No mSig data to process.");
+      }
+      // Rebuild the TX if there is any mSig data
+      RawTransaction rawTx =
+          RawTransaction.parseBytes(ByteUtilities.toByteArray(txData.getFirst()));
+      // If we've added mSig data then update the TX.
+      if (signedData.size() > 0) {
+        String contractVersion = contractData.getFirst();
+        FiatContractInterface contract =
+            (FiatContractInterface) FiatContractInterface.class.getClassLoader()
+                .loadClass(contractVersion).newInstance();
+
+        FiatContractParametersInterface contractParms = contract.getContractParameters();
+        Map<String, List<String>> contractParamData = contractParms
+            .parseTransfer(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()));
+
+        Iterator<String> msigSig = signedData.getFirst().iterator();
+        contractParamData.get(FiatContractParametersInterface.SIGR).add(msigSig.next());
+        contractParamData.get(FiatContractParametersInterface.SIGS).add(msigSig.next());
+        contractParamData.get(FiatContractParametersInterface.SIGV).add(msigSig.next());
+
+        Long nonce =
+            new BigInteger(contractParamData.get(FiatContractParametersInterface.NONCE).get(0))
+                .longValue();
+        String sender = contractParamData.get(FiatContractParametersInterface.SENDER).get(0);
+        List<String> recipients = contractParamData.get(FiatContractParametersInterface.RECIPIENTS);
+        List<Long> amounts = new LinkedList<>();
+        for (String amount : contractParamData.get(FiatContractParametersInterface.AMOUNT)) {
+          amounts.add(new BigInteger(amount).longValue());
+        }
+        List<String> sigV = contractParamData.get(FiatContractParametersInterface.SIGV);
+        List<String> sigR = contractParamData.get(FiatContractParametersInterface.SIGR);
+        List<String> sigS = contractParamData.get(FiatContractParametersInterface.SIGS);
+
+        rawTx.getData().setDecodedContents(ByteUtilities.toByteArray(
+            contractParms.transfer(nonce, sender, recipients, amounts, sigV, sigR, sigS)));
+      }
+      // Sign the TX
+      String txCount = txData.getLast();
+      BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount));
+
+      if (nonce.equals(BigInteger.ZERO)) {
+        rawTx.getNonce().setDecodedContents(new byte[]{});
+      } else {
+        rawTx.getNonce()
+            .setDecodedContents(ByteUtilities.stripLeadingNullBytes(nonce.toByteArray()));
+      }
+
+      String sigString = ByteUtilities.toHexString(rawTx.getSigBytes());
+      LOGGER.debug("Tx: " + ByteUtilities.toHexString(rawTx.encode()));
+      LOGGER.debug("SigBytes: " + sigString);
+      sigString = EthereumTools.hashKeccak(sigString);
+      LOGGER.debug("Hashed: " + sigString);
+      byte[][] sigData = signData(sigString, address, privateKey);
+      if (sigData.length < 3) {
+        LinkedList<String> signature = new LinkedList<>();
+        signature.add(txData.getFirst());
+        LinkedList<Iterable<String>> result = new LinkedList<>();
+        result.add(signature);
+        return result;
+      }
+
+      rawTx.getSigR().setDecodedContents(sigData[0]);
+      rawTx.getSigS().setDecodedContents(sigData[1]);
+      rawTx.getSigV().setDecodedContents(sigData[2]);
+
+      // Return the signed TX as-is, we don't need network information to apply it.
+      LinkedList<String> signature = new LinkedList<>();
+      signature.add(ByteUtilities.toHexString(rawTx.encode()));
+      LinkedList<Iterable<String>> result = new LinkedList<>();
+      result.add(signature);
+      result.add(new LinkedList<>(Collections.singletonList(sigString)));
+      return result;
+    } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+      LOGGER.warn(null, e);
+      LinkedList<String> signature = new LinkedList<>();
+      signature.add(txData.getFirst());
+      LinkedList<Iterable<String>> result = new LinkedList<>();
+      result.add(signature);
+      return result;
+    }
+  }
+
+  private byte[][] signData(String data, String address, String name) {
+    if (name == null) {
+      // Catch errors here
+      String sig;
+      try {
+        LOGGER.debug("Asking geth to sign " + data + " for 0x" + address);
+        sig = ethereumRpc.eth_sign("0x" + address, data);
+      } catch (Exception e) {
+        LOGGER.warn(null, e);
+        return new byte[0][0];
+      }
+
+      try {
+        LOGGER.debug("Decoding sig result: " + sig);
+        byte[] sigBytes = ByteUtilities.toByteArray(sig);
+        byte[] sigR = Arrays.copyOfRange(sigBytes, 0, 32);
+        byte[] sigS = Arrays.copyOfRange(sigBytes, 32, 64);
+        byte[] sigV = Arrays.copyOfRange(sigBytes, 64, 65);
+
+        String signingAddress = null;
+        try {
+          signingAddress = ByteUtilities.toHexString(
+              Secp256k1.recoverPublicKey(sigR, sigS, sigV, ByteUtilities.toByteArray(data)))
+              .substring(2);
+        } catch (Exception e) {
+          LOGGER.debug("Couldn't recover public key from signature", e);
+        }
+        signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
+        LOGGER.debug("Appears to be signed by: " + signingAddress);
+
+        // Adjust for expected format.
+        sigV[0] += 27;
+
+        return new byte[][]{sigR, sigS, sigV};
+      } catch (Exception e) {
+        LOGGER.error(null, e);
+        return new byte[0][0];
+      }
+    } else {
+      int maxRounds = 1000;
+
+      String privateKey = "";
+      if (address != null) {
+        for (int i = 1; i <= maxRounds; i++) {
+          String privateKeyCheck =
+              EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), i);
+          if (EthereumTools.getPublicAddress(privateKeyCheck).equalsIgnoreCase(address)) {
+            privateKey = privateKeyCheck;
+            break;
+          }
+        }
+        if (privateKey.isEmpty()) {
+          return new byte[0][0];
+        }
+      } else {
+        privateKey = name;
+        address = EthereumTools.getPublicAddress(privateKey);
+      }
+
+      // Sign and return it
+      byte[] privateBytes = ByteUtilities.toByteArray(privateKey);
+      byte[] sigBytes = ByteUtilities.toByteArray(data);
+      String signingAddress = "";
+
+      // The odd signature can't be resolved to a recoveryId, in those cases, just sign it again.
+      byte[] sigV;
+      byte[] sigR;
+      byte[] sigS;
+      do {
+        byte[][] signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
+        sigR = ByteUtilities.stripLeadingNullBytes(signedBytes[0]);
+        sigS = ByteUtilities.stripLeadingNullBytes(signedBytes[1]);
+        sigV = signedBytes[2];
+
+        if (sigV[0] != 0 && sigV[0] != 1) {
+          continue;
+        }
+
+        try {
+          signingAddress =
+              ByteUtilities.toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigV, sigBytes))
+                  .substring(2);
+        } catch (Exception e) {
+          LOGGER.debug("Couldn't recover the public key", e);
+        }
+        signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
+      } while (!address.equalsIgnoreCase(signingAddress));
+
+      // Adjust for ethereum's encoding
+      sigV[0] += 27;
+
+      return new byte[][]{sigR, sigS, sigV};
+    }
   }
 
   // TODO Add some admin functions for creation and destruction of tokens. Figure out where we're going to put these in tooling.
