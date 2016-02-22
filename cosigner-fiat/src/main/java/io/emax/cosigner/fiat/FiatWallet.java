@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class FiatWallet implements Wallet {
   private static final Logger LOGGER = LoggerFactory.getLogger(FiatWallet.class);
@@ -217,38 +218,91 @@ public class FiatWallet implements Wallet {
       recipients.add(recipient.getRecipientAddress());
     });
 
-    // TODO Lookup nonce.
+    String txCount = ethereumRpc
+        .eth_getStorageAt("0x" + contractAddress.toLowerCase(Locale.US), "0x1",
+            DefaultBlock.LATEST.toString());
+    BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
 
     tx.getData().setDecodedContents(ByteUtilities.toByteArray(
         contractInterface.getContractParameters()
-            .transfer(0L, fromAddresses.iterator().next(), recipients, amounts, new LinkedList<>(),
-                new LinkedList<>(), new LinkedList<>())));
+            .transfer(nonce.longValue(), fromAddresses.iterator().next(), recipients, amounts,
+                new LinkedList<>(), new LinkedList<>(), new LinkedList<>())));
 
     return ByteUtilities.toHexString(tx.encode());
   }
 
   @Override
   public Iterable<String> getSignersForTransaction(String transaction) {
-    // TODO Essentially only care about the sender here.
+    // TODO Essentially only care about the sender here, if we can determine that easily
     return null;
   }
 
   @Override
   public String signTransaction(String transaction, String address) {
-    // TODO
-    return null;
+    return signTransaction(transaction, address, null);
   }
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
-    // TODO
-    return null;
+    Iterable<Iterable<String>> sigData = getSigString(transaction, address);
+    String privateKey = null;
+    // TODO If name != null, figure out the private key.
+    sigData = signWithPrivateKey(sigData, privateKey, address);
+    return applySignature(transaction, address, sigData);
   }
 
   @Override
   public Iterable<Iterable<String>> getSigString(String transaction, String address) {
-    // TODO
-    return null;
+    return getSigString(transaction, address, false);
+  }
+
+  public Iterable<Iterable<String>> getSigString(String transaction, String address,
+      boolean ignoreContractCode) {
+    RawTransaction tx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
+    LinkedList<Iterable<String>> sigStrings = new LinkedList<>();
+
+    if (!ignoreContractCode && ByteUtilities.toHexString(tx.getTo().getDecodedContents())
+        .equalsIgnoreCase(contractAddress)) {
+      // Initialize hash (IV = 0x00)
+      String hashBytes = String.format("%64s", "0").replace(' ', '0');
+
+      // Get the transaction data
+      Map<String, List<String>> contractParams =
+          contractInterface.getContractParameters().parseTransfer(transaction);
+      BigInteger nonce = new BigInteger(contractParams.get("nonce").get(0));
+      List<String> recipients = contractParams.get("recipients");
+      List<String> amounts = contractParams.get("amount");
+
+      // Hash to sign is hash(previous hash + recipient + amount + nonce)
+      for (int i = 0; i < recipients.size(); i++) {
+        hashBytes += String.format("%40s", recipients.get(i)).replace(' ', '0');
+        hashBytes += String
+            .format("%40s", ByteUtilities.toHexString(new BigInteger(amounts.get(i)).toByteArray()))
+            .replace(' ', '0');
+        hashBytes +=
+            String.format("%40s", ByteUtilities.toHexString(nonce.toByteArray())).replace(' ', '0');
+
+        LOGGER.debug("Hashing: " + hashBytes);
+        hashBytes = EthereumTools.hashKeccak(hashBytes);
+        LOGGER.debug("Result: " + hashBytes);
+      }
+      LinkedList<String> msigString = new LinkedList<>();
+      msigString.add(contractInterface.getClass().getCanonicalName());
+      msigString.add(hashBytes);
+      sigStrings.add(msigString);
+    }
+
+    // Calculate the transaction's signature data.
+    String txCount =
+        ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.LATEST.toString());
+    LinkedList<String> txString = new LinkedList<>();
+    txString.add(transaction);
+    txString.add(txCount);
+    sigStrings.add(txString);
+
+    LOGGER.debug(sigStrings.toString());
+
+    return sigStrings;
   }
 
   @Override
@@ -260,8 +314,12 @@ public class FiatWallet implements Wallet {
 
   @Override
   public String sendTransaction(String transaction) {
-    // TODO We may want to re-sign like in the base Ethereum msig contract. We'll see.
-    return null;
+    Iterable<Iterable<String>> sigData =
+        getSigString(transaction, config.getContractAccount(), true);
+    sigData = signWithPrivateKey(sigData, null, config.getContractAccount());
+    transaction = applySignature(transaction, config.getContractAccount(), sigData);
+
+    return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
   @Override
@@ -293,7 +351,15 @@ public class FiatWallet implements Wallet {
   @Override
   public Iterable<Iterable<String>> signWithPrivateKey(Iterable<Iterable<String>> data,
       String privateKey) {
-    // TODO
+    return signWithPrivateKey(data, privateKey, null);
+  }
+
+  private Iterable<Iterable<String>> signWithPrivateKey(Iterable<Iterable<String>> data,
+      String privateKey, String address) {
+    // TODO If address == null sign with key
+    // TODO If address != null sign with address (geth sign)
+    // TODO If there is more than one outer-iterable, the first one is the contract data
+    // TODO The second and/or only outer-iterable is the transaction data
     return null;
   }
 
