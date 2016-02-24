@@ -2,6 +2,7 @@ package io.emax.cosigner.fiat;
 
 import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.SigningType;
+import io.emax.cosigner.common.EnvironmentVariableParser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Locale;
 import java.util.Properties;
 
 public class FiatConfiguration implements CurrencyConfiguration {
@@ -35,21 +37,21 @@ public class FiatConfiguration implements CurrencyConfiguration {
     loadConfig(currency);
   }
 
-  /*private static long getLongProp(Properties prop, String value, long defaultValue) {
+  private static long getLongProp(Properties prop, String value, long defaultValue) {
     try {
-      return Long.parseLong(prop.getProperty(value));
+      return Long.parseLong(EnvironmentVariableParser.resolveEnvVars(prop.getProperty(value)));
     } catch (Exception e) {
       LOGGER.warn(null, e);
       return defaultValue;
     }
-  }*/
+  }
 
   private synchronized void loadConfig(String currency) {
     if (!configLoaded) {
       configLoaded = true;
 
       FileInputStream propertiesFile = null;
-      String propertiesFilePath = "./cosigner-" + currency + ".properties";
+      String propertiesFilePath = "./cosigner-" + currency.toLowerCase(Locale.US) + ".properties";
 
       try {
         Properties cosignerProperties = new Properties();
@@ -58,7 +60,63 @@ public class FiatConfiguration implements CurrencyConfiguration {
         cosignerProperties.load(propertiesFile);
         propertiesFile.close();
 
-        // TODO Load properties file.
+        // currencySymbol
+        currencySymbol = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("currencySymbol", currencySymbol));
+
+        // serverPrivateKey
+        serverPrivateKey = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey));
+
+        // minSignatures
+        minSignatures = (int) getLongProp(cosignerProperties, "minSignatures", minSignatures);
+
+        // minConfirmations
+        minConfirmations =
+            (int) getLongProp(cosignerProperties, "minConfirmations", minConfirmations);
+
+        // gasPrice
+        gasPrice = getLongProp(cosignerProperties, "gasPrice", gasPrice);
+
+        // contractGas
+        contractGas = getLongProp(cosignerProperties, "contractGas", contractGas);
+
+        // contractAccount
+        contractAccount = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("contractAccount", contractAccount));
+
+        // adminAccount
+        adminAccount = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("adminAccount", adminAccount));
+
+        // multiSigAccounts
+        String arrayParser = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("multiSigAccounts"));
+        if (arrayParser != null) {
+          multiSigAccounts = arrayParser.split("[|]");
+        }
+
+        // generateNewContract
+        generateNewContract = Boolean.valueOf(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties
+                .getProperty("generateNewContract", Boolean.toString(generateNewContract))));
+
+        // contractAddress
+        contractAddress = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("contractAddress", contractAddress));
+
+        // maxAmountPerHour
+        maxAmountPerHour = new BigDecimal(
+            cosignerProperties.getProperty("maxAmountPerHour", maxAmountPerHour.toPlainString()));
+
+        // maxAmountPerDay
+        maxAmountPerDay = new BigDecimal(
+            cosignerProperties.getProperty("maxAmountPerDay", maxAmountPerDay.toPlainString()));
+
+        // maxAmountPerTransaction
+        maxAmountPerTransaction = new BigDecimal(cosignerProperties
+            .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString()));
+        
       } catch (IOException e) {
         if (propertiesFile != null) {
           try {

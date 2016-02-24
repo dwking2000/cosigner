@@ -101,7 +101,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>io.emax.cosigner.ethereum.cli.Application</mainClass>
+                            <mainClass>io.emax.cosigner.fiat.cli.Application</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

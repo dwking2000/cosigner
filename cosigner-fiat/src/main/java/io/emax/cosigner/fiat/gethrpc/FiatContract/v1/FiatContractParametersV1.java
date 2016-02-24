@@ -3,6 +3,9 @@ package io.emax.cosigner.fiat.gethrpc.FiatContract.v1;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractParametersInterface;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FiatContractParametersV1 implements FiatContractParametersInterface {
+  private static final Logger LOGGER = LoggerFactory.getLogger(FiatContractParametersV1.class);
 
   @Override
   public String createContract(String adminAddress, List<String> ownerAddresses,
@@ -229,25 +233,36 @@ public class FiatContractParametersV1 implements FiatContractParametersInterface
     BigInteger intValue = BigInteger.ZERO;
     HashMap<String, List<String>> parameters = new HashMap<>();
 
+    LOGGER.debug("Parsing " + bytecode.length() / 2 + "bytes: " + bytecode);
+
     // Check that this is a transfer command.
-    String function = bytecode.substring(bufPointer, contract.getTransfer().length());
+    LOGGER.debug(
+        "Reading from " + bufPointer + ", " + contract.getTransfer().length() + " characters.");
+    String function = bytecode.substring(bufPointer, bufPointer + contract.getTransfer().length());
     bufPointer += contract.getTransfer().length();
     if (!function.equalsIgnoreCase(contract.getTransfer())) {
       return null;
     }
+    LOGGER.debug("Found function:" + function);
 
     // Nonce
-    readValue = bytecode.substring(bufPointer, paramSize);
+    LOGGER.debug("Reading from " + bufPointer + ", " + paramSize + " characters.");
+    readValue = bytecode.substring(bufPointer, bufPointer + paramSize);
+    LOGGER.debug("Read in: " + readValue);
     bufPointer += paramSize;
     intValue = new BigInteger("00" + readValue, 16);
     parameters.put(NONCE, Arrays.asList(intValue.toString(10)));
+    LOGGER.debug("Found nonce:" + intValue.toString(10));
 
     // Sender
-    readValue = bytecode.substring(bufPointer, paramSize);
+    LOGGER.debug("Reading from " + bufPointer + ", " + paramSize + " characters.");
+    readValue = bytecode.substring(bufPointer, bufPointer + paramSize);
+    LOGGER.debug("Read in: " + readValue);
     bufPointer += paramSize;
     readValue = ByteUtilities
         .toHexString(ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(readValue)));
     parameters.put(SENDER, Arrays.asList(readValue));
+    LOGGER.debug("Found sender:" + readValue);
 
     // Recipient
     parameters.put(RECIPIENTS, parseArray(bufPointer, bytecode, false));
@@ -275,20 +290,30 @@ public class FiatContractParametersV1 implements FiatContractParametersInterface
   private List<String> parseArray(int bufPointer, String buffer, boolean decodeToInt) {
     final int paramSize = 64;
     // Find the location of the array data
-    String readValue = buffer.substring(bufPointer, paramSize);
+    LOGGER.debug("Reading from " + bufPointer + ", " + paramSize + " characters.");
+    String readValue = buffer.substring(bufPointer, bufPointer + paramSize);
+    LOGGER.debug("Read in: " + readValue);
     BigInteger intValue = new BigInteger("00" + readValue, 16);
     int arrayPointer = intValue.intValue() * 2; // String vs Bytes
+    arrayPointer +=
+        new FiatContractV1().getTransfer().length(); // Offset by function id, not included in calc.
+    LOGGER.debug("Found arrayPointer:" + arrayPointer);
 
     // Get the size of the array
-    readValue = buffer.substring(arrayPointer, paramSize);
+    LOGGER.debug("Reading from " + arrayPointer + ", " + paramSize + " characters.");
+    readValue = buffer.substring(arrayPointer, arrayPointer + paramSize);
+    LOGGER.debug("Read in: " + readValue);
     arrayPointer += paramSize;
     intValue = new BigInteger("00" + readValue, 16);
     int arraySize = intValue.intValue();
+    LOGGER.debug("Found arraySize:" + arraySize);
 
     // Read in the data
     LinkedList<String> arrayData = new LinkedList<>();
     for (int i = 0; i < arraySize; i++) {
-      readValue = buffer.substring(arrayPointer, paramSize);
+      LOGGER.debug("Reading from " + arrayPointer + ", " + paramSize + " characters.");
+      readValue = buffer.substring(arrayPointer, arrayPointer + paramSize);
+      LOGGER.debug("Read in: " + readValue);
       arrayPointer += paramSize;
       readValue = ByteUtilities
           .toHexString(ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(readValue)));
@@ -297,6 +322,7 @@ public class FiatContractParametersV1 implements FiatContractParametersInterface
       if (decodeToInt) {
         intValue = new BigInteger("00" + readValue, 16);
         readValue = intValue.toString(10);
+        LOGGER.debug("Converted to int: " + readValue);
       }
 
       arrayData.add(readValue);

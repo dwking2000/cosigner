@@ -3,6 +3,7 @@ package io.emax.cosigner.fiat;
 import io.emax.cosigner.api.core.ServerStatus;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.common.EthereumTools;
@@ -19,7 +20,6 @@ import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractParametersInterfac
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class FiatWallet implements Wallet {
   private static final Logger LOGGER = LoggerFactory.getLogger(FiatWallet.class);
@@ -98,7 +99,24 @@ public class FiatWallet implements Wallet {
       String rawTx = ByteUtilities.toHexString(tx.encode());
       LOGGER.debug("Creating contract: " + rawTx);
       sendTransaction(rawTx);
+
+      RlpList calculatedContractAddress = new RlpList();
+      RlpItem contractCreator = new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
+      calculatedContractAddress.add(contractCreator);
+      calculatedContractAddress.add(tx.getNonce());
+
+      // Figure out the contract address and store it in lookup tables for future use
+      String expectedContract =
+          EthereumTools.hashKeccak(ByteUtilities.toHexString(calculatedContractAddress.encode()))
+              .substring(96 / 4, 256 / 4);
+
+      LOGGER.debug(
+          "Expecting new contract address of " + expectedContract + " with tx: " + RawTransaction
+              .parseBytes(ByteUtilities.toByteArray(rawTx)));
+      contractAddress = expectedContract;
     }
+
+    LOGGER.debug("Got contract address of: " + contractAddress);
   }
 
   private FiatContractInterface getContractType(String contract) {
@@ -144,6 +162,8 @@ public class FiatWallet implements Wallet {
     String publicAddress = EthereumTools.getPublicAddress(privateKey);
 
     while (knownAddresses.contains(publicAddress.toLowerCase(Locale.US))) {
+      LOGGER.debug("Address " + publicAddress + " already known");
+      LOGGER.debug("KnownAddress: " + Json.stringifyObject(Set.class, knownAddresses));
       rounds++;
       privateKey =
           EthereumTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
@@ -177,7 +197,9 @@ public class FiatWallet implements Wallet {
     HashSet<String> userAddresses = ownedAddresses.get(user);
     if (userAddresses.isEmpty()) {
       String balanceCheck = getBalance(createAddress(name));
-      while (balanceCheck != null && balanceCheck != BigDecimal.ZERO.toPlainString()) {
+      while (balanceCheck != null && balanceCheck != BigInteger.ZERO.toString(10)) {
+        LOGGER.debug(
+            "BalanceCheck was: " + balanceCheck + " compared to " + BigInteger.ZERO.toString(10));
         userAddresses = ownedAddresses.get(user);
         balanceCheck = getBalance(createAddress(name));
       }
@@ -198,6 +220,20 @@ public class FiatWallet implements Wallet {
     callData.setData("0x" + contractInterface.getContractParameters().getBalance(address));
     callData.setGas("100000"); // Doesn't matter, just can't be nil
     callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
+    LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
+    String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+
+    BigInteger balance = new BigInteger(1, ByteUtilities.toByteArray(response));
+    return balance.toString(10);
+  }
+
+  public String getTotalBalances() {
+    CallData callData = new CallData();
+    callData.setTo("0x" + contractAddress);
+    callData.setData("0x" + contractInterface.getContractParameters().getTotalBalance());
+    callData.setGas("100000"); // Doesn't matter, just can't be nil
+    callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
+    LOGGER.debug("Total balance request: " + Json.stringifyObject(CallData.class, callData));
     String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
 
     BigInteger balance = new BigInteger(1, ByteUtilities.toByteArray(response));
@@ -272,30 +308,34 @@ public class FiatWallet implements Wallet {
       String hashBytes = String.format("%64s", "0").replace(' ', '0');
 
       // Get the transaction data
-      Map<String, List<String>> contractParams =
-          contractInterface.getContractParameters().parseTransfer(transaction);
-      BigInteger nonce =
-          new BigInteger(contractParams.get(FiatContractParametersInterface.NONCE).get(0));
-      List<String> recipients = contractParams.get(FiatContractParametersInterface.RECIPIENTS);
-      List<String> amounts = contractParams.get(FiatContractParametersInterface.AMOUNT);
+      Map<String, List<String>> contractParams = contractInterface.getContractParameters()
+          .parseTransfer(ByteUtilities.toHexString(tx.getData().getDecodedContents()));
+      if (contractParams != null) {
+        LOGGER.debug(Json.stringifyObject(Map.class, contractParams));
 
-      // Hash to sign is hash(previous hash + recipient + amount + nonce)
-      for (int i = 0; i < recipients.size(); i++) {
-        hashBytes += String.format("%40s", recipients.get(i)).replace(' ', '0');
-        hashBytes += String
-            .format("%40s", ByteUtilities.toHexString(new BigInteger(amounts.get(i)).toByteArray()))
-            .replace(' ', '0');
-        hashBytes +=
-            String.format("%40s", ByteUtilities.toHexString(nonce.toByteArray())).replace(' ', '0');
+        BigInteger nonce =
+            new BigInteger(contractParams.get(FiatContractParametersInterface.NONCE).get(0));
+        List<String> recipients = contractParams.get(FiatContractParametersInterface.RECIPIENTS);
+        List<String> amounts = contractParams.get(FiatContractParametersInterface.AMOUNT);
 
-        LOGGER.debug("Hashing: " + hashBytes);
-        hashBytes = EthereumTools.hashKeccak(hashBytes);
-        LOGGER.debug("Result: " + hashBytes);
+        // Hash to sign is hash(previous hash + recipient + amount + nonce)
+        for (int i = 0; i < recipients.size(); i++) {
+          hashBytes += String.format("%40s", recipients.get(i)).replace(' ', '0');
+          hashBytes += String.format("%40s",
+              ByteUtilities.toHexString(new BigInteger(amounts.get(i)).toByteArray()))
+              .replace(' ', '0');
+          hashBytes += String.format("%40s", ByteUtilities.toHexString(nonce.toByteArray()))
+              .replace(' ', '0');
+
+          LOGGER.debug("Hashing: " + hashBytes);
+          hashBytes = EthereumTools.hashKeccak(hashBytes);
+          LOGGER.debug("Result: " + hashBytes);
+        }
+        LinkedList<String> msigString = new LinkedList<>();
+        msigString.add(contractInterface.getClass().getCanonicalName());
+        msigString.add(hashBytes);
+        sigStrings.add(msigString);
       }
-      LinkedList<String> msigString = new LinkedList<>();
-      msigString.add(contractInterface.getClass().getCanonicalName());
-      msigString.add(hashBytes);
-      sigStrings.add(msigString);
     }
 
     // Calculate the transaction's signature data.
@@ -582,6 +622,7 @@ public class FiatWallet implements Wallet {
 
   public String generateTokens(long amount) {
     RawTransaction tx = new RawTransaction();
+    tx.getTo().setDecodedContents(ByteUtilities.toByteArray(contractAddress));
     tx.getGasPrice().setDecodedContents(ByteUtilities
         .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
     tx.getGasLimit().setDecodedContents(ByteUtilities
@@ -594,6 +635,7 @@ public class FiatWallet implements Wallet {
 
   public String destroyTokens(long amount) {
     RawTransaction tx = new RawTransaction();
+    tx.getTo().setDecodedContents(ByteUtilities.toByteArray(contractAddress));
     tx.getGasPrice().setDecodedContents(ByteUtilities
         .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
     tx.getGasLimit().setDecodedContents(ByteUtilities
