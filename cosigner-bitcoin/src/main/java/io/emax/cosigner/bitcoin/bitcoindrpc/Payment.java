@@ -172,6 +172,36 @@ public class Payment {
   @JsonProperty("involvesWatchonly")
   private boolean involvesWatchonly;
 
+  public String getBip125replaceable() {
+    return bip125replaceable;
+  }
+
+  public void setBip125replaceable(String bip125replaceable) {
+    this.bip125replaceable = bip125replaceable;
+  }
+
+  @JsonProperty("bip125-replaceable")
+  private String bip125replaceable;
+
+  @JsonProperty("label")
+  private String label;
+
+  public String getLabel() {
+    return label;
+  }
+
+  public void setLabel(String label) {
+    this.label = label;
+  }
+
+  public String getBlockhash() {
+    return blockhash;
+  }
+
+  public void setBlockhash(String blockhash) {
+    this.blockhash = blockhash;
+  }
+
   public String getAccount() {
     return account;
   }

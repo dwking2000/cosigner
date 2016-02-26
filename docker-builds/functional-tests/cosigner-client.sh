@@ -311,7 +311,7 @@ echo ""
 echo "Transfering 100.00 EUR to "${FIATADDRESS}
 FIATTX=$(java -jar ${CLIENTLIB} prepareTransaction EUR ${COINBASE} ${FIATADDRESS} 10000 | tail -n 1)
 echo ${FIATTX}
-SIGNEDTX=$(java -jar ${CLIENTLIB} signTransaction EUR ${FIATTX} ${COINBASE} | tail -n 1)
+SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction EUR ${FIATTX} ${COINBASE} | tail -n 1)
 echo ${SIGNEDTX}
 TXID=$(java -jar ${CLIENTLIB} sendTransaction EUR ${SIGNEDTX} | tail -n 1)
 echo ${TXID}
