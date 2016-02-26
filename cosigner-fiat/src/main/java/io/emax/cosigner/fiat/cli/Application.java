@@ -47,7 +47,7 @@ public class Application {
     }
 
     FiatWallet wallet = new FiatWallet("EUR");
-    FiatMonitor monitor = new FiatMonitor();
+    FiatMonitor monitor = new FiatMonitor("EUR");
     String accountName = "";
     String address = "";
     String transaction = "";

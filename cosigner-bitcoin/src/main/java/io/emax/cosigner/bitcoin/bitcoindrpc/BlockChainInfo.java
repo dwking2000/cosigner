@@ -57,6 +57,17 @@ public class BlockChainInfo {
   @JsonProperty("softforks")
   private SoftForks[] softforks;
 
+  public String getMediantime() {
+    return mediantime;
+  }
+
+  public void setMediantime(String mediantime) {
+    this.mediantime = mediantime;
+  }
+
+  @JsonProperty("mediantime")
+  private String mediantime;
+
   /**
    * Estimate of what percentage of the block chain transactions have been verified so far, starting
    * at 0.0 and increasing to 1.0 for fully verified. May slightly exceed 1.0 when fully synced to
