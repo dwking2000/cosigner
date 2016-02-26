@@ -98,6 +98,8 @@ public class FiatWallet implements Wallet {
 
       String rawTx = ByteUtilities.toHexString(tx.encode());
       LOGGER.debug("Creating contract: " + rawTx);
+      rawTx = signTransaction(rawTx, config.getContractAccount());
+      LOGGER.debug("Signed contract: " + rawTx);
       sendTransaction(rawTx);
 
       RlpList calculatedContractAddress = new RlpList();
@@ -321,10 +323,10 @@ public class FiatWallet implements Wallet {
         // Hash to sign is hash(previous hash + recipient + amount + nonce)
         for (int i = 0; i < recipients.size(); i++) {
           hashBytes += String.format("%40s", recipients.get(i)).replace(' ', '0');
-          hashBytes += String.format("%40s",
+          hashBytes += String.format("%64s",
               ByteUtilities.toHexString(new BigInteger(amounts.get(i)).toByteArray()))
               .replace(' ', '0');
-          hashBytes += String.format("%40s", ByteUtilities.toHexString(nonce.toByteArray()))
+          hashBytes += String.format("%64s", ByteUtilities.toHexString(nonce.toByteArray()))
               .replace(' ', '0');
 
           LOGGER.debug("Hashing: " + hashBytes);
@@ -364,11 +366,23 @@ public class FiatWallet implements Wallet {
 
   @Override
   public String sendTransaction(String transaction) {
-    Iterable<Iterable<String>> sigData =
-        getSigString(transaction, config.getContractAccount(), true);
-    sigData = signWithPrivateKey(sigData, null, config.getContractAccount());
-    transaction = applySignature(transaction, config.getContractAccount(), sigData);
+    LOGGER.debug("Asked to send: " + transaction);
+    RawTransaction rawTx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
 
+    if (ByteUtilities.toHexString(rawTx.getTo().getDecodedContents())
+        .equalsIgnoreCase(contractAddress)) {
+      Map<String, List<String>> contractParams = contractInterface.getContractParameters()
+          .parseTransfer(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()));
+      if (contractParams != null) {
+        Iterable<Iterable<String>> sigData =
+            getSigString(transaction, config.getContractAccount(), true);
+        sigData = signWithPrivateKey(sigData, null, config.getContractAccount());
+        LOGGER.debug("Re-signing transfer transaction");
+        transaction = applySignature(transaction, config.getContractAccount(), sigData);
+      }
+    }
+
+    LOGGER.debug("Sending: " + transaction);
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 

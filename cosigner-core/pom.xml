@@ -54,6 +54,11 @@
         </dependency>
         <dependency>
             <groupId>io.emax</groupId>
+            <artifactId>cosigner-fiat</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.emax</groupId>
             <artifactId>cosigner-basic-validator</artifactId>
             <version>${project.version}</version>
         </dependency>

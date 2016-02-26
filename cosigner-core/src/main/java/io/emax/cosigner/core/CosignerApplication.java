@@ -83,6 +83,12 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     ethereumPackage.setWallet(new io.emax.cosigner.ethereum.EthereumWallet());
     ethereumPackage.setMonitor(new io.emax.cosigner.ethereum.EthereumMonitor());
     getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(), ethereumPackage);
+    // Euro
+    CurrencyPackage euroPackage = new CurrencyPackage();
+    euroPackage.setConfiguration(new io.emax.cosigner.fiat.FiatConfiguration("EUR"));
+    euroPackage.setWallet(new io.emax.cosigner.fiat.FiatWallet("EUR"));
+    euroPackage.setMonitor(new io.emax.cosigner.fiat.FiatMonitor("EUR"));
+    getCurrencies().put(euroPackage.getConfiguration().getCurrencySymbol(), euroPackage);
 
     // If the enabled currency list has been set, then remove any that aren't enabled.
     List<String> removeThese = new LinkedList<>();

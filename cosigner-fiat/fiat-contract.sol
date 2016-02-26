@@ -7,13 +7,13 @@ contract fiatcontract {
 
   uint m_numOwners;
   address admin;
-  bool adminSigned;
+  uint adminSigned;
   mapping(address => uint) ownerIndex;
   mapping(uint => address) owners;
 
   uint transactionNonce;
   address sender;
-  bool senderSigned;
+  uint senderSigned;
   bytes32 transactionHash;
   uint numTransactions;
   mapping(uint => Transaction) transactions;
@@ -38,6 +38,8 @@ contract fiatcontract {
 
   function confirmTransaction() internal returns (bool) {
     transactionHash = 0x00;
+    senderSigned = 0;
+    adminSigned = 0;
     for(uint i = 0; i < numTransactions; i++) {
       transactionHash = sha3(transactionHash, transactions[i].to, transactions[i].value, transactionNonce);        
     }
@@ -55,12 +57,12 @@ contract fiatcontract {
       if(ownerBit > 0 && (signers & ownerValue == 0)) {
         signers |= ownerValue;
         numSigners++;
-      } else if(signer == sender && !senderSigned) {
+      } else if(signer == sender && senderSigned == 0) {
         numSigners++;
-        senderSigned = true;
-      } else if(signer == admin && !adminSigned) {
+        senderSigned = 1;
+      } else if(signer == admin && adminSigned == 0) {
         numSigners++;
-        adminSigned = true;
+        adminSigned = 1;
       }
     }
 
@@ -112,8 +114,6 @@ contract fiatcontract {
   function transfer(uint nonce, address _sender, address[] to, uint[] value,
       uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
     sender = _sender;
-    senderSigned = false;
-    adminSigned = false;
     numTransactions = to.length;
     for(uint i = 0; i < numTransactions; i++) {
       transactions[i].to = to[i];
@@ -128,7 +128,7 @@ contract fiatcontract {
       signatures[i].sigS = sigS[i];
     }
 
-    if(confirmTransaction() && senderSigned) {
+    if(confirmTransaction() && senderSigned == 1) {
       lastNonce = transactionNonce;
       for(i = 0; i < numTransactions; i++) {
         if(balances[sender] >= transactions[i].value) {
@@ -148,12 +148,14 @@ contract fiatcontract {
   }
 
   function createTokens(uint amount) {
-    balances[admin] += amount;
-    totalBalance += amount;
+    if(msg.sender == admin) {
+      balances[admin] += amount;
+      totalBalance += amount;
+    }
   }
 
   function destroyTokens(uint amount) {
-    if(balances[admin] >= amount) {
+    if(balances[admin] >= amount && msg.sender == admin) {
       balances[admin] -= amount;
       totalBalance -= amount;
     } else {
