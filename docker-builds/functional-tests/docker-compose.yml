@@ -37,5 +37,4 @@ functional:
     - bitcoind
     - geth
   environment:
-    BITCOIN_FAUCET:
-    ETHER_FAUCET:
+    GETH_CONTRACT_ACCOUNT:

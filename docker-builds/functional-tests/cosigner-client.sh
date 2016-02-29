@@ -17,10 +17,12 @@ while [ ${CATRES} -ne 0 ]; do
   sleep 5
   cat < /dev/tcp/${COSIGNER_PORT_8443_TCP_ADDR}/8443
   CATRES=$?
-  echo ${CATRES}
 done
 
 #========================SETUP===============================
+CURLURL="http://${GETH_PORT_8101_TCP_ADDR}:${GETH_PORT_8101_TCP_PORT}"
+export GETH_CONTRACT_ACCOUNT=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "eth_coinbase", "params": [] }' ${CURLURL} | jq '.result' | sed 's/^"//g' | sed 's/"$//g' | sed 's/^0x//g')
+
 echo "Configuration: "
 cat cosigner-client.properties
 
@@ -287,6 +289,8 @@ echo "TxID: "${TXID}
 waitBlock
 waitBlock
 waitBlock
+waitBlock
+waitBlock
 
 echo ""
 echo "Checking balances..."
@@ -319,6 +323,8 @@ echo ${TXID}
 waitBlock
 waitBlock
 waitBlock
+waitBlock
+waitBlock
 
 echo ""
 echo "Checking balances..."
@@ -340,6 +346,8 @@ echo ${TXID}
 waitBlock
 waitBlock
 waitBlock
+waitBlock
+waitBlock
 
 echo ""
 echo "Checking balances..."
@@ -349,7 +357,6 @@ echo ${COINBASE}": "${ADD1BALANCE}
 echo ${FIATADDRESS}": "${ADD2BALANCE}
 
 ## Destroy the tokens
-ADMINLIB=/opt/functional/cosigner/target/lib/cosigner-fiat-0.0.1-SNAPSHOT.jar
 TOKENTX=$(java -jar ${ADMINLIB} destroyTokens 10000 | tail -n 1)
 echo "Generated transaction: "${TOKENTX}
 SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction EUR ${TOKENTX} ${COINBASE} | tail -n 1)
@@ -357,6 +364,8 @@ echo "Signed: "${SIGNEDTX}
 TXID=$(java -jar ${CLIENTLIB} sendTransaction EUR ${SIGNEDTX} | tail -n 1)
 echo "TxID: "${TXID}
 
+waitBlock
+waitBlock
 waitBlock
 waitBlock
 waitBlock
