@@ -600,6 +600,14 @@ public class EthereumWallet implements Wallet, Validatable {
       byte[] sigS;
       do {
         byte[][] signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
+        // EIP-2
+        BigInteger lowSlimit =
+            new BigInteger("007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0", 16);
+        BigInteger ourSvalue = new BigInteger(1, signedBytes[1]);
+        while (ourSvalue.compareTo(lowSlimit) > 0) {
+          signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
+          ourSvalue = new BigInteger(1, signedBytes[1]);
+        }
         sigR = ByteUtilities.stripLeadingNullBytes(signedBytes[0]);
         sigS = ByteUtilities.stripLeadingNullBytes(signedBytes[1]);
         sigV = signedBytes[2];

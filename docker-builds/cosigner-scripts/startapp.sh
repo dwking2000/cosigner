@@ -18,6 +18,10 @@ waitBlock () {
 }
 
 waitBlock;
+waitBlock;
+waitBlock;
+waitBlock;
+waitBlock;
 
 export GETH_CONTRACT_ACCOUNT=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "eth_coinbase", "params": [] }' ${CURLURL} | jq '.result' | sed 's/^"//g' | sed 's/"$//g' | sed 's/^0x//g')
 

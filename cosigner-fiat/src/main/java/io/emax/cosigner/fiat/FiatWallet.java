@@ -9,6 +9,7 @@ import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.common.RlpItem;
 import io.emax.cosigner.ethereum.common.RlpList;
+import io.emax.cosigner.ethereum.gethrpc.Block;
 import io.emax.cosigner.ethereum.gethrpc.CallData;
 import io.emax.cosigner.ethereum.gethrpc.DefaultBlock;
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
@@ -20,6 +21,10 @@ import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractParametersInterfac
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import rx.Observable;
+import rx.Subscription;
+
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +36,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class FiatWallet implements Wallet {
   private static final Logger LOGGER = LoggerFactory.getLogger(FiatWallet.class);
@@ -39,10 +45,17 @@ public class FiatWallet implements Wallet {
   private static final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
   private static FiatConfiguration config;
 
-  private String contractAddress = "";
-  private FiatContractInterface contractInterface = new FiatContract();
+  private static String contractAddress = "";
+  private static FiatContractInterface contractInterface = new FiatContract();
   private HashSet<String> knownAddresses = new HashSet<>();
   private HashMap<String, HashSet<String>> ownedAddresses = new HashMap<>();
+
+  // Transaction history data
+  private static final HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
+  @SuppressWarnings("unused")
+  private static Subscription txHistorySubscription =
+      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> scanTransactions());
 
   public FiatWallet(String currency) {
     config = new FiatConfiguration(currency);
@@ -72,8 +85,8 @@ public class FiatWallet implements Wallet {
                   .substring(96 / 4, 256 / 4);
           FiatContractInterface contractClass = getContractType(contract);
           if (contractClass != null) {
-            this.contractInterface = contractClass;
-            this.contractAddress = contract;
+            FiatWallet.contractInterface = contractClass;
+            FiatWallet.contractAddress = contract;
             break;
           }
         }
@@ -386,10 +399,78 @@ public class FiatWallet implements Wallet {
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
+  private static void scanTransactions() {
+    // Scan every block, look for origin and receiver.
+    // Get latest block
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+
+    for (long i = 0; i < latestBlockNumber.longValue(); i++) {
+      String blockNumber = "0x" + BigInteger.valueOf(i).toString(16);
+      Block block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
+
+      if (block.getTransactions().length == 0) {
+        continue;
+      }
+
+      Arrays.asList(block.getTransactions()).forEach(tx -> {
+        TransactionDetails txDetail = new TransactionDetails();
+        txDetail.setTxDate(block.getTimestamp());
+
+        txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
+        txDetail.setFromAddress(
+            new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getFrom()))});
+        txDetail.setToAddress(
+            new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
+        txDetail.setAmount(BigDecimal.ZERO);
+
+        // For each receiver that is the fiat account, parse the data, check if it's transferring a balance
+        try {
+          if (contractAddress.equalsIgnoreCase(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
+            String txData = tx.getInput();
+            FiatContractParametersInterface contractParamsInterface =
+                contractInterface.getContractParameters();
+            Map<String, List<String>> contractParams =
+                contractParamsInterface.parseTransfer(txData);
+
+            if (contractParams != null) {
+              for (int j = 0; j < contractParams.get(contractParamsInterface.RECIPIENTS).size();
+                   j++) {
+                TransactionDetails fiatTx = new TransactionDetails();
+                fiatTx.setFromAddress(
+                    contractParams.get(contractParamsInterface.SENDER).toArray(new String[]{}));
+                fiatTx.setToAddress(
+                    new String[]{contractParams.get(contractParamsInterface.RECIPIENTS).get(j)});
+                fiatTx.setAmount(
+                    new BigDecimal(contractParams.get(contractParamsInterface.AMOUNT).get(j)));
+                fiatTx.setTxHash(txDetail.getTxHash());
+
+                if (!txHistory.containsKey(fiatTx.getToAddress()[0])) {
+                  txHistory.put(fiatTx.getToAddress()[0], new HashSet<>());
+                }
+                if (!txHistory.containsKey(fiatTx.getFromAddress()[0])) {
+                  txHistory.put(fiatTx.getFromAddress()[0], new HashSet<>());
+                }
+
+                txHistory.get(fiatTx.getFromAddress()[0]).add(fiatTx);
+                txHistory.get(fiatTx.getToAddress()[0]).add(fiatTx);
+              }
+            }
+          }
+        } catch (Exception e) {
+          LOGGER.debug("Unable to decode tx data", e);
+        }
+      });
+    }
+  }
+
   @Override
   public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
-    // TODO
-    return new TransactionDetails[0];
+    LinkedList<TransactionDetails> txDetails = new LinkedList<>();
+    if (txHistory.containsKey(address)) {
+      txHistory.get(address).forEach(txDetails::add);
+    }
+    return txDetails.toArray(new TransactionDetails[txDetails.size()]);
   }
 
   @Override
@@ -609,6 +690,14 @@ public class FiatWallet implements Wallet {
       byte[] sigS;
       do {
         byte[][] signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
+        // EIP-2
+        BigInteger lowSlimit =
+            new BigInteger("007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0", 16);
+        BigInteger ourSvalue = new BigInteger(1, signedBytes[1]);
+        while (ourSvalue.compareTo(lowSlimit) > 0) {
+          signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
+          ourSvalue = new BigInteger(1, signedBytes[1]);
+        }
         sigR = ByteUtilities.stripLeadingNullBytes(signedBytes[0]);
         sigS = ByteUtilities.stripLeadingNullBytes(signedBytes[1]);
         sigV = signedBytes[2];

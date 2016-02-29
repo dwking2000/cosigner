@@ -276,7 +276,7 @@ ADD1BALANCE=$(java -jar ${CLIENTLIB} getBalance EUR ${COINBASE} | tail -n 1)
 echo ${COINBASE}": "${ADD1BALANCE}
 
 ## Generate Tokens
-ADMINLIB=/opt/functional/cosigner/target/lib/cosigner-fiat-0.0.1-SNAPSHOT.jar
+ADMINLIB=/opt/emax/lib/cosigner-fiat-0.0.1-SNAPSHOT.jar
 TOKENTX=$(java -jar ${ADMINLIB} generateTokens 10000 | tail -n 1)
 echo "Generated transaction: "${TOKENTX}
 SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction EUR ${TOKENTX} ${COINBASE} | tail -n 1)
