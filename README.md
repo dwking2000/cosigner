@@ -17,8 +17,8 @@ These handle the TLS connection and provide object to RPC call conversion method
 
 [UserKey Address + Cosigner Node Addresses] => Multi-sig contract/address => Used for transactions
 
-##Signing
-Cosigner can sign using ECC secp256k1, create and pass raw transactions to other Cosigner nodes for additional signing, and broadcast signed transactions.
+##Transactions
+Cosigner can create, sign and pass transactions to other Cosigner nodes for additional signing, and broadcast signed transactions.
 
 ###Multi-Signature
 The default setup is for Cosigner to hold 2 out of 4 keys in a 3-of-4 multi-signature address. The other 2 keys are 1) controlled by the user via the userkey, and 2) held offline for emergencies.
