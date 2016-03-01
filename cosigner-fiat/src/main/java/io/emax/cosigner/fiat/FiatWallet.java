@@ -302,6 +302,7 @@ public class FiatWallet implements Wallet {
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
+    // TODO Validate the transaction before signing. Check balance, check the nonce, whatever we have to do.
     Iterable<Iterable<String>> sigData = getSigString(transaction, address);
     sigData = signWithPrivateKey(sigData, name, address);
     return applySignature(transaction, address, sigData);

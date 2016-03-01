@@ -492,6 +492,7 @@ public class EthereumWallet implements Wallet, Validatable {
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
+    // TODO Validate the transaction before signing. Check balance, check the nonce, whatever we have to do.
     // Prepare sigData so that if we can't sign, it returns the original.
     LinkedList<String> txData = new LinkedList<>();
     txData.add(transaction);

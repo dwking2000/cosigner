@@ -368,6 +368,7 @@ public class BitcoinWallet implements Wallet, Validatable {
 
       LOGGER.debug("We can sign for " + userAddress);
 
+      // BTC TX is re-verified since we look up the outputs in getSigString
       signedTransaction = new SignedTransaction();
       Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
       signatureData = signWithPrivateKey(signatureData, privateKey);

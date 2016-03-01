@@ -21,6 +21,7 @@ contract fiatcontract {
   uint numSignatures;
   mapping(uint => SigData) signatures;
 
+  // TODO Add address => block # mapping for confirmations
   mapping(address => uint) balances;
   uint totalBalance;
 
@@ -87,6 +88,8 @@ contract fiatcontract {
 
     return ownersList;
   }
+
+  // TODO function getBalanceConfirmations(address addr) public returns (uint)
 
   function getBalance(address addr) public returns (uint) {
     return balances[addr];
