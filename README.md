@@ -43,12 +43,11 @@ Ethereum (Go - Implemented, C++/Parity - coming)
 
 Bitcoin (bitcoind - Implemented, bitcoinj - coming)
 
-## Security
-We will eventually release a library for storing keys using hardware security modules.
+## Key management
 
-### Key management
+You can either store keys with each node, or store them remotely/on hardware security modules.
 
-Partially covered above, each Cosigner node should hold only 1 key which is not retrievable through any API. The final key is provided by the ‘userkey’ which is a random number that Cosigner has no persistent knowledge of. It cannot submit transactions on behalf of a user without that information. To gain access to enough keys to submit a transaction someone would have to compromise M-1 cosigner nodes with the appropriate keys, and get the random number which is on the same scale as the keys, which is not stored in Cosigner. 
+Each Cosigner node should hold only 1 key which is not retrievable through any API. The final key is provided by the ‘userkey’ which is a random number that Cosigner has no persistent knowledge of. It cannot submit transactions on behalf of a user without that information. To gain access to enough keys to submit a transaction someone would have to compromise M-1 cosigner nodes with the appropriate keys, and get the random number which is on the same scale as the keys, which is not stored in Cosigner. 
 
 ## Countersigner
 Info to come on the light implementation of Cosigner.
