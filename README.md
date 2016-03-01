@@ -68,6 +68,8 @@ Cosigner will be following Google's
 
 See [cosigner-core](https://github.com/EMAXio/cosigner/blob/master/cosigner-core/README.md) for instructions on building and using cosigner.
 
+or [Braveno Docs](http://docs.braveno.com/#cosigner-core-api) for the API Documentation.
+
 ## Ownership and License
 
 Copyright information and contributors are listed in AUTHORS. This project uses
