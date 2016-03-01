@@ -13,7 +13,7 @@ cosigner-client-js
 These handle the TLS connection and provide object to RPC call conversion methods to make it simple to communicate with Cosigner. Cosigner communicates over TLS with REST and WebSocket endpoints, making it relatively easy to implement a custom client if desired.
 
 ##Signing
-Cosigner can sign using ECC secp256k1, pass raw transactions to other Cosigner nodes for signing, and broadcast signed transactions.
+Cosigner can sign using ECC secp256k1, create and pass raw transactions to other Cosigner nodes for additional signing, and broadcast signed transactions.
 
 ###Multi-Signature
 The default setup is for Cosigner to hold 2 out of 4 keys in a 3-of-4 multi-signature address. The other 2 keys are 1) controlled by the user via the userkey, and 2) held offline for emergencies.

@@ -5,7 +5,9 @@ Cosigner is a multi-signature blockchain agnostic gateway, compatible with multi
 
 ##Cosigner Client
 There are currently two clients:
+
 cosigner-client-java
+
 cosigner-client-js
 
 These handle the TLS connection and provide object to RPC call conversion methods to make it simple to communicate with Cosigner. Cosigner communicates over TLS with REST and WebSocket endpoints, making it relatively easy to implement a custom client if desired.
