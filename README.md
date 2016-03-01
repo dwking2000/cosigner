@@ -12,6 +12,11 @@ cosigner-client-js
 
 These handle the TLS connection and provide object to RPC call conversion methods to make it simple to communicate with Cosigner. Cosigner communicates over TLS with REST and WebSocket endpoints, making it relatively easy to implement a custom client if desired.
 
+##Account structure
+[Userkey + Serverkey] => User’s Seed => Generates private keys used for addresses (UserKey Address, shouldn’t hold any balance)
+
+[UserKey Address + Cosigner Node Addresses] => Multi-sig contract/address => Used for transactions
+
 ##Signing
 Cosigner can sign using ECC secp256k1, create and pass raw transactions to other Cosigner nodes for additional signing, and broadcast signed transactions.
 
@@ -20,11 +25,6 @@ The default setup is for Cosigner to hold 2 out of 4 keys in a 3-of-4 multi-sign
 
 ###Offline Signing
 Cosigner provides APIs to retrieve enough data from a transaction that a client can sign with no direct network/Cosigner connection. This allows for a private key that never leaves the client’s control, while still using Cosigner’s features.
-
-##Account structure
-[Userkey + Serverkey] => User’s Seed => Generates private keys used for addresses (UserKey Address, shouldn’t hold any balance)
-
-[UserKey Address + Cosigner Node Addresses] => Multi-sig contract/address => Used for transactions
 
 ## Transaction monitoring
 Cosigner monitors transactions to addresses in its account structure.
