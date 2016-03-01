@@ -42,18 +42,14 @@ Ethereum (Go - Implemented, C++/Parity - coming)
 Bitcoin (bitcoind - Implemented, bitcoinj - coming)
 
 ## Security
-
+We will eventually release a library for storing keys using hardware security modules.
 
 ### Key management
 
 Partially covered above, each Cosigner node should hold only 1 key which is not retrievable through any API. The final key is provided by the ‘userkey’ which is a random number that Cosigner has no persistent knowledge of. It cannot submit transactions on behalf of a user without that information. To gain access to enough keys to submit a transaction someone would have to compromise M-1 cosigner nodes with the appropriate keys, and get the random number which is on the same scale as the keys, which is not stored in Cosigner. 
 
-### Backup?
-
-Keys stored offline somewhere for Cosigner if we have to rebuild, plus the cold/offline keys that never touch Cosigner. The ‘userkeys’ and addresses connected to them would be tracked by the client. In our case the exchange DB. Addresses are deterministic, so with the userkey we can scan every possibility within reason and recover any lost addresses.
-
 ## Countersigner
-Info on the light node and link to repo
+Info to come on the light implementation of Cosigner.
 
 
 ## WARNING
