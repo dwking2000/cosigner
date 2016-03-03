@@ -10,3 +10,4 @@ infer-out/
 .pmd*
 .checkstyle
 *.swp
+*~
