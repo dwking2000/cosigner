@@ -218,12 +218,12 @@ public class CurrencyResource {
    * @return Common.submitTransaction()
    */
   @POST
-  @Path("/SubmitTransaction")
+  @Path("/BroadcastTransaction")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response submitTransaction(String params) {
-    LOGGER.debug("[SubmitTransaction:Request]");
+  public Response broadcastTransaction(String params) {
+    LOGGER.debug("[BroadcastTransaction:Request]");
     Response response = Response.ok(Common.submitTransaction(params)).build();
-    LOGGER.debug("[SubmitTransaction:Response] " + response.toString());
+    LOGGER.debug("[BroadcastTransaction:Response] " + response.toString());
     return response;
   }
 }

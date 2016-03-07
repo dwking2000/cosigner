@@ -98,6 +98,17 @@ public class FiatContractParametersV1 implements FiatContractParametersInterface
   }
 
   @Override
+  public String getConfirmations(String address) {
+    FiatContractV1 contract = new FiatContractV1();
+    String response = contract.getGetConfirmations();
+
+    String formattedString = String.format("%64s", address).replace(' ', '0');
+    response += formattedString;
+
+    return response;
+  }
+
+  @Override
   public String getTotalBalance() {
     FiatContractV1 contract = new FiatContractV1();
     String response = contract.getGetTotalBalance();

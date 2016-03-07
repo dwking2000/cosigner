@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -231,8 +232,12 @@ public class EthereumWallet implements Wallet, Validatable {
   @Override
   public String getMultiSigAddress(Iterable<String> addresses, String name) {
     // Look for existing msig account for this address.
-    // TODO Should add all addresses provided, for user-provided keys
-    String userAddress = addresses.iterator().next().toLowerCase(Locale.US);
+    String userAddress = "";
+    Iterator<String> addIter = addresses.iterator();
+    while (addIter.hasNext()) {
+      String addr = addIter.next();
+      userAddress += addr.toLowerCase(Locale.US);
+    }
     if (msigContracts.containsKey(userAddress.toLowerCase(Locale.US))) {
       LOGGER.debug("Found existing address: " + msigContracts.get(userAddress).getContractAddress()
           .toLowerCase(Locale.US));
@@ -261,20 +266,19 @@ public class EthereumWallet implements Wallet, Validatable {
     // Address[] - first entry in an array parameter is how many elements there are
 
     // Build the array
-    String[] addressesUsed = new String[config.getMultiSigAddresses().length + 1];
-    addressesUsed[0] = String.format("%64s", userAddress).replace(' ', '0');
-    int addressesSkipped = 0;
+    addIter = addresses.iterator();
+    List<String> addressesUsed = new LinkedList<>();
+    addIter.forEachRemaining(address -> {
+      addressesUsed.add(String.format("%64s", address).replace(' ', '0'));
+    });
     for (int i = 0; i < config.getMultiSigAddresses().length; i++) {
       if (config.getMultiSigAddresses()[i].isEmpty()) {
-        addressesSkipped++;
         continue;
       }
-      addressesUsed[i + 1 - addressesSkipped] =
-          String.format("%64s", config.getMultiSigAddresses()[i]).replace(' ', '0');
+      addressesUsed.add(String.format("%64s", config.getMultiSigAddresses()[i]).replace(' ', '0'));
     }
-    String numberOfAddresses = ByteUtilities.toHexString(
-        BigInteger.valueOf(config.getMultiSigAddresses().length + 1 - addressesSkipped)
-            .toByteArray());
+    String numberOfAddresses =
+        ByteUtilities.toHexString(BigInteger.valueOf(addressesUsed.size()).toByteArray());
     numberOfAddresses = String.format("%64s", numberOfAddresses).replace(' ', '0');
 
     // Contract code is the init code which copies the payload and constructor parameters, then runs
@@ -284,8 +288,8 @@ public class EthereumWallet implements Wallet, Validatable {
     StringBuilder contractCode = new StringBuilder();
     contractCode.append(contractInit).append(accountOffset).append(requiredSigs)
         .append(numberOfAddresses);
-    for (int i = 0; i < addressesUsed.length - addressesSkipped; i++) {
-      contractCode.append(addressesUsed[i]);
+    for (int i = 0; i < addressesUsed.size(); i++) {
+      contractCode.append(addressesUsed.get(i));
     }
     tx.getData().setDecodedContents(ByteUtilities.toByteArray(contractCode.toString()));
 
@@ -492,7 +496,13 @@ public class EthereumWallet implements Wallet, Validatable {
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
-    // TODO Validate the transaction before signing. Check balance, check the nonce, whatever we have to do.
+    // Verify that the account is capable of sending this.
+    TransactionDetails txDetails = decodeRawTransaction(transaction);
+    if (txDetails.getAmount().compareTo(new BigDecimal(getBalance(txDetails.getFromAddress()[0])))
+        < 0) {
+      return transaction;
+    }
+
     // Prepare sigData so that if we can't sign, it returns the original.
     LinkedList<String> txData = new LinkedList<>();
     txData.add(transaction);
@@ -603,7 +613,8 @@ public class EthereumWallet implements Wallet, Validatable {
         byte[][] signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);
         // EIP-2
         BigInteger lowSlimit =
-            new BigInteger("007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0", 16);
+            new BigInteger("007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0",
+                16);
         BigInteger ourSvalue = new BigInteger(1, signedBytes[1]);
         while (ourSvalue.compareTo(lowSlimit) > 0) {
           signedBytes = Secp256k1.signTransaction(sigBytes, privateBytes);

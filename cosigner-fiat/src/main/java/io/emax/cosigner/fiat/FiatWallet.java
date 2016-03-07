@@ -242,6 +242,19 @@ public class FiatWallet implements Wallet {
     return balance.toString(10);
   }
 
+  public String getConfirmations(String address) {
+    CallData callData = new CallData();
+    callData.setTo("0x" + contractAddress);
+    callData.setData("0x" + contractInterface.getContractParameters().getConfirmations(address));
+    callData.setGas("100000"); // Doesn't matter, just can't be nil
+    callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
+    LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
+    String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+
+    BigInteger balance = new BigInteger(1, ByteUtilities.toByteArray(response));
+    return balance.toString(10);
+  }
+
   public String getTotalBalances() {
     CallData callData = new CallData();
     callData.setTo("0x" + contractAddress);
@@ -302,7 +315,39 @@ public class FiatWallet implements Wallet {
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
-    // TODO Validate the transaction before signing. Check balance, check the nonce, whatever we have to do.
+    // Convert transaction to data, and to parsed input.
+    RawTransaction tx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
+    Map<String, List<String>> txParams = contractInterface.getContractParameters()
+        .parseTransfer(ByteUtilities.toHexString(tx.getData().getDecodedContents()));
+
+    // If it's one of ours and the parameters are legible, verify it.
+    if (txParams != null) {
+      // Get the balance
+      String balance =
+          getBalance(txParams.get(contractInterface.getContractParameters().SENDER).get(0));
+      String confirmations =
+          getConfirmations(txParams.get(contractInterface.getContractParameters().SENDER).get(0));
+
+      int intConfirmations = new BigInteger(confirmations, 10).intValue();
+      int intBalance = new BigInteger(balance, 10).intValue();
+
+      // Consider the balance invalid if there haven't been enough confirmations since the last tx.
+      if (intConfirmations < config.getMinConfirmations()) {
+        intBalance = 0;
+      }
+
+      int totalSent = 0;
+      for (String amountString : txParams.get(contractInterface.getContractParameters().AMOUNT)) {
+        totalSent += new BigInteger(amountString, 10).intValue();
+      }
+
+      // If it's not valid, return the original tx.
+      if (totalSent > intBalance) {
+        return transaction;
+      }
+    } // Otherwise just sign it.
+    // TODO Consider refusing to sign if it's not one of ours.
+
     Iterable<Iterable<String>> sigData = getSigString(transaction, address);
     sigData = signWithPrivateKey(sigData, name, address);
     return applySignature(transaction, address, sigData);

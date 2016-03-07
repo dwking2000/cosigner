@@ -23,6 +23,8 @@ public interface FiatContractParametersInterface {
 
   String getBalance(String address);
 
+  String getConfirmations(String address);
+
   String getTotalBalance();
 
   String isOwner(String address);

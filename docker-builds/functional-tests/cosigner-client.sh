@@ -84,7 +84,7 @@ echo ${SIGNEDTX}
 
 echo ""
 echo "Submitting the TX..."
-TXID=$(java -jar ${CLIENTLIB} sendTransaction BTC ${SIGNEDTX} | tail -n 1)
+TXID=$(java -jar ${CLIENTLIB} broadcastTransaction BTC ${SIGNEDTX} | tail -n 1)
 echo ${TXID}
 
 echo ""
@@ -176,7 +176,7 @@ TX=$(java -jar ${CLIENTLIB} prepareTransaction ETH ${COINBASE} ${ADDRESS} 50 | t
 echo ${TX}
 SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction ETH ${TX} ${COINBASE} | tail -n 1)
 echo ${SIGNEDTX}
-TXID=$(java -jar ${CLIENTLIB} sendTransaction ETH ${SIGNEDTX} | tail -n 1)
+TXID=$(java -jar ${CLIENTLIB} broadcastTransaction ETH ${SIGNEDTX} | tail -n 1)
 echo ${TXID}
 
 waitBlock
@@ -211,7 +211,7 @@ echo ${SIGNEDTX}
 
 echo ""
 echo "Submit tx"
-TXID=$(java -jar ${CLIENTLIB} sendTransaction ETH ${SIGNEDTX} | tail -n 1)
+TXID=$(java -jar ${CLIENTLIB} broadcastTransaction ETH ${SIGNEDTX} | tail -n 1)
 echo ${TXID}
 
 waitBlock
@@ -283,7 +283,7 @@ TOKENTX=$(java -jar ${ADMINLIB} generateTokens 10000 | tail -n 1)
 echo "Generated transaction: "${TOKENTX}
 SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction EUR ${TOKENTX} ${COINBASE} | tail -n 1)
 echo "Signed: "${SIGNEDTX}
-TXID=$(java -jar ${CLIENTLIB} sendTransaction EUR ${SIGNEDTX} | tail -n 1)
+TXID=$(java -jar ${CLIENTLIB} broadcastTransaction EUR ${SIGNEDTX} | tail -n 1)
 echo "TxID: "${TXID}
 
 waitBlock
@@ -317,7 +317,7 @@ FIATTX=$(java -jar ${CLIENTLIB} prepareTransaction EUR ${COINBASE} ${FIATADDRESS
 echo ${FIATTX}
 SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction EUR ${FIATTX} ${COINBASE} | tail -n 1)
 echo ${SIGNEDTX}
-TXID=$(java -jar ${CLIENTLIB} sendTransaction EUR ${SIGNEDTX} | tail -n 1)
+TXID=$(java -jar ${CLIENTLIB} broadcastTransaction EUR ${SIGNEDTX} | tail -n 1)
 echo ${TXID}
 
 waitBlock
@@ -340,7 +340,7 @@ FIATTX=$(java -jar ${CLIENTLIB} prepareTransaction EUR ${FIATADDRESS} ${COINBASE
 echo ${FIATTX}
 SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction EUR ${FIATTX} ${FIATADDRESS} | tail -n 1)
 echo ${SIGNEDTX}
-TXID=$(java -jar ${CLIENTLIB} sendTransaction EUR ${SIGNEDTX} | tail -n 1)
+TXID=$(java -jar ${CLIENTLIB} broadcastTransaction EUR ${SIGNEDTX} | tail -n 1)
 echo ${TXID}
 
 waitBlock
@@ -361,7 +361,7 @@ TOKENTX=$(java -jar ${ADMINLIB} destroyTokens 10000 | tail -n 1)
 echo "Generated transaction: "${TOKENTX}
 SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction EUR ${TOKENTX} ${COINBASE} | tail -n 1)
 echo "Signed: "${SIGNEDTX}
-TXID=$(java -jar ${CLIENTLIB} sendTransaction EUR ${SIGNEDTX} | tail -n 1)
+TXID=$(java -jar ${CLIENTLIB} broadcastTransaction EUR ${SIGNEDTX} | tail -n 1)
 echo "TxID: "${TXID}
 
 waitBlock

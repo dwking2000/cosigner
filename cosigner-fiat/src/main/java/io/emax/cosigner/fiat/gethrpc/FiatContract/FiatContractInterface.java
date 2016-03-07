@@ -13,6 +13,8 @@ public interface FiatContractInterface {
 
   String getIsOwner();
 
+  String getGetConfirmations();
+
   String getTransfer();
 
   String getInitData();

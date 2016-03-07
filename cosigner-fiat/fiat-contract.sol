@@ -21,7 +21,7 @@ contract fiatcontract {
   uint numSignatures;
   mapping(uint => SigData) signatures;
 
-  // TODO Add address => block # mapping for confirmations
+  mapping(address => uint) lastActiveBlock;
   mapping(address => uint) balances;
   uint totalBalance;
 
@@ -35,7 +35,10 @@ contract fiatcontract {
     uint8 sigV;
     bytes32 sigR;
     bytes32 sigS;
-  }      
+  }
+
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
   function confirmTransaction() internal returns (bool) {
     transactionHash = 0x00;
@@ -89,14 +92,25 @@ contract fiatcontract {
     return ownersList;
   }
 
-  // TODO function getBalanceConfirmations(address addr) public returns (uint)
-
-  function getBalance(address addr) public returns (uint) {
-    return balances[addr];
+  // This is a multi-sig based contract designed to be controlled by cosigner
+  // As such, we do not support the write/update functions of the token API
+  // Implementing the read-only portion of the official token API
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    // This exists for API compatibility, we do not support allowances.
+    return 0;
   }
 
-  function getTotalBalance() public returns (uint) {
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+  function totalSupply() constant returns (uint256 supply) {
     return totalBalance;
+  }
+  // End Token API
+
+  function getConfirmations(address addr) public returns (uint) {
+    return (block.number - lastActiveBlock[addr]);
   }
 
   // constructor is given number of sigs required to do protected "onlymanyowners" transactions
@@ -137,6 +151,9 @@ contract fiatcontract {
         if(balances[sender] >= transactions[i].value) {
           balances[sender] -= transactions[i].value;
           balances[transactions[i].to] += transactions[i].value;
+          lastActiveBlock[sender] = block.number;
+          lastActiveBlock[transactions[i].to] = block.number;
+          Transfer(sender, transactions[i].to, transactions[i].value);
         } else {
           // Rollback the tx if there'x a problem executing it.
           throw;
@@ -154,6 +171,7 @@ contract fiatcontract {
     if(msg.sender == admin) {
       balances[admin] += amount;
       totalBalance += amount;
+      lastActiveBlock[admin] = block.number;
     }
   }
 
@@ -161,6 +179,7 @@ contract fiatcontract {
     if(balances[admin] >= amount && msg.sender == admin) {
       balances[admin] -= amount;
       totalBalance -= amount;
+      lastActiveBlock[admin] = block.number;
     } else {
       throw;
     }
