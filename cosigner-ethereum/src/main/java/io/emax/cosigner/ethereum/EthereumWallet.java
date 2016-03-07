@@ -498,9 +498,16 @@ public class EthereumWallet implements Wallet, Validatable {
   public String signTransaction(String transaction, String address, String name) {
     // Verify that the account is capable of sending this.
     TransactionDetails txDetails = decodeRawTransaction(transaction);
-    if (txDetails.getAmount().compareTo(new BigDecimal(getBalance(txDetails.getFromAddress()[0])))
-        > 0) {
+    String sender = address;
+    if (reverseMsigContracts.containsKey(address.toLowerCase(Locale.US))) {
+      sender = txDetails.getFromAddress()[0];
+    }
+    if (txDetails.getAmount().compareTo(new BigDecimal(getBalance(sender))) > 0) {
       LOGGER.debug("Refusing to sign, account does not have enough balance.");
+      LOGGER.debug("Amount sent: " + txDetails.getAmount()
+          .divide(BigDecimal.valueOf(config.getWeiMultiplier())).toPlainString());
+      LOGGER.debug("Balance available (" + sender + "): " + (new BigDecimal(
+          getBalance(txDetails.getFromAddress()[0])).toPlainString()));
       return transaction;
     }
 
@@ -877,7 +884,8 @@ public class EthereumWallet implements Wallet, Validatable {
           .recoverPublicKey(decodedTransaction.getSigR().getDecodedContents(),
               decodedTransaction.getSigS().getDecodedContents(),
               new byte[]{(byte) (decodedTransaction.getSigV().getDecodedContents()[0] - 27)},
-              ByteUtilities.toByteArray(EthereumTools.hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes()))))));
+              ByteUtilities.toByteArray(EthereumTools
+                  .hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes()))))));
     } catch (Exception e) {
       LOGGER.error("Couldn't determine signer", e);
     }
