@@ -234,10 +234,14 @@ public class EthereumWallet implements Wallet, Validatable {
     // Look for existing msig account for this address.
     String userAddress = "";
     Iterator<String> addIter = addresses.iterator();
+    List<String> addressesUsed = new LinkedList<>();
     while (addIter.hasNext()) {
       String addr = addIter.next();
       userAddress += addr.toLowerCase(Locale.US);
+      addressesUsed.add(String.format("%64s", addr).replace(' ', '0'));
     }
+    LOGGER.debug("userAddress: " + userAddress);
+
     if (msigContracts.containsKey(userAddress.toLowerCase(Locale.US))) {
       LOGGER.debug("Found existing address: " + msigContracts.get(userAddress).getContractAddress()
           .toLowerCase(Locale.US));
@@ -266,11 +270,6 @@ public class EthereumWallet implements Wallet, Validatable {
     // Address[] - first entry in an array parameter is how many elements there are
 
     // Build the array
-    addIter = addresses.iterator();
-    List<String> addressesUsed = new LinkedList<>();
-    addIter.forEachRemaining(address -> {
-      addressesUsed.add(String.format("%64s", address).replace(' ', '0'));
-    });
     for (int i = 0; i < config.getMultiSigAddresses().length; i++) {
       if (config.getMultiSigAddresses()[i].isEmpty()) {
         continue;
@@ -290,6 +289,7 @@ public class EthereumWallet implements Wallet, Validatable {
         .append(numberOfAddresses);
     for (int i = 0; i < addressesUsed.size(); i++) {
       contractCode.append(addressesUsed.get(i));
+      LOGGER.debug("Adding address to signers: " + addressesUsed.get(i));
     }
     tx.getData().setDecodedContents(ByteUtilities.toByteArray(contractCode.toString()));
 
@@ -499,7 +499,8 @@ public class EthereumWallet implements Wallet, Validatable {
     // Verify that the account is capable of sending this.
     TransactionDetails txDetails = decodeRawTransaction(transaction);
     if (txDetails.getAmount().compareTo(new BigDecimal(getBalance(txDetails.getFromAddress()[0])))
-        < 0) {
+        > 0) {
+      LOGGER.debug("Refusing to sign, account does not have enough balance.");
       return transaction;
     }
 
@@ -871,12 +872,15 @@ public class EthereumWallet implements Wallet, Validatable {
       LOGGER.debug("Non-contract tx sent to contract address", e);
     }
 
-    LOGGER.debug("TX is signed by: " + ByteUtilities.toHexString(Secp256k1
-        .recoverPublicKey(decodedTransaction.getSigR().getDecodedContents(),
-            decodedTransaction.getSigS().getDecodedContents(),
-            new byte[]{(byte) (decodedTransaction.getSigV().getDecodedContents()[0] - 27)},
-            ByteUtilities.toByteArray(EthereumTools
-                .hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes()))))));
+    try {
+      LOGGER.debug("TX is signed by: " + ByteUtilities.toHexString(Secp256k1
+          .recoverPublicKey(decodedTransaction.getSigR().getDecodedContents(),
+              decodedTransaction.getSigS().getDecodedContents(),
+              new byte[]{(byte) (decodedTransaction.getSigV().getDecodedContents()[0] - 27)},
+              ByteUtilities.toByteArray(EthereumTools.hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes()))))));
+    } catch (Exception e) {
+      LOGGER.error("Couldn't determine signer", e);
+    }
     LOGGER.debug("TX bytes: " + EthereumTools
         .hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes())));
     return ethereumRpc.eth_sendRawTransaction(transaction);
