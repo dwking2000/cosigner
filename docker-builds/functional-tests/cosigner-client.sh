@@ -291,6 +291,12 @@ waitBlock
 waitBlock
 waitBlock
 waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
 
 echo ""
 echo "Checking balances..."
@@ -325,6 +331,12 @@ waitBlock
 waitBlock
 waitBlock
 waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
 
 echo ""
 echo "Checking balances..."
@@ -348,6 +360,12 @@ waitBlock
 waitBlock
 waitBlock
 waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
 
 echo ""
 echo "Checking balances..."
@@ -364,6 +382,12 @@ echo "Signed: "${SIGNEDTX}
 TXID=$(java -jar ${CLIENTLIB} broadcastTransaction EUR ${SIGNEDTX} | tail -n 1)
 echo "TxID: "${TXID}
 
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
 waitBlock
 waitBlock
 waitBlock
