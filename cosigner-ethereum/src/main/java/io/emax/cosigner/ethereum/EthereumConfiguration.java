@@ -27,6 +27,8 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
   private static BigDecimal maxAmountPerHour = BigDecimal.ZERO;
   private static BigDecimal maxAmountPerDay = BigDecimal.ZERO;
   private static BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
+
+  // TODO Encrypt if possible.
   // Ideally we'll prompt for this or something more secure than a properties
   // file...
   private static String serverPrivateKey =

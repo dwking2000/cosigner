@@ -280,10 +280,13 @@ public class CommonTest {
 
           String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
           String address = Common.getNewAddress(parmsString);
+          CosignerResponse cosignerResponse =
+              (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+          address = cosignerResponse.getResult();
 
           parms.setAccount(Collections.singletonList(address));
           address = Common.getNewAddress(parmsString);
-          CosignerResponse cosignerResponse =
+          cosignerResponse =
               (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
           address = cosignerResponse.getResult();
           CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();

@@ -152,8 +152,8 @@ public class EthereumWallet implements Wallet, Validatable {
           contractType = contractType.getSuperclass();
         }
       }
-    } catch (InstantiationException | IllegalAccessException e) {
-      LOGGER.debug(null, e);
+    } catch (Exception e) {
+      LOGGER.warn("Error scanning for existing contracts!");
     } finally {
       synching = false;
     }

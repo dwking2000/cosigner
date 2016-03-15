@@ -5,6 +5,7 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
 import io.emax.cosigner.bitcoin.bitcoindrpc.NetworkBytes;
 import io.emax.cosigner.common.Base58;
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.DeterministicRng;
 import io.emax.cosigner.common.crypto.Secp256k1;
 
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
@@ -22,8 +23,6 @@ import java.util.Locale;
 public class BitcoinTools {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinTools.class);
-  private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
-  private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
   public static final String NOKEY = "NOKEY";
   private static final String SHA256 = "SHA-256";
 
@@ -43,28 +42,11 @@ public class BitcoinTools {
       return NOKEY;
     }
 
-    SecureRandom secureRandom;
-    try {
-      secureRandom =
-          SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
-    } catch (Exception e) {
-      LOGGER.error(null, e);
-      secureRandom = new SecureRandom();
-    }
-
     try {
       byte[] userKey = new BigInteger(userKeyPart, 16).toByteArray();
       byte[] serverKey = new BigInteger(serverKeyPart, 16).toByteArray();
-      byte[] userSeed = new byte[Math.max(userKey.length, serverKey.length)];
+      SecureRandom secureRandom = DeterministicRng.getSecureRandom(userKey, serverKey);
 
-      // XOR the key parts to get our seed, repeating them if they lengths
-      // don't match
-      for (int i = 0; i < userSeed.length; i++) {
-        userSeed[i] = (byte) (userKey[i % userKey.length] ^ serverKey[i % serverKey.length]);
-      }
-
-      // Set up out private key variables
-      secureRandom.setSeed(userSeed);
       // Bit of magic, move this maybe. This is the max key range.
       BigInteger maxKey =
           new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);
@@ -80,6 +62,7 @@ public class BitcoinTools {
           privateKeyCheck = new BigInteger(1, privateKeyAttempt);
         }
       }
+
       return encodePrivateKey(ByteUtilities.toHexString(privateKeyAttempt));
     } catch (RuntimeException e) {
       LOGGER.debug(null, e);

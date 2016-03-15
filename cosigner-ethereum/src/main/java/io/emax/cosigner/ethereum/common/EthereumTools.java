@@ -1,6 +1,7 @@
 package io.emax.cosigner.ethereum.common;
 
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.DeterministicRng;
 import io.emax.cosigner.common.crypto.Secp256k1;
 
 import org.bouncycastle.jcajce.provider.digest.Keccak;
@@ -16,8 +17,6 @@ import java.util.Arrays;
 
 public class EthereumTools {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumTools.class);
-  private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
-  private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
 
   /**
    * Generates a deterministic random number that can be used as a private key in ECDSA.
@@ -33,28 +32,14 @@ public class EthereumTools {
    */
   public static String getDeterministicPrivateKey(String userKeyPart, String serverKeyPart,
       int rounds) {
-    SecureRandom secureRandom;
-    try {
-      secureRandom =
-          SecureRandom.getInstance(RANDOM_NUMBER_ALGORITHM, RANDOM_NUMBER_ALGORITHM_PROVIDER);
-    } catch (Exception e) {
-      LOGGER.error(null, e);
-      secureRandom = new SecureRandom();
-    }
 
     byte[] userKey = new BigInteger(userKeyPart, 16).toByteArray();
     byte[] serverKey = new BigInteger(serverKeyPart, 16).toByteArray();
-    byte[] userSeed = new byte[Math.max(userKey.length, serverKey.length)];
-
-    // XOR the key parts to get our seed, repeating them if they lengths
-    // don't match
-    for (int i = 0; i < userSeed.length; i++) {
-      userSeed[i] = (byte) (userKey[i % userKey.length] ^ serverKey[i % serverKey.length]);
-    }
+    SecureRandom secureRandom = DeterministicRng.getSecureRandom(userKey, serverKey);
 
     // Set up our private key variables
     BigInteger privateKeyCheck = BigInteger.ZERO;
-    secureRandom.setSeed(userSeed);
+
     // Bit of magic, move this maybe. This is the max key range.
     BigInteger maxKey =
         new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);

@@ -17,6 +17,7 @@ public class FiatConfiguration implements CurrencyConfiguration {
   private static final Logger LOGGER = LoggerFactory.getLogger(FiatConfiguration.class);
 
   private static String currencySymbol = "FIAT";
+  // TODO Encrypt if possible.
   private static String serverPrivateKey = "deadbeef";
   private static int minSignatures = 10;
   private static int minConfirmations = 10;
