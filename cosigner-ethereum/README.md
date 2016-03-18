@@ -6,8 +6,7 @@ An ethereum implementation for cosigner-api
 
 ## Current State
 
-Unstable
-- Multi-sig contract needs to be reviewed, and there is no backwards compatibility with previous contract code yet.
+Mostly-stable. 
 
 # Warning #
 cosigner-ethereum tracks addresses based on the contract creation account and the specific contract it uses. Until the contract is finalized, any software updates may break cosigner's ability to access accounts from previous versions. So you should only be using this on a test network. We will attempt to address the changing contracts issue once the library is stable.
