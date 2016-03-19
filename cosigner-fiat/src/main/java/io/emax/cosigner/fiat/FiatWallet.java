@@ -96,42 +96,46 @@ public class FiatWallet implements Wallet {
       }
     }
 
-    if ((contractAddress == null || contractAddress.isEmpty()) && config.generateNewContract()) {
-      LOGGER.debug("Generating new contract...");
-      // Create the TX data structure
-      RawTransaction tx = new RawTransaction();
-      tx.getGasPrice().setDecodedContents(ByteUtilities
-          .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
-      tx.getGasLimit().setDecodedContents(ByteUtilities
-          .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
-      tx.getData().setDecodedContents(ByteUtilities.toByteArray(
-          contractInterface.getContractParameters()
-              .createContract(config.getAdminAccount(), Arrays.asList(config.getMultiSigAccounts()),
-                  config.getMinSignatures())));
+    try {
+      if ((contractAddress == null || contractAddress.isEmpty()) && config.generateNewContract()) {
+        LOGGER.debug("Generating new contract...");
+        // Create the TX data structure
+        RawTransaction tx = new RawTransaction();
+        tx.getGasPrice().setDecodedContents(ByteUtilities
+            .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
+        tx.getGasLimit().setDecodedContents(ByteUtilities
+            .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
+        tx.getData().setDecodedContents(ByteUtilities.toByteArray(
+            contractInterface.getContractParameters().createContract(config.getAdminAccount(),
+                Arrays.asList(config.getMultiSigAccounts()), config.getMinSignatures())));
 
-      String rawTx = ByteUtilities.toHexString(tx.encode());
-      LOGGER.debug("Creating contract: " + rawTx);
-      rawTx = signTransaction(rawTx, config.getContractAccount());
-      LOGGER.debug("Signed contract: " + rawTx);
-      sendTransaction(rawTx);
+        String rawTx = ByteUtilities.toHexString(tx.encode());
+        LOGGER.debug("Creating contract: " + rawTx);
+        rawTx = signTransaction(rawTx, config.getContractAccount());
+        LOGGER.debug("Signed contract: " + rawTx);
+        sendTransaction(rawTx);
 
-      RlpList calculatedContractAddress = new RlpList();
-      RlpItem contractCreator = new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
-      calculatedContractAddress.add(contractCreator);
-      calculatedContractAddress.add(tx.getNonce());
+        RlpList calculatedContractAddress = new RlpList();
+        RlpItem contractCreator =
+            new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
+        calculatedContractAddress.add(contractCreator);
+        calculatedContractAddress.add(tx.getNonce());
 
-      // Figure out the contract address and store it in lookup tables for future use
-      String expectedContract =
-          EthereumTools.hashKeccak(ByteUtilities.toHexString(calculatedContractAddress.encode()))
-              .substring(96 / 4, 256 / 4);
+        // Figure out the contract address and store it in lookup tables for future use
+        String expectedContract =
+            EthereumTools.hashKeccak(ByteUtilities.toHexString(calculatedContractAddress.encode()))
+                .substring(96 / 4, 256 / 4);
 
-      LOGGER.debug(
-          "Expecting new contract address of " + expectedContract + " with tx: " + RawTransaction
-              .parseBytes(ByteUtilities.toByteArray(rawTx)));
-      contractAddress = expectedContract;
+        LOGGER.debug(
+            "Expecting new contract address of " + expectedContract + " with tx: " + RawTransaction
+                .parseBytes(ByteUtilities.toByteArray(rawTx)));
+        contractAddress = expectedContract;
+      }
+
+      LOGGER.debug("Got contract address of: " + contractAddress);
+    } catch (Exception e) {
+      LOGGER.error("Unable to create contract, FIAT module is not usable!", e);
     }
-
-    LOGGER.debug("Got contract address of: " + contractAddress);
   }
 
   private FiatContractInterface getContractType(String contract) {
