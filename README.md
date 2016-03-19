@@ -37,7 +37,7 @@ Cosigner always reports the lower balance of either the most recent block, or th
 
 #### Multiple Cosigner nodes
 
-Cosigner is designed to be run as a cluster of nodes, this is done to reduce single points of failure in the system, each Cosigner node has its own set of full blockchain nodes, this gives a larger probability of discovering if one of one of your blockchain nodes are on a fork, or if a transaction is being double spended. Each node reconfirms transaction data, balance, etc… before signing. Signing keys can also be spread out over these nodes , so that each one needs to agree before a transaction can be submitted.
+Cosigner is designed to be run as a cluster of nodes, this is done to reduce single points of failure in the system, each Cosigner node has its own set of full blockchain nodes, this gives a larger probability of discovering if one of your blockchain nodes are on a fork, or if a transaction is being double spended. Each node reconfirms transaction data, balance, etc… before signing. Signing keys can also be spread out over these nodes, so that each one needs to agree before a transaction can be submitted.
 
 ### Blockchain's & implementations
 Having multiple blockchains available through one abstracted API is convenient, and aids in producing stable code. We also believe multiple implementations of each blockchain technology makes Cosigner more resilient to implementation specific bugs and forks.
