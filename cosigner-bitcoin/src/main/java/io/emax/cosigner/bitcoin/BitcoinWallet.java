@@ -84,14 +84,14 @@ public class BitcoinWallet implements Wallet, Validatable {
         }
       }
     }
-    bitcoindRpc.importaddress(newAddress, internalName, true);
+    bitcoindRpc.importaddress(newAddress, internalName, false);
 
     return newAddress;
   }
 
   @Override
   public boolean registerAddress(String address) {
-    bitcoindRpc.importaddress(address, "", true);
+    bitcoindRpc.importaddress(address, "", false);
     return true;
   }
 
@@ -125,7 +125,7 @@ public class BitcoinWallet implements Wallet, Validatable {
     // Hash the user's key so it's not stored in the wallet
     String internalName = BitcoinTools.encodeUserKey(name);
     String newAddress = generateMultiSigAddress(addresses, name);
-    bitcoindRpc.importaddress(newAddress, internalName, true);
+    bitcoindRpc.importaddress(newAddress, internalName, false);
 
     return newAddress;
   }
