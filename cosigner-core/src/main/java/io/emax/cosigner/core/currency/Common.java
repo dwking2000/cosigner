@@ -45,6 +45,7 @@ public class Common {
   private static final HashMap<String, Subscription> transactionSubscriptions = new HashMap<>();
   private static final HashMap<String, Monitor> monitors = new HashMap<>();
 
+  // TODO All responses should be reworked to the format: { response: "", error: "" }
   private static CurrencyParameters convertParams(String params) {
     try {
       JsonFactory jsonFact = new JsonFactory();
