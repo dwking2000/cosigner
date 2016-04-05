@@ -134,7 +134,7 @@ public class FiatWallet implements Wallet {
 
       LOGGER.debug("Got contract address of: " + contractAddress);
     } catch (Exception e) {
-      LOGGER.error("Unable to create contract, FIAT module is not usable!", e);
+      LOGGER.error("Unable to create contract, FIAT module is not usable!");
     }
   }
 
@@ -451,66 +451,71 @@ public class FiatWallet implements Wallet {
 
   private static void scanTransactions() {
     // Scan every block, look for origin and receiver.
-    // Get latest block
-    BigInteger latestBlockNumber =
-        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+    try {
+      // Get latest block
+      BigInteger latestBlockNumber =
+          new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
 
-    for (long i = 0; i < latestBlockNumber.longValue(); i++) {
-      String blockNumber = "0x" + BigInteger.valueOf(i).toString(16);
-      Block block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
+      for (long i = 0; i < latestBlockNumber.longValue(); i++) {
+        String blockNumber = "0x" + BigInteger.valueOf(i).toString(16);
+        Block block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
 
-      if (block.getTransactions().length == 0) {
-        continue;
-      }
+        if (block.getTransactions().length == 0) {
+          continue;
+        }
 
-      Arrays.asList(block.getTransactions()).forEach(tx -> {
-        TransactionDetails txDetail = new TransactionDetails();
-        txDetail.setTxDate(block.getTimestamp());
+        Arrays.asList(block.getTransactions()).forEach(tx -> {
+          TransactionDetails txDetail = new TransactionDetails();
+          txDetail.setTxDate(block.getTimestamp());
 
-        txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
-        txDetail.setFromAddress(
-            new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getFrom()))});
-        txDetail.setToAddress(
-            new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
-        txDetail.setAmount(BigDecimal.ZERO);
+          txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
+          txDetail.setFromAddress(
+              new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getFrom()))});
+          txDetail.setToAddress(
+              new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
+          txDetail.setAmount(BigDecimal.ZERO);
 
-        // For each receiver that is the fiat account, parse the data, check if it's transferring a balance
-        try {
-          if (contractAddress.equalsIgnoreCase(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
-            String txData = tx.getInput();
-            FiatContractParametersInterface contractParamsInterface =
-                contractInterface.getContractParameters();
-            Map<String, List<String>> contractParams =
-                contractParamsInterface.parseTransfer(txData);
+          // For each receiver that is the fiat account, parse the data, check if it's transferring a balance
+          try {
+            if (contractAddress
+                .equalsIgnoreCase(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
+              String txData = tx.getInput();
+              FiatContractParametersInterface contractParamsInterface =
+                  contractInterface.getContractParameters();
+              Map<String, List<String>> contractParams =
+                  contractParamsInterface.parseTransfer(txData);
 
-            if (contractParams != null) {
-              for (int j = 0; j < contractParams.get(contractParamsInterface.RECIPIENTS).size();
-                   j++) {
-                TransactionDetails fiatTx = new TransactionDetails();
-                fiatTx.setFromAddress(
-                    contractParams.get(contractParamsInterface.SENDER).toArray(new String[]{}));
-                fiatTx.setToAddress(
-                    new String[]{contractParams.get(contractParamsInterface.RECIPIENTS).get(j)});
-                fiatTx.setAmount(
-                    new BigDecimal(contractParams.get(contractParamsInterface.AMOUNT).get(j)));
-                fiatTx.setTxHash(txDetail.getTxHash());
+              if (contractParams != null) {
+                for (int j = 0; j < contractParams.get(contractParamsInterface.RECIPIENTS).size();
+                     j++) {
+                  TransactionDetails fiatTx = new TransactionDetails();
+                  fiatTx.setFromAddress(
+                      contractParams.get(contractParamsInterface.SENDER).toArray(new String[]{}));
+                  fiatTx.setToAddress(
+                      new String[]{contractParams.get(contractParamsInterface.RECIPIENTS).get(j)});
+                  fiatTx.setAmount(
+                      new BigDecimal(contractParams.get(contractParamsInterface.AMOUNT).get(j)));
+                  fiatTx.setTxHash(txDetail.getTxHash());
 
-                if (!txHistory.containsKey(fiatTx.getToAddress()[0])) {
-                  txHistory.put(fiatTx.getToAddress()[0], new HashSet<>());
+                  if (!txHistory.containsKey(fiatTx.getToAddress()[0])) {
+                    txHistory.put(fiatTx.getToAddress()[0], new HashSet<>());
+                  }
+                  if (!txHistory.containsKey(fiatTx.getFromAddress()[0])) {
+                    txHistory.put(fiatTx.getFromAddress()[0], new HashSet<>());
+                  }
+
+                  txHistory.get(fiatTx.getFromAddress()[0]).add(fiatTx);
+                  txHistory.get(fiatTx.getToAddress()[0]).add(fiatTx);
                 }
-                if (!txHistory.containsKey(fiatTx.getFromAddress()[0])) {
-                  txHistory.put(fiatTx.getFromAddress()[0], new HashSet<>());
-                }
-
-                txHistory.get(fiatTx.getFromAddress()[0]).add(fiatTx);
-                txHistory.get(fiatTx.getToAddress()[0]).add(fiatTx);
               }
             }
+          } catch (Exception e) {
+            LOGGER.debug("Unable to decode tx data", e);
           }
-        } catch (Exception e) {
-          LOGGER.debug("Unable to decode tx data", e);
-        }
-      });
+        });
+      }
+    } catch (Exception e) {
+      LOGGER.warn("Unable to scan blockchain for FIAT wallet!");
     }
   }
 

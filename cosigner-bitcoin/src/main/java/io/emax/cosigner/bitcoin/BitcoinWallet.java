@@ -131,8 +131,8 @@ public class BitcoinWallet implements Wallet, Validatable {
   }
 
   private static void scanForAddresses() {
-    Map<String, BigDecimal> knownAccounts = bitcoindRpc.listaccounts(0, true);
     try {
+      Map<String, BigDecimal> knownAccounts = bitcoindRpc.listaccounts(0, true);
       knownAccounts.keySet().forEach(account -> {
         // Look for any known PK/Single accounts and generate the matching multisig in memory
         Pattern pattern = Pattern.compile("^" + PUBKEY_PREFIX + "(.*)");

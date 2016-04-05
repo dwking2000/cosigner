@@ -204,7 +204,7 @@ public class BitcoinTools {
 
       return Base58.encode(decodedPublicKey);
     } catch (Exception e) {
-      LOGGER.error(null, e);
+      LOGGER.error("Unable to get network information when creating address", e);
       return null;
     }
   }

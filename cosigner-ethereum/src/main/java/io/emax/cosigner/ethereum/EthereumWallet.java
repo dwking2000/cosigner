@@ -901,90 +901,95 @@ public class EthereumWallet implements Wallet, Validatable {
 
   private static void scanTransactions() {
     // Scan every block, look for origin and receiver.
-    // Get latest block
-    BigInteger latestBlockNumber =
-        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+    try {
+      // Get latest block
+      BigInteger latestBlockNumber =
+          new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
 
-    for (long i = 0; i < latestBlockNumber.longValue(); i++) {
-      String blockNumber = "0x" + BigInteger.valueOf(i).toString(16);
-      Block block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
+      for (long i = 0; i < latestBlockNumber.longValue(); i++) {
+        String blockNumber = "0x" + BigInteger.valueOf(i).toString(16);
+        Block block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
 
-      if (block.getTransactions().length == 0) {
-        continue;
-      }
+        if (block.getTransactions().length == 0) {
+          continue;
+        }
 
-      Arrays.asList(block.getTransactions()).forEach(tx -> {
-        TransactionDetails txDetail = new TransactionDetails();
-        txDetail.setTxDate(block.getTimestamp());
+        Arrays.asList(block.getTransactions()).forEach(tx -> {
+          TransactionDetails txDetail = new TransactionDetails();
+          txDetail.setTxDate(block.getTimestamp());
 
-        txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
-        txDetail.setFromAddress(
-            new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getFrom()))});
-        txDetail.setToAddress(
-            new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
-        BigDecimal amount =
-            new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(tx.getValue())));
-        amount = amount.divide(BigDecimal.valueOf(config.getWeiMultiplier()));
-        txDetail.setAmount(amount);
+          txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
+          txDetail.setFromAddress(
+              new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getFrom()))});
+          txDetail.setToAddress(
+              new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
+          BigDecimal amount =
+              new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(tx.getValue())));
+          amount = amount.divide(BigDecimal.valueOf(config.getWeiMultiplier()));
+          txDetail.setAmount(amount);
 
-        // For each receiver that is an mSig account, parse the data, check if it's sending data to
-        // another account.
-        try {
-          if (reverseMsigContracts.containsKey(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
-            ContractInformation contractInfo = msigContracts
-                .get(reverseMsigContracts.get(txDetail.getToAddress()[0].toLowerCase(Locale.US)));
-            MultiSigContractInterface contract =
-                (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
-            LOGGER.debug("Found transaction for contract version: " + contract.getClass()
-                .getCanonicalName());
+          // For each receiver that is an mSig account, parse the data, check if it's sending data to
+          // another account.
+          try {
+            if (reverseMsigContracts
+                .containsKey(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
+              ContractInformation contractInfo = msigContracts
+                  .get(reverseMsigContracts.get(txDetail.getToAddress()[0].toLowerCase(Locale.US)));
+              MultiSigContractInterface contract =
+                  (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
+              LOGGER.debug("Found transaction for contract version: " + contract.getClass()
+                  .getCanonicalName());
 
-            byte[] inputData = ByteUtilities.toByteArray(tx.getInput());
-            MultiSigContractParametersInterface multiSig = contract.getContractParameters();
-            multiSig.decode(inputData);
+              byte[] inputData = ByteUtilities.toByteArray(tx.getInput());
+              MultiSigContractParametersInterface multiSig = contract.getContractParameters();
+              multiSig.decode(inputData);
 
-            if (multiSig.getFunction().equalsIgnoreCase(contract.getExecuteFunctionAddress())) {
-              for (int j = 0; j < multiSig.getAddress().size(); j++) {
-                TransactionDetails msigTx = new TransactionDetails();
-                msigTx.setFromAddress(txDetail.getToAddress());
-                msigTx.setToAddress(new String[]{multiSig.getAddress().get(j)});
-                msigTx.setAmount(BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
-                    .divide(BigDecimal.valueOf(config.getWeiMultiplier())));
-                msigTx.setTxHash(txDetail.getTxHash());
+              if (multiSig.getFunction().equalsIgnoreCase(contract.getExecuteFunctionAddress())) {
+                for (int j = 0; j < multiSig.getAddress().size(); j++) {
+                  TransactionDetails msigTx = new TransactionDetails();
+                  msigTx.setFromAddress(txDetail.getToAddress());
+                  msigTx.setToAddress(new String[]{multiSig.getAddress().get(j)});
+                  msigTx.setAmount(BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
+                      .divide(BigDecimal.valueOf(config.getWeiMultiplier())));
+                  msigTx.setTxHash(txDetail.getTxHash());
 
-                if (!txHistory.containsKey(msigTx.getToAddress()[0])) {
-                  txHistory.put(msigTx.getToAddress()[0], new HashSet<>());
-                }
-                if (!txHistory.containsKey(msigTx.getFromAddress()[0])) {
-                  txHistory.put(msigTx.getFromAddress()[0], new HashSet<>());
-                }
+                  if (!txHistory.containsKey(msigTx.getToAddress()[0])) {
+                    txHistory.put(msigTx.getToAddress()[0], new HashSet<>());
+                  }
+                  if (!txHistory.containsKey(msigTx.getFromAddress()[0])) {
+                    txHistory.put(msigTx.getFromAddress()[0], new HashSet<>());
+                  }
 
-                if (reverseMsigContracts.containsKey(msigTx.getFromAddress()[0])) {
-                  txHistory.get(msigTx.getFromAddress()[0]).add(msigTx);
-                }
-                if (reverseMsigContracts.containsKey(msigTx.getToAddress()[0])) {
-                  txHistory.get(msigTx.getToAddress()[0]).add(msigTx);
+                  if (reverseMsigContracts.containsKey(msigTx.getFromAddress()[0])) {
+                    txHistory.get(msigTx.getFromAddress()[0]).add(msigTx);
+                  }
+                  if (reverseMsigContracts.containsKey(msigTx.getToAddress()[0])) {
+                    txHistory.get(msigTx.getToAddress()[0]).add(msigTx);
+                  }
                 }
               }
             }
+          } catch (Exception e) {
+            LOGGER.debug("Unable to decode tx data", e);
           }
-        } catch (Exception e) {
-          LOGGER.debug("Unable to decode tx data", e);
-        }
 
-        if (!txHistory.containsKey(txDetail.getToAddress()[0])) {
-          txHistory.put(txDetail.getToAddress()[0], new HashSet<>());
-        }
-        if (!txHistory.containsKey(txDetail.getFromAddress()[0])) {
-          txHistory.put(txDetail.getFromAddress()[0], new HashSet<>());
-        }
+          if (!txHistory.containsKey(txDetail.getToAddress()[0])) {
+            txHistory.put(txDetail.getToAddress()[0], new HashSet<>());
+          }
+          if (!txHistory.containsKey(txDetail.getFromAddress()[0])) {
+            txHistory.put(txDetail.getFromAddress()[0], new HashSet<>());
+          }
 
-        if (reverseMsigContracts.containsKey(txDetail.getFromAddress()[0])) {
-          txHistory.get(txDetail.getFromAddress()[0]).add(txDetail);
-        }
-        if (reverseMsigContracts.containsKey(txDetail.getToAddress()[0])) {
-          txHistory.get(txDetail.getToAddress()[0]).add(txDetail);
-        }
-      });
+          if (reverseMsigContracts.containsKey(txDetail.getFromAddress()[0])) {
+            txHistory.get(txDetail.getFromAddress()[0]).add(txDetail);
+          }
+          if (reverseMsigContracts.containsKey(txDetail.getToAddress()[0])) {
+            txHistory.get(txDetail.getToAddress()[0]).add(txDetail);
+          }
+        });
+      }
+    } catch (Exception e) {
+      LOGGER.warn("Unable to scan blockchain for Ethereum!");
     }
   }
 
