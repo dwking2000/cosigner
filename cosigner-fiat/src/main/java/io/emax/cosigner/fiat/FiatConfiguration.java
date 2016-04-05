@@ -116,7 +116,7 @@ public class FiatConfiguration implements CurrencyConfiguration {
         // maxAmountPerTransaction
         maxAmountPerTransaction = new BigDecimal(cosignerProperties
             .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString()));
-        
+
       } catch (IOException e) {
         if (propertiesFile != null) {
           try {
@@ -125,8 +125,8 @@ public class FiatConfiguration implements CurrencyConfiguration {
             LOGGER.warn(null, e1);
           }
         }
-        LOGGER.debug(null, e);
-        LOGGER.info("Could not load cosigner-fiat configuration, using defaults.");
+        LOGGER.info("Could not load cosigner-fiat configuration from " + propertiesFilePath
+            + ", using defaults.");
       }
     }
   }

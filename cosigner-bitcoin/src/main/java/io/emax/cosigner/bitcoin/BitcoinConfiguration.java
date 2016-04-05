@@ -50,9 +50,8 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   private static synchronized void loadConfig() {
     if (!configLoaded) {
       FileInputStream propertiesFile = null;
+      String propertiesFilePath = "./cosigner-bitcoin.properties";
       try {
-        String propertiesFilePath = "./cosigner-bitcoin.properties";
-
         Properties cosignerProperties = new Properties();
         propertiesFile = new FileInputStream(propertiesFilePath);
 
@@ -112,8 +111,8 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
             LOGGER.warn(null, e1);
           }
         }
-        LOGGER.info("Could not load cosigner-bitcoin configuration, using defaults.");
-        LOGGER.debug(null, e);
+        LOGGER.info("Could not load cosigner-bitcoin configuration from " + propertiesFilePath
+            + ", using defaults.");
       }
       configLoaded = true;
     }

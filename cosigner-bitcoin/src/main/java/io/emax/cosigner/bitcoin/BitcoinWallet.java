@@ -132,15 +132,19 @@ public class BitcoinWallet implements Wallet, Validatable {
 
   private static void scanForAddresses() {
     Map<String, BigDecimal> knownAccounts = bitcoindRpc.listaccounts(0, true);
-    knownAccounts.keySet().forEach(account -> {
-      // Look for any known PK/Single accounts and generate the matching multisig in memory
-      Pattern pattern = Pattern.compile("^" + PUBKEY_PREFIX + "(.*)");
-      Matcher matcher = pattern.matcher(account);
-      if (matcher.matches()) {
-        String pubKey = matcher.group(1);
-        generateMultiSigAddress(Collections.singletonList(pubKey), null);
-      }
-    });
+    try {
+      knownAccounts.keySet().forEach(account -> {
+        // Look for any known PK/Single accounts and generate the matching multisig in memory
+        Pattern pattern = Pattern.compile("^" + PUBKEY_PREFIX + "(.*)");
+        Matcher matcher = pattern.matcher(account);
+        if (matcher.matches()) {
+          String pubKey = matcher.group(1);
+          generateMultiSigAddress(Collections.singletonList(pubKey), null);
+        }
+      });
+    } catch (Exception e) {
+      LOGGER.debug("No accounts found when scanning");
+    }
   }
 
   private static String generateMultiSigAddress(Iterable<String> addresses, String name) {

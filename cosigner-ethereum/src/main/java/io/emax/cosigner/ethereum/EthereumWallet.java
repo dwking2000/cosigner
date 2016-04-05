@@ -108,40 +108,45 @@ public class EthereumWallet implements Wallet, Validatable {
           MultiSigContractInterface contractParams =
               (MultiSigContractInterface) contractType.newInstance();
           if (contractParams.getContractPayload().equalsIgnoreCase(contractCode)) {
-            // We found an existing contract
-            LOGGER.debug("Found existing contract version: " + contractType.getCanonicalName());
-            CallData callData = new CallData();
-            callData.setTo("0x" + contract);
-            callData.setData("0x" + contractParams.getGetOwnersFunctionAddress());
-            callData.setGas("100000"); // Doesn't matter, just can't be nil
-            callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
-            String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+            try {
+              // We found an existing contract
+              LOGGER.debug("Found existing contract version: " + contractType.getCanonicalName());
+              CallData callData = new CallData();
+              callData.setTo("0x" + contract);
+              callData.setData("0x" + contractParams.getGetOwnersFunctionAddress());
+              callData.setGas("100000"); // Doesn't matter, just can't be nil
+              callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
+              String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
 
-            byte[] callBytes = ByteUtilities.toByteArray(response);
-            int bufferPointer = 32; // skip first value, we know it just points to the next one.
-            byte[] sizeBytes = Arrays.copyOfRange(callBytes, bufferPointer, bufferPointer + 32);
-            bufferPointer += 32;
-            int numAddresses = new BigInteger(1, sizeBytes).intValue();
-            for (int j = 0; j < numAddresses; j++) {
-              byte[] addressBytes =
-                  Arrays.copyOfRange(callBytes, bufferPointer, bufferPointer + 32);
+              byte[] callBytes = ByteUtilities.toByteArray(response);
+              int bufferPointer = 32; // skip first value, we know it just points to the next one.
+              byte[] sizeBytes = Arrays.copyOfRange(callBytes, bufferPointer, bufferPointer + 32);
               bufferPointer += 32;
-              String userAddress =
-                  ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(addressBytes));
-              userAddress = String.format("%40s", userAddress).replace(' ', '0');
+              int numAddresses = new BigInteger(1, sizeBytes).intValue();
+              for (int j = 0; j < numAddresses; j++) {
+                byte[] addressBytes =
+                    Arrays.copyOfRange(callBytes, bufferPointer, bufferPointer + 32);
+                bufferPointer += 32;
+                String userAddress =
+                    ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(addressBytes));
+                userAddress = String.format("%40s", userAddress).replace(' ', '0');
 
-              // Skip it if we already know about it
-              if (reverseMsigContracts.containsKey(contract.toLowerCase(Locale.US))) {
-                continue;
+                // Skip it if we already know about it
+                if (reverseMsigContracts.containsKey(contract.toLowerCase(Locale.US))) {
+                  continue;
+                }
+
+                msigContracts.put(userAddress.toLowerCase(Locale.US),
+                    new ContractInformation(contract.toLowerCase(Locale.US), contractCode,
+                        contractType));
+                reverseMsigContracts
+                    .put(contract.toLowerCase(Locale.US), userAddress.toLowerCase(Locale.US));
               }
-
-              msigContracts.put(userAddress.toLowerCase(Locale.US),
-                  new ContractInformation(contract.toLowerCase(Locale.US), contractCode,
-                      contractType));
-              reverseMsigContracts
-                  .put(contract.toLowerCase(Locale.US), userAddress.toLowerCase(Locale.US));
+              break;
+            } catch (Exception e) {
+              LOGGER.warn("Could not process contract data for contract at " + contract + "!");
+              break;
             }
-            break;
           }
 
           contractType = contractType.getSuperclass();
@@ -564,11 +569,11 @@ public class EthereumWallet implements Wallet, Validatable {
           signingAddress = ByteUtilities.toHexString(
               Secp256k1.recoverPublicKey(sigR, sigS, sigV, ByteUtilities.toByteArray(data)))
               .substring(2);
+          signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
+          LOGGER.debug("Appears to be signed by: " + signingAddress);
         } catch (Exception e) {
-          LOGGER.debug("Couldn't recover public key from signature", e);
+          LOGGER.debug("Couldn't recover public key from signature");
         }
-        signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
-        LOGGER.debug("Appears to be signed by: " + signingAddress);
 
         // Adjust for expected format.
         sigV[0] += 27;
@@ -710,7 +715,7 @@ public class EthereumWallet implements Wallet, Validatable {
         LOGGER.error("Error matching contract class", e);
         return new LinkedList<>();
       } catch (Exception e) {
-        LOGGER.debug("Non-contract tx sent to contract address", e);
+        LOGGER.debug("Non-contract tx sent to contract address");
       }
     }
 
@@ -1006,7 +1011,7 @@ public class EthereumWallet implements Wallet, Validatable {
       String sender = EthereumTools.getPublicAddress(senderKey, false);
       txDetail.setFromAddress(new String[]{sender});
     } catch (ArrayIndexOutOfBoundsException e) {
-      LOGGER.debug("Unsigned transaction, can't determine sender", e);
+      LOGGER.debug("Unsigned transaction, can't determine sender");
       txDetail.setFromAddress(new String[]{});
     }
 
@@ -1044,7 +1049,7 @@ public class EthereumWallet implements Wallet, Validatable {
         }
       }
     } catch (ArrayIndexOutOfBoundsException | InstantiationException | IllegalAccessException e) {
-      LOGGER.debug("Unable to decode tx data", e);
+      LOGGER.debug("Unable to decode tx data");
     }
 
     return txDetail;

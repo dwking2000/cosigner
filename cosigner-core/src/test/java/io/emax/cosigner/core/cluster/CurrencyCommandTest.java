@@ -1,5 +1,6 @@
 package io.emax.cosigner.core.cluster;
 
+import io.emax.cosigner.api.core.CosignerResponse;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
@@ -40,6 +41,9 @@ public class CurrencyCommandTest {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      currenciesString = cosignerResponse.getResult();
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -61,9 +65,11 @@ public class CurrencyCommandTest {
       command.setCurrencyParams(params);
 
       String response = CurrencyCommand.handleCommand(command);
-      command = CurrencyCommand.parseCommandString(response);
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, response);
+      response = cosignerResponse.getResult();
 
-      System.out.println("Response to sign-request: " + command.toJson());
+      System.out.println("Response to sign-request: " + response);
 
     });
   }

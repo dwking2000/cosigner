@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import io.emax.cosigner.api.core.CosignerResponse;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.currency.Common;
@@ -86,10 +87,11 @@ public class CurrencyCommand implements BaseCommand {
       case SIGN:
         String signedTx = Common.approveTransaction(
             Json.stringifyObject(CurrencyParameters.class, command.currencyParams), false);
-        command.currencyParams.setTransactionData(signedTx);
-        return command.toJson();
+        return signedTx;
       default:
-        return command.toJson();
+        CosignerResponse cosignerResponse = new CosignerResponse();
+        cosignerResponse.setError("Unsupported command");
+        return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     }
   }
 }

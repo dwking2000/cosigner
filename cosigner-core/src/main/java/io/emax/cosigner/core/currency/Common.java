@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.emax.cosigner.api.core.CosignerResponse;
 import io.emax.cosigner.api.core.CurrencyPackage;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.api.core.CurrencyParametersRecipient;
@@ -85,31 +86,47 @@ public class Common {
    * @return String list of currencies.
    */
   public static String listCurrencies() {
-    List<String> currencies = new LinkedList<>();
-    CosignerApplication.getCurrencies().keySet().forEach(currencies::add);
+    try {
+      List<String> currencies = new LinkedList<>();
+      CosignerApplication.getCurrencies().keySet().forEach(currencies::add);
 
-    String currencyString = Json.stringifyObject(LinkedList.class, currencies);
+      String currencyString = Json.stringifyObject(LinkedList.class, currencies);
 
-    LOGGER.debug("[Response] " + currencyString);
-    return currencyString;
+      LOGGER.debug("[Response] " + currencyString);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(currencyString);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
   /**
    * Registers addresses for currency libraries that need a watch list.
    */
   public static String registerAddress(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    HashMap<String, Boolean> responses = new HashMap<>();
-    currencyParams.getAccount().forEach(address -> {
-      Boolean result = currency.getWallet().registerAddress(address);
-      responses.put(address, result);
-    });
+      HashMap<String, Boolean> responses = new HashMap<>();
+      currencyParams.getAccount().forEach(address -> {
+        Boolean result = currency.getWallet().registerAddress(address);
+        responses.put(address, result);
+      });
 
-    String response = Json.stringifyObject(HashMap.class, responses);
-    LOGGER.debug("[Response] " + response);
-    return response;
+      String response = Json.stringifyObject(HashMap.class, responses);
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
   /**
@@ -120,34 +137,50 @@ public class Common {
    * keys.
    */
   public static String getNewAddress(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    String userAccount = currency.getWallet().createAddress(currencyParams.getUserKey());
-    LinkedList<String> accounts = new LinkedList<>();
-    if (currencyParams.getAccount() != null) {
-      accounts.addAll(currencyParams.getAccount());
+      String userAccount = currency.getWallet().createAddress(currencyParams.getUserKey());
+      LinkedList<String> accounts = new LinkedList<>();
+      if (currencyParams.getAccount() != null) {
+        accounts.addAll(currencyParams.getAccount());
+      }
+      accounts.add(userAccount);
+
+      String response =
+          currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     }
-    accounts.add(userAccount);
-
-    String response =
-        currency.getWallet().getMultiSigAddress(accounts, currencyParams.getUserKey());
-    LOGGER.debug("[Response] " + response);
-    return response;
   }
 
   /**
    * Generates a currency-specific address from a public key.
    */
   public static String generateAddressFromKey(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    String publicKey = currencyParams.getUserKey();
-    String publicAddress = currency.getWallet().createAddressFromKey(publicKey, false);
+      String publicKey = currencyParams.getUserKey();
+      String publicAddress = currency.getWallet().createAddressFromKey(publicKey, false);
 
-    LOGGER.debug("[Response] " + publicAddress);
-    return publicAddress;
+      LOGGER.debug("[Response] " + publicAddress);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(publicAddress);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
   /**
@@ -158,15 +191,23 @@ public class Common {
    * key.
    */
   public static String listAllAddresses(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    LinkedList<String> accounts = new LinkedList<>();
-    currency.getWallet().getAddresses(currencyParams.getUserKey()).forEach(accounts::add);
-    String response = Json.stringifyObject(LinkedList.class, accounts);
+      LinkedList<String> accounts = new LinkedList<>();
+      currency.getWallet().getAddresses(currencyParams.getUserKey()).forEach(accounts::add);
+      String response = Json.stringifyObject(LinkedList.class, accounts);
 
-    LOGGER.debug("[Response] " + response);
-    return response;
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
   /**
@@ -178,17 +219,25 @@ public class Common {
    * @return List of transactions that affect each account.
    */
   public static String listTransactions(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    LinkedList<TransactionDetails> txDetails = new LinkedList<>();
-    currencyParams.getAccount().forEach(account -> txDetails
-        .addAll(Arrays.asList(currency.getWallet().getTransactions(account, 100, 0))));
+      LinkedList<TransactionDetails> txDetails = new LinkedList<>();
+      currencyParams.getAccount().forEach(account -> txDetails
+          .addAll(Arrays.asList(currency.getWallet().getTransactions(account, 100, 0))));
 
-    String response = Json.stringifyObject(LinkedList.class, txDetails);
+      String response = Json.stringifyObject(LinkedList.class, txDetails);
 
-    LOGGER.debug("[Response] " + response);
-    return response;
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
   /**
@@ -198,24 +247,32 @@ public class Common {
    * @return Sum of all balances for the provided addresses.
    */
   public static String getBalance(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    BigDecimal balance = BigDecimal.ZERO;
-    if (currencyParams.getAccount() == null || currencyParams.getAccount().isEmpty()) {
-      for (String account : currency.getWallet().getAddresses(currencyParams.getUserKey())) {
-        balance = balance.add(new BigDecimal(currency.getWallet().getBalance(account)));
+      BigDecimal balance = BigDecimal.ZERO;
+      if (currencyParams.getAccount() == null || currencyParams.getAccount().isEmpty()) {
+        for (String account : currency.getWallet().getAddresses(currencyParams.getUserKey())) {
+          balance = balance.add(new BigDecimal(currency.getWallet().getBalance(account)));
+        }
+      } else {
+        for (String account : currencyParams.getAccount()) {
+          balance = balance.add(new BigDecimal(currency.getWallet().getBalance(account)));
+        }
       }
-    } else {
-      for (String account : currencyParams.getAccount()) {
-        balance = balance.add(new BigDecimal(currency.getWallet().getBalance(account)));
-      }
+
+      String response = balance.toPlainString();
+
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     }
-
-    String response = balance.toPlainString();
-
-    LOGGER.debug("[Response] " + response);
-    return response;
   }
 
   private static void cleanUpSubscriptions(String id) {
@@ -252,142 +309,152 @@ public class Common {
    * actual data is sent through the socket or callback.
    */
   public static String monitorBalance(String params, Session responseSocket) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    Monitor monitor = currency.getMonitor().createNewMonitor();
+      Monitor monitor = currency.getMonitor().createNewMonitor();
 
-    monitor.addAddresses(currencyParams.getAccount());
+      monitor.addAddresses(currencyParams.getAccount());
 
-    CurrencyParameters returnParms = new CurrencyParameters();
-    String response = Json.stringifyObject(CurrencyParameters.class, returnParms);
+      CurrencyParameters returnParms = new CurrencyParameters();
+      String response = Json.stringifyObject(CurrencyParameters.class, returnParms);
 
-    // Web socket was passed to us
-    if (responseSocket != null) {
+      // Web socket was passed to us
+      if (responseSocket != null) {
 
-      cleanUpSubscriptions(responseSocket.toString());
+        cleanUpSubscriptions(responseSocket.toString());
 
-      Subscription wsBalanceSubscription = monitor.getObservableBalances().subscribe(balanceMap -> {
-        balanceMap.forEach((address, balance) -> {
-          try {
-            CurrencyParameters responseParms = new CurrencyParameters();
-            responseParms.setAccount(new LinkedList<>());
-            responseParms.getAccount().add(address);
-            CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
-            accountData.setAmount(balance);
-            accountData.setRecipientAddress(address);
-            responseParms.setReceivingAccount(Collections.singletonList(accountData));
-            LOGGER.debug("Sending balance update...");
-            responseSocket.getRemote()
-                .sendString(Json.stringifyObject(CurrencyParameters.class, responseParms));
-            responseSocket.getRemote().flush();
-          } catch (Exception e) {
-            LOGGER.debug(null, e);
-            cleanUpSubscriptions(responseSocket.toString());
-          }
-        });
-      });
-      balanceSubscriptions.put(responseSocket.toString(), wsBalanceSubscription);
-
-      Subscription wsTransactionSubscription =
-          monitor.getObservableTransactions().subscribe(transactionSet -> {
-            transactionSet.forEach(transaction -> {
-              try {
-                CurrencyParameters responseParms = new CurrencyParameters();
-                responseParms.setAccount(new LinkedList<>());
-                responseParms.getAccount().addAll(Arrays.asList(transaction.getFromAddress()));
-                LinkedList<CurrencyParametersRecipient> receivers = new LinkedList<>();
-                Arrays.asList(transaction.getToAddress()).forEach(address -> {
-                  CurrencyParametersRecipient sendData = new CurrencyParametersRecipient();
-                  sendData.setAmount(transaction.getAmount().toPlainString());
-                  sendData.setRecipientAddress(address);
-                  receivers.add(sendData);
-                });
-                responseParms.setReceivingAccount(receivers);
-                responseParms.setTransactionData(transaction.getTxHash());
-                responseSocket.getRemote()
-                    .sendString(Json.stringifyObject(CurrencyParameters.class, responseParms));
-                responseSocket.getRemote().flush();
-              } catch (Exception e) {
-                LOGGER.debug(null, e);
-                cleanUpSubscriptions(responseSocket.toString());
-              }
+        Subscription wsBalanceSubscription =
+            monitor.getObservableBalances().subscribe(balanceMap -> {
+              balanceMap.forEach((address, balance) -> {
+                try {
+                  CurrencyParameters responseParms = new CurrencyParameters();
+                  responseParms.setAccount(new LinkedList<>());
+                  responseParms.getAccount().add(address);
+                  CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+                  accountData.setAmount(balance);
+                  accountData.setRecipientAddress(address);
+                  responseParms.setReceivingAccount(Collections.singletonList(accountData));
+                  LOGGER.debug("Sending balance update...");
+                  responseSocket.getRemote()
+                      .sendString(Json.stringifyObject(CurrencyParameters.class, responseParms));
+                  responseSocket.getRemote().flush();
+                } catch (Exception e) {
+                  LOGGER.debug(null, e);
+                  cleanUpSubscriptions(responseSocket.toString());
+                }
+              });
             });
-          });
+        balanceSubscriptions.put(responseSocket.toString(), wsBalanceSubscription);
 
-      transactionSubscriptions.put(responseSocket.toString(), wsTransactionSubscription);
-      monitors.put(responseSocket.toString(), monitor);
-    } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
-      // It's a REST callback
-      cleanUpSubscriptions(currencyParams.getCallback());
-
-      Subscription rsBalanceSubscription = monitor.getObservableBalances().subscribe(balanceMap -> {
-        balanceMap.forEach((address, balance) -> {
-          try {
-            CurrencyParameters responseParms = new CurrencyParameters();
-            responseParms.setAccount(new LinkedList<>());
-            responseParms.getAccount().add(address);
-            CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
-            accountData.setAmount(balance);
-            accountData.setRecipientAddress(address);
-            responseParms.setReceivingAccount(Collections.singletonList(accountData));
-
-            HttpPost httpPost = new HttpPost(currencyParams.getCallback());
-            httpPost.addHeader("content-type", "application/json");
-            StringEntity entity;
-            entity =
-                new StringEntity(Json.stringifyObject(CurrencyParameters.class, responseParms));
-            httpPost.setEntity(entity);
-
-            HttpClients.createDefault().execute(httpPost).close();
-          } catch (Exception e) {
-            LOGGER.debug(null, e);
-            cleanUpSubscriptions(currencyParams.getCallback());
-          }
-        });
-      });
-      balanceSubscriptions.put(currencyParams.getCallback(), rsBalanceSubscription);
-
-      Subscription rsTransactionSubscription =
-          monitor.getObservableTransactions().subscribe(transactionSet -> {
-            transactionSet.forEach(transaction -> {
-              try {
-                CurrencyParameters responseParms = new CurrencyParameters();
-                responseParms.setAccount(new LinkedList<>());
-                responseParms.getAccount().addAll(Arrays.asList(transaction.getFromAddress()));
-                LinkedList<CurrencyParametersRecipient> receivers = new LinkedList<>();
-                Arrays.asList(transaction.getToAddress()).forEach(address -> {
-                  CurrencyParametersRecipient sendData = new CurrencyParametersRecipient();
-                  sendData.setAmount(transaction.getAmount().toPlainString());
-                  sendData.setRecipientAddress(address);
-                  receivers.add(sendData);
-                });
-                responseParms.setReceivingAccount(receivers);
-                responseParms.setTransactionData(transaction.getTxHash());
-
-                HttpPost httpPost = new HttpPost(currencyParams.getCallback());
-                httpPost.addHeader("content-type", "application/json");
-                StringEntity entity;
-                entity =
-                    new StringEntity(Json.stringifyObject(CurrencyParameters.class, responseParms));
-                httpPost.setEntity(entity);
-
-                HttpClients.createDefault().execute(httpPost).close();
-              } catch (Exception e) {
-                LOGGER.debug(null, e);
-                cleanUpSubscriptions(currencyParams.getCallback());
-              }
+        Subscription wsTransactionSubscription =
+            monitor.getObservableTransactions().subscribe(transactionSet -> {
+              transactionSet.forEach(transaction -> {
+                try {
+                  CurrencyParameters responseParms = new CurrencyParameters();
+                  responseParms.setAccount(new LinkedList<>());
+                  responseParms.getAccount().addAll(Arrays.asList(transaction.getFromAddress()));
+                  LinkedList<CurrencyParametersRecipient> receivers = new LinkedList<>();
+                  Arrays.asList(transaction.getToAddress()).forEach(address -> {
+                    CurrencyParametersRecipient sendData = new CurrencyParametersRecipient();
+                    sendData.setAmount(transaction.getAmount().toPlainString());
+                    sendData.setRecipientAddress(address);
+                    receivers.add(sendData);
+                  });
+                  responseParms.setReceivingAccount(receivers);
+                  responseParms.setTransactionData(transaction.getTxHash());
+                  responseSocket.getRemote()
+                      .sendString(Json.stringifyObject(CurrencyParameters.class, responseParms));
+                  responseSocket.getRemote().flush();
+                } catch (Exception e) {
+                  LOGGER.debug(null, e);
+                  cleanUpSubscriptions(responseSocket.toString());
+                }
+              });
             });
-          });
-      transactionSubscriptions.put(currencyParams.getCallback(), rsTransactionSubscription);
-      monitors.put(currencyParams.getCallback(), monitor);
-    } else {
-      // We have no way to respond to the caller other than with this response.
-      monitor.destroyMonitor();
+
+        transactionSubscriptions.put(responseSocket.toString(), wsTransactionSubscription);
+        monitors.put(responseSocket.toString(), monitor);
+      } else if (currencyParams.getCallback() != null && !currencyParams.getCallback().isEmpty()) {
+        // It's a REST callback
+        cleanUpSubscriptions(currencyParams.getCallback());
+
+        Subscription rsBalanceSubscription =
+            monitor.getObservableBalances().subscribe(balanceMap -> {
+              balanceMap.forEach((address, balance) -> {
+                try {
+                  CurrencyParameters responseParms = new CurrencyParameters();
+                  responseParms.setAccount(new LinkedList<>());
+                  responseParms.getAccount().add(address);
+                  CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
+                  accountData.setAmount(balance);
+                  accountData.setRecipientAddress(address);
+                  responseParms.setReceivingAccount(Collections.singletonList(accountData));
+
+                  HttpPost httpPost = new HttpPost(currencyParams.getCallback());
+                  httpPost.addHeader("content-type", "application/json");
+                  StringEntity entity;
+                  entity = new StringEntity(
+                      Json.stringifyObject(CurrencyParameters.class, responseParms));
+                  httpPost.setEntity(entity);
+
+                  HttpClients.createDefault().execute(httpPost).close();
+                } catch (Exception e) {
+                  LOGGER.debug(null, e);
+                  cleanUpSubscriptions(currencyParams.getCallback());
+                }
+              });
+            });
+        balanceSubscriptions.put(currencyParams.getCallback(), rsBalanceSubscription);
+
+        Subscription rsTransactionSubscription =
+            monitor.getObservableTransactions().subscribe(transactionSet -> {
+              transactionSet.forEach(transaction -> {
+                try {
+                  CurrencyParameters responseParms = new CurrencyParameters();
+                  responseParms.setAccount(new LinkedList<>());
+                  responseParms.getAccount().addAll(Arrays.asList(transaction.getFromAddress()));
+                  LinkedList<CurrencyParametersRecipient> receivers = new LinkedList<>();
+                  Arrays.asList(transaction.getToAddress()).forEach(address -> {
+                    CurrencyParametersRecipient sendData = new CurrencyParametersRecipient();
+                    sendData.setAmount(transaction.getAmount().toPlainString());
+                    sendData.setRecipientAddress(address);
+                    receivers.add(sendData);
+                  });
+                  responseParms.setReceivingAccount(receivers);
+                  responseParms.setTransactionData(transaction.getTxHash());
+
+                  HttpPost httpPost = new HttpPost(currencyParams.getCallback());
+                  httpPost.addHeader("content-type", "application/json");
+                  StringEntity entity;
+                  entity = new StringEntity(
+                      Json.stringifyObject(CurrencyParameters.class, responseParms));
+                  httpPost.setEntity(entity);
+
+                  HttpClients.createDefault().execute(httpPost).close();
+                } catch (Exception e) {
+                  LOGGER.debug(null, e);
+                  cleanUpSubscriptions(currencyParams.getCallback());
+                }
+              });
+            });
+        transactionSubscriptions.put(currencyParams.getCallback(), rsTransactionSubscription);
+        monitors.put(currencyParams.getCallback(), monitor);
+      } else {
+        // We have no way to respond to the caller other than with this response.
+        monitor.destroyMonitor();
+      }
+
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     }
-
-    LOGGER.debug("[Response] " + response);
-    return response;
   }
 
   /**
@@ -401,91 +468,119 @@ public class Common {
    * @return The transaction string that was requested.
    */
   public static String prepareTransaction(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
 
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    if (currencyParams.getTransactionData() == null || currencyParams.getTransactionData()
-        .isEmpty()) {
-      // Create the transaction
-      List<String> addresses = new LinkedList<>();
-      addresses.addAll(currencyParams.getAccount());
-      LinkedList<Recipient> recipients = new LinkedList<>();
-      currencyParams.getReceivingAccount().forEach(account -> {
-        Recipient recipient = new Recipient();
-        recipient.setAmount(new BigDecimal(account.getAmount()));
-        recipient.setRecipientAddress(account.getRecipientAddress());
-        recipients.add(recipient);
-      });
-      currencyParams
-          .setTransactionData(currency.getWallet().createTransaction(addresses, recipients));
-    }
-
-    // Authorize it with the user account
-    String initalTx = currencyParams.getTransactionData();
-    LOGGER.debug("Wallet.CreateTransaction Result: " + initalTx);
-
-    if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
-      currencyParams.setTransactionData(currency.getWallet()
-          .signTransaction(initalTx, currencyParams.getAccount().get(0),
-              currencyParams.getUserKey()));
-      LOGGER.debug("Sign with userKey: " + currencyParams.getTransactionData());
-    }
-
-    // If the userKey/address combo don't work then we stop here.
-    if (currencyParams.getTransactionData().equalsIgnoreCase(initalTx)) {
-      LOGGER.debug("No userKey signature, returning unsigned TX: " + initalTx);
-      return initalTx;
-    }
-
-    // Try to validate it, don't sign if it fails.
-    for (Validator validator : CosignerApplication.getValidators()) {
-      if (!validator.validateTransaction(currency, currencyParams.getTransactionData())) {
-        return initalTx;
+      if (currencyParams.getTransactionData() == null || currencyParams.getTransactionData()
+          .isEmpty()) {
+        // Create the transaction
+        List<String> addresses = new LinkedList<>();
+        addresses.addAll(currencyParams.getAccount());
+        LinkedList<Recipient> recipients = new LinkedList<>();
+        currencyParams.getReceivingAccount().forEach(account -> {
+          Recipient recipient = new Recipient();
+          recipient.setAmount(new BigDecimal(account.getAmount()));
+          recipient.setRecipientAddress(account.getRecipientAddress());
+          recipients.add(recipient);
+        });
+        currencyParams
+            .setTransactionData(currency.getWallet().createTransaction(addresses, recipients));
       }
-    }
 
-    // Send it if it's a sign-each and there's more than one signature
-    // required (we're at 1/X)
-    if (currency.getConfiguration().getMinSignatures() > 1 && currency.getConfiguration()
-        .getSigningType().equals(SigningType.SENDEACH)) {
-      submitTransaction(Json.stringifyObject(CurrencyParameters.class, currencyParams));
-    }
+      // Authorize it with the user account
+      String initalTx = currencyParams.getTransactionData();
+      LOGGER.debug("Wallet.CreateTransaction Result: " + initalTx);
 
-    String response = currencyParams.getTransactionData();
-    LOGGER.debug("[Response] " + response);
-    return response;
+      if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
+        currencyParams.setTransactionData(currency.getWallet()
+            .signTransaction(initalTx, currencyParams.getAccount().get(0),
+                currencyParams.getUserKey()));
+        LOGGER.debug("Sign with userKey: " + currencyParams.getTransactionData());
+      }
+
+      // If the userKey/address combo don't work then we stop here.
+      if (currencyParams.getTransactionData().equalsIgnoreCase(initalTx)) {
+        LOGGER.debug("No userKey signature, returning unsigned TX: " + initalTx);
+        CosignerResponse cosignerResponse = new CosignerResponse();
+        cosignerResponse.setResult(initalTx);
+        return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+      }
+
+      // Try to validate it, don't sign if it fails.
+      for (Validator validator : CosignerApplication.getValidators()) {
+        if (!validator.validateTransaction(currency, currencyParams.getTransactionData())) {
+          throw new Exception("Validation failed, transaction not ok.");
+        }
+      }
+
+      // Send it if it's a sign-each and there's more than one signature
+      // required (we're at 1/X)
+      if (currency.getConfiguration().getMinSignatures() > 1 && currency.getConfiguration()
+          .getSigningType().equals(SigningType.SENDEACH)) {
+        submitTransaction(Json.stringifyObject(CurrencyParameters.class, currencyParams));
+      }
+
+      String response = currencyParams.getTransactionData();
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
   /**
    * Get list of addresses that could sign this transaction.
    */
   public static String getSignersForTransaction(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    Iterable<String> signers =
-        currency.getWallet().getSignersForTransaction(currencyParams.getTransactionData());
+      Iterable<String> signers =
+          currency.getWallet().getSignersForTransaction(currencyParams.getTransactionData());
 
-    return Json.stringifyObject(Iterable.class, signers);
+      String response = Json.stringifyObject(Iterable.class, signers);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
   /**
    * Get the data needed to create an offline signature for the transaction.
    */
   public static String getSignatureString(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    String address = "";
-    if (currencyParams.getAccount() != null && currencyParams.getAccount().size() > 0) {
-      address = currencyParams.getAccount().get(0);
+      String address = "";
+      if (currencyParams.getAccount() != null && currencyParams.getAccount().size() > 0) {
+        address = currencyParams.getAccount().get(0);
+      }
+
+      Iterable<Iterable<String>> sigData =
+          currency.getWallet().getSigString(currencyParams.getTransactionData(), address);
+
+      String response = Json.stringifyObject(Iterable.class, sigData);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     }
-
-    Iterable<Iterable<String>> sigData =
-        currency.getWallet().getSigString(currencyParams.getTransactionData(), address);
-
-    return Json.stringifyObject(Iterable.class, sigData);
   }
 
   /**
@@ -493,21 +588,30 @@ public class Common {
    */
   @SuppressWarnings("unchecked")
   public static String applySignature(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    String address = "";
-    if (currencyParams.getAccount() != null && currencyParams.getAccount().size() > 0) {
-      address = currencyParams.getAccount().get(0);
+      String address = "";
+      if (currencyParams.getAccount() != null && currencyParams.getAccount().size() > 0) {
+        address = currencyParams.getAccount().get(0);
+      }
+
+      Iterator<String> txList = ((Iterable<String>) Json
+          .objectifyString(Iterable.class, currencyParams.getTransactionData())).iterator();
+      String tx = txList.next();
+      Iterable<Iterable<String>> sigData =
+          (Iterable<Iterable<String>>) Json.objectifyString(Iterable.class, txList.next());
+
+      String response = currency.getWallet().applySignature(tx, address, sigData);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     }
-
-    Iterator<String> txList = ((Iterable<String>) Json
-        .objectifyString(Iterable.class, currencyParams.getTransactionData())).iterator();
-    String tx = txList.next();
-    Iterable<Iterable<String>> sigData =
-        (Iterable<Iterable<String>>) Json.objectifyString(Iterable.class, txList.next());
-
-    return currency.getWallet().applySignature(tx, address, sigData);
   }
 
   /**
@@ -524,59 +628,73 @@ public class Common {
    * @return Signed transaction string
    */
   public static String approveTransaction(String params, boolean sendToRemotes) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    for (Server server : ClusterInfo.getInstance().getServers()) {
-      if (server.isOriginator()) { // It's us, try to sign it locally.
-        // But first check that it's valid.
-        for (Validator validator : CosignerApplication.getValidators()) {
-          if (!validator.validateTransaction(currency, currencyParams.getTransactionData())) {
-            return currencyParams.getTransactionData();
+      for (Server server : ClusterInfo.getInstance().getServers()) {
+        if (server.isOriginator()) { // It's us, try to sign it locally.
+          // But first check that it's valid.
+          for (Validator validator : CosignerApplication.getValidators()) {
+            if (!validator.validateTransaction(currency, currencyParams.getTransactionData())) {
+              throw new Exception("Transaction could not be validated.");
+            }
           }
-        }
 
-        // Apply user-key signature first if it exists.
-        if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
-          currencyParams.setTransactionData(currency.getWallet()
+          // Apply user-key signature first if it exists.
+          if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
+            String sigAttempt = currency.getWallet()
+                .signTransaction(currencyParams.getTransactionData(),
+                    currencyParams.getAccount().get(0), currencyParams.getUserKey());
+            currencyParams.setTransactionData(sigAttempt);
+          }
+
+          String sigAttempt = currency.getWallet()
               .signTransaction(currencyParams.getTransactionData(),
-                  currencyParams.getAccount().get(0), currencyParams.getUserKey()));
-        }
+                  currencyParams.getAccount().get(0));
+          currencyParams.setTransactionData(sigAttempt);
+        } else if (sendToRemotes) {
+          try {
+            CurrencyCommand command = new CurrencyCommand();
+            CurrencyParameters copyParams = convertParams(params);
+            // Don't want every server trying to sign with the user-key.
+            copyParams.setUserKey("");
+            command.setCurrencyParams(copyParams);
+            command.setCommandType(CurrencyCommandType.SIGN);
+            CosignerResponse cosignerResponse = (CosignerResponse) Json
+                .objectifyString(CosignerResponse.class,
+                    Coordinator.broadcastCommand(command, server));
 
-        currencyParams.setTransactionData(currency.getWallet()
-            .signTransaction(currencyParams.getTransactionData(),
-                currencyParams.getAccount().get(0)));
-      } else if (sendToRemotes) {
-        try {
-          CurrencyCommand command = new CurrencyCommand();
-          CurrencyParameters copyParams = convertParams(params);
-          // Don't want every server trying to sign with the user-key.
-          copyParams.setUserKey("");
-          command.setCurrencyParams(copyParams);
-          command.setCommandType(CurrencyCommandType.SIGN);
-          command =
-              CurrencyCommand.parseCommandString(Coordinator.broadcastCommand(command, server));
+            if (cosignerResponse.getError() != null && !cosignerResponse.getError().isEmpty()) {
+              throw new Exception(cosignerResponse.getError());
+            }
 
-          if (command != null) {
             String originalTx = currencyParams.getTransactionData();
-            currencyParams.setTransactionData(command.getCurrencyParams().getTransactionData());
+            currencyParams.setTransactionData(cosignerResponse.getResult());
 
             // If it's send-each and the remote actually signed it, send it.
             if (!originalTx.equalsIgnoreCase(currencyParams.getTransactionData()) && currency
                 .getConfiguration().getSigningType().equals(SigningType.SENDEACH)) {
               submitTransaction(Json.stringifyObject(CurrencyParameters.class, currencyParams));
             }
+
+          } catch (Exception e) {
+            // Likely caused by an offline server or bad response.
+            LOGGER.warn(null, e);
           }
-        } catch (Exception e) {
-          // Likely caused by an offline server or bad response.
-          LOGGER.warn(null, e);
         }
       }
-    }
-    String response = currencyParams.getTransactionData();
+      String response = currencyParams.getTransactionData();
 
-    LOGGER.debug("[Response] " + response);
-    return response;
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
   /**
@@ -587,13 +705,21 @@ public class Common {
    * @return The transaction hash/ID.
    */
   public static String submitTransaction(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    String response = currency.getWallet().sendTransaction(currencyParams.getTransactionData());
+      String response = currency.getWallet().sendTransaction(currencyParams.getTransactionData());
 
-    LOGGER.debug("[Response] " + response);
-    return response;
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
 }

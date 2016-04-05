@@ -179,7 +179,7 @@ public class Secp256k1 {
       ECPoint pointQ = ECAlgorithms.sumOfTwoMultiplies(spec.getG(), pointEInvRInv, pointR, srInv);
       return pointQ.getEncoded(false);
     } catch (Exception e) {
-      LOGGER.error(null, e);
+      LOGGER.warn("Error recovering public key from message");
     }
 
     return new byte[0];

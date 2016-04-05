@@ -114,8 +114,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
             LOGGER.warn(null, e1);
           }
         }
-        LOGGER.debug(null, e);
-        LOGGER.info("Could not load cosigner-ethereum configuration, using defaults.");
+        LOGGER.info("Could not load cosigner-ethereum configuration from " + propertiesFilePath + ", using defaults.");
       }
       configLoaded = true;
     }

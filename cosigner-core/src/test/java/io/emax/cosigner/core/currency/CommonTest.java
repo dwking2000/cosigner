@@ -1,5 +1,6 @@
 package io.emax.cosigner.core.currency;
 
+import io.emax.cosigner.api.core.CosignerResponse;
 import io.emax.cosigner.api.core.CurrencyPackage;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.api.core.CurrencyParametersRecipient;
@@ -70,6 +71,11 @@ public class CommonTest {
 
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      System.out.println("Got response: " + currenciesString);
+
+      currenciesString = cosignerResponse.getResult();
       @SuppressWarnings("unchecked") LinkedList<String> currencies =
           (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
 
@@ -89,6 +95,9 @@ public class CommonTest {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      currenciesString = cosignerResponse.getResult();
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -104,7 +113,9 @@ public class CommonTest {
 
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
-        System.out.println(address);
+        CosignerResponse cosignerResponse =
+            (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+        System.out.println(cosignerResponse.getResult());
       });
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -121,6 +132,10 @@ public class CommonTest {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      currenciesString = cosignerResponse.getResult();
+
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -136,6 +151,9 @@ public class CommonTest {
 
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String addressString = Common.listAllAddresses(parmsString);
+        CosignerResponse cosignerResponse =
+            (CosignerResponse) Json.objectifyString(CosignerResponse.class, addressString);
+        addressString = cosignerResponse.getResult();
 
         LinkedList<String> addresses =
             (LinkedList<String>) Json.objectifyString(LinkedList.class, addressString);
@@ -156,6 +174,9 @@ public class CommonTest {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      currenciesString = cosignerResponse.getResult();
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -171,10 +192,15 @@ public class CommonTest {
 
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
+        CosignerResponse cosignerResponse =
+            (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+        address = cosignerResponse.getResult();
 
         parms.setAccount(Collections.singletonList(address));
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String balance = Common.getBalance(parmsString);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, balance);
+        balance = cosignerResponse.getResult();
         System.out.println(balance);
       });
     } catch (Exception e) {
@@ -192,6 +218,9 @@ public class CommonTest {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      currenciesString = cosignerResponse.getResult();
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -207,10 +236,14 @@ public class CommonTest {
 
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
+        CosignerResponse cosignerResponse =
+            (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+        address = cosignerResponse.getResult();
 
         parms.setAccount(Collections.singletonList(address));
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String balance = Common.monitorBalance(parmsString, null);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, balance);
         System.out.println(balance);
       });
     } catch (Exception e) {
@@ -228,6 +261,9 @@ public class CommonTest {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      currenciesString = cosignerResponse.getResult();
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -247,6 +283,9 @@ public class CommonTest {
 
           parms.setAccount(Collections.singletonList(address));
           address = Common.getNewAddress(parmsString);
+          CosignerResponse cosignerResponse =
+              (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+          address = cosignerResponse.getResult();
           CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
           accountData.setAmount("5.0");
           accountData.setRecipientAddress(address);
@@ -254,6 +293,8 @@ public class CommonTest {
           parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
           String tx = Common.prepareTransaction(parmsString);
+          cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, tx);
+          tx = cosignerResponse.getResult();
           System.out.println(tx);
         } catch (Exception e) {
           LOGGER.debug(null, e);
@@ -275,6 +316,9 @@ public class CommonTest {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      currenciesString = cosignerResponse.getResult();
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -296,6 +340,9 @@ public class CommonTest {
 
           parms.setAccount(Collections.singletonList(address));
           address = Common.getNewAddress(parmsString);
+          CosignerResponse cosignerResponse =
+              (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+          address = cosignerResponse.getResult();
           CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
           accountData.setAmount("5.0");
           accountData.setRecipientAddress(address);
@@ -303,11 +350,16 @@ public class CommonTest {
           parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
           String tx = Common.prepareTransaction(parmsString);
+          cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, tx);
+          tx = cosignerResponse.getResult();
           System.out.println(tx);
 
           parms.setTransactionData(tx);
           parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
           String sigData = Common.getSignatureString(parmsString);
+          cosignerResponse =
+              (CosignerResponse) Json.objectifyString(CosignerResponse.class, sigData);
+          sigData = cosignerResponse.getResult();
           System.out.println(sigData);
 
           Iterable<Iterable<String>> signatureData =
@@ -322,6 +374,8 @@ public class CommonTest {
           parms.setTransactionData(Json.stringifyObject(Iterable.class, sigApplication));
           parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
           tx = Common.applySignature(parmsString);
+          cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, tx);
+          tx = cosignerResponse.getResult();
           System.out.println(tx);
 
         } catch (Exception e) {
@@ -344,6 +398,9 @@ public class CommonTest {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      currenciesString = cosignerResponse.getResult();
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -359,9 +416,14 @@ public class CommonTest {
 
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
+        CosignerResponse cosignerResponse =
+            (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+        address = cosignerResponse.getResult();
 
         parms.setAccount(Collections.singletonList(address));
         address = Common.getNewAddress(parmsString);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+        address = cosignerResponse.getResult();
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);
@@ -369,10 +431,14 @@ public class CommonTest {
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         String tx = Common.prepareTransaction(parmsString);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, tx);
+        tx = cosignerResponse.getResult();
         parms.setTransactionData(tx);
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         tx = Common.approveTransaction(parmsString, true);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, tx);
+        tx = cosignerResponse.getResult();
         System.out.println(tx);
       });
     } catch (Exception e) {
@@ -390,6 +456,9 @@ public class CommonTest {
     LinkedList<String> currencies = new LinkedList<>();
     try {
       String currenciesString = Common.listCurrencies();
+      CosignerResponse cosignerResponse =
+          (CosignerResponse) Json.objectifyString(CosignerResponse.class, currenciesString);
+      currenciesString = cosignerResponse.getResult();
       currencies = (LinkedList<String>) Json.objectifyString(LinkedList.class, currenciesString);
     } catch (Exception e) {
       LOGGER.debug(null, e);
@@ -405,9 +474,14 @@ public class CommonTest {
 
         String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String address = Common.getNewAddress(parmsString);
+        CosignerResponse cosignerResponse =
+            (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+        address = cosignerResponse.getResult();
 
         parms.setAccount(Collections.singletonList(address));
         address = Common.getNewAddress(parmsString);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+        address = cosignerResponse.getResult();
         CurrencyParametersRecipient accountData = new CurrencyParametersRecipient();
         accountData.setAmount("5.0");
         accountData.setRecipientAddress(address);
@@ -415,14 +489,20 @@ public class CommonTest {
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         String tx = Common.prepareTransaction(parmsString);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, tx);
+        tx = cosignerResponse.getResult();
         parms.setTransactionData(tx);
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         tx = Common.approveTransaction(parmsString, true);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, tx);
+        tx = cosignerResponse.getResult();
         parms.setTransactionData(tx);
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
 
         tx = Common.submitTransaction(parmsString);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, tx);
+        tx = cosignerResponse.getResult();
         System.out.println(tx);
       });
     } catch (Exception e) {
