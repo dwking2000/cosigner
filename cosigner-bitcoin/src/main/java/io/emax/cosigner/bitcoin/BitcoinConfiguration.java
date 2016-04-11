@@ -21,6 +21,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   private static int minSignatures = 1;
   private static String[] multiSigAccounts = {};
   private static int maxDeterministicAddresses = 100;
+  private static int rescanTimer = 60;
   private static String daemonUser;
   private static String daemonPassword;
   private static BigDecimal maxAmountPerHour = BigDecimal.ZERO;
@@ -82,6 +83,9 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
         // maxDeterministicAddresses
         maxDeterministicAddresses =
             getIntProp(cosignerProperties, "maxDeterministicAddresses", maxDeterministicAddresses);
+
+        // rescanTimer
+        rescanTimer = getIntProp(cosignerProperties, "rescanTimer", rescanTimer);
 
         // daemonUser
         daemonUser = cosignerProperties.getProperty("daemonUser", "");
@@ -195,5 +199,9 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   @Override
   public BigDecimal getMaxAmountPerTransaction() {
     return maxAmountPerTransaction;
+  }
+  
+  public static int getRescanTimer() {
+    return rescanTimer;
   }
 }

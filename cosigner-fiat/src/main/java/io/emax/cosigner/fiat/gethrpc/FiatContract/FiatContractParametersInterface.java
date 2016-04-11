@@ -1,4 +1,4 @@
-package io.emax.cosigner.fiat.gethrpc.FiatContract;
+package io.emax.cosigner.fiat.gethrpc.fiatcontract;
 
 import java.util.List;
 import java.util.Map;

@@ -222,9 +222,28 @@ public class Common {
       CurrencyParameters currencyParams = convertParams(params);
       CurrencyPackage currency = lookupCurrency(currencyParams);
 
+      int returnNumber;
+      int skipNumber;
+
+      try {
+        returnNumber = Integer.parseInt(currencyParams.getTransactionData().split(":")[0]);
+      } catch (Exception e) {
+        LOGGER.debug("No return number specified, using default of 100.");
+        returnNumber = 100;
+      }
+
+      try {
+        skipNumber = Integer.parseInt(currencyParams.getTransactionData().split(":")[1]);
+      } catch (Exception e) {
+        LOGGER.debug("No skip number specified, using default of 0.");
+        skipNumber = 0;
+      }
+
       LinkedList<TransactionDetails> txDetails = new LinkedList<>();
-      currencyParams.getAccount().forEach(account -> txDetails
-          .addAll(Arrays.asList(currency.getWallet().getTransactions(account, 100, 0))));
+      final int finalReturnNumber = returnNumber;
+      final int finalSkipNumber = skipNumber;
+      currencyParams.getAccount().forEach(account -> txDetails.addAll(Arrays.asList(
+          currency.getWallet().getTransactions(account, finalReturnNumber, finalSkipNumber))));
 
       String response = Json.stringifyObject(LinkedList.class, txDetails);
 

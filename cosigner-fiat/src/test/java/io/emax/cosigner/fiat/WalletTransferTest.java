@@ -6,8 +6,8 @@ import io.emax.cosigner.common.Json;
 import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
 import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
-import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractInterface;
-import io.emax.cosigner.fiat.gethrpc.FiatContract.v1.FiatContractV1;
+import io.emax.cosigner.fiat.gethrpc.fiatcontract.FiatContractInterface;
+import io.emax.cosigner.fiat.gethrpc.fiatcontract.v1.FiatContractV1;
 
 import org.junit.Test;
 

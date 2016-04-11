@@ -1,4 +1,4 @@
-package io.emax.cosigner.fiat.gethrpc.FiatContract;
+package io.emax.cosigner.fiat.gethrpc.fiatcontract;
 
 public interface FiatContractInterface {
   String getCreateTokens();

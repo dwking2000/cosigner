@@ -14,9 +14,9 @@ import io.emax.cosigner.ethereum.gethrpc.CallData;
 import io.emax.cosigner.ethereum.gethrpc.DefaultBlock;
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
-import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContract;
-import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractInterface;
-import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractParametersInterface;
+import io.emax.cosigner.fiat.gethrpc.fiatcontract.FiatContract;
+import io.emax.cosigner.fiat.gethrpc.fiatcontract.FiatContractInterface;
+import io.emax.cosigner.fiat.gethrpc.fiatcontract.FiatContractParametersInterface;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +28,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -53,9 +55,13 @@ public class FiatWallet implements Wallet {
   // Transaction history data
   private static final HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
   @SuppressWarnings("unused")
-  private static Subscription txHistorySubscription =
+  private static Subscription txFullHistorySubscription =
       Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanTransactions());
+          .subscribe(tick -> scanTransactions(0));
+  @SuppressWarnings("unused")
+  private static Subscription txShortHistorySubscription =
+      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> scanTransactions(-500));
 
   public FiatWallet(String currency) {
     config = new FiatConfiguration(currency);
@@ -350,7 +356,6 @@ public class FiatWallet implements Wallet {
         return transaction;
       }
     } // Otherwise just sign it.
-    // TODO Consider refusing to sign if it's not one of ours.
 
     Iterable<Iterable<String>> sigData = getSigString(transaction, address);
     sigData = signWithPrivateKey(sigData, name, address);
@@ -449,16 +454,27 @@ public class FiatWallet implements Wallet {
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
-  private static void scanTransactions() {
+  private static void scanTransactions(long startingBlock) {
     // Scan every block, look for origin and receiver.
     try {
       // Get latest block
       BigInteger latestBlockNumber =
           new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
 
-      for (long i = 0; i < latestBlockNumber.longValue(); i++) {
+      // If it's negative, start from that many blocks prior to the last.
+      if (startingBlock < 0) {
+        startingBlock = Math.max(startingBlock + latestBlockNumber.longValue(), 0);
+      }
+
+      for (long i = startingBlock; i < latestBlockNumber.longValue(); i++) {
         String blockNumber = "0x" + BigInteger.valueOf(i).toString(16);
-        Block block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
+        Block block;
+        try {
+          block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
+        } catch (Exception e) {
+          LOGGER.warn("Error reading block #" + i, e);
+          continue;
+        }
 
         if (block.getTransactions().length == 0) {
           continue;
@@ -466,7 +482,10 @@ public class FiatWallet implements Wallet {
 
         Arrays.asList(block.getTransactions()).forEach(tx -> {
           TransactionDetails txDetail = new TransactionDetails();
-          txDetail.setTxDate(block.getTimestamp());
+          BigInteger dateConverter =
+              new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
+          dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
+          txDetail.setTxDate(new Date(dateConverter.longValue()));
 
           txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
           txDetail.setFromAddress(
@@ -489,6 +508,7 @@ public class FiatWallet implements Wallet {
                 for (int j = 0; j < contractParams.get(contractParamsInterface.RECIPIENTS).size();
                      j++) {
                   TransactionDetails fiatTx = new TransactionDetails();
+                  fiatTx.setTxDate(new Date(dateConverter.longValue()));
                   fiatTx.setFromAddress(
                       contractParams.get(contractParamsInterface.SENDER).toArray(new String[]{}));
                   fiatTx.setToAddress(
@@ -510,7 +530,7 @@ public class FiatWallet implements Wallet {
               }
             }
           } catch (Exception e) {
-            LOGGER.debug("Unable to decode tx data", e);
+            LOGGER.debug("Unable to decode tx data");
           }
         });
       }
@@ -519,11 +539,26 @@ public class FiatWallet implements Wallet {
     }
   }
 
+  private class TxDateComparator implements Comparator<TransactionDetails> {
+    @Override
+    public int compare(TransactionDetails o1, TransactionDetails o2) {
+      return o1.getTxDate().compareTo(o2.getTxDate());
+    }
+  }
+
   @Override
   public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     if (txHistory.containsKey(address)) {
       txHistory.get(address).forEach(txDetails::add);
+    }
+
+    Collections.sort(txDetails, new TxDateComparator());
+    for (int i = 0; i < skipNumber; i++) {
+      txDetails.removeLast();
+    }
+    while (txDetails.size() > numberToReturn) {
+      txDetails.removeFirst();
     }
     return txDetails.toArray(new TransactionDetails[txDetails.size()]);
   }

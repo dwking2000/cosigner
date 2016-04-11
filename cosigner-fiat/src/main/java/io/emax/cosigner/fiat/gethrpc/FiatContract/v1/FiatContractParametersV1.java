@@ -1,7 +1,7 @@
-package io.emax.cosigner.fiat.gethrpc.FiatContract.v1;
+package io.emax.cosigner.fiat.gethrpc.fiatcontract.v1;
 
 import io.emax.cosigner.common.ByteUtilities;
-import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractParametersInterface;
+import io.emax.cosigner.fiat.gethrpc.fiatcontract.FiatContractParametersInterface;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

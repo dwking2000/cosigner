@@ -50,8 +50,32 @@ public class BitcoinWallet implements Wallet, Validatable {
   private static Subscription multiSigSubscription =
       Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
           .subscribe(tick -> scanForAddresses());
-
+  private static Thread rescanThread = null;
   private static final HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
+
+  public BitcoinWallet() {
+    if (rescanThread == null) {
+      rescanThread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          while (true) {
+            try {
+              Thread.sleep(config.getRescanTimer() * 1000L);
+              LOGGER.debug("Initiating blockchain rescan...");
+              byte[] key = Secp256k1.generatePrivateKey();
+              String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
+              String address = BitcoinTools.getPublicAddress(privateKey, true);
+              bitcoindRpc.importaddress(address, "RESCAN", true);
+            } catch (Exception e) {
+              LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
+            }
+          }
+        }
+      });
+      rescanThread.setDaemon(true);
+      rescanThread.start();
+    }
+  }
 
   @Override
   public String createAddress(String name) {
@@ -65,7 +89,6 @@ public class BitcoinWallet implements Wallet, Validatable {
         BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
     String newAddress = BitcoinTools.getPublicAddress(privateKey, true);
     String pubKey = BitcoinTools.getPublicKey(privateKey);
-    // Hash the user's key so it's not stored in the wallet
     String internalName = PUBKEY_PREFIX + pubKey;
 
     String[] existingAddresses = bitcoindRpc.getaddressesbyaccount(internalName);
@@ -579,93 +602,106 @@ public class BitcoinWallet implements Wallet, Validatable {
   @Override
   public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
-    Payment[] payments = bitcoindRpc.listtransactions("*", 1000000, 0, true);
-    for (Payment payment : Arrays.asList(payments)) {
+    int pageSize = 1000;
+    int pageNumber = 0;
+    while (txDetails.size() < (numberToReturn + skipNumber)) {
+      Payment[] payments = bitcoindRpc.listtransactions("*", pageSize, pageNumber * pageSize, true);
+      for (Payment payment : Arrays.asList(payments)) {
 
-      // Lookup the txid and vout/vin based on the sign of the amount (+/-)
-      // Determine the address involved
-      try {
-        String rawTx = bitcoindRpc.getrawtransaction(payment.getTxid());
-        RawTransaction tx = RawTransaction.parse(rawTx);
-        if (payment.getCategory() == PaymentCategory.receive) {
+        // Lookup the txid and vout/vin based on the sign of the amount (+/-)
+        // Determine the address involved
+        try {
+          String rawTx = bitcoindRpc.getrawtransaction(payment.getTxid());
+          RawTransaction tx = RawTransaction.parse(rawTx);
+          if (payment.getCategory() == PaymentCategory.receive) {
 
-          // Paid to the account
-          if (payment.getAddress().equalsIgnoreCase(address)) {
-            TransactionDetails detail = new TransactionDetails();
-            detail.setAmount(payment.getAmount());
-            detail.setTxDate(payment.getBlocktime());
-
-            // Senders
-            HashSet<String> senders = new HashSet<>();
-            tx.getInputs().forEach(input -> {
-              try {
-                String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
-                RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
-                String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
-                String scriptAddress = RawTransaction.decodePubKeyScript(script);
-                senders.add(scriptAddress);
-              } catch (Exception e) {
-                LOGGER.debug(null, e);
-                senders.add(null);
-              }
-            });
-            detail.setFromAddress(senders.toArray(new String[senders.size()]));
-
-            detail.setToAddress(new String[]{address});
-            detail.setTxHash(payment.getTxid());
-
-            txDetails.add(detail);
-          }
-        } else if (payment.getCategory() == PaymentCategory.send) {
-          // Sent from the account
-          tx.getInputs().forEach(input -> {
-            String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
-            RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
-            String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
-            String scriptAddress = RawTransaction.decodePubKeyScript(script);
-
-            if (scriptAddress != null && scriptAddress.equalsIgnoreCase(address)) {
+            // Paid to the account
+            if (payment.getAddress().equalsIgnoreCase(address)) {
               TransactionDetails detail = new TransactionDetails();
-
-              detail.setTxDate(payment.getBlocktime());
-              detail.setTxHash(payment.getTxid());
               detail.setAmount(payment.getAmount());
-              detail.setFromAddress(new String[]{address});
-              detail.setToAddress(new String[]{payment.getAddress()});
+              detail.setTxDate(payment.getBlocktime());
+
+              // Senders
+              HashSet<String> senders = new HashSet<>();
+              tx.getInputs().forEach(input -> {
+                try {
+                  String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
+                  RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
+                  String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
+                  String scriptAddress = RawTransaction.decodePubKeyScript(script);
+                  senders.add(scriptAddress);
+                } catch (Exception e) {
+                  LOGGER.debug(null, e);
+                  senders.add(null);
+                }
+              });
+              detail.setFromAddress(senders.toArray(new String[senders.size()]));
+
+              detail.setToAddress(new String[]{address});
+              detail.setTxHash(payment.getTxid());
 
               txDetails.add(detail);
             }
-          });
-        }
-      } catch (Exception e) {
-        LOGGER.debug(null, e);
-      }
-    }
+          } else if (payment.getCategory() == PaymentCategory.send) {
+            // Sent from the account
+            tx.getInputs().forEach(input -> {
+              String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
+              RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
+              String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
+              String scriptAddress = RawTransaction.decodePubKeyScript(script);
 
-    LinkedList<TransactionDetails> removeThese = new LinkedList<>();
-    for (TransactionDetails detail : txDetails) {
-      boolean noMatch = false;
-      for (String from : Arrays.asList(detail.getFromAddress())) {
-        boolean subMatch = false;
-        for (String to : Arrays.asList(detail.getToAddress())) {
-          if (to.equalsIgnoreCase(from)) {
-            subMatch = true;
+              if (scriptAddress != null && scriptAddress.equalsIgnoreCase(address)) {
+                TransactionDetails detail = new TransactionDetails();
+
+                detail.setTxDate(payment.getBlocktime());
+                detail.setTxHash(payment.getTxid());
+                detail.setAmount(payment.getAmount());
+                detail.setFromAddress(new String[]{address});
+                detail.setToAddress(new String[]{payment.getAddress()});
+
+                txDetails.add(detail);
+              }
+            });
+          }
+        } catch (Exception e) {
+          LOGGER.debug(null, e);
+        }
+      }
+
+      LinkedList<TransactionDetails> removeThese = new LinkedList<>();
+      for (TransactionDetails detail : txDetails) {
+        boolean noMatch = false;
+        for (String from : Arrays.asList(detail.getFromAddress())) {
+          boolean subMatch = false;
+          for (String to : Arrays.asList(detail.getToAddress())) {
+            if (to.equalsIgnoreCase(from)) {
+              subMatch = true;
+              break;
+            }
+          }
+          if (!subMatch) {
+            noMatch = true;
             break;
           }
         }
-        if (!subMatch) {
-          noMatch = true;
-          break;
+
+        // If the from & to's match then it's just a return amount, simpler if we don't list it.
+        if (!noMatch) {
+          removeThese.add(detail);
         }
       }
 
-      // If the from & to's match then it's just a return amount, simpler if we don't list it.
-      if (!noMatch) {
-        removeThese.add(detail);
-      }
+      removeThese.forEach(txDetails::remove);
+
+      pageNumber++;
     }
 
-    removeThese.forEach(txDetails::remove);
+    for (int i = 0; i < skipNumber; i++) {
+      txDetails.removeFirst();
+    }
+    while (txDetails.size() > numberToReturn) {
+      txDetails.removeLast();
+    }
     return txDetails.toArray(new TransactionDetails[txDetails.size()]);
   }
 

@@ -4,6 +4,7 @@ import io.emax.cosigner.api.core.ServerStatus;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.common.RlpItem;
@@ -13,6 +14,7 @@ import io.emax.cosigner.ethereum.gethrpc.CallData;
 import io.emax.cosigner.ethereum.gethrpc.DefaultBlock;
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
+import io.emax.cosigner.ethereum.gethrpc.Transaction;
 import io.emax.cosigner.ethereum.gethrpc.multisig.ContractInformation;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContract;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractInterface;
@@ -28,6 +30,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -57,9 +61,13 @@ public class EthereumWallet implements Wallet, Validatable {
   // Transaction history data
   private static final HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
   @SuppressWarnings("unused")
-  private static Subscription txHistorySubscription =
+  private static Subscription txFullHistorySubscription =
       Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanTransactions());
+          .subscribe(tick -> scanTransactions(0));
+  @SuppressWarnings("unused")
+  private static Subscription txShortHistorySubscription =
+      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
+          .subscribe(tick -> scanTransactions(-500));
 
   /**
    * Ethereum wallet.
@@ -899,16 +907,27 @@ public class EthereumWallet implements Wallet, Validatable {
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
-  private static void scanTransactions() {
-    // Scan every block, look for origin and receiver.
+  private static void scanTransactions(long startingBlock) {
+    // Scan blocks, look for origin and receiver.
     try {
       // Get latest block
       BigInteger latestBlockNumber =
           new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
 
-      for (long i = 0; i < latestBlockNumber.longValue(); i++) {
+      // If it's negative, start from that many blocks prior to the last.
+      if (startingBlock < 0) {
+        startingBlock = Math.max(startingBlock + latestBlockNumber.longValue(), 0);
+      }
+
+      for (long i = startingBlock; i < latestBlockNumber.longValue(); i++) {
         String blockNumber = "0x" + BigInteger.valueOf(i).toString(16);
-        Block block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
+        Block block;
+        try {
+          block = ethereumRpc.eth_getBlockByNumber(blockNumber, true);
+        } catch (Exception e) {
+          LOGGER.warn("Error reading block #" + i, e);
+          continue;
+        }
 
         if (block.getTransactions().length == 0) {
           continue;
@@ -916,7 +935,10 @@ public class EthereumWallet implements Wallet, Validatable {
 
         Arrays.asList(block.getTransactions()).forEach(tx -> {
           TransactionDetails txDetail = new TransactionDetails();
-          txDetail.setTxDate(block.getTimestamp());
+          BigInteger dateConverter =
+              new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
+          dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
+          txDetail.setTxDate(new Date(dateConverter.longValue()));
 
           txDetail.setTxHash(ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getHash())));
           txDetail.setFromAddress(
@@ -928,6 +950,8 @@ public class EthereumWallet implements Wallet, Validatable {
           amount = amount.divide(BigDecimal.valueOf(config.getWeiMultiplier()));
           txDetail.setAmount(amount);
 
+          LOGGER.debug("Found tx for: " + tx.getFrom() + " - " + Json
+              .stringifyObject(Transaction.class, tx));
           // For each receiver that is an mSig account, parse the data, check if it's sending data to
           // another account.
           try {
@@ -947,6 +971,7 @@ public class EthereumWallet implements Wallet, Validatable {
               if (multiSig.getFunction().equalsIgnoreCase(contract.getExecuteFunctionAddress())) {
                 for (int j = 0; j < multiSig.getAddress().size(); j++) {
                   TransactionDetails msigTx = new TransactionDetails();
+                  msigTx.setTxDate(new Date(dateConverter.longValue()));
                   msigTx.setFromAddress(txDetail.getToAddress());
                   msigTx.setToAddress(new String[]{multiSig.getAddress().get(j)});
                   msigTx.setAmount(BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
@@ -970,7 +995,7 @@ public class EthereumWallet implements Wallet, Validatable {
               }
             }
           } catch (Exception e) {
-            LOGGER.debug("Unable to decode tx data", e);
+            LOGGER.debug("Unable to decode tx data");
           }
 
           if (!txHistory.containsKey(txDetail.getToAddress()[0])) {
@@ -989,7 +1014,14 @@ public class EthereumWallet implements Wallet, Validatable {
         });
       }
     } catch (Exception e) {
-      LOGGER.warn("Unable to scan blockchain for Ethereum!");
+      LOGGER.warn("Unable to scan blockchain for Ethereum!", e);
+    }
+  }
+
+  private class TxDateComparator implements Comparator<TransactionDetails> {
+    @Override
+    public int compare(TransactionDetails o1, TransactionDetails o2) {
+      return o1.getTxDate().compareTo(o2.getTxDate());
     }
   }
 
@@ -997,8 +1029,22 @@ public class EthereumWallet implements Wallet, Validatable {
   public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     if (txHistory.containsKey(address)) {
+      LOGGER.debug("We have tx history for this address");
       txHistory.get(address).forEach(txDetails::add);
     }
+    LOGGER.debug("Size: " + txDetails.size());
+
+    LOGGER.debug("SkipNumber: " + skipNumber);
+    LOGGER.debug("NumberToReturn: " + numberToReturn);
+    Collections.sort(txDetails, new TxDateComparator());
+    for (int i = 0; i < skipNumber; i++) {
+      txDetails.removeLast();
+    }
+    LOGGER.debug("Size: " + txDetails.size());
+    while (txDetails.size() > numberToReturn) {
+      txDetails.removeFirst();
+    }
+    LOGGER.debug("Size: " + txDetails.size());
     return txDetails.toArray(new TransactionDetails[txDetails.size()]);
   }
 

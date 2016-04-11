@@ -1,7 +1,7 @@
-package io.emax.cosigner.fiat.gethrpc.FiatContract.v1;
+package io.emax.cosigner.fiat.gethrpc.fiatcontract.v1;
 
-import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractInterface;
-import io.emax.cosigner.fiat.gethrpc.FiatContract.FiatContractParametersInterface;
+import io.emax.cosigner.fiat.gethrpc.fiatcontract.FiatContractInterface;
+import io.emax.cosigner.fiat.gethrpc.fiatcontract.FiatContractParametersInterface;
 
 public class FiatContractV1 implements FiatContractInterface {
   private static final String initData =

@@ -38,7 +38,7 @@ public class Application {
       System.out.println("\tsignTransaction(String transaction, String address)");
       System.out.println("\tsendTransaction(String transaction)");
       System.out.println("\tmonitor(String address)");
-      System.out.println("\tlistTxs(String address)");
+      System.out.println("\tlistTxs(String address, int resultSize, int skipNumber)");
       System.out.println("\tgeneratePrivateKey()");
       System.out.println("\tgenerateAddressFromKey(privateKey)");
       System.out.println("\tgenerateTokens(Long cents)");
@@ -54,6 +54,8 @@ public class Application {
     LinkedList<String> addressList = new LinkedList<>();
     BigDecimal amount = BigDecimal.ZERO;
     Long longVal = 0L;
+    int resultSize = 0;
+    int skipNumber = 0;
     switch (args[0]) {
       case "getNewAddress":
         if (args.length >= 2) {
@@ -157,9 +159,16 @@ public class Application {
         if (args.length >= 2) {
           accountName = args[1];
         }
+        if (args.length >= 3) {
+          resultSize = Integer.parseInt(args[2]);
+        }
+        if (args.length >= 4) {
+          skipNumber = Integer.parseInt(args[3]);
+        }
         System.out.println("Waiting 2 minutes to let txHistory build...");
         Thread.sleep(2 * 60 * 1000L);
-        Arrays.asList(wallet.getTransactions(accountName, 100, 0)).forEach(System.out::println);
+        Arrays.asList(wallet.getTransactions(accountName, resultSize, skipNumber))
+            .forEach(System.out::println);
         break;
       case "generatePrivateKey":
         System.out.println(wallet.generatePrivateKey());
