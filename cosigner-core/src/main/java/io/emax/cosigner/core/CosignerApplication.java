@@ -10,6 +10,7 @@ import io.emax.cosigner.core.cluster.Coordinator;
 import io.emax.cosigner.core.resources.AdminResource;
 import io.emax.cosigner.core.resources.CurrencyResource;
 import io.emax.cosigner.core.resources.websocket.WebSocketSocket;
+import io.emax.cosigner.ethereum.EthereumWallet;
 import io.emax.cosigner.fiat.FiatWallet;
 import io.emax.cosigner.validator.BasicValidator;
 
@@ -85,8 +86,9 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     // Ethereum
     CurrencyPackage ethereumPackage = new CurrencyPackage();
     ethereumPackage.setConfiguration(new io.emax.cosigner.ethereum.EthereumConfiguration());
-    ethereumPackage.setWallet(new io.emax.cosigner.ethereum.EthereumWallet());
-    ethereumPackage.setMonitor(new io.emax.cosigner.ethereum.EthereumMonitor());
+    ethereumPackage.setWallet(new EthereumWallet());
+    ethereumPackage.setMonitor(new io.emax.cosigner.ethereum.EthereumMonitor(
+        (EthereumWallet) ethereumPackage.getWallet()));
     getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(), ethereumPackage);
     // Euro
     CurrencyPackage euroPackage = new CurrencyPackage();

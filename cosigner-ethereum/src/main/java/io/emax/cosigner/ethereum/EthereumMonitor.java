@@ -39,6 +39,10 @@ public class EthereumMonitor implements io.emax.cosigner.api.currency.Monitor {
     wallet = new EthereumWallet();
   }
 
+  public EthereumMonitor(EthereumWallet inputWallet) {
+    wallet = inputWallet;
+  }
+
   private boolean updateBalances() {
     monitoredAddresses.forEach(address -> {
       String currentBalance = wallet.getBalance(address);
