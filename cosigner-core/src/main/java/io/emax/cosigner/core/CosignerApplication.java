@@ -10,6 +10,7 @@ import io.emax.cosigner.core.cluster.Coordinator;
 import io.emax.cosigner.core.resources.AdminResource;
 import io.emax.cosigner.core.resources.CurrencyResource;
 import io.emax.cosigner.core.resources.websocket.WebSocketSocket;
+import io.emax.cosigner.fiat.FiatWallet;
 import io.emax.cosigner.validator.BasicValidator;
 
 import org.eclipse.jetty.servlets.CrossOriginFilter;
@@ -90,8 +91,9 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     // Euro
     CurrencyPackage euroPackage = new CurrencyPackage();
     euroPackage.setConfiguration(new io.emax.cosigner.fiat.FiatConfiguration("EUR"));
-    euroPackage.setWallet(new io.emax.cosigner.fiat.FiatWallet("EUR"));
-    euroPackage.setMonitor(new io.emax.cosigner.fiat.FiatMonitor("EUR"));
+    euroPackage.setWallet(new FiatWallet("EUR"));
+    euroPackage.setMonitor(
+        new io.emax.cosigner.fiat.FiatMonitor("EUR", (FiatWallet) euroPackage.getWallet()));
     getCurrencies().put(euroPackage.getConfiguration().getCurrencySymbol(), euroPackage);
 
     // If the enabled currency list has been set, then remove any that aren't enabled.
@@ -132,7 +134,8 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
         .addMapping("/admin/*");
 
     // Enable CORS
-    final FilterRegistration.Dynamic cors = environment.servlets().addFilter("crossOriginRequests", CrossOriginFilter.class);
+    final FilterRegistration.Dynamic cors =
+        environment.servlets().addFilter("crossOriginRequests", CrossOriginFilter.class);
     cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
   }
 }

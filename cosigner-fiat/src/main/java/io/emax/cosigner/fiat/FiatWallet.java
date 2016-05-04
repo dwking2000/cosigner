@@ -77,7 +77,11 @@ public class FiatWallet implements Wallet {
         String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
             DefaultBlock.LATEST.toString());
         int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
+        LOGGER.info("FIAT Rounds: " + rounds + "(" + txCount + ") for " + config.getContractAccount());
         for (int i = 0; i < rounds; i++) {
+          if(i % 10000 == 0) {
+            LOGGER.info("FIAT Round progress: " + i + "/" + rounds + "...");
+          }
           RlpList contractAddress = new RlpList();
           RlpItem contractCreator =
               new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
@@ -149,7 +153,6 @@ public class FiatWallet implements Wallet {
       String contractCode = ethereumRpc
           .eth_getCode("0x" + contract.toLowerCase(Locale.US), DefaultBlock.LATEST.toString());
       contractCode = contractCode.substring(2);
-      LOGGER.debug("Contract code: " + contractCode);
       Class<?> contractType = FiatContract.class;
       while (FiatContractInterface.class.isAssignableFrom(contractType)) {
         FiatContractInterface contractParams = (FiatContractInterface) contractType.newInstance();

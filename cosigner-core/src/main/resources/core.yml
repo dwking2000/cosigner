@@ -36,7 +36,7 @@ logging:
     io.emax: DEBUG
   appenders:
     - type: console
-      threshold: WARN
+      threshold: INFO
       target: stderr
 
     - type: file

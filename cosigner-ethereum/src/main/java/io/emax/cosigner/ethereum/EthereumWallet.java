@@ -4,7 +4,6 @@ import io.emax.cosigner.api.core.ServerStatus;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.common.ByteUtilities;
-import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.common.RlpItem;
@@ -14,7 +13,6 @@ import io.emax.cosigner.ethereum.gethrpc.CallData;
 import io.emax.cosigner.ethereum.gethrpc.DefaultBlock;
 import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.gethrpc.RawTransaction;
-import io.emax.cosigner.ethereum.gethrpc.Transaction;
 import io.emax.cosigner.ethereum.gethrpc.multisig.ContractInformation;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContract;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractInterface;
@@ -74,6 +72,7 @@ public class EthereumWallet implements Wallet, Validatable {
    *
    * <p>Provides wallet access to the Ethereum network via a geth node.
    */
+  private static boolean loadingScan = true;
   public EthereumWallet() {
     try {
       syncMultiSigAddresses();
@@ -90,11 +89,15 @@ public class EthereumWallet implements Wallet, Validatable {
     }
     try {
       synching = true;
-      LOGGER.debug("Synchronizing contract accounts with network...");
+      LOGGER.info("Synchronizing contract accounts with network...");
       String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
           DefaultBlock.LATEST.toString());
       int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
+      LOGGER.info("ETH Rounds: " + rounds + "(" + txCount + ") for " + config.getContractAccount());
       for (int i = 0; i < rounds; i++) {
+        if(loadingScan && i % 50000 == 0) {
+          LOGGER.info("Initializing ETH: " + i + "/" + rounds + "...");
+        }
         RlpList contractAddress = new RlpList();
         RlpItem contractCreator =
             new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
@@ -110,7 +113,6 @@ public class EthereumWallet implements Wallet, Validatable {
             .eth_getCode("0x" + contract.toLowerCase(Locale.US), DefaultBlock.LATEST.toString());
 
         contractCode = contractCode.substring(2);
-        LOGGER.debug("Contract code: " + contractCode);
         Class<?> contractType = MultiSigContract.class;
         while (MultiSigContractInterface.class.isAssignableFrom(contractType)) {
           MultiSigContractInterface contractParams =
@@ -164,6 +166,7 @@ public class EthereumWallet implements Wallet, Validatable {
       LOGGER.warn("Error scanning for existing contracts!");
     } finally {
       synching = false;
+      loadingScan = false;
     }
   }
 
@@ -950,8 +953,6 @@ public class EthereumWallet implements Wallet, Validatable {
           amount = amount.divide(BigDecimal.valueOf(config.getWeiMultiplier()));
           txDetail.setAmount(amount);
 
-          LOGGER.debug("Found tx for: " + tx.getFrom() + " - " + Json
-              .stringifyObject(Transaction.class, tx));
           // For each receiver that is an mSig account, parse the data, check if it's sending data to
           // another account.
           try {
@@ -978,17 +979,16 @@ public class EthereumWallet implements Wallet, Validatable {
                       .divide(BigDecimal.valueOf(config.getWeiMultiplier())));
                   msigTx.setTxHash(txDetail.getTxHash());
 
-                  if (!txHistory.containsKey(msigTx.getToAddress()[0])) {
-                    txHistory.put(msigTx.getToAddress()[0], new HashSet<>());
-                  }
-                  if (!txHistory.containsKey(msigTx.getFromAddress()[0])) {
-                    txHistory.put(msigTx.getFromAddress()[0], new HashSet<>());
-                  }
-
                   if (reverseMsigContracts.containsKey(msigTx.getFromAddress()[0])) {
+                    if (!txHistory.containsKey(msigTx.getFromAddress()[0])) {
+                      txHistory.put(msigTx.getFromAddress()[0], new HashSet<>());
+                    }
                     txHistory.get(msigTx.getFromAddress()[0]).add(msigTx);
                   }
                   if (reverseMsigContracts.containsKey(msigTx.getToAddress()[0])) {
+                    if (!txHistory.containsKey(msigTx.getToAddress()[0])) {
+                      txHistory.put(msigTx.getToAddress()[0], new HashSet<>());
+                    }
                     txHistory.get(msigTx.getToAddress()[0]).add(msigTx);
                   }
                 }
@@ -998,17 +998,16 @@ public class EthereumWallet implements Wallet, Validatable {
             LOGGER.debug("Unable to decode tx data");
           }
 
-          if (!txHistory.containsKey(txDetail.getToAddress()[0])) {
-            txHistory.put(txDetail.getToAddress()[0], new HashSet<>());
-          }
-          if (!txHistory.containsKey(txDetail.getFromAddress()[0])) {
-            txHistory.put(txDetail.getFromAddress()[0], new HashSet<>());
-          }
-
           if (reverseMsigContracts.containsKey(txDetail.getFromAddress()[0])) {
+            if (!txHistory.containsKey(txDetail.getFromAddress()[0])) {
+              txHistory.put(txDetail.getFromAddress()[0], new HashSet<>());
+            }
             txHistory.get(txDetail.getFromAddress()[0]).add(txDetail);
           }
           if (reverseMsigContracts.containsKey(txDetail.getToAddress()[0])) {
+            if (!txHistory.containsKey(txDetail.getToAddress()[0])) {
+              txHistory.put(txDetail.getToAddress()[0], new HashSet<>());
+            }
             txHistory.get(txDetail.getToAddress()[0]).add(txDetail);
           }
         });

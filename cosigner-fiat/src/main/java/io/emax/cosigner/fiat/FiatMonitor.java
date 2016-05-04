@@ -42,6 +42,11 @@ public class FiatMonitor implements io.emax.cosigner.api.currency.Monitor {
     wallet = new FiatWallet(currency);
   }
 
+  public FiatMonitor(String currency, FiatWallet inputWallet) {
+    currencySymbol = currency;
+    wallet = inputWallet;
+  }
+
   private boolean updateBalances() {
     monitoredAddresses.forEach(address -> {
       String currentBalance = wallet.getBalance(address);
