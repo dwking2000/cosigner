@@ -12,15 +12,19 @@ import io.emax.cosigner.core.resources.CurrencyResource;
 import io.emax.cosigner.core.resources.websocket.WebSocketSocket;
 import io.emax.cosigner.validator.BasicValidator;
 
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
 import javax.servlet.ServletRegistration;
 
 public class CosignerApplication extends io.dropwizard.Application<CosignerConfiguration> {
@@ -126,5 +130,9 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
 
     environment.admin().addServlet("admin resources", jerseyContainerHolder.getContainer())
         .addMapping("/admin/*");
+
+    // Enable CORS
+    final FilterRegistration.Dynamic cors = environment.servlets().addFilter("crossOriginRequests", CrossOriginFilter.class);
+    cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
   }
 }
