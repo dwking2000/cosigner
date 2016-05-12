@@ -51,6 +51,7 @@ public class EthereumWallet implements Wallet, Validatable {
   private static Thread multiSigSubscription = new Thread(() -> {
     while (true) {
       try {
+        LOGGER.info("Scanning ETH multi-sig addresses");
         syncMultiSigAddresses();
         Thread.sleep(60000);
       } catch (Exception e) {
@@ -65,6 +66,7 @@ public class EthereumWallet implements Wallet, Validatable {
   private static Thread txFullHistorySubscription = new Thread(() -> {
     while (true) {
       try {
+        LOGGER.info("Scanning ETH transactions");
         scanTransactions(0);
         Thread.sleep(60000);
       } catch (Exception e) {
@@ -76,6 +78,7 @@ public class EthereumWallet implements Wallet, Validatable {
   private static Thread txShortHistorySubscription = new Thread(() -> {
     while (true) {
       try {
+        LOGGER.info("Short scanning ETH transactions");
         scanTransactions(-500);
         Thread.sleep(60000);
       } catch (Exception e) {

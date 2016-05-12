@@ -54,6 +54,7 @@ public class FiatWallet implements Wallet {
   private static Thread txFullHistorySubscription = new Thread(() -> {
     while (true) {
       try {
+        LOGGER.info("Scanning FIAT:" + config.getCurrencySymbol() + " transactions");
         scanTransactions(0);
         Thread.sleep(60000);
       } catch (Exception e) {
@@ -65,6 +66,7 @@ public class FiatWallet implements Wallet {
   private static Thread txShortHistorySubscription = new Thread(() -> {
     while (true) {
       try {
+        LOGGER.info("Short scanning FIAT:" + config.getCurrencySymbol() + " transactions");
         scanTransactions(-500);
         Thread.sleep(60000);
       } catch (Exception e) {

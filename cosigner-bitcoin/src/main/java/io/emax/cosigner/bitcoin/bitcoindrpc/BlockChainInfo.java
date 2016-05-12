@@ -77,6 +77,17 @@ public class BlockChainInfo {
   @JsonProperty("verificationprogress")
   private BigDecimal verificationprogress;
 
+  public Bip9Softforks[] getBip9_softforks() {
+    return bip9_softforks;
+  }
+
+  public void setBip9_softforks(Bip9Softforks[] bip9_softforks) {
+    this.bip9_softforks = bip9_softforks;
+  }
+
+  @JsonProperty("bip9_softforks")
+  private Bip9Softforks[] bip9_softforks;
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {

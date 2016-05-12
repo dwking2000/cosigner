@@ -46,6 +46,7 @@ public class BitcoinWallet implements Wallet, Validatable {
   private static Thread multiSigSubscription = new Thread(() -> {
     while (true) {
       try {
+        LOGGER.info("Scanning BTC multi-sig addresses");
         scanForAddresses();
         Thread.sleep(60000);
       } catch (Exception e) {
