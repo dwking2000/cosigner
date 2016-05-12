@@ -21,9 +21,6 @@ import io.emax.cosigner.fiat.gethrpc.fiatcontract.FiatContractParametersInterfac
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import rx.Observable;
-import rx.Subscription;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -38,7 +35,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 public class FiatWallet implements Wallet {
   private static final Logger LOGGER = LoggerFactory.getLogger(FiatWallet.class);
@@ -54,18 +50,42 @@ public class FiatWallet implements Wallet {
 
   // Transaction history data
   private static final HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
-  @SuppressWarnings("unused")
-  private static Subscription txFullHistorySubscription =
-      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanTransactions(0));
-  @SuppressWarnings("unused")
-  private static Subscription txShortHistorySubscription =
-      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanTransactions(-500));
+
+  private static Thread txFullHistorySubscription = new Thread(() -> {
+    while (true) {
+      try {
+        scanTransactions(0);
+        Thread.sleep(60000);
+      } catch (Exception e) {
+        LOGGER.debug("Full transaction scan interrupted.");
+      }
+    }
+  });
+
+  private static Thread txShortHistorySubscription = new Thread(() -> {
+    while (true) {
+      try {
+        scanTransactions(-500);
+        Thread.sleep(60000);
+      } catch (Exception e) {
+        LOGGER.debug("Short transaction scan interrupted.");
+      }
+    }
+  });
 
   public FiatWallet(String currency) {
     config = new FiatConfiguration(currency);
     setupFiatContract();
+
+    if (!txFullHistorySubscription.isAlive()) {
+      txFullHistorySubscription.setDaemon(true);
+      txFullHistorySubscription.run();
+    }
+
+    if (!txShortHistorySubscription.isAlive()) {
+      txShortHistorySubscription.setDaemon(true);
+      txShortHistorySubscription.run();
+    }
   }
 
   private void setupFiatContract() {
@@ -77,9 +97,10 @@ public class FiatWallet implements Wallet {
         String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
             DefaultBlock.LATEST.toString());
         int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
-        LOGGER.info("FIAT Rounds: " + rounds + "(" + txCount + ") for " + config.getContractAccount());
+        LOGGER.info(
+            "FIAT Rounds: " + rounds + "(" + txCount + ") for " + config.getContractAccount());
         for (int i = 0; i < rounds; i++) {
-          if(i % 10000 == 0) {
+          if (i % 10000 == 0) {
             LOGGER.info("FIAT Round progress: " + i + "/" + rounds + "...");
           }
           RlpList contractAddress = new RlpList();

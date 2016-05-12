@@ -22,9 +22,6 @@ import io.emax.cosigner.common.crypto.Secp256k1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import rx.Observable;
-import rx.Subscription;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -37,7 +34,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,29 +42,38 @@ public class BitcoinWallet implements Wallet, Validatable {
   private static final BitcoinConfiguration config = new BitcoinConfiguration();
   private static final BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
   private static final String PUBKEY_PREFIX = "PK-";
-  @SuppressWarnings("unused")
-  private static Subscription multiSigSubscription =
-      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanForAddresses());
+
+  private static Thread multiSigSubscription = new Thread(() -> {
+    while (true) {
+      try {
+        scanForAddresses();
+        Thread.sleep(60000);
+      } catch (Exception e) {
+        LOGGER.debug("Multisig scan interrupted.");
+      }
+    }
+  });
   private static Thread rescanThread = null;
   private static final HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
   public BitcoinWallet() {
+    if(!multiSigSubscription.isAlive()) {
+      multiSigSubscription.setDaemon(true);
+      multiSigSubscription.run();
+    }
+
     if (rescanThread == null) {
-      rescanThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          while (true) {
-            try {
-              Thread.sleep(config.getRescanTimer() * 1000L);
-              LOGGER.debug("Initiating blockchain rescan...");
-              byte[] key = Secp256k1.generatePrivateKey();
-              String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
-              String address = BitcoinTools.getPublicAddress(privateKey, true);
-              bitcoindRpc.importaddress(address, "RESCAN", true);
-            } catch (Exception e) {
-              LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
-            }
+      rescanThread = new Thread(() -> {
+        while (true) {
+          try {
+            Thread.sleep(config.getRescanTimer() * 1000L);
+            LOGGER.debug("Initiating blockchain rescan...");
+            byte[] key = Secp256k1.generatePrivateKey();
+            String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
+            String address = BitcoinTools.getPublicAddress(privateKey, true);
+            bitcoindRpc.importaddress(address, "RESCAN", true);
+          } catch (Exception e) {
+            LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
           }
         }
       });

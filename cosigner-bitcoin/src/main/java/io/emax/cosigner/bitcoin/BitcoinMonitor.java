@@ -39,6 +39,10 @@ public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
     wallet = new BitcoinWallet();
   }
 
+  public BitcoinMonitor(BitcoinWallet wallet) {
+    this.wallet = wallet;
+  }
+
   private boolean updateBalances() {
     monitoredAddresses.forEach(address -> {
       String currentBalance = wallet.getBalance(address);

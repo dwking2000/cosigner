@@ -21,9 +21,6 @@ import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContractParametersInte
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import rx.Observable;
-import rx.Subscription;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -36,7 +33,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 public class EthereumWallet implements Wallet, Validatable {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumWallet.class);
@@ -51,21 +47,42 @@ public class EthereumWallet implements Wallet, Validatable {
   // Multi-sig data
   private static final HashMap<String, ContractInformation> msigContracts = new HashMap<>();
   private static final HashMap<String, String> reverseMsigContracts = new HashMap<>();
-  @SuppressWarnings("unused")
-  private static Subscription multiSigSubscription =
-      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> syncMultiSigAddresses());
+
+  private static Thread multiSigSubscription = new Thread(() -> {
+    while (true) {
+      try {
+        syncMultiSigAddresses();
+        Thread.sleep(60000);
+      } catch (Exception e) {
+        LOGGER.debug("Multisig scan interrupted.");
+      }
+    }
+  });
 
   // Transaction history data
   private static final HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
-  @SuppressWarnings("unused")
-  private static Subscription txFullHistorySubscription =
-      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanTransactions(0));
-  @SuppressWarnings("unused")
-  private static Subscription txShortHistorySubscription =
-      Observable.interval(1, TimeUnit.MINUTES).onErrorReturn(null)
-          .subscribe(tick -> scanTransactions(-500));
+
+  private static Thread txFullHistorySubscription = new Thread(() -> {
+    while (true) {
+      try {
+        scanTransactions(0);
+        Thread.sleep(60000);
+      } catch (Exception e) {
+        LOGGER.debug("Full transaction scan interrupted.");
+      }
+    }
+  });
+
+  private static Thread txShortHistorySubscription = new Thread(() -> {
+    while (true) {
+      try {
+        scanTransactions(-500);
+        Thread.sleep(60000);
+      } catch (Exception e) {
+        LOGGER.debug("Short transaction scan interrupted.");
+      }
+    }
+  });
 
   /**
    * Ethereum wallet.
@@ -73,11 +90,27 @@ public class EthereumWallet implements Wallet, Validatable {
    * <p>Provides wallet access to the Ethereum network via a geth node.
    */
   private static boolean loadingScan = true;
+
   public EthereumWallet() {
     try {
       syncMultiSigAddresses();
     } catch (Exception e) {
       LOGGER.debug(null, e);
+    }
+
+    if (!multiSigSubscription.isAlive()) {
+      multiSigSubscription.setDaemon(true);
+      multiSigSubscription.run();
+    }
+
+    if (!txFullHistorySubscription.isAlive()) {
+      txFullHistorySubscription.setDaemon(true);
+      txFullHistorySubscription.run();
+    }
+
+    if (!txShortHistorySubscription.isAlive()) {
+      txShortHistorySubscription.setDaemon(true);
+      txShortHistorySubscription.run();
     }
   }
 
@@ -95,7 +128,7 @@ public class EthereumWallet implements Wallet, Validatable {
       int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
       LOGGER.info("ETH Rounds: " + rounds + "(" + txCount + ") for " + config.getContractAccount());
       for (int i = 0; i < rounds; i++) {
-        if(loadingScan && i % 50000 == 0) {
+        if (loadingScan && i % 50000 == 0) {
           LOGGER.info("Initializing ETH: " + i + "/" + rounds + "...");
         }
         RlpList contractAddress = new RlpList();

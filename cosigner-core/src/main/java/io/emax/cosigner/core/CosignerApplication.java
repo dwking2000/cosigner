@@ -5,6 +5,7 @@ import io.dropwizard.jersey.setup.JerseyContainerHolder;
 import io.dropwizard.setup.Environment;
 import io.emax.cosigner.api.core.CurrencyPackage;
 import io.emax.cosigner.api.validation.Validator;
+import io.emax.cosigner.bitcoin.BitcoinWallet;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
 import io.emax.cosigner.core.resources.AdminResource;
@@ -80,8 +81,9 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     // Bitcoin
     CurrencyPackage bitcoinPackage = new CurrencyPackage();
     bitcoinPackage.setConfiguration(new io.emax.cosigner.bitcoin.BitcoinConfiguration());
-    bitcoinPackage.setWallet(new io.emax.cosigner.bitcoin.BitcoinWallet());
-    bitcoinPackage.setMonitor(new io.emax.cosigner.bitcoin.BitcoinMonitor());
+    bitcoinPackage.setWallet(new BitcoinWallet());
+    bitcoinPackage.setMonitor(
+        new io.emax.cosigner.bitcoin.BitcoinMonitor((BitcoinWallet) bitcoinPackage.getWallet()));
     getCurrencies().put(bitcoinPackage.getConfiguration().getCurrencySymbol(), bitcoinPackage);
     // Ethereum
     CurrencyPackage ethereumPackage = new CurrencyPackage();
