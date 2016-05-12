@@ -79,12 +79,12 @@ public class FiatWallet implements Wallet {
 
     if (!txFullHistorySubscription.isAlive()) {
       txFullHistorySubscription.setDaemon(true);
-      txFullHistorySubscription.run();
+      txFullHistorySubscription.start();
     }
 
     if (!txShortHistorySubscription.isAlive()) {
       txShortHistorySubscription.setDaemon(true);
-      txShortHistorySubscription.run();
+      txShortHistorySubscription.start();
     }
   }
 

@@ -59,7 +59,7 @@ public class BitcoinWallet implements Wallet, Validatable {
   public BitcoinWallet() {
     if(!multiSigSubscription.isAlive()) {
       multiSigSubscription.setDaemon(true);
-      multiSigSubscription.run();
+      multiSigSubscription.start();
     }
 
     if (rescanThread == null) {
