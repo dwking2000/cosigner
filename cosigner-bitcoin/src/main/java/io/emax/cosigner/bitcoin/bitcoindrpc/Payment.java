@@ -13,41 +13,12 @@ import java.util.List;
  * @author dquintela
  */
 public class Payment {
-  public enum PaymentCategory {
-    /**
-     * if sending payment.
-     */
-    send,
-    /**
-     * if this wallet received payment in a regular transaction.
-     */
-    receive,
-    /**
-     * if a matured and spendable coinbase.
-     */
-    generate,
-    /**
-     * if a coinbase that is not spendable yet.
-     */
-    immature,
-    /**
-     * if a coinbase from a block that’s not in the local best block chain.
-     */
-    orphan,
-    /**
-     * if an off-block-chain move made with the move RPC.
-     */
-    move
-  }
-
-
   /**
    * The account which the payment was credited to or debited from. May be an empty string ("") for
    * the default account
    */
   @JsonProperty("account")
   private String account;
-
   /**
    * The address paid in this payment, which may be someone else’s address not belonging to this
    * wallet. May be empty if the address is unknown, such as when paying to a non-standard pubkey
@@ -55,20 +26,17 @@ public class Payment {
    */
   @JsonProperty("address")
   private String address;
-
   /**
    * The category of payment/transaction.
    */
   @JsonProperty("category")
   private PaymentCategory category;
-
   /**
    * A negative bitcoin amount if sending payment; a positive bitcoin amount if receiving payment
    * (including coinbases).
    */
   @JsonProperty("amount")
   private BigDecimal amount;
-
   /**
    * For an output, the output index (vout) for this output in this transaction. For an input, the
    * output index for the output being spent in its transaction. Because inputs list the output
@@ -77,55 +45,47 @@ public class Payment {
    */
   @JsonProperty("vout")
   private int vout;
-
   /**
    * If sending payment, the fee paid as a negative bitcoins value. May be 0. Not returned if
    * receiving payment
    */
   @JsonProperty("fee")
   private BigDecimal fee;
-
   /**
    * The number of confirmations the transaction has received. Will be 0 for unconfirmed and -1 for
    * conflicted
    */
   @JsonProperty("confirmations")
   private long confirmations;
-
   /**
    * Set to true if the transaction is a coinbase. Not returned for regular transactions
    */
   @JsonProperty("generated")
   private boolean generated;
-
   /**
    * Only returned for confirmed transactions. The hash of the block on the local best block chain
    * which includes this transaction, encoded as hex in RPC byte order
    */
   @JsonProperty("blockhash")
   private String blockhash;
-
   /**
    * Only returned for confirmed transactions. The block height of the block on the local best block
    * chain which includes this transaction
    */
   @JsonProperty("blockindex")
   private Long blockindex;
-
   /**
    * Only returned for confirmed transactions. The block header time (Unix epoch time) of the block
    * on the local best block chain which includes this transaction
    */
   @JsonProperty("blocktime")
   private Date blocktime = new Date();
-
   /**
    * The TXID of the transaction, encoded as hex in RPC byte order. Not returned for move category
    * payments
    */
   @JsonProperty("txid")
   private String txid;
-
   /**
    * An array containing the TXIDs of other transactions that spend the same inputs (UTXOs) as this
    * transaction. Array may be empty.
@@ -134,49 +94,52 @@ public class Payment {
    */
   @JsonProperty("walletconflicts")
   private List<String> walletconflicts = new LinkedList<>();
-
   /**
    * A Unix epoch time when the transaction was added to the wallet.
    */
   @JsonProperty("time")
   private Date time = new Date();
-
   /**
    * A Unix epoch time when the transaction was detected by the local node, or the time of the block
    * on the local best block chain that included the transaction.
    */
   @JsonProperty("timereceived")
   private Date timereceived = new Date();
-
   /**
    * For transaction originating with this wallet, a locally-stored comment added to the
    * transaction. Only returned if a comment was added
    */
   @JsonProperty("comment")
   private String comment;
-
   /**
    * For transaction originating with this wallet, a locally-stored comment added to the transaction
    * identifying who the transaction was sent to. Only returned if a comment-to was added
    */
   @JsonProperty("to")
   private String to;
-
   /**
    * Only returned by move category payments. This is the account the bitcoins were moved from or
    * moved to, as indicated by a negative or positive amount field in this payment
    */
   @JsonProperty("otheraccount")
   private String otheraccount;
-
   @JsonProperty("involvesWatchonly")
   private boolean involvesWatchonly;
-
   @JsonProperty("abandoned")
   private boolean abandoned;
+  @JsonProperty("trusted")
+  private boolean trusted;
+  @JsonProperty("bip125-replaceable")
+  private String bip125replaceable;
+  @JsonProperty("label")
+  private String label;
 
   public boolean isAbandoned() {
     return abandoned;
+  }
+
+  public boolean isTrusted() {
+    return trusted;
   }
 
   public String getBip125replaceable() {
@@ -186,12 +149,6 @@ public class Payment {
   public void setBip125replaceable(String bip125replaceable) {
     this.bip125replaceable = bip125replaceable;
   }
-
-  @JsonProperty("bip125-replaceable")
-  private String bip125replaceable;
-
-  @JsonProperty("label")
-  private String label;
 
   public String getLabel() {
     return label;
@@ -467,5 +424,32 @@ public class Payment {
         + walletconflicts + ", time=" + time + ", timereceived=" + timereceived + ", comment="
         + comment + ", to=" + to + ", otheraccount=" + otheraccount + ", involvesWatchonly="
         + involvesWatchonly + "]";
+  }
+
+  public enum PaymentCategory {
+    /**
+     * if sending payment.
+     */
+    send,
+    /**
+     * if this wallet received payment in a regular transaction.
+     */
+    receive,
+    /**
+     * if a matured and spendable coinbase.
+     */
+    generate,
+    /**
+     * if a coinbase that is not spendable yet.
+     */
+    immature,
+    /**
+     * if a coinbase from a block that’s not in the local best block chain.
+     */
+    orphan,
+    /**
+     * if an off-block-chain move made with the move RPC.
+     */
+    move
   }
 }
