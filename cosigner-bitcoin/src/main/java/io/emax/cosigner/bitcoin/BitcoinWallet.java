@@ -627,7 +627,7 @@ public class BitcoinWallet implements Wallet, Validatable {
 
             if (payment.getAddress().equalsIgnoreCase(address)) {
               TransactionDetails detail = new TransactionDetails();
-              detail.setAmount(payment.getAmount());
+              detail.setAmount(payment.getAmount().abs());
               detail.setTxDate(payment.getBlocktime());
 
               // Senders
@@ -664,7 +664,7 @@ public class BitcoinWallet implements Wallet, Validatable {
 
                 detail.setTxDate(payment.getBlocktime());
                 detail.setTxHash(payment.getTxid());
-                detail.setAmount(payment.getAmount());
+                detail.setAmount(payment.getAmount().abs());
                 detail.setFromAddress(new String[]{address});
                 detail.setToAddress(new String[]{payment.getAddress()});
 
