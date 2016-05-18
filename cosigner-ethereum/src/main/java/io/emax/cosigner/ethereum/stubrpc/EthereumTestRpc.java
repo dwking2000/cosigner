@@ -59,4 +59,9 @@ public class EthereumTestRpc implements EthereumRpc {
   public Block eth_getBlockByNumber(String number, boolean returnTxData) {
     return null;
   }
+
+  @Override
+  public String net_version() {
+    return "1";
+  }
 }

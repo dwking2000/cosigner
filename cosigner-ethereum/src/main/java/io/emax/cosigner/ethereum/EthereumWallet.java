@@ -37,6 +37,8 @@ import java.util.Locale;
 public class EthereumWallet implements Wallet, Validatable {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumWallet.class);
 
+  private static final String TESTNET_VERSION = "2";
+  private static final long TESTNET_BASE_ROUNDS = (long)Math.pow(2,20);
   // RPC and configuration
   private static final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
   private static final EthereumConfiguration config = new EthereumConfiguration();
@@ -129,8 +131,13 @@ public class EthereumWallet implements Wallet, Validatable {
       String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
           DefaultBlock.LATEST.toString());
       int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
-      LOGGER.info("ETH Rounds: " + rounds + "(" + txCount + ") for " + config.getContractAccount());
-      for (int i = 0; i < rounds; i++) {
+      int baseRounds = 0;
+      if(ethereumRpc.net_version().equals(TESTNET_VERSION)) {
+        baseRounds = (int)TESTNET_BASE_ROUNDS;
+      }
+
+      LOGGER.info("ETH Rounds: " + (rounds - baseRounds) + "(" + txCount + " - " + baseRounds +") for " + config.getContractAccount());
+      for (int i = baseRounds; i < rounds; i++) {
         if (loadingScan && i % 50000 == 0) {
           LOGGER.info("Initializing ETH: " + i + "/" + rounds + "...");
         }

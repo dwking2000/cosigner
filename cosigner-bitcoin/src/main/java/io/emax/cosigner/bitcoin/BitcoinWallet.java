@@ -67,12 +67,12 @@ public class BitcoinWallet implements Wallet, Validatable {
       rescanThread = new Thread(() -> {
         while (true) {
           try {
-            Thread.sleep(config.getRescanTimer() * 1000L);
             LOGGER.debug("Initiating blockchain rescan...");
             byte[] key = Secp256k1.generatePrivateKey();
             String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
             String address = BitcoinTools.getPublicAddress(privateKey, true);
             bitcoindRpc.importaddress(address, "RESCAN", true);
+            Thread.sleep(config.getRescanTimer() * 60L * 60L * 1000L);
           } catch (Exception e) {
             LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
           }
@@ -612,16 +612,18 @@ public class BitcoinWallet implements Wallet, Validatable {
     int pageNumber = 0;
     while (txDetails.size() < (numberToReturn + skipNumber)) {
       Payment[] payments = bitcoindRpc.listtransactions("*", pageSize, pageNumber * pageSize, true);
+      if(payments.length == 0) {
+        break;
+      }
       for (Payment payment : Arrays.asList(payments)) {
-
         // Lookup the txid and vout/vin based on the sign of the amount (+/-)
         // Determine the address involved
         try {
           String rawTx = bitcoindRpc.getrawtransaction(payment.getTxid());
           RawTransaction tx = RawTransaction.parse(rawTx);
           if (payment.getCategory() == PaymentCategory.receive) {
-
             // Paid to the account
+
             if (payment.getAddress().equalsIgnoreCase(address)) {
               TransactionDetails detail = new TransactionDetails();
               detail.setAmount(payment.getAmount());
@@ -708,6 +710,7 @@ public class BitcoinWallet implements Wallet, Validatable {
     while (txDetails.size() > numberToReturn) {
       txDetails.removeLast();
     }
+
     return txDetails.toArray(new TransactionDetails[txDetails.size()]);
   }
 

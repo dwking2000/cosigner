@@ -39,6 +39,9 @@ import java.util.Set;
 public class FiatWallet implements Wallet {
   private static final Logger LOGGER = LoggerFactory.getLogger(FiatWallet.class);
 
+  private static final String TESTNET_VERSION = "2";
+  private static final long TESTNET_BASE_ROUNDS = (long)Math.pow(2,20);
+
   // RPC and configuration
   private static final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
   private static FiatConfiguration config;
@@ -99,9 +102,14 @@ public class FiatWallet implements Wallet {
         String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
             DefaultBlock.LATEST.toString());
         int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
+        int baseRounds = 0;
+        if(ethereumRpc.net_version().equals(TESTNET_VERSION)) {
+          baseRounds = (int)TESTNET_BASE_ROUNDS;
+        }
+
         LOGGER.info(
-            "FIAT Rounds: " + rounds + "(" + txCount + ") for " + config.getContractAccount());
-        for (int i = 0; i < rounds; i++) {
+            "FIAT Rounds: " + (rounds - baseRounds) + "(" + txCount + " - " + baseRounds + ") for " + config.getContractAccount());
+        for (int i = baseRounds; i < rounds; i++) {
           if (i % 10000 == 0) {
             LOGGER.info("FIAT Round progress: " + i + "/" + rounds + "...");
           }

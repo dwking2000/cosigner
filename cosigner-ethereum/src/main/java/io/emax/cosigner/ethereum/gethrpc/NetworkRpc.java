@@ -6,4 +6,6 @@ public interface NetworkRpc {
   String eth_call(CallData object, String defaultBlock);
 
   Block eth_getBlockByNumber(String number, boolean returnTxData);
+
+  String net_version();
 }
