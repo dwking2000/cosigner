@@ -615,6 +615,7 @@ public class BitcoinWallet implements Wallet, Validatable {
       if(payments.length == 0) {
         break;
       }
+
       for (Payment payment : Arrays.asList(payments)) {
         // Lookup the txid and vout/vin based on the sign of the amount (+/-)
         // Determine the address involved

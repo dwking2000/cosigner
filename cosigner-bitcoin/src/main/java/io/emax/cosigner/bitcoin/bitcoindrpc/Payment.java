@@ -172,6 +172,13 @@ public class Payment {
   @JsonProperty("involvesWatchonly")
   private boolean involvesWatchonly;
 
+  @JsonProperty("abandoned")
+  private boolean abandoned;
+
+  public boolean isAbandoned() {
+    return abandoned;
+  }
+
   public String getBip125replaceable() {
     return bip125replaceable;
   }
