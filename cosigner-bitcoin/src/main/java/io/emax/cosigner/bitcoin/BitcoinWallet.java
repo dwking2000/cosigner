@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -628,7 +629,7 @@ public class BitcoinWallet implements Wallet, Validatable {
             if (payment.getAddress().equalsIgnoreCase(address)) {
               TransactionDetails detail = new TransactionDetails();
               detail.setAmount(payment.getAmount().abs());
-              detail.setTxDate(payment.getBlocktime());
+              detail.setTxDate(new Date(payment.getBlocktime().toInstant().toEpochMilli() * 1000L));
 
               // Senders
               HashSet<String> senders = new HashSet<>();
@@ -662,7 +663,7 @@ public class BitcoinWallet implements Wallet, Validatable {
               if (scriptAddress != null && scriptAddress.equalsIgnoreCase(address)) {
                 TransactionDetails detail = new TransactionDetails();
 
-                detail.setTxDate(payment.getBlocktime());
+                detail.setTxDate(new Date(payment.getBlocktime().toInstant().toEpochMilli() * 1000L));
                 detail.setTxHash(payment.getTxid());
                 detail.setAmount(payment.getAmount().abs());
                 detail.setFromAddress(new String[]{address});
