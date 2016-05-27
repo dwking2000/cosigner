@@ -23,8 +23,10 @@ public class FiatConfiguration implements CurrencyConfiguration {
   private static int minConfirmations = 10;
   private static long gasPrice = 100000000000L;
   private static long contractGas = 3000000L;
+  private static String contractKey = "";
   private static String contractAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
   private static String adminAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
+  private static String[] multiSigKeys = {};
   private static String[] multiSigAccounts = {"4839540a0ae3242fadf288622f7de1a9278a5858"};
   private static boolean generateNewContract = true;
   private static String contractAddress = "";
@@ -82,6 +84,10 @@ public class FiatConfiguration implements CurrencyConfiguration {
         // contractGas
         contractGas = getLongProp(cosignerProperties, "contractGas", contractGas);
 
+        // contractKey
+        contractKey = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("contractKey", contractKey));
+
         // contractAccount
         contractAccount = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("contractAccount", contractAccount));
@@ -90,8 +96,15 @@ public class FiatConfiguration implements CurrencyConfiguration {
         adminAccount = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("adminAccount", adminAccount));
 
-        // multiSigAccounts
+        // multiSigKeys
         String arrayParser = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("multiSigKeys"));
+        if (arrayParser != null) {
+          multiSigKeys = arrayParser.split("[|]");
+        }
+
+        // multiSigAccounts
+        arrayParser = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("multiSigAccounts"));
         if (arrayParser != null) {
           multiSigAccounts = arrayParser.split("[|]");
@@ -173,12 +186,20 @@ public class FiatConfiguration implements CurrencyConfiguration {
     return contractGas;
   }
 
+  public String getContractKey() {
+    return contractKey;
+  }
+
   public String getContractAccount() {
     return contractAccount;
   }
 
   public String getAdminAccount() {
     return adminAccount;
+  }
+
+  public String[] getMultiSigKeys() {
+    return multiSigKeys;
   }
 
   public String[] getMultiSigAccounts() {

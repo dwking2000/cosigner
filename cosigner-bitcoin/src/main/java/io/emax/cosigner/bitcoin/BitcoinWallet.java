@@ -59,7 +59,7 @@ public class BitcoinWallet implements Wallet, Validatable {
   private static final HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
   public BitcoinWallet() {
-    if(!multiSigSubscription.isAlive()) {
+    if (!multiSigSubscription.isAlive()) {
       multiSigSubscription.setDaemon(true);
       multiSigSubscription.start();
     }
@@ -68,13 +68,17 @@ public class BitcoinWallet implements Wallet, Validatable {
       rescanThread = new Thread(() -> {
         while (true) {
           try {
-            LOGGER.debug("Initiating blockchain rescan...");
-            byte[] key = Secp256k1.generatePrivateKey();
-            String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
-            String address = BitcoinTools.getPublicAddress(privateKey, true);
-            bitcoindRpc.importaddress(address, "RESCAN", true);
+            try {
+              LOGGER.debug("Initiating blockchain rescan...");
+              byte[] key = Secp256k1.generatePrivateKey();
+              String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
+              String address = BitcoinTools.getPublicAddress(privateKey, true);
+              bitcoindRpc.importaddress(address, "RESCAN", true);
+            } catch (Exception e) {
+              LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
+            }
             Thread.sleep(config.getRescanTimer() * 60L * 60L * 1000L);
-          } catch (Exception e) {
+          }catch (Exception e) {
             LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
           }
         }
@@ -208,6 +212,12 @@ public class BitcoinWallet implements Wallet, Validatable {
     for (String account : config.getMultiSigAccounts()) {
       if (!account.isEmpty()) {
         multisigAddresses.add(account);
+      }
+    }
+
+    for (String accountKey : config.getMultiSigKeys()) {
+      if (!accountKey.isEmpty()) {
+        multisigAddresses.add(BitcoinTools.getPublicAddress(accountKey, true));
       }
     }
 
@@ -408,9 +418,25 @@ public class BitcoinWallet implements Wallet, Validatable {
       signatureData = signWithPrivateKey(signatureData, privateKey);
       signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
     } else {
-      LOGGER.debug("Asking bitcoind to sign...");
-      signedTransaction =
-          bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[]{}, null, SigHash.ALL);
+      try {
+        LOGGER.debug("Asking bitcoind to sign...");
+        signedTransaction =
+            bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[]{}, null, SigHash.ALL);
+      } catch (Exception e) {
+        signedTransaction = new SignedTransaction();
+        signedTransaction.setTransaction(transaction);
+      }
+
+      for (String accountKey : config.getMultiSigKeys()) {
+        if (!accountKey.isEmpty()) {
+          transaction = signedTransaction.getTransaction();
+          address = BitcoinTools.getPublicAddress(accountKey, true);
+          signedTransaction = new SignedTransaction();
+          Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
+          signatureData = signWithPrivateKey(signatureData, accountKey);
+          signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
+        }
+      }
     }
 
     return signedTransaction.getTransaction();
@@ -613,7 +639,7 @@ public class BitcoinWallet implements Wallet, Validatable {
     int pageNumber = 0;
     while (txDetails.size() < (numberToReturn + skipNumber)) {
       Payment[] payments = bitcoindRpc.listtransactions("*", pageSize, pageNumber * pageSize, true);
-      if(payments.length == 0) {
+      if (payments.length == 0) {
         break;
       }
 
@@ -663,7 +689,8 @@ public class BitcoinWallet implements Wallet, Validatable {
               if (scriptAddress != null && scriptAddress.equalsIgnoreCase(address)) {
                 TransactionDetails detail = new TransactionDetails();
 
-                detail.setTxDate(new Date(payment.getBlocktime().toInstant().toEpochMilli() * 1000L));
+                detail
+                    .setTxDate(new Date(payment.getBlocktime().toInstant().toEpochMilli() * 1000L));
                 detail.setTxHash(payment.getTxid());
                 detail.setAmount(payment.getAmount().abs());
                 detail.setFromAddress(new String[]{address});

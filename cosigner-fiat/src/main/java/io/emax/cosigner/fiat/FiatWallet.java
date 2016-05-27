@@ -40,7 +40,7 @@ public class FiatWallet implements Wallet {
   private static final Logger LOGGER = LoggerFactory.getLogger(FiatWallet.class);
 
   private static final String TESTNET_VERSION = "2";
-  private static final long TESTNET_BASE_ROUNDS = (long)Math.pow(2,20);
+  private static final long TESTNET_BASE_ROUNDS = (long) Math.pow(2, 20);
 
   // RPC and configuration
   private static final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
@@ -103,12 +103,13 @@ public class FiatWallet implements Wallet {
             DefaultBlock.LATEST.toString());
         int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
         int baseRounds = 0;
-        if(ethereumRpc.net_version().equals(TESTNET_VERSION)) {
-          baseRounds = (int)TESTNET_BASE_ROUNDS;
+        if (ethereumRpc.net_version().equals(TESTNET_VERSION)) {
+          baseRounds = (int) TESTNET_BASE_ROUNDS;
         }
 
         LOGGER.info(
-            "FIAT Rounds: " + (rounds - baseRounds) + "(" + txCount + " - " + baseRounds + ") for " + config.getContractAccount());
+            "FIAT Rounds: " + (rounds - baseRounds) + "(" + txCount + " - " + baseRounds + ") for "
+                + config.getContractAccount());
         for (int i = baseRounds; i < rounds; i++) {
           if (i % 10000 == 0) {
             LOGGER.info("FIAT Round progress: " + i + "/" + rounds + "...");
@@ -152,8 +153,22 @@ public class FiatWallet implements Wallet {
 
         String rawTx = ByteUtilities.toHexString(tx.encode());
         LOGGER.debug("Creating contract: " + rawTx);
-        rawTx = signTransaction(rawTx, config.getContractAccount());
+        String contractKey = config.getContractKey();
+        String contractAddress = config.getContractAccount();
+
+        if (!contractKey.isEmpty()) {
+          contractAddress = EthereumTools.getPublicAddress(contractKey, true);
+          LOGGER.debug("ContractAccount from key: " + contractAddress);
+        } else {
+          contractKey = null;
+          LOGGER.debug("ContractAccount from config: " + contractAddress);
+        }
+        Iterable<Iterable<String>> sigData = getSigString(rawTx, contractAddress, true);
+        sigData =
+            signWithPrivateKey(sigData, contractKey, contractKey == null ? contractAddress : null);
+        rawTx = applySignature(rawTx, contractAddress, sigData);
         LOGGER.debug("Signed contract: " + rawTx);
+
         sendTransaction(rawTx);
 
         RlpList calculatedContractAddress = new RlpList();
@@ -276,6 +291,8 @@ public class FiatWallet implements Wallet {
   public String getBalance(String address) {
     CallData callData = new CallData();
     callData.setTo("0x" + contractAddress);
+    callData.setFrom("0x" + contractAddress);
+    callData.setValue("0");
     callData.setData("0x" + contractInterface.getContractParameters().getBalance(address));
     callData.setGas("100000"); // Doesn't matter, just can't be nil
     callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
@@ -289,6 +306,8 @@ public class FiatWallet implements Wallet {
   public String getConfirmations(String address) {
     CallData callData = new CallData();
     callData.setTo("0x" + contractAddress);
+    callData.setFrom("0x" + contractAddress);
+    callData.setValue("0");
     callData.setData("0x" + contractInterface.getContractParameters().getConfirmations(address));
     callData.setGas("100000"); // Doesn't matter, just can't be nil
     callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
@@ -302,6 +321,8 @@ public class FiatWallet implements Wallet {
   public String getTotalBalances() {
     CallData callData = new CallData();
     callData.setTo("0x" + contractAddress);
+    callData.setFrom("0x" + contractAddress);
+    callData.setValue("0");
     callData.setData("0x" + contractInterface.getContractParameters().getTotalBalance());
     callData.setGas("100000"); // Doesn't matter, just can't be nil
     callData.setGasPrice("100000"); // Doesn't matter, just can't be nil
@@ -391,8 +412,41 @@ public class FiatWallet implements Wallet {
       }
     } // Otherwise just sign it.
 
-    Iterable<Iterable<String>> sigData = getSigString(transaction, address);
-    sigData = signWithPrivateKey(sigData, name, address);
+    // Prepare sigData so that if we can't sign, it returns the original.
+    LinkedList<String> txData = new LinkedList<>();
+    txData.add(transaction);
+    LinkedList<Iterable<String>> wrappedTxdata = new LinkedList<>();
+    wrappedTxdata.add(txData);
+    Iterable<Iterable<String>> sigData = wrappedTxdata;
+
+    if (name == null && ownedAddresses.containsKey(address.toLowerCase(Locale.US))) {
+      for (int i = 0; i < config.getMultiSigAccounts().length; i++) {
+        if (config.getMultiSigAccounts()[i].isEmpty()) {
+          continue;
+        }
+        sigData = getSigString(transaction, config.getMultiSigAccounts()[i]);
+        sigData = signWithPrivateKey(sigData, null, config.getMultiSigAccounts()[i]);
+        transaction = applySignature(transaction, address, sigData);
+      }
+      for (int i = 0; i < config.getMultiSigKeys().length; i++) {
+        if (config.getMultiSigKeys()[i].isEmpty()) {
+          continue;
+        }
+        String msigAddress = EthereumTools.getPublicAddress(config.getMultiSigKeys()[i], true);
+        sigData = getSigString(transaction, msigAddress);
+        sigData = signWithPrivateKey(sigData, config.getMultiSigKeys()[i], null);
+        transaction = applySignature(transaction, address, sigData);
+      }
+    } else if (name == null) {
+      sigData = getSigString(transaction, address);
+      sigData = signWithPrivateKey(sigData, address, null);
+      transaction = applySignature(transaction, address, sigData);
+    } else {
+      String translatedAddress = address.toLowerCase(Locale.US);
+      sigData = getSigString(transaction, translatedAddress);
+      sigData = signWithPrivateKey(sigData, name, translatedAddress);
+    }
+
     return applySignature(transaction, address, sigData);
   }
 
@@ -476,11 +530,19 @@ public class FiatWallet implements Wallet {
       Map<String, List<String>> contractParams = contractInterface.getContractParameters()
           .parseTransfer(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()));
       if (contractParams != null) {
-        Iterable<Iterable<String>> sigData =
-            getSigString(transaction, config.getContractAccount(), true);
-        sigData = signWithPrivateKey(sigData, null, config.getContractAccount());
+        String contractKey = config.getContractKey();
+        String contractAddress = config.getContractAccount();
+
+        if (!contractKey.isEmpty()) {
+          contractAddress = EthereumTools.getPublicAddress(contractKey, true);
+        } else {
+          contractKey = null;
+        }
+        Iterable<Iterable<String>> sigData = getSigString(transaction, contractAddress, true);
+        sigData =
+            signWithPrivateKey(sigData, contractKey, contractKey == null ? contractAddress : null);
         LOGGER.debug("Re-signing transfer transaction");
-        transaction = applySignature(transaction, config.getContractAccount(), sigData);
+        transaction = applySignature(transaction, contractAddress, sigData);
       }
     }
 

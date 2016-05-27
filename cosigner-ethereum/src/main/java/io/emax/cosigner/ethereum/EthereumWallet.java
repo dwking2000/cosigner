@@ -38,7 +38,7 @@ public class EthereumWallet implements Wallet, Validatable {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumWallet.class);
 
   private static final String TESTNET_VERSION = "2";
-  private static final long TESTNET_BASE_ROUNDS = (long)Math.pow(2,20);
+  private static final long TESTNET_BASE_ROUNDS = (long) Math.pow(2, 20);
   // RPC and configuration
   private static final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
   private static final EthereumConfiguration config = new EthereumConfiguration();
@@ -132,11 +132,13 @@ public class EthereumWallet implements Wallet, Validatable {
           DefaultBlock.LATEST.toString());
       int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
       int baseRounds = 0;
-      if(ethereumRpc.net_version().equals(TESTNET_VERSION)) {
-        baseRounds = (int)TESTNET_BASE_ROUNDS;
+      if (ethereumRpc.net_version().equals(TESTNET_VERSION)) {
+        baseRounds = (int) TESTNET_BASE_ROUNDS;
       }
 
-      LOGGER.info("ETH Rounds: " + (rounds - baseRounds) + "(" + txCount + " - " + baseRounds +") for " + config.getContractAccount());
+      LOGGER.info(
+          "ETH Rounds: " + (rounds - baseRounds) + "(" + txCount + " - " + baseRounds + ") for "
+              + config.getContractAccount());
       for (int i = baseRounds; i < rounds; i++) {
         if (loadingScan && i % 50000 == 0) {
           LOGGER.info("Initializing ETH: " + i + "/" + rounds + "...");
@@ -335,6 +337,14 @@ public class EthereumWallet implements Wallet, Validatable {
       }
       addressesUsed.add(String.format("%64s", config.getMultiSigAddresses()[i]).replace(' ', '0'));
     }
+    for (int i = 0; i < config.getMultiSigKeys().length; i++) {
+      if (config.getMultiSigKeys()[i].isEmpty()) {
+        continue;
+      }
+      String convertedAddress = EthereumTools.getPublicAddress(config.getMultiSigAddresses()[i]);
+      addressesUsed.add(String.format("%64s", convertedAddress).replace(' ', '0'));
+    }
+
     String numberOfAddresses =
         ByteUtilities.toHexString(BigInteger.valueOf(addressesUsed.size()).toByteArray());
     numberOfAddresses = String.format("%64s", numberOfAddresses).replace(' ', '0');
@@ -354,8 +364,18 @@ public class EthereumWallet implements Wallet, Validatable {
 
     // Sign it with our contract creator, creator needs funds to pay for the creation
     String rawTx = ByteUtilities.toHexString(tx.encode());
+    String decodedContractAddress = config.getContractAccount();
+    String contractKey = config.getContractKey();
+
+    if (!contractKey.isEmpty()) {
+      decodedContractAddress = EthereumTools.getPublicAddress(contractKey, true);
+    } else {
+      contractKey = null;
+    }
     LOGGER.debug("Attempting to create contract with account: " + config.getContractAccount());
-    String signedTx = signTransaction(rawTx, config.getContractAccount());
+    Iterable<Iterable<String>> sigData = getSigString(rawTx, decodedContractAddress, false);
+    sigData = signTx(sigData, contractKey == null ? decodedContractAddress : null, contractKey);
+    String signedTx = applySignature(rawTx, decodedContractAddress, sigData);
 
     // Signature failed, we got the same thing back
     if (signedTx.equalsIgnoreCase(rawTx)) {
@@ -584,6 +604,15 @@ public class EthereumWallet implements Wallet, Validatable {
         }
         sigData = getSigString(transaction, config.getMultiSigAddresses()[i]);
         sigData = signTx(sigData, config.getMultiSigAddresses()[i], null);
+        transaction = applySignature(transaction, address, sigData);
+      }
+      for (int i = 0; i < config.getMultiSigKeys().length; i++) {
+        if (config.getMultiSigKeys()[i].isEmpty()) {
+          continue;
+        }
+        String msigAddress = EthereumTools.getPublicAddress(config.getMultiSigKeys()[i], true);
+        sigData = getSigString(transaction, msigAddress);
+        sigData = signTx(sigData, null, config.getMultiSigKeys()[i]);
         transaction = applySignature(transaction, address, sigData);
       }
     } else if (name == null) {
@@ -927,11 +956,18 @@ public class EthereumWallet implements Wallet, Validatable {
 
         if (contractParams.getFunction().equalsIgnoreCase(contract.getExecuteFunctionAddress())) {
           // This is a transfer request, re-sign it so that fees can be paid.
+          String contractAddress = config.getContractAccount();
+          String contractKey = config.getContractKey();
+
+          if (!contractKey.isEmpty()) {
+            contractAddress = EthereumTools.getPublicAddress(contractKey, true);
+          } else {
+            contractKey = null;
+          }
           LOGGER.debug("Re-signing TX for fees: " + transaction);
-          Iterable<Iterable<String>> sigData =
-              getSigString(transaction, config.getContractAccount(), false);
-          sigData = signTx(sigData, config.getContractAccount(), null);
-          transaction = applySignature(transaction, config.getContractAccount(), sigData);
+          Iterable<Iterable<String>> sigData = getSigString(transaction, contractAddress, false);
+          sigData = signTx(sigData, contractKey == null ? contractAddress : null, contractKey);
+          transaction = applySignature(transaction, contractAddress, sigData);
         }
       }
     } catch (Exception e) {
