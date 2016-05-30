@@ -18,6 +18,8 @@ RUN sed 's/localhost/${COSIGNER_PORT_8443_TCP_ADDR}/g' < /opt/functional/cosigne
 
 RUN cp /opt/emax/*.properties /opt/emax/lib/
 RUN cp /opt/emax/*.properties /opt/functional/cosigner-client/target/
+RUN mkdir /opt/emax/lib/lib
+RUN cp /opt/emax/lib/*.jar /opt/emax/lib/lib
 
 RUN cd /usr/bin && wget -O jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
 RUN chmod 555 /usr/bin/jq

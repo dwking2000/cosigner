@@ -22,7 +22,9 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
   private static long simpleTxGas = 90000L;
   private static long contractGas = 3000000L;
   private static int minSignatures = 2;
+  private static String contractKey = "";
   private static String contractAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
+  private static String[] multiSigKeys = {};
   private static String[] multiSigAccounts = {"4839540a0ae3242fadf288622f7de1a9278a5858"};
   private static BigDecimal maxAmountPerHour = BigDecimal.ZERO;
   private static BigDecimal maxAmountPerDay = BigDecimal.ZERO;
@@ -81,12 +83,23 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
         // minSignatures
         minSignatures = (int) getLongProp(cosignerProperties, "minSignatures", minSignatures);
 
+        // contractKey
+        contractKey = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("contractKey", contractKey));
+
         // contractAccount
         contractAccount = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("contractAccount", contractAccount));
 
-        // multiSigAccounts
+        // multiSigKeys
         String arrayParser = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("multiSigKeys"));
+        if (arrayParser != null) {
+          multiSigKeys = arrayParser.split("[|]");
+        }
+
+        // multiSigAccounts
+        arrayParser = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("multiSigAccounts"));
         if (arrayParser != null) {
           multiSigAccounts = arrayParser.split("[|]");
@@ -116,7 +129,8 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
             LOGGER.warn(null, e1);
           }
         }
-        LOGGER.info("Could not load cosigner-ethereum configuration from " + propertiesFilePath + ", using defaults.");
+        LOGGER.info("Could not load cosigner-ethereum configuration from " + propertiesFilePath
+            + ", using defaults.");
       }
       configLoaded = true;
     }
@@ -170,6 +184,12 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
     return false;
   }
 
+  public String[] getMultiSigKeys() {
+    String[] retArray = new String[multiSigKeys.length];
+    System.arraycopy(multiSigKeys, 0, retArray, 0, multiSigKeys.length);
+    return retArray;
+  }
+
   /**
    * Lists addresses that should be appended to the signers when creating new multi-sig addresses.
    *
@@ -183,6 +203,10 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
 
   public long getWeiMultiplier() {
     return 1000000000000000000L;
+  }
+
+  public String getContractKey() {
+    return contractKey;
   }
 
   public String getContractAccount() {

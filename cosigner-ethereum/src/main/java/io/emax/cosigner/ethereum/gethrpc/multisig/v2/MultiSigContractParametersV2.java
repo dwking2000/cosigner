@@ -132,7 +132,7 @@ public class MultiSigContractParametersV2
     encodedData.append(String.format(bytes64, ByteUtilities.toHexString(
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(this.address.size()).toByteArray())))
         .replace(' ', '0'));
-    for (String address : address) {
+    for (String address : this.address) {
       encodedData.append(String.format(bytes64, address).replace(' ', '0'));
     }
 
@@ -140,7 +140,7 @@ public class MultiSigContractParametersV2
     encodedData.append(String.format(bytes64, ByteUtilities.toHexString(
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(this.value.size()).toByteArray())))
         .replace(' ', '0'));
-    for (BigInteger value : value) {
+    for (BigInteger value : this.value) {
       encodedData.append(String.format(bytes64,
           ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(value.toByteArray())))
           .replace(' ', '0'));

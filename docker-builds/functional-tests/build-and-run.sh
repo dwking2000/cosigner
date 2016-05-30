@@ -9,5 +9,7 @@ docker-compose pull
 docker-compose build
 
 docker-compose rm -f
-docker-compose up 
+docker-compose up -d geth bitcoind cosigner 
+docker-compose up --no-recreate functional
+docker-compose kill
 

@@ -19,6 +19,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   private static int minConfirmations = 6;
   private static int maxConfirmations = 9999999;
   private static int minSignatures = 1;
+  private static String[] multiSigKeys = {};
   private static String[] multiSigAccounts = {};
   private static int maxDeterministicAddresses = 100;
   private static int rescanTimer = 60;
@@ -73,8 +74,15 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
         // maxConfirmations
         maxConfirmations = getIntProp(cosignerProperties, "maxConfirmations", maxConfirmations);
 
-        // multiSigAccounts
+        // multiSigKeys
         String arrayParser = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("multiSigKeys"));
+        if (arrayParser != null) {
+          multiSigKeys = arrayParser.split("[|]");
+        }
+
+        // multiSigAccounts
+        arrayParser = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("multiSigAccounts"));
         if (arrayParser != null) {
           multiSigAccounts = arrayParser.split("[|]");
@@ -157,6 +165,12 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   @Override
   public boolean hasMultipleRecipients() {
     return true;
+  }
+
+  public String[] getMultiSigKeys() {
+    String[] retArray = new String[multiSigKeys.length];
+    System.arraycopy(multiSigKeys, 0, retArray, 0, multiSigKeys.length);
+    return retArray;
   }
 
   /**
