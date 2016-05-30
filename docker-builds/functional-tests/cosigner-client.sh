@@ -123,6 +123,32 @@ echo "Getting coinbase"
 COINBASE=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "eth_coinbase", "params": [] }' ${CURLURL} | jq '.result' | sed 's/^"//g' | sed 's/"$//g' | sed 's/^0x//g')
 echo ${COINBASE}
 
+CONTRACT_ACCOUNT=e8a78b476ae1403b7fd39b662545ae608aced7c7
+echo ""
+echo "Contract account should be: "${CONTRACT_ACCOUNT}
+
+echo ""
+echo "Waiting 10 blocks for coinbase to generate funds before funding..."
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+
+echo ""
+echo "Funding contract account"
+TX=$(java -jar ${CLIENTLIB} prepareTransaction ETH ${COINBASE} ${CONTRACT_ACCOUNT} 5 | tail -n 1)
+echo ${TX}
+SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction ETH ${TX} ${COINBASE} | tail -n 1)
+echo ${SIGNEDTX}
+TXID=$(java -jar ${CLIENTLIB} broadcastTransaction ETH ${SIGNEDTX} | tail -n 1)
+echo ${TXID}
+
 echo ""
 echo "Waiting 10 blocks for coinbase to generate funds before starting..."
 waitBlock
@@ -137,9 +163,11 @@ waitBlock
 waitBlock
 
 echo ""
-echo "Checking coinbase balance"
+echo "Checking balances"
 CBBALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${COINBASE} | tail -n 1)
-echo ${CBBALANCE}
+CABALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${CONTRACT_ACCOUNT} | tail -n 1)
+echo ${COINBASE}": "${CBBALANCE}
+echo ${CONTRACT_ACCOUNT}": "${CABALANCE}
 
 echo ""
 echo "Generating address"
@@ -259,6 +287,32 @@ echo "Getting coinbase"
 COINBASE=$(curl -s -H 'Content-Type: application/json' -X POST -d '{"jsonrpc": "2.0", "id": "curl", "method": "eth_coinbase", "params": [] }' ${CURLURL} | jq '.result' | sed 's/^"//g' | sed 's/"$//g' | sed 's/^0x//g')
 echo ${COINBASE}
 
+CONTRACT_ACCOUNT=e8a78b476ae1403b7fd39b662545ae608aced7c7
+echo ""
+echo "Contract account should be: "${CONTRACT_ACCOUNT}
+
+echo ""
+echo "Waiting 10 blocks for coinbase to generate funds before funding..."
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+waitBlock
+
+echo ""
+echo "Funding contract account"
+TX=$(java -jar ${CLIENTLIB} prepareTransaction ETH ${COINBASE} ${CONTRACT_ACCOUNT} 5 | tail -n 1)
+echo ${TX}
+SIGNEDTX=$(java -jar ${CLIENTLIB} approveTransaction ETH ${TX} ${COINBASE} | tail -n 1)
+echo ${SIGNEDTX}
+TXID=$(java -jar ${CLIENTLIB} broadcastTransaction ETH ${SIGNEDTX} | tail -n 1)
+echo ${TXID}
+
 echo ""
 echo "Waiting 10 blocks for coinbase to generate funds before starting..."
 waitBlock
@@ -273,9 +327,11 @@ waitBlock
 waitBlock
 
 echo ""
-echo "Checking coinbase/admin balance..."
-ADD1BALANCE=$(java -jar ${CLIENTLIB} getBalance EUR ${COINBASE} | tail -n 1)
-echo ${COINBASE}": "${ADD1BALANCE}
+echo "Checking balances"
+CBBALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${COINBASE} | tail -n 1)
+CABALANCE=$(java -jar ${CLIENTLIB} getBalance ETH ${CONTRACT_ACCOUNT} | tail -n 1)
+echo ${COINBASE}": "${CBBALANCE}
+echo ${CONTRACT_ACCOUNT}": "${CABALANCE}
 
 ## Generate Tokens
 ADMINLIB=/opt/emax/lib/cosigner-fiat-0.0.1-SNAPSHOT.jar
