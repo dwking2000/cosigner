@@ -98,8 +98,17 @@ public class FiatWallet implements Wallet {
       contractAddress = config.getContractAddress();
       contractInterface = getContractType(contractAddress);
     } else {
+
+      String contractKey = config.getContractKey();
+      String contractAccount = config.getContractAccount();
+
+      if (!contractKey.isEmpty()) {
+        contractAccount = EthereumTools.getPublicAddress(contractKey, true);
+        LOGGER.debug("ContractAccount from key: " + contractAddress);
+      }
+
       try {
-        String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
+        String txCount = ethereumRpc.eth_getTransactionCount("0x" + contractAccount,
             DefaultBlock.LATEST.toString());
         int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
         int baseRounds = 0;
@@ -109,14 +118,14 @@ public class FiatWallet implements Wallet {
 
         LOGGER.info(
             "FIAT Rounds: " + (rounds - baseRounds) + "(" + txCount + " - " + baseRounds + ") for "
-                + config.getContractAccount());
+                + contractAccount);
         for (int i = baseRounds; i < rounds; i++) {
           if (i % 10000 == 0) {
             LOGGER.info("FIAT Round progress: " + i + "/" + rounds + "...");
           }
           RlpList contractAddress = new RlpList();
           RlpItem contractCreator =
-              new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
+              new RlpItem(ByteUtilities.toByteArray(contractAccount));
           RlpItem nonce =
               new RlpItem(ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(i).toByteArray()));
           contractAddress.add(contractCreator);
@@ -154,7 +163,7 @@ public class FiatWallet implements Wallet {
         String rawTx = ByteUtilities.toHexString(tx.encode());
         LOGGER.debug("Creating contract: " + rawTx);
         String contractKey = config.getContractKey();
-        String contractAddress = config.getContractAccount();
+        contractAddress = config.getContractAccount();
 
         if (!contractKey.isEmpty()) {
           contractAddress = EthereumTools.getPublicAddress(contractKey, true);
@@ -173,7 +182,7 @@ public class FiatWallet implements Wallet {
 
         RlpList calculatedContractAddress = new RlpList();
         RlpItem contractCreator =
-            new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
+            new RlpItem(ByteUtilities.toByteArray(contractAddress));
         calculatedContractAddress.add(contractCreator);
         calculatedContractAddress.add(tx.getNonce());
 

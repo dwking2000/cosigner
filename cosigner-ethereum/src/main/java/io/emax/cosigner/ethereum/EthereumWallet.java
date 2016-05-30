@@ -127,8 +127,15 @@ public class EthereumWallet implements Wallet, Validatable {
     }
     try {
       synching = true;
+      String decodedContractAddress = config.getContractAccount();
+      String contractKey = config.getContractKey();
+
+      if (!contractKey.isEmpty()) {
+        decodedContractAddress = EthereumTools.getPublicAddress(contractKey, true);
+      }
+
       LOGGER.info("Synchronizing contract accounts with network...");
-      String txCount = ethereumRpc.eth_getTransactionCount("0x" + config.getContractAccount(),
+      String txCount = ethereumRpc.eth_getTransactionCount("0x" + decodedContractAddress,
           DefaultBlock.LATEST.toString());
       int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
       int baseRounds = 0;
@@ -138,14 +145,14 @@ public class EthereumWallet implements Wallet, Validatable {
 
       LOGGER.info(
           "ETH Rounds: " + (rounds - baseRounds) + "(" + txCount + " - " + baseRounds + ") for "
-              + config.getContractAccount());
+              + decodedContractAddress);
       for (int i = baseRounds; i < rounds; i++) {
         if (loadingScan && i % 50000 == 0) {
           LOGGER.info("Initializing ETH: " + i + "/" + rounds + "...");
         }
         RlpList contractAddress = new RlpList();
         RlpItem contractCreator =
-            new RlpItem(ByteUtilities.toByteArray(config.getContractAccount()));
+            new RlpItem(ByteUtilities.toByteArray(decodedContractAddress));
         RlpItem nonce =
             new RlpItem(ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(i).toByteArray()));
         contractAddress.add(contractCreator);
