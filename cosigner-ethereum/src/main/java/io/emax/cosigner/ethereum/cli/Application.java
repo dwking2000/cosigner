@@ -33,6 +33,7 @@ public class Application {
       System.out.println("\tgetBalance(String address)");
       System.out.println("\tcreateTransaction(String fromAddress1, String fromAddress2,"
           + " ..., String toAddress, Decimal amount)");
+      System.out.println("\tgetSigners(String transaction)");
       System.out.println("\tsignTransaction(String transaction, String address)");
       System.out.println("\tsendTransaction(String transaction)");
       System.out.println("\tmonitor(String address)");
@@ -88,6 +89,12 @@ public class Application {
         recipient.setRecipientAddress(accountName);
         System.out
             .println(wallet.createTransaction(addressList, Collections.singletonList(recipient)));
+        break;
+      case "getSigners":
+        if (args.length >= 2) {
+          transaction = args[1];
+        }
+        System.out.println(wallet.getSignersForTransaction(transaction));
         break;
       case "signTransaction":
         if (args.length == 4) {

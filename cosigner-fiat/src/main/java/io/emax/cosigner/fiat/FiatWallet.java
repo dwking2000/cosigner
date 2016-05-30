@@ -156,9 +156,15 @@ public class FiatWallet implements Wallet {
             .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
         tx.getGasLimit().setDecodedContents(ByteUtilities
             .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
+        LinkedList<String> decodedAddresses = new LinkedList<>();
+        decodedAddresses.addAll(Arrays.asList(config.getMultiSigAccounts()));
+        Arrays.asList(config.getMultiSigKeys()).forEach(key -> {
+          String address = EthereumTools.getPublicAddress(key, true);
+          decodedAddresses.add(address);
+        });
         tx.getData().setDecodedContents(ByteUtilities.toByteArray(
             contractInterface.getContractParameters().createContract(config.getAdminAccount(),
-                Arrays.asList(config.getMultiSigAccounts()), config.getMinSignatures())));
+                decodedAddresses, config.getMinSignatures())));
 
         String rawTx = ByteUtilities.toHexString(tx.encode());
         LOGGER.debug("Creating contract: " + rawTx);
