@@ -211,12 +211,14 @@ public class BitcoinWallet implements Wallet, Validatable {
 
     for (String account : config.getMultiSigAccounts()) {
       if (!account.isEmpty()) {
+        // TODO Consider providing the public key instead of an account here... Or add a third option
         multisigAddresses.add(account);
       }
     }
 
     for (String accountKey : config.getMultiSigKeys()) {
       if (!accountKey.isEmpty()) {
+        // TODO Need to provide public key here
         multisigAddresses.add(BitcoinTools.getPublicAddress(accountKey, true));
       }
     }
