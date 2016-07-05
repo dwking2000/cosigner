@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class EthereumWallet implements Wallet, Validatable {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumWallet.class);
@@ -1076,6 +1077,64 @@ public class EthereumWallet implements Wallet, Validatable {
     }
     LOGGER.debug("Size: " + txDetails.size());
     return txDetails.toArray(new TransactionDetails[txDetails.size()]);
+  }
+
+  @Override
+  public TransactionDetails getTransaction(String transactionId) {
+    Map txData = ethereumRpc.eth_getTransactionByHash(transactionId);
+
+    Block txBlock = ethereumRpc.eth_getBlockByNumber(txData.get("blockNumber").toString(), true);
+    TransactionDetails txDetail = new TransactionDetails();
+    txDetail.setTxHash(txData.get("hash").toString());
+    txDetail.setTxDate(new Date(
+        new BigInteger(1, ByteUtilities.toByteArray(txBlock.getTimestamp())).longValue() * 1000L));
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+    BigInteger txBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(txData.get("blockNumber").toString()));
+    txDetail.setConfirmed(
+        config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+
+    txDetail.setAmount(
+        new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(txData.get("value").toString())))
+            .divide(BigDecimal.valueOf(config.getWeiMultiplier())));
+    txDetail.setToAddress(new String[]{txData.get("to").toString()});
+    txDetail.setFromAddress(new String[]{txData.get("from").toString()});
+
+    try {
+      if (reverseMsigContracts.containsKey(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
+        ContractInformation contractInfo = msigContracts
+            .get(reverseMsigContracts.get(txDetail.getToAddress()[0].toLowerCase(Locale.US)));
+        MultiSigContractInterface contract =
+            (MultiSigContractInterface) contractInfo.getContractVersion().newInstance();
+
+        byte[] inputData = ByteUtilities.toByteArray(txData.get("input").toString());
+        MultiSigContractParametersInterface multiSig = contract.getContractParameters();
+        multiSig.decode(inputData);
+
+        LOGGER.debug("TXDetail: " + txDetail.toString());
+        if (multiSig.getFunction().equalsIgnoreCase(contract.getExecuteFunctionAddress())) {
+          txDetail.setFromAddress(txDetail.getToAddress());
+          txDetail.setToAddress(new String[0]);
+          txDetail.setAmount(BigDecimal.ZERO);
+          for (int j = 0; j < multiSig.getAddress().size(); j++) {
+            LinkedList<String> recipients = new LinkedList<>();
+            recipients.addAll(Arrays.asList(txDetail.getToAddress()));
+            recipients.add(multiSig.getAddress().get(j));
+            txDetail.setToAddress(recipients.toArray(new String[recipients.size()]));
+
+            txDetail.setAmount(txDetail.getAmount().add(
+                BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
+                    .divide(BigDecimal.valueOf(config.getWeiMultiplier()))));
+          }
+
+          LOGGER.debug("Updated TXDetail: " + txDetail.toString());
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Not a contract tx");
+    }
+    return txDetail;
   }
 
   @Override

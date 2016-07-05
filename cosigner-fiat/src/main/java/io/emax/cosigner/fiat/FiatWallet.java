@@ -675,6 +675,53 @@ public class FiatWallet implements Wallet {
   }
 
   @Override
+  public TransactionDetails getTransaction(String transactionId) {
+    Map txMap = ethereumRpc.eth_getTransactionByHash(transactionId);
+
+    Block txBlock = ethereumRpc.eth_getBlockByNumber(txMap.get("blockNumber").toString(), true);
+    TransactionDetails txDetail = new TransactionDetails();
+    txDetail.setTxHash(txMap.get("hash").toString());
+    txDetail.setTxDate(new Date(
+        new BigInteger(1, ByteUtilities.toByteArray(txBlock.getTimestamp())).longValue() * 1000L));
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+    BigInteger txBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(txMap.get("blockNumber").toString()));
+    txDetail.setConfirmed(
+        config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+
+    txDetail.setToAddress(new String[]{txMap.get("to").toString()});
+    txDetail.setFromAddress(new String[]{txMap.get("from").toString()});
+
+    try {
+      if (contractAddress
+          .equalsIgnoreCase(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
+        String txData = txMap.get("input").toString();
+        FiatContractParametersInterface contractParamsInterface =
+            contractInterface.getContractParameters();
+        Map<String, List<String>> contractParams =
+            contractParamsInterface.parseTransfer(txData);
+
+        if (contractParams != null) {
+          for (int j = 0; j < contractParams.get(contractParamsInterface.RECIPIENTS).size();
+               j++) {
+            txDetail.setFromAddress(
+                contractParams.get(contractParamsInterface.SENDER).toArray(new String[]{}));
+            txDetail.setToAddress(
+                new String[]{contractParams.get(contractParamsInterface.RECIPIENTS).get(j)});
+            txDetail.setAmount(
+                new BigDecimal(contractParams.get(contractParamsInterface.AMOUNT).get(j)));
+          }
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Unable to decode tx data");
+    }
+
+    return txDetail;
+  }
+
+  @Override
   public ServerStatus getWalletStatus() {
     try {
       ethereumRpc.eth_blockNumber();

@@ -135,6 +135,7 @@ public interface Wallet extends OfflineWallet {
     private String[] fromAddress = new String[0];
     private String[] toAddress = new String[0];
     private BigDecimal amount;
+    private boolean confirmed = false;
 
     public String getTxHash() {
       return txHash;
@@ -186,6 +187,14 @@ public interface Wallet extends OfflineWallet {
 
     public void setAmount(BigDecimal amount) {
       this.amount = amount;
+    }
+
+    public boolean isConfirmed() {
+      return confirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+      this.confirmed = confirmed;
     }
 
     @Override
@@ -246,7 +255,7 @@ public interface Wallet extends OfflineWallet {
     public String toString() {
       return "TransactionDetails [txHash=" + txHash + ", txDate=" + txDate + ", fromAddress="
           + Arrays.toString(fromAddress) + ", toAddress=" + Arrays.toString(toAddress) + ", amount="
-          + amount + "]";
+          + amount + ", isConfirmed=" + confirmed + "]";
     }
   }
 
@@ -259,6 +268,8 @@ public interface Wallet extends OfflineWallet {
    * @return Transaction Details
    */
   TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber);
+
+  TransactionDetails getTransaction(String transactionId);
 
   ServerStatus getWalletStatus();
 }

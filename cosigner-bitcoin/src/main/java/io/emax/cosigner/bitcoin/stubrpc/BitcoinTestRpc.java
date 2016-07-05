@@ -120,4 +120,9 @@ public class BitcoinTestRpc implements BitcoindRpc {
       boolean includeWatchOnly) {
     return new Payment[]{};
   }
+
+  @Override
+  public Map<String, Object> gettransaction(String txid, boolean includeWatchOnly) {
+    return null;
+  }
 }
