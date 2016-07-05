@@ -108,6 +108,16 @@ public class CurrencyResource {
     return response;
   }
 
+  @POST
+  @Path("/GetTransaction")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getTransaction(String params) {
+    LOGGER.debug("[GetTransaction:Request]");
+    Response response = Response.ok(Common.getTransaction(params)).build();
+    LOGGER.debug("[GetTransaction:Response] " + response.toString());
+    return response;
+  }
+
   /**
    * REST end-point for the {@link Common} currency methods.
    *

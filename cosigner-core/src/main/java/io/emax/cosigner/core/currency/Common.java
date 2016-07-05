@@ -260,6 +260,17 @@ public class Common {
   }
 
   /**
+   * Get transaction details for a specific transaction ID.
+   */
+  public static String getTransaction(String params) {
+    CurrencyParameters currencyParams = convertParams(params);
+    CurrencyPackage currency = lookupCurrency(currencyParams);
+
+    return Json.stringifyObject(TransactionDetails.class,
+        currency.getWallet().getTransaction(currencyParams.getTransactionData()));
+  }
+
+  /**
    * Returns the combined balance of all addresses provided in the parameters.
    *
    * @param params {@link CurrencyParameters} with the currency code and addresses filled in.

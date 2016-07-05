@@ -46,6 +46,10 @@ public class WebSocketResource extends WebSocketAdapter {
           LOGGER.debug("[ListTransactions:WSRequest]");
           getRemote().sendString(Common.listTransactions(arg1));
           break;
+        case "/gettransaction":
+          LOGGER.debug("[GetTransaction:WSRequest]");
+          getRemote().sendString(Common.getTransaction(arg1));
+          break;
         case "/getbalance":
           LOGGER.debug("[GetBalance:WSRequest]");
           getRemote().sendString(Common.getBalance(arg1));
