@@ -38,6 +38,7 @@ public class Application {
       System.out.println("\tsendTransaction(String transaction)");
       System.out.println("\tmonitor(String address)");
       System.out.println("\tlistTxs(String address, int resultSize, int skipNumber)");
+      System.out.println("\tgetTx(String tx-id)");
       return;
     }
 
@@ -166,6 +167,12 @@ public class Application {
         Thread.sleep(2 * 60 * 1000L);
         Arrays.asList(wallet.getTransactions(accountName, resultSize, skipNumber))
             .forEach(System.out::println);
+        break;
+      case "getTx":
+        if (args.length >= 2) {
+          accountName = args[1];
+        }
+        System.out.println(wallet.getTransaction(accountName));
         break;
       default:
         System.out.println("Method not valid or not supported yet");

@@ -8,6 +8,7 @@ import io.emax.cosigner.ethereum.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.gethrpc.multisig.MultiSigContract;
 
 import java.math.BigInteger;
+import java.util.Map;
 
 public class EthereumTestRpc implements EthereumRpc {
   private int txCounter = 1;
@@ -21,6 +22,11 @@ public class EthereumTestRpc implements EthereumRpc {
   public String eth_getTransactionCount(String address, String defaultBlock) {
     return ByteUtilities.toHexString(
         ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(txCounter).toByteArray()));
+  }
+
+  @Override
+  public Map<String, Object> eth_getTransactionByHash(String txid) {
+    return null;
   }
 
   @Override

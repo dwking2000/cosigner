@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -78,7 +79,7 @@ public class BitcoinWallet implements Wallet, Validatable {
               LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
             }
             Thread.sleep(config.getRescanTimer() * 60L * 60L * 1000L);
-          }catch (Exception e) {
+          } catch (Exception e) {
             LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
           }
         }
@@ -780,6 +781,33 @@ public class BitcoinWallet implements Wallet, Validatable {
     txDetails.setFromAddress(senders.toArray(new String[senders.size()]));
     txDetails.setToAddress(recipients.toArray(new String[recipients.size()]));
     return txDetails;
+  }
+
+  @Override
+  public TransactionDetails getTransaction(String transactionId) {
+    Map txData = bitcoindRpc.gettransaction(transactionId, true);
+
+    TransactionDetails txDetail = new TransactionDetails();
+    txDetail.setTxHash(txData.get("txid").toString());
+    txDetail.setConfirmed(config.getMinConfirmations() <= (int) txData.get("confirmations"));
+    txDetail.setAmount(new BigDecimal(txData.get("amount").toString()));
+    txDetail.setTxDate(new Date(((int) txData.get("blocktime")) * 1000L));
+
+    LinkedList<String> senders = new LinkedList<>();
+    LinkedList<String> recipients = new LinkedList<>();
+    ArrayList<Map<String, Object>> txd = (ArrayList<Map<String, Object>>) txData.get("details");
+    txd.forEach((txdMap) -> {
+      if (txdMap.get("category").toString().equalsIgnoreCase("send")) {
+        senders.add(txdMap.get("address").toString());
+      } else if (txdMap.get("category").toString().equalsIgnoreCase("receive")) {
+        recipients.add(txdMap.get("address").toString());
+      }
+    });
+
+    txDetail.setFromAddress(senders.toArray(new String[senders.size()]));
+    txDetail.setToAddress(recipients.toArray(new String[recipients.size()]));
+
+    return txDetail;
   }
 
   @Override

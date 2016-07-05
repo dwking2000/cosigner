@@ -141,4 +141,7 @@ public interface WalletRpc {
   @JsonRpcMethod("listtransactions")
   Payment[] listtransactions(String account, int numberToReturn, int numberToSkip,
       boolean includeWatchOnly);
+
+  @JsonRpcMethod("gettransaction")
+  Map<String, Object> gettransaction(String txid, boolean includeWatchOnly);
 }
