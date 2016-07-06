@@ -263,11 +263,22 @@ public class Common {
    * Get transaction details for a specific transaction ID.
    */
   public static String getTransaction(String params) {
-    CurrencyParameters currencyParams = convertParams(params);
-    CurrencyPackage currency = lookupCurrency(currencyParams);
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackage currency = lookupCurrency(currencyParams);
 
-    return Json.stringifyObject(TransactionDetails.class,
-        currency.getWallet().getTransaction(currencyParams.getTransactionData()));
+      String response = Json.stringifyObject(TransactionDetails.class,
+          currency.getWallet().getTransaction(currencyParams.getTransactionData()));
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      LOGGER.debug(null, e);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
   }
 
   /**
