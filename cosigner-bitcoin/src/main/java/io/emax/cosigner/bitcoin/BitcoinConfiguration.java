@@ -43,7 +43,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
 
   private static int getIntProp(Properties prop, String value, int defaultValue) {
     try {
-      return Integer.parseInt(prop.getProperty(value));
+      return Integer.parseInt(EnvironmentVariableParser.resolveEnvVars(prop.getProperty(value)));
     } catch (Exception e) {
       LOGGER.warn(null, e);
       return defaultValue;
@@ -96,25 +96,29 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
         rescanTimer = getIntProp(cosignerProperties, "rescanTimer", rescanTimer);
 
         // daemonUser
-        daemonUser = cosignerProperties.getProperty("daemonUser", "");
+        daemonUser = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("daemonUser", ""));
 
         // daemonPassword
-        daemonPassword = cosignerProperties.getProperty("daemonPassword", "");
+        daemonPassword = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("daemonPassword", ""));
 
         // maxAmountPerHour
-        maxAmountPerHour = new BigDecimal(
-            cosignerProperties.getProperty("maxAmountPerHour", maxAmountPerHour.toPlainString()));
+        maxAmountPerHour = new BigDecimal(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties.getProperty("maxAmountPerHour", maxAmountPerHour.toPlainString())));
 
         // maxAmountPerDay
-        maxAmountPerDay = new BigDecimal(
-            cosignerProperties.getProperty("maxAmountPerDay", maxAmountPerDay.toPlainString()));
+        maxAmountPerDay = new BigDecimal(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties.getProperty("maxAmountPerDay", maxAmountPerDay.toPlainString())));
 
         // maxAmountPerTransaction
-        maxAmountPerTransaction = new BigDecimal(cosignerProperties
-            .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString()));
+        maxAmountPerTransaction = new BigDecimal(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties
+                .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString())));
 
         // serverPrivateKey
-        serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
+        serverPrivateKey = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey));
         LOGGER.info("cosigner-bitcoin configuration loaded.");
       } catch (IOException e) {
         if (propertiesFile != null) {
@@ -214,7 +218,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   public BigDecimal getMaxAmountPerTransaction() {
     return maxAmountPerTransaction;
   }
-  
+
   public static int getRescanTimer() {
     return rescanTimer;
   }

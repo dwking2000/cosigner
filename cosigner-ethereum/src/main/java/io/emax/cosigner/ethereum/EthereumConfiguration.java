@@ -44,7 +44,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
 
   private static long getLongProp(Properties prop, String value, long defaultValue) {
     try {
-      return Long.parseLong(prop.getProperty(value));
+      return Long.parseLong(EnvironmentVariableParser.resolveEnvVars(prop.getProperty(value)));
     } catch (Exception e) {
       LOGGER.warn(null, e);
       return defaultValue;
@@ -106,19 +106,21 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
         }
 
         // maxAmountPerHour
-        maxAmountPerHour = new BigDecimal(
-            cosignerProperties.getProperty("maxAmountPerHour", maxAmountPerHour.toPlainString()));
+        maxAmountPerHour = new BigDecimal(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties.getProperty("maxAmountPerHour", maxAmountPerHour.toPlainString())));
 
         // maxAmountPerDay
-        maxAmountPerDay = new BigDecimal(
-            cosignerProperties.getProperty("maxAmountPerDay", maxAmountPerDay.toPlainString()));
+        maxAmountPerDay = new BigDecimal(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties.getProperty("maxAmountPerDay", maxAmountPerDay.toPlainString())));
 
         // maxAmountPerTransaction
-        maxAmountPerTransaction = new BigDecimal(cosignerProperties
-            .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString()));
+        maxAmountPerTransaction = new BigDecimal(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties
+                .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString())));
 
         // serverPrivateKey
-        serverPrivateKey = cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey);
+        serverPrivateKey = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("serverPrivateKey", serverPrivateKey));
 
         LOGGER.info("cosigner-ethereum configuration loaded.");
       } catch (IOException e) {
