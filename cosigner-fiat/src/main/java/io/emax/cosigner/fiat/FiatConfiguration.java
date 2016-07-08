@@ -120,16 +120,17 @@ public class FiatConfiguration implements CurrencyConfiguration {
             .resolveEnvVars(cosignerProperties.getProperty("contractAddress", contractAddress));
 
         // maxAmountPerHour
-        maxAmountPerHour = new BigDecimal(
-            cosignerProperties.getProperty("maxAmountPerHour", maxAmountPerHour.toPlainString()));
+        maxAmountPerHour = new BigDecimal(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties.getProperty("maxAmountPerHour", maxAmountPerHour.toPlainString())));
 
         // maxAmountPerDay
-        maxAmountPerDay = new BigDecimal(
-            cosignerProperties.getProperty("maxAmountPerDay", maxAmountPerDay.toPlainString()));
+        maxAmountPerDay = new BigDecimal(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties.getProperty("maxAmountPerDay", maxAmountPerDay.toPlainString())));
 
         // maxAmountPerTransaction
-        maxAmountPerTransaction = new BigDecimal(cosignerProperties
-            .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString()));
+        maxAmountPerTransaction = new BigDecimal(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties
+                .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString())));
 
       } catch (IOException e) {
         if (propertiesFile != null) {
