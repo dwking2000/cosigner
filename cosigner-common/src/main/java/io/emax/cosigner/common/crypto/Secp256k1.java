@@ -28,6 +28,10 @@ public class Secp256k1 {
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
   private static final String SECP256K1 = "secp256k1";
 
+  public static final BigInteger MAXPRIVATEKEY =
+      new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);
+
+
   /**
    * Generate a random private key that can be used with Secp256k1.
    */
@@ -41,16 +45,12 @@ public class Secp256k1 {
       secureRandom = new SecureRandom();
     }
 
-    // Bit of magic, move this maybe. This is the max key range.
-    BigInteger maxKey =
-        new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);
-
     // Generate the key, skipping as many as desired.
     byte[] privateKeyAttempt = new byte[32];
     secureRandom.nextBytes(privateKeyAttempt);
     BigInteger privateKeyCheck = new BigInteger(1, privateKeyAttempt);
     while (privateKeyCheck.compareTo(BigInteger.ZERO) == 0
-        || privateKeyCheck.compareTo(maxKey) == 1) {
+        || privateKeyCheck.compareTo(MAXPRIVATEKEY) == 1) {
       secureRandom.nextBytes(privateKeyAttempt);
       privateKeyCheck = new BigInteger(1, privateKeyAttempt);
     }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.emax.cosigner.api.core.CosignerResponse;
-import io.emax.cosigner.api.core.CurrencyPackage;
+import io.emax.cosigner.api.core.CurrencyPackageInterface;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.api.core.CurrencyParametersRecipient;
 import io.emax.cosigner.api.core.Server;
@@ -71,7 +71,7 @@ public class Common {
   /**
    * Lookup the currency package declared in the parameters.
    */
-  public static CurrencyPackage lookupCurrency(CurrencyParameters params) {
+  public static CurrencyPackageInterface lookupCurrency(CurrencyParameters params) {
     if (CosignerApplication.getCurrencies().containsKey(params.getCurrencySymbol())) {
       return CosignerApplication.getCurrencies().get(params.getCurrencySymbol());
     } else {
@@ -108,7 +108,7 @@ public class Common {
   public static String registerAddress(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       HashMap<String, Boolean> responses = new HashMap<>();
       currencyParams.getAccount().forEach(address -> {
@@ -138,7 +138,7 @@ public class Common {
   public static String getNewAddress(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       String userAccount = currency.getWallet().createAddress(currencyParams.getUserKey());
       LinkedList<String> accounts = new LinkedList<>();
@@ -166,7 +166,7 @@ public class Common {
   public static String generateAddressFromKey(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       String publicKey = currencyParams.getUserKey();
       String publicAddress = currency.getWallet().createAddressFromKey(publicKey, false);
@@ -192,7 +192,7 @@ public class Common {
   public static String listAllAddresses(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       LinkedList<String> accounts = new LinkedList<>();
       currency.getWallet().getAddresses(currencyParams.getUserKey()).forEach(accounts::add);
@@ -220,7 +220,7 @@ public class Common {
   public static String listTransactions(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       int returnNumber;
       int skipNumber;
@@ -265,7 +265,7 @@ public class Common {
   public static String getTransaction(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       String response = Json.stringifyObject(TransactionDetails.class,
           currency.getWallet().getTransaction(currencyParams.getTransactionData()));
@@ -290,7 +290,7 @@ public class Common {
   public static String getBalance(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       BigDecimal balance = BigDecimal.ZERO;
       if (currencyParams.getAccount() == null || currencyParams.getAccount().isEmpty()) {
@@ -352,7 +352,7 @@ public class Common {
   public static String monitorBalance(String params, Session responseSocket) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       Monitor monitor = currency.getMonitor().createNewMonitor();
 
@@ -512,7 +512,7 @@ public class Common {
     try {
       CurrencyParameters currencyParams = convertParams(params);
 
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       if (currencyParams.getTransactionData() == null || currencyParams.getTransactionData()
           .isEmpty()) {
@@ -581,7 +581,7 @@ public class Common {
   public static String getSignersForTransaction(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       Iterable<String> signers =
           currency.getWallet().getSignersForTransaction(currencyParams.getTransactionData());
@@ -603,7 +603,7 @@ public class Common {
   public static String getSignatureString(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       String address = "";
       if (currencyParams.getAccount() != null && currencyParams.getAccount().size() > 0) {
@@ -631,7 +631,7 @@ public class Common {
   public static String applySignature(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       String address = "";
       if (currencyParams.getAccount() != null && currencyParams.getAccount().size() > 0) {
@@ -671,7 +671,7 @@ public class Common {
   public static String approveTransaction(String params, boolean sendToRemotes) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       for (Server server : ClusterInfo.getInstance().getServers()) {
         if (server.isOriginator()) { // It's us, try to sign it locally.
@@ -748,7 +748,7 @@ public class Common {
   public static String submitTransaction(String params) {
     try {
       CurrencyParameters currencyParams = convertParams(params);
-      CurrencyPackage currency = lookupCurrency(currencyParams);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
 
       String response = currency.getWallet().sendTransaction(currencyParams.getTransactionData());
 

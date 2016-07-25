@@ -47,17 +47,13 @@ public class BitcoinTools {
       byte[] serverKey = new BigInteger(serverKeyPart, 16).toByteArray();
       SecureRandom secureRandom = DeterministicRng.getSecureRandom(userKey, serverKey);
 
-      // Bit of magic, move this maybe. This is the max key range.
-      BigInteger maxKey =
-          new BigInteger("00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140", 16);
-
       // Generate the key, skipping as many as desired.
       byte[] privateKeyAttempt = new byte[32];
       for (int i = 0; i < Math.max(rounds, 1); i++) {
         secureRandom.nextBytes(privateKeyAttempt);
         BigInteger privateKeyCheck = new BigInteger(1, privateKeyAttempt);
         while (privateKeyCheck.compareTo(BigInteger.ZERO) == 0
-            || privateKeyCheck.compareTo(maxKey) == 1) {
+            || privateKeyCheck.compareTo(Secp256k1.MAXPRIVATEKEY) == 1) {
           secureRandom.nextBytes(privateKeyAttempt);
           privateKeyCheck = new BigInteger(1, privateKeyAttempt);
         }
