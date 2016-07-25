@@ -29,9 +29,6 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   private BigDecimal maxAmountPerDay = BigDecimal.ZERO;
   private BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
 
-  // Ideally we'll prompt for this or something more secure than a properties
-  // file...
-  // TODO Encrypt if possible.
   private String serverPrivateKey =
       "b0837faed56bc7c48dc29d564b1c030f03eee53b0317c53d784c8f40654821c6";
 

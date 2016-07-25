@@ -1,13 +1,14 @@
 package io.emax.cosigner.core.currency;
 
 import io.emax.cosigner.api.core.CosignerResponse;
-import io.emax.cosigner.api.core.CurrencyPackage;
+import io.emax.cosigner.api.core.CurrencyPackageInterface;
 import io.emax.cosigner.api.core.CurrencyParameters;
 import io.emax.cosigner.api.core.CurrencyParametersRecipient;
 import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.bitcoin.BitcoinConfiguration;
+import io.emax.cosigner.bitcoin.BitcoinCurrencyPackage;
 import io.emax.cosigner.bitcoin.BitcoinMonitor;
 import io.emax.cosigner.bitcoin.BitcoinResource;
 import io.emax.cosigner.bitcoin.BitcoinWallet;
@@ -15,6 +16,7 @@ import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.ethereum.EthereumConfiguration;
+import io.emax.cosigner.ethereum.EthereumCurrencyPackage;
 import io.emax.cosigner.ethereum.EthereumMonitor;
 import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.EthereumWallet;
@@ -53,12 +55,12 @@ public class CommonTest {
     Monitor ethereumMonitor = new EthereumMonitor((EthereumWallet) ethereumWallet);
 
     // Register currency packages
-    CurrencyPackage bitcoinPackage = new CurrencyPackage();
+    CurrencyPackageInterface bitcoinPackage = new BitcoinCurrencyPackage();
     bitcoinPackage.setConfiguration(bitcoinConfig);
     bitcoinPackage.setMonitor(bitcoinMonitor);
     bitcoinPackage.setWallet(bitcoinWallet);
 
-    CurrencyPackage ethereumPackage = new CurrencyPackage();
+    CurrencyPackageInterface ethereumPackage = new EthereumCurrencyPackage();
     ethereumPackage.setConfiguration(ethereumConfig);
     ethereumPackage.setMonitor(ethereumMonitor);
     ethereumPackage.setWallet(ethereumWallet);
@@ -342,7 +344,7 @@ public class CommonTest {
           parms.setCurrencySymbol(currency);
           parms.setUserKey(userKey);
 
-          CurrencyPackage currencyPackage = Common.lookupCurrency(parms);
+          CurrencyPackageInterface currencyPackage = Common.lookupCurrency(parms);
           String parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
           String privateKey = currencyPackage.getWallet().generatePrivateKey();
           String address = currencyPackage.getWallet().createAddressFromKey(privateKey, true);

@@ -41,53 +41,51 @@ import java.util.regex.Pattern;
 
 public class BitcoinWallet implements Wallet, Validatable {
   private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinWallet.class);
-  BitcoinConfiguration config;
   private final BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
   private static final String PUBKEY_PREFIX = "PK-";
 
-  private Thread multiSigSubscription = new Thread(() -> {
-    while (true) {
-      try {
-        LOGGER.info("Scanning BTC multi-sig addresses");
-        scanForAddresses();
-        Thread.sleep(60000);
-      } catch (Exception e) {
-        LOGGER.debug("Multisig scan interrupted.");
-      }
-    }
-  });
-  private static Thread rescanThread = null;
-  private static final HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
+  BitcoinConfiguration config;
+
+  private final HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
   public BitcoinWallet(BitcoinConfiguration conf) {
     config = conf;
-    if (!multiSigSubscription.isAlive()) {
-      multiSigSubscription.setDaemon(true);
-      multiSigSubscription.start();
-    }
+    Thread multiSigSubscription = new Thread(() -> {
+      //noinspection InfiniteLoopStatement
+      while (true) {
+        try {
+          LOGGER.info("Scanning BTC multi-sig addresses");
+          scanForAddresses();
+          Thread.sleep(60000);
+        } catch (Exception e) {
+          LOGGER.debug("Multisig scan interrupted.");
+        }
+      }
+    });
+    multiSigSubscription.setDaemon(true);
+    multiSigSubscription.start();
 
-    if (rescanThread == null) {
-      rescanThread = new Thread(() -> {
-        while (true) {
+    Thread rescanThread = new Thread(() -> {
+      //noinspection InfiniteLoopStatement
+      while (true) {
+        try {
           try {
-            try {
-              LOGGER.debug("Initiating blockchain rescan...");
-              byte[] key = Secp256k1.generatePrivateKey();
-              String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
-              String address = BitcoinTools.getPublicAddress(privateKey, true);
-              bitcoindRpc.importaddress(address, "RESCAN", true);
-            } catch (Exception e) {
-              LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
-            }
-            Thread.sleep(config.getRescanTimer() * 60L * 60L * 1000L);
+            LOGGER.debug("Initiating blockchain rescan...");
+            byte[] key = Secp256k1.generatePrivateKey();
+            String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
+            String address = BitcoinTools.getPublicAddress(privateKey, true);
+            bitcoindRpc.importaddress(address, "RESCAN", true);
           } catch (Exception e) {
             LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
           }
+          Thread.sleep(config.getRescanTimer() * 60L * 60L * 1000L);
+        } catch (Exception e) {
+          LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
         }
-      });
-      rescanThread.setDaemon(true);
-      rescanThread.start();
-    }
+      }
+    });
+    rescanThread.setDaemon(true);
+    rescanThread.start();
   }
 
   @Override
@@ -213,15 +211,13 @@ public class BitcoinWallet implements Wallet, Validatable {
 
     for (String account : config.getMultiSigAccounts()) {
       if (!account.isEmpty()) {
-        // TODO Consider providing the public key instead of an account here... Or add a third option
         multisigAddresses.add(account);
       }
     }
 
     for (String accountKey : config.getMultiSigKeys()) {
       if (!accountKey.isEmpty()) {
-        // TODO Need to provide public key here
-        multisigAddresses.add(BitcoinTools.getPublicAddress(accountKey, true));
+        multisigAddresses.add(BitcoinTools.getPublicKey(accountKey));
       }
     }
 
@@ -370,9 +366,7 @@ public class BitcoinWallet implements Wallet, Validatable {
 
           String redeemScript = multiSigRedeemScripts.get(output.getAddress());
           Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
-          publicKeys.forEach(key -> {
-            addresses.add(BitcoinTools.getPublicAddress(key, false));
-          });
+          publicKeys.forEach(key -> addresses.add(BitcoinTools.getPublicAddress(key, false)));
         }
       }
     });
@@ -775,7 +769,7 @@ public class BitcoinWallet implements Wallet, Validatable {
     for (long amount : satoshis) {
       totalAmount = totalAmount.add(BigDecimal.valueOf(amount));
     }
-    totalAmount = totalAmount.divide(BigDecimal.valueOf(100000000));
+    totalAmount = totalAmount.divide(BigDecimal.valueOf(100000000), BigDecimal.ROUND_UNNECESSARY);
 
     TransactionDetails txDetails = new TransactionDetails();
     txDetails.setAmount(totalAmount);
@@ -814,7 +808,7 @@ public class BitcoinWallet implements Wallet, Validatable {
   @Override
   public ServerStatus getWalletStatus() {
     try {
-      bitcoindRpc.getblockchaininfo().getChain().toString();
+      bitcoindRpc.getblockchaininfo().getChain();
       return ServerStatus.CONNECTED;
     } catch (Exception e) {
       return ServerStatus.DISCONNECTED;

@@ -1,6 +1,6 @@
 package io.emax.cosigner.api.validation;
 
-import io.emax.cosigner.api.core.CurrencyPackage;
+import io.emax.cosigner.api.core.CurrencyPackageInterface;
 
 public interface Validator {
   /**
@@ -9,5 +9,5 @@ public interface Validator {
    * <p>Returns true if the transaction appears to be OK. False if cosigner should stop the
    * signing/sending process.
    */
-  boolean validateTransaction(CurrencyPackage currency, String transaction);
+  boolean validateTransaction(CurrencyPackageInterface currency, String transaction);
 }
