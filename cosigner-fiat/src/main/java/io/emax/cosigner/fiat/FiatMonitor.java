@@ -19,7 +19,7 @@ public class FiatMonitor implements io.emax.cosigner.api.currency.Monitor {
   private final HashSet<TransactionDetails> accountTransactions = new HashSet<>();
   private final HashSet<TransactionDetails> newAccountTransactions = new HashSet<>();
 
-  private String currencySymbol;
+  private FiatConfiguration config;
 
   private final Observable<Map<String, String>> observableBalances =
       Observable.interval(1, TimeUnit.MINUTES).map(tick -> accountBalances);
@@ -37,13 +37,12 @@ public class FiatMonitor implements io.emax.cosigner.api.currency.Monitor {
 
   private final FiatWallet wallet;
 
-  public FiatMonitor(String currency) {
-    currencySymbol = currency;
-    wallet = new FiatWallet(currency);
+  public FiatMonitor(FiatConfiguration config) {
+    this.config = config;
+    wallet = new FiatWallet(config);
   }
 
-  public FiatMonitor(String currency, FiatWallet inputWallet) {
-    currencySymbol = currency;
+  public FiatMonitor(FiatWallet inputWallet) {
     wallet = inputWallet;
   }
 
@@ -108,7 +107,7 @@ public class FiatMonitor implements io.emax.cosigner.api.currency.Monitor {
 
   @Override
   public io.emax.cosigner.api.currency.Monitor createNewMonitor() {
-    return new FiatMonitor(currencySymbol);
+    return new FiatMonitor(config);
   }
 
   @Override

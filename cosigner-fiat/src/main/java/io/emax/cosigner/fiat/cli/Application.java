@@ -1,6 +1,7 @@
 package io.emax.cosigner.fiat.cli;
 
 import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.fiat.FiatConfiguration;
 import io.emax.cosigner.fiat.FiatMonitor;
 import io.emax.cosigner.fiat.FiatWallet;
 
@@ -46,8 +47,8 @@ public class Application {
       return;
     }
 
-    FiatWallet wallet = new FiatWallet("EUR");
-    FiatMonitor monitor = new FiatMonitor("EUR");
+    FiatWallet wallet = new FiatWallet(new FiatConfiguration("EUR"));
+    FiatMonitor monitor = new FiatMonitor(wallet);
     String accountName = "";
     String address = "";
     String transaction = "";

@@ -22,8 +22,8 @@ public class MonitorTest {
   @Before
   public void setUp() {
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    wallet = new EthereumWallet();
-    monitor = new EthereumMonitor();
+    wallet = new EthereumWallet(new EthereumConfiguration());
+    monitor = new EthereumMonitor(wallet);
     userKey = "deadbeef";
     balanceCounter = 0;
   }

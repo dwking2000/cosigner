@@ -24,7 +24,7 @@ public class WalletTest {
   @Before
   public void setUp() {
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    wallet = new EthereumWallet();
+    wallet = new EthereumWallet(new EthereumConfiguration());
     userKey = "deadbeef";
   }
 
@@ -168,6 +168,8 @@ public class WalletTest {
   public void testPreExistingAddresses() {
     System.out.println("");
     System.out.println("Testing address load");
+
+    testWallet();
 
     boolean foundPreExisting = false;
     for (String address : wallet.getAddresses(userKey)) {

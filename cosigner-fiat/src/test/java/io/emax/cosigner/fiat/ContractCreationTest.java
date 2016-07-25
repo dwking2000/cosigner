@@ -11,6 +11,6 @@ public class ContractCreationTest {
   public void createContract() {
     // Find or create a contract. Bytecode test more than anything.
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    Wallet wallet = new FiatWallet("EUR");
+    Wallet wallet = new FiatWallet(new FiatConfiguration("EUR"));
   }
 }

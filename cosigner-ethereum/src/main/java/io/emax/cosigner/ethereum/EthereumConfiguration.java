@@ -16,27 +16,23 @@ import java.util.Properties;
 public class EthereumConfiguration implements CurrencyConfiguration, ValidatorConfiguration {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumConfiguration.class);
   // Defaults
-  private static String daemonConnectionString = "http://localhost:8101";
-  private static int minConfirmations = 10;
-  private static long gasPrice = 100000000000L;
-  private static long simpleTxGas = 90000L;
-  private static long contractGas = 3000000L;
-  private static int minSignatures = 2;
-  private static String contractKey = "";
-  private static String contractAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
-  private static String[] multiSigKeys = {};
-  private static String[] multiSigAccounts = {"4839540a0ae3242fadf288622f7de1a9278a5858"};
-  private static BigDecimal maxAmountPerHour = BigDecimal.ZERO;
-  private static BigDecimal maxAmountPerDay = BigDecimal.ZERO;
-  private static BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
-
-  // TODO Encrypt if possible.
-  // Ideally we'll prompt for this or something more secure than a properties
-  // file...
-  private static String serverPrivateKey =
+  private String daemonConnectionString = "http://localhost:8101";
+  private int minConfirmations = 10;
+  private long gasPrice = 100000000000L;
+  private long simpleTxGas = 90000L;
+  private long contractGas = 3000000L;
+  private int minSignatures = 2;
+  private String contractKey = "";
+  private String contractAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
+  private String[] multiSigKeys = {};
+  private String[] multiSigAccounts = {"4839540a0ae3242fadf288622f7de1a9278a5858"};
+  private BigDecimal maxAmountPerHour = BigDecimal.ZERO;
+  private BigDecimal maxAmountPerDay = BigDecimal.ZERO;
+  private BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
+  private String serverPrivateKey =
       "b0837faed56bc7c48dc29d564b1c030f03eee53b0317c53d784c8f40654821c6";
 
-  private static boolean configLoaded = false;
+  private boolean configLoaded = false;
 
   public EthereumConfiguration() {
     loadConfig();

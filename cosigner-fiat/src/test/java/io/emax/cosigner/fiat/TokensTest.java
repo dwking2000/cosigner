@@ -9,7 +9,7 @@ public class TokensTest {
   @Test
   public void generateTokens() {
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    FiatWallet wallet = new FiatWallet("EUR");
+    FiatWallet wallet = new FiatWallet(new FiatConfiguration("EUR"));
 
     String generatedTx = wallet.generateTokens(10000);
     System.out.println("TX to generate 100.00 worth of tokens: " + generatedTx);
@@ -18,7 +18,7 @@ public class TokensTest {
   @Test
   public void destroyTokens() {
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    FiatWallet wallet = new FiatWallet("EUR");
+    FiatWallet wallet = new FiatWallet(new FiatConfiguration("EUR"));
 
     String generatedTx = wallet.destroyTokens(10000);
     System.out.println("TX to destroy 100.00 worth of tokens: " + generatedTx);

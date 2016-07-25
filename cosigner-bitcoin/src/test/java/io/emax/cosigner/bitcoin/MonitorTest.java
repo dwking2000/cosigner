@@ -22,8 +22,8 @@ public class MonitorTest {
   @Before
   public void setUp() {
     BitcoinResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
-    wallet = new BitcoinWallet();
-    monitor = new BitcoinMonitor();
+    wallet = new BitcoinWallet(new BitcoinConfiguration());
+    monitor = new BitcoinMonitor(wallet);
     userKey = "deadbeef";
     balanceCounter = 0;
   }

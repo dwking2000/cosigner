@@ -1,5 +1,6 @@
 package io.emax.cosigner.bitcoin.stubrpc;
 
+import io.emax.cosigner.bitcoin.BitcoinConfiguration;
 import io.emax.cosigner.bitcoin.BitcoinWallet;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainInfo;
@@ -100,7 +101,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
     Output output = new Output();
     output.setAccount("");
-    output.setAddress(new BitcoinWallet().createAddress("deadbeef"));
+    output.setAddress(new BitcoinWallet(new BitcoinConfiguration()).createAddress("deadbeef"));
     output.setAmount(BigDecimal.valueOf(30));
     output.setConfirmations(minimumConfirmations);
     output.setOutputIndex(1);

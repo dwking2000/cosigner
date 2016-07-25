@@ -34,13 +34,16 @@ public class EthereumMonitor implements io.emax.cosigner.api.currency.Monitor {
       Observable.interval(30, TimeUnit.SECONDS).map(tick -> updateBalances()).subscribe();
 
   private final EthereumWallet wallet;
+  private final EthereumConfiguration config;
 
-  public EthereumMonitor() {
-    wallet = new EthereumWallet();
+  public EthereumMonitor(EthereumConfiguration conf) {
+    config = conf;
+    wallet = new EthereumWallet(conf);
   }
 
   public EthereumMonitor(EthereumWallet inputWallet) {
     wallet = inputWallet;
+    config = wallet.config;
   }
 
   private boolean updateBalances() {
@@ -104,7 +107,7 @@ public class EthereumMonitor implements io.emax.cosigner.api.currency.Monitor {
 
   @Override
   public io.emax.cosigner.api.currency.Monitor createNewMonitor() {
-    return new EthereumMonitor();
+    return new EthereumMonitor(config);
   }
 
   @Override

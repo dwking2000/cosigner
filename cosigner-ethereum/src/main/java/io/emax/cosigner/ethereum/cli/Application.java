@@ -1,6 +1,7 @@
 package io.emax.cosigner.ethereum.cli;
 
 import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.ethereum.EthereumConfiguration;
 import io.emax.cosigner.ethereum.EthereumMonitor;
 import io.emax.cosigner.ethereum.EthereumWallet;
 
@@ -42,8 +43,8 @@ public class Application {
       return;
     }
 
-    EthereumWallet wallet = new EthereumWallet();
-    EthereumMonitor monitor = new EthereumMonitor();
+    EthereumWallet wallet = new EthereumWallet(new EthereumConfiguration());
+    EthereumMonitor monitor = new EthereumMonitor(wallet);
     String accountName = "";
     String address = "";
     String transaction = "";

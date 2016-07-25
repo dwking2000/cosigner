@@ -16,25 +16,25 @@ import java.util.Properties;
 public class FiatConfiguration implements CurrencyConfiguration {
   private static final Logger LOGGER = LoggerFactory.getLogger(FiatConfiguration.class);
 
-  private static String currencySymbol = "FIAT";
+  private String currencySymbol = "FIAT";
   // TODO Encrypt if possible.
-  private static String serverPrivateKey = "deadbeef";
-  private static int minSignatures = 10;
-  private static int minConfirmations = 10;
-  private static long gasPrice = 100000000000L;
-  private static long contractGas = 3000000L;
-  private static String contractKey = "";
-  private static String contractAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
-  private static String adminAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
-  private static String[] multiSigKeys = {};
-  private static String[] multiSigAccounts = {"4839540a0ae3242fadf288622f7de1a9278a5858"};
-  private static boolean generateNewContract = true;
-  private static String contractAddress = "";
-  private static BigDecimal maxAmountPerHour = BigDecimal.ZERO;
-  private static BigDecimal maxAmountPerDay = BigDecimal.ZERO;
-  private static BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
+  private String serverPrivateKey = "deadbeef";
+  private int minSignatures = 10;
+  private int minConfirmations = 10;
+  private long gasPrice = 100000000000L;
+  private long contractGas = 3000000L;
+  private String contractKey = "";
+  private String contractAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
+  private String adminAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
+  private String[] multiSigKeys = {};
+  private String[] multiSigAccounts = {"4839540a0ae3242fadf288622f7de1a9278a5858"};
+  private boolean generateNewContract = true;
+  private String contractAddress = "";
+  private BigDecimal maxAmountPerHour = BigDecimal.ZERO;
+  private BigDecimal maxAmountPerDay = BigDecimal.ZERO;
+  private BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
 
-  private static boolean configLoaded = false;
+  private boolean configLoaded = false;
 
   public FiatConfiguration(String currency) {
     loadConfig(currency);
