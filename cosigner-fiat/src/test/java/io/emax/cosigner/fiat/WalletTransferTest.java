@@ -21,7 +21,7 @@ public class WalletTransferTest {
   @Test
   public void createTransfer() {
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    Wallet wallet = new FiatWallet("EUR");
+    Wallet wallet = new FiatWallet(new FiatConfiguration("EUR"));
 
     String userKey1 = "deadbeef1";
     String userKey2 = "deadbeef2";

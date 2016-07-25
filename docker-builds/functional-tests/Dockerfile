@@ -1,4 +1,4 @@
-FROM cosigner_cosigner
+FROM cosignerinternal_cosigner
 MAINTAINER Tom Robichaud <tom@emax.io>
 
 RUN mkdir -p /opt/functional/

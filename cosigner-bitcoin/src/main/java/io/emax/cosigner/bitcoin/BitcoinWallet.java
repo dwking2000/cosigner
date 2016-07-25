@@ -41,11 +41,11 @@ import java.util.regex.Pattern;
 
 public class BitcoinWallet implements Wallet, Validatable {
   private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinWallet.class);
-  private static final BitcoinConfiguration config = new BitcoinConfiguration();
-  private static final BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
+  BitcoinConfiguration config;
+  private final BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
   private static final String PUBKEY_PREFIX = "PK-";
 
-  private static Thread multiSigSubscription = new Thread(() -> {
+  private Thread multiSigSubscription = new Thread(() -> {
     while (true) {
       try {
         LOGGER.info("Scanning BTC multi-sig addresses");
@@ -59,7 +59,8 @@ public class BitcoinWallet implements Wallet, Validatable {
   private static Thread rescanThread = null;
   private static final HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
-  public BitcoinWallet() {
+  public BitcoinWallet(BitcoinConfiguration conf) {
+    config = conf;
     if (!multiSigSubscription.isAlive()) {
       multiSigSubscription.setDaemon(true);
       multiSigSubscription.start();
@@ -165,7 +166,7 @@ public class BitcoinWallet implements Wallet, Validatable {
     return newAddress;
   }
 
-  private static void scanForAddresses() {
+  private void scanForAddresses() {
     try {
       Map<String, BigDecimal> knownAccounts = bitcoindRpc.listaccounts(0, true);
       knownAccounts.keySet().forEach(account -> {
@@ -182,7 +183,7 @@ public class BitcoinWallet implements Wallet, Validatable {
     }
   }
 
-  private static String generateMultiSigAddress(Iterable<String> addresses, String name) {
+  private String generateMultiSigAddress(Iterable<String> addresses, String name) {
     LinkedList<String> multisigAddresses = new LinkedList<>();
     addresses.forEach(address -> {
       // Check if any of the addresses belong to the user

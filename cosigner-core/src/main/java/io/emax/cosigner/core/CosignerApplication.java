@@ -5,13 +5,19 @@ import io.dropwizard.jersey.setup.JerseyContainerHolder;
 import io.dropwizard.setup.Environment;
 import io.emax.cosigner.api.core.CurrencyPackage;
 import io.emax.cosigner.api.validation.Validator;
+import io.emax.cosigner.bitcoin.BitcoinConfiguration;
+import io.emax.cosigner.bitcoin.BitcoinMonitor;
 import io.emax.cosigner.bitcoin.BitcoinWallet;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
 import io.emax.cosigner.core.resources.AdminResource;
 import io.emax.cosigner.core.resources.CurrencyResource;
 import io.emax.cosigner.core.resources.websocket.WebSocketSocket;
+import io.emax.cosigner.ethereum.EthereumConfiguration;
+import io.emax.cosigner.ethereum.EthereumMonitor;
 import io.emax.cosigner.ethereum.EthereumWallet;
+import io.emax.cosigner.fiat.FiatConfiguration;
+import io.emax.cosigner.fiat.FiatMonitor;
 import io.emax.cosigner.fiat.FiatWallet;
 import io.emax.cosigner.validator.BasicValidator;
 
@@ -80,25 +86,30 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     // Load api.currency libraries here
     // Bitcoin
     CurrencyPackage bitcoinPackage = new CurrencyPackage();
-    bitcoinPackage.setConfiguration(new io.emax.cosigner.bitcoin.BitcoinConfiguration());
-    bitcoinPackage.setWallet(new BitcoinWallet());
-    bitcoinPackage.setMonitor(
-        new io.emax.cosigner.bitcoin.BitcoinMonitor((BitcoinWallet) bitcoinPackage.getWallet()));
+    bitcoinPackage.setConfiguration(new BitcoinConfiguration());
+    bitcoinPackage
+        .setWallet(new BitcoinWallet((BitcoinConfiguration) bitcoinPackage.getConfiguration()));
+    bitcoinPackage.setMonitor(new BitcoinMonitor((BitcoinWallet) bitcoinPackage.getWallet()));
     getCurrencies().put(bitcoinPackage.getConfiguration().getCurrencySymbol(), bitcoinPackage);
     // Ethereum
     CurrencyPackage ethereumPackage = new CurrencyPackage();
-    ethereumPackage.setConfiguration(new io.emax.cosigner.ethereum.EthereumConfiguration());
-    ethereumPackage.setWallet(new EthereumWallet());
-    ethereumPackage.setMonitor(new io.emax.cosigner.ethereum.EthereumMonitor(
-        (EthereumWallet) ethereumPackage.getWallet()));
+    ethereumPackage.setConfiguration(new EthereumConfiguration());
+    ethereumPackage
+        .setWallet(new EthereumWallet((EthereumConfiguration) ethereumPackage.getConfiguration()));
+    ethereumPackage.setMonitor(new EthereumMonitor((EthereumWallet) ethereumPackage.getWallet()));
     getCurrencies().put(ethereumPackage.getConfiguration().getCurrencySymbol(), ethereumPackage);
     // Euro
     CurrencyPackage euroPackage = new CurrencyPackage();
-    euroPackage.setConfiguration(new io.emax.cosigner.fiat.FiatConfiguration("EUR"));
-    euroPackage.setWallet(new FiatWallet("EUR"));
-    euroPackage.setMonitor(
-        new io.emax.cosigner.fiat.FiatMonitor("EUR", (FiatWallet) euroPackage.getWallet()));
+    euroPackage.setConfiguration(new FiatConfiguration("EUR"));
+    euroPackage.setWallet(new FiatWallet((FiatConfiguration) euroPackage.getConfiguration()));
+    euroPackage.setMonitor(new FiatMonitor((FiatWallet) euroPackage.getWallet()));
     getCurrencies().put(euroPackage.getConfiguration().getCurrencySymbol(), euroPackage);
+    // US Dollar
+    CurrencyPackage usdPackage = new CurrencyPackage();
+    usdPackage.setConfiguration(new FiatConfiguration("USD"));
+    usdPackage.setWallet(new FiatWallet((FiatConfiguration) usdPackage.getConfiguration()));
+    usdPackage.setMonitor(new FiatMonitor((FiatWallet) usdPackage.getWallet()));
+    getCurrencies().put(usdPackage.getConfiguration().getCurrencySymbol(), usdPackage);
 
     // If the enabled currency list has been set, then remove any that aren't enabled.
     List<String> removeThese = new LinkedList<>();

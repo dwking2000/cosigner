@@ -43,18 +43,18 @@ public class FiatWallet implements Wallet {
   private static final long TESTNET_BASE_ROUNDS = (long) Math.pow(2, 20);
 
   // RPC and configuration
-  private static final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
-  private static FiatConfiguration config;
+  private final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
+  private FiatConfiguration config;
 
-  private static String contractAddress = "";
-  private static FiatContractInterface contractInterface = new FiatContract();
+  private String contractAddress = "";
+  private FiatContractInterface contractInterface = new FiatContract();
   private HashSet<String> knownAddresses = new HashSet<>();
   private HashMap<String, HashSet<String>> ownedAddresses = new HashMap<>();
 
   // Transaction history data
-  private static final HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
+  private final HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
 
-  private static Thread txFullHistorySubscription = new Thread(() -> {
+  private Thread txFullHistorySubscription = new Thread(() -> {
     while (true) {
       try {
         LOGGER.info("Scanning FIAT:" + config.getCurrencySymbol() + " transactions");
@@ -66,7 +66,7 @@ public class FiatWallet implements Wallet {
     }
   });
 
-  private static Thread txShortHistorySubscription = new Thread(() -> {
+  private Thread txShortHistorySubscription = new Thread(() -> {
     while (true) {
       try {
         LOGGER.info("Short scanning FIAT:" + config.getCurrencySymbol() + " transactions");
@@ -78,8 +78,8 @@ public class FiatWallet implements Wallet {
     }
   });
 
-  public FiatWallet(String currency) {
-    config = new FiatConfiguration(currency);
+  public FiatWallet(FiatConfiguration conf) {
+    config = conf;
     setupFiatContract();
 
     if (!txFullHistorySubscription.isAlive()) {
@@ -136,8 +136,8 @@ public class FiatWallet implements Wallet {
                   .substring(96 / 4, 256 / 4);
           FiatContractInterface contractClass = getContractType(contract);
           if (contractClass != null) {
-            FiatWallet.contractInterface = contractClass;
-            FiatWallet.contractAddress = contract;
+            this.contractInterface = contractClass;
+            this.contractAddress = contract;
             break;
           }
         }
@@ -565,7 +565,7 @@ public class FiatWallet implements Wallet {
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
-  private static void scanTransactions(long startingBlock) {
+  private void scanTransactions(long startingBlock) {
     // Scan every block, look for origin and receiver.
     try {
       // Get latest block
@@ -607,11 +607,11 @@ public class FiatWallet implements Wallet {
 
           // For each receiver that is the fiat account, parse the data, check if it's transferring a balance
           try {
-            if (contractAddress
+            if (this.contractAddress
                 .equalsIgnoreCase(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
               String txData = tx.getInput();
               FiatContractParametersInterface contractParamsInterface =
-                  contractInterface.getContractParameters();
+                  this.contractInterface.getContractParameters();
               Map<String, List<String>> contractParams =
                   contractParamsInterface.parseTransfer(txData);
 

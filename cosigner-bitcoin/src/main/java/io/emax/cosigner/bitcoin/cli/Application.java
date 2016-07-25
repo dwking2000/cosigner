@@ -1,6 +1,7 @@
 package io.emax.cosigner.bitcoin.cli;
 
 import io.emax.cosigner.api.currency.Wallet.Recipient;
+import io.emax.cosigner.bitcoin.BitcoinConfiguration;
 import io.emax.cosigner.bitcoin.BitcoinMonitor;
 import io.emax.cosigner.bitcoin.BitcoinWallet;
 
@@ -41,8 +42,8 @@ public class Application {
       return;
     }
 
-    BitcoinWallet wallet = new BitcoinWallet();
-    BitcoinMonitor monitor = new BitcoinMonitor();
+    BitcoinWallet wallet = new BitcoinWallet(new BitcoinConfiguration());
+    BitcoinMonitor monitor = new BitcoinMonitor(wallet);
     String accountName = "";
     String address = "";
     String transaction = "";

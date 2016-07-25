@@ -40,14 +40,14 @@ public class EthereumWallet implements Wallet, Validatable {
   private static final String TESTNET_VERSION = "2";
   private static final long TESTNET_BASE_ROUNDS = (long) Math.pow(2, 20);
 
-  private static final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
-  private static final EthereumConfiguration config = new EthereumConfiguration();
+  private final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
+  EthereumConfiguration config;
 
-  private static final HashMap<String, Integer> addressRounds = new HashMap<>();
-  private static final HashMap<String, ContractInformation> msigContracts = new HashMap<>();
-  private static final HashMap<String, String> reverseMsigContracts = new HashMap<>();
+  private final HashMap<String, Integer> addressRounds = new HashMap<>();
+  private final HashMap<String, ContractInformation> msigContracts = new HashMap<>();
+  private final HashMap<String, String> reverseMsigContracts = new HashMap<>();
 
-  private static Thread multiSigSubscription = new Thread(() -> {
+  private Thread multiSigSubscription = new Thread(() -> {
     while (true) {
       try {
         LOGGER.info("Scanning ETH multi-sig addresses");
@@ -59,8 +59,8 @@ public class EthereumWallet implements Wallet, Validatable {
     }
   });
 
-  private static final HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
-  private static Thread txFullHistorySubscription = new Thread(() -> {
+  private final HashMap<String, HashSet<TransactionDetails>> txHistory = new HashMap<>();
+  private Thread txFullHistorySubscription = new Thread(() -> {
     while (true) {
       try {
         LOGGER.info("Scanning ETH transactions");
@@ -71,7 +71,7 @@ public class EthereumWallet implements Wallet, Validatable {
       }
     }
   });
-  private static Thread txShortHistorySubscription = new Thread(() -> {
+  private Thread txShortHistorySubscription = new Thread(() -> {
     while (true) {
       try {
         LOGGER.info("Short scanning ETH transactions");
@@ -83,7 +83,8 @@ public class EthereumWallet implements Wallet, Validatable {
     }
   });
 
-  public EthereumWallet() {
+  public EthereumWallet(EthereumConfiguration conf) {
+    this.config = conf;
     try {
       syncMultiSigAddresses();
     } catch (Exception e) {
@@ -106,9 +107,9 @@ public class EthereumWallet implements Wallet, Validatable {
     }
   }
 
-  private static volatile boolean synching = false;
+  private volatile boolean synching = false;
 
-  private static void syncMultiSigAddresses() {
+  private void syncMultiSigAddresses() {
     if (synching) {
       return;
     }
@@ -942,7 +943,7 @@ public class EthereumWallet implements Wallet, Validatable {
     return ethereumRpc.eth_sendRawTransaction(transaction);
   }
 
-  private static void scanTransactions(long startingBlock) {
+  private void scanTransactions(long startingBlock) {
     // Scan blocks, look for origin and receiver.
     try {
       // Get latest block

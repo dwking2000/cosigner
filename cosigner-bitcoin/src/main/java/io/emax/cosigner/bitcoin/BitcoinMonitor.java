@@ -34,13 +34,16 @@ public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
           .subscribe();
 
   private final BitcoinWallet wallet;
+  private final BitcoinConfiguration config;
 
-  public BitcoinMonitor() {
-    wallet = new BitcoinWallet();
+  public BitcoinMonitor(BitcoinConfiguration conf) {
+    config = conf;
+    wallet = new BitcoinWallet(conf);
   }
 
   public BitcoinMonitor(BitcoinWallet wallet) {
     this.wallet = wallet;
+    config = wallet.config;
   }
 
   private boolean updateBalances() {
@@ -93,7 +96,7 @@ public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
 
   @Override
   public io.emax.cosigner.api.currency.Monitor createNewMonitor() {
-    return new BitcoinMonitor();
+    return new BitcoinMonitor(config);
   }
 
   @Override

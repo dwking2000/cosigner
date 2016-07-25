@@ -15,27 +15,27 @@ import java.util.Properties;
 
 public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorConfiguration {
   private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinConfiguration.class);
-  private static String daemonConnectionString = "http://127.0.0.1:18332";
-  private static int minConfirmations = 6;
-  private static int maxConfirmations = 9999999;
-  private static int minSignatures = 1;
-  private static String[] multiSigKeys = {};
-  private static String[] multiSigAccounts = {};
-  private static int maxDeterministicAddresses = 100;
-  private static int rescanTimer = 60;
-  private static String daemonUser;
-  private static String daemonPassword;
-  private static BigDecimal maxAmountPerHour = BigDecimal.ZERO;
-  private static BigDecimal maxAmountPerDay = BigDecimal.ZERO;
-  private static BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
+  private String daemonConnectionString = "http://127.0.0.1:18332";
+  private int minConfirmations = 6;
+  private int maxConfirmations = 9999999;
+  private int minSignatures = 1;
+  private String[] multiSigKeys = {};
+  private String[] multiSigAccounts = {};
+  private int maxDeterministicAddresses = 100;
+  private int rescanTimer = 60;
+  private String daemonUser;
+  private String daemonPassword;
+  private BigDecimal maxAmountPerHour = BigDecimal.ZERO;
+  private BigDecimal maxAmountPerDay = BigDecimal.ZERO;
+  private BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
 
   // Ideally we'll prompt for this or something more secure than a properties
   // file...
   // TODO Encrypt if possible.
-  private static String serverPrivateKey =
+  private String serverPrivateKey =
       "b0837faed56bc7c48dc29d564b1c030f03eee53b0317c53d784c8f40654821c6";
 
-  private static boolean configLoaded = false;
+  private boolean configLoaded = false;
 
   public BitcoinConfiguration() {
     loadConfig();
@@ -50,7 +50,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
     }
   }
 
-  private static synchronized void loadConfig() {
+  private synchronized void loadConfig() {
     if (!configLoaded) {
       FileInputStream propertiesFile = null;
       String propertiesFilePath = "./cosigner-bitcoin.properties";
@@ -219,7 +219,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
     return maxAmountPerTransaction;
   }
 
-  public static int getRescanTimer() {
+  public int getRescanTimer() {
     return rescanTimer;
   }
 }

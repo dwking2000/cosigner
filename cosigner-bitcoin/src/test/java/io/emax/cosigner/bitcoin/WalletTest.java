@@ -21,7 +21,7 @@ public class WalletTest {
   @Before
   public void setUp() {
     BitcoinResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
-    wallet = new BitcoinWallet();
+    wallet = new BitcoinWallet(new BitcoinConfiguration());
     userKey = "deadbeef";
   }
 

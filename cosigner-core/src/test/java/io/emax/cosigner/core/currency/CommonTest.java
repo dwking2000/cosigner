@@ -7,11 +7,17 @@ import io.emax.cosigner.api.core.CurrencyParametersRecipient;
 import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.Wallet;
+import io.emax.cosigner.bitcoin.BitcoinConfiguration;
+import io.emax.cosigner.bitcoin.BitcoinMonitor;
 import io.emax.cosigner.bitcoin.BitcoinResource;
+import io.emax.cosigner.bitcoin.BitcoinWallet;
 import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
+import io.emax.cosigner.ethereum.EthereumConfiguration;
+import io.emax.cosigner.ethereum.EthereumMonitor;
 import io.emax.cosigner.ethereum.EthereumResource;
+import io.emax.cosigner.ethereum.EthereumWallet;
 import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
 
 import org.junit.Assert;
@@ -36,15 +42,15 @@ public class CommonTest {
 
     // Bitcoin
     BitcoinResource.getResource().setBitcoindRpc(new BitcoinTestRpc());
-    Wallet bitcoinWallet = new io.emax.cosigner.bitcoin.BitcoinWallet();
-    Monitor bitcoinMonitor = new io.emax.cosigner.bitcoin.BitcoinMonitor();
-    CurrencyConfiguration bitcoinConfig = new io.emax.cosigner.bitcoin.BitcoinConfiguration();
+    CurrencyConfiguration bitcoinConfig = new BitcoinConfiguration();
+    Wallet bitcoinWallet = new BitcoinWallet((BitcoinConfiguration) bitcoinConfig);
+    Monitor bitcoinMonitor = new BitcoinMonitor((BitcoinWallet) bitcoinWallet);
 
     // Ethereum
     EthereumResource.getResource().setEthereumRpc(new EthereumTestRpc());
-    Wallet ethereumWallet = new io.emax.cosigner.ethereum.EthereumWallet();
-    Monitor ethereumMonitor = new io.emax.cosigner.ethereum.EthereumMonitor();
-    CurrencyConfiguration ethereumConfig = new io.emax.cosigner.ethereum.EthereumConfiguration();
+    CurrencyConfiguration ethereumConfig = new EthereumConfiguration();
+    Wallet ethereumWallet = new EthereumWallet((EthereumConfiguration) ethereumConfig);
+    Monitor ethereumMonitor = new EthereumMonitor((EthereumWallet) ethereumWallet);
 
     // Register currency packages
     CurrencyPackage bitcoinPackage = new CurrencyPackage();
