@@ -137,6 +137,25 @@ public interface Wallet extends OfflineWallet {
     private BigDecimal amount;
     private boolean confirmed = false;
 
+    public long getConfirmations() {
+      return confirmations;
+    }
+
+    public void setConfirmations(long confirmations) {
+      this.confirmations = confirmations;
+    }
+
+    public long getMinConfirmations() {
+      return minConfirmations;
+    }
+
+    public void setMinConfirmations(long minConfirmations) {
+      this.minConfirmations = minConfirmations;
+    }
+
+    private long confirmations = 0;
+    private long minConfirmations = 0;
+
     public String getTxHash() {
       return txHash;
     }
@@ -253,9 +272,10 @@ public interface Wallet extends OfflineWallet {
 
     @Override
     public String toString() {
-      return "TransactionDetails [txHash=" + txHash + ", txDate=" + txDate + ", fromAddress="
-          + Arrays.toString(fromAddress) + ", toAddress=" + Arrays.toString(toAddress) + ", amount="
-          + amount + ", isConfirmed=" + confirmed + "]";
+      return "TransactionDetails{" + "txHash='" + txHash + '\'' + ", txDate=" + txDate
+          + ", fromAddress=" + Arrays.toString(fromAddress) + ", toAddress=" + Arrays
+          .toString(toAddress) + ", amount=" + amount + ", confirmed=" + confirmed
+          + ", confirmations=" + confirmations + ", minConfirmations=" + minConfirmations + '}';
     }
   }
 

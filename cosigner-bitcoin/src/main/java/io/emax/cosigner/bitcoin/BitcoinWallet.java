@@ -1,6 +1,7 @@
 package io.emax.cosigner.bitcoin;
 
 import io.emax.cosigner.api.core.ServerStatus;
+import io.emax.cosigner.api.currency.CurrencyAdmin;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
@@ -39,7 +40,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BitcoinWallet implements Wallet, Validatable {
+public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinWallet.class);
   private final BitcoindRpc bitcoindRpc = BitcoinResource.getResource().getBitcoindRpc();
   private static final String PUBKEY_PREFIX = "PK-";
@@ -627,7 +628,11 @@ public class BitcoinWallet implements Wallet, Validatable {
 
   @Override
   public String sendTransaction(String transaction) {
-    return bitcoindRpc.sendrawtransaction(transaction, false);
+    if(transactionsEnabled) {
+      return bitcoindRpc.sendrawtransaction(transaction, false);
+    } else {
+      return "Transactions temporarily disabled";
+    }
   }
 
   @Override
@@ -654,6 +659,12 @@ public class BitcoinWallet implements Wallet, Validatable {
               TransactionDetails detail = new TransactionDetails();
               detail.setAmount(payment.getAmount().abs());
               detail.setTxDate(new Date(payment.getBlocktime().toInstant().toEpochMilli() * 1000L));
+
+              Map txData = bitcoindRpc.gettransaction(payment.getTxid(), true);
+              detail
+                  .setConfirmed(config.getMinConfirmations() <= (int) txData.get("confirmations"));
+              detail.setConfirmations((int) txData.get("confirmations"));
+              detail.setMinConfirmations(config.getMinConfirmations());
 
               // Senders
               HashSet<String> senders = new HashSet<>();
@@ -693,6 +704,12 @@ public class BitcoinWallet implements Wallet, Validatable {
                 detail.setAmount(payment.getAmount().abs());
                 detail.setFromAddress(new String[]{address});
                 detail.setToAddress(new String[]{payment.getAddress()});
+
+                Map txData = bitcoindRpc.gettransaction(payment.getTxid(), true);
+                detail.setConfirmed(
+                    config.getMinConfirmations() <= (int) txData.get("confirmations"));
+                detail.setConfirmations((int) txData.get("confirmations"));
+                detail.setMinConfirmations(config.getMinConfirmations());
 
                 txDetails.add(detail);
               }
@@ -787,6 +804,8 @@ public class BitcoinWallet implements Wallet, Validatable {
     txDetail.setConfirmed(config.getMinConfirmations() <= (int) txData.get("confirmations"));
     txDetail.setAmount(new BigDecimal(txData.get("amount").toString()));
     txDetail.setTxDate(new Date(((int) txData.get("blocktime")) * 1000L));
+    txDetail.setConfirmations((int) txData.get("confirmations"));
+    txDetail.setMinConfirmations(config.getMinConfirmations());
 
     LinkedList<String> senders = new LinkedList<>();
     LinkedList<String> recipients = new LinkedList<>();
@@ -813,5 +832,39 @@ public class BitcoinWallet implements Wallet, Validatable {
     } catch (Exception e) {
       return ServerStatus.DISCONNECTED;
     }
+  }
+
+  @Override
+  public Map<String, String> getConfiguration() {
+    HashMap<String, String> configSummary = new HashMap<>();
+    configSummary.put("Currency Symbol", config.getCurrencySymbol());
+    configSummary.put("Bitcoind Connection", config.getDaemonConnectionString());
+    configSummary.put("Minimum Signatures", ((Integer) config.getMinSignatures()).toString());
+    configSummary.put("Minimum Confirmations", ((Integer) config.getMinConfirmations()).toString());
+    configSummary.put("Rescan Timer", ((Integer) config.getRescanTimer()).toString());
+    configSummary
+        .put("Maximum Transaction Value", config.getMaxAmountPerTransaction().toPlainString());
+    configSummary
+        .put("Maximum Transaction Value Per Hour", config.getMaxAmountPerHour().toPlainString());
+    configSummary
+        .put("Maximum Transaction Value Per Day", config.getMaxAmountPerDay().toPlainString());
+    return configSummary;
+  }
+
+  private boolean transactionsEnabled = true;
+
+  @Override
+  public void enableTransactions() {
+    transactionsEnabled = true;
+  }
+
+  @Override
+  public void disableTransactions() {
+    transactionsEnabled = false;
+  }
+
+  @Override
+  public boolean transactionsEnabled() {
+    return transactionsEnabled;
   }
 }

@@ -1,6 +1,7 @@
 package io.emax.cosigner.ethereum;
 
 import io.emax.cosigner.api.core.ServerStatus;
+import io.emax.cosigner.api.currency.CurrencyAdmin;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.common.ByteUtilities;
@@ -35,7 +36,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class EthereumWallet implements Wallet, Validatable {
+public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumWallet.class);
   private static final String TESTNET_VERSION = "2";
   private static final long TESTNET_BASE_ROUNDS = (long) Math.pow(2, 20);
@@ -940,7 +941,11 @@ public class EthereumWallet implements Wallet, Validatable {
     }
     LOGGER.debug("TX bytes: " + EthereumTools
         .hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes())));
-    return ethereumRpc.eth_sendRawTransaction(transaction);
+    if(transactionsEnabled) {
+      return ethereumRpc.eth_sendRawTransaction(transaction);
+    } else {
+      return "Transactions Temporarily Disabled";
+    }
   }
 
   private void scanTransactions(long startingBlock) {
@@ -986,6 +991,12 @@ public class EthereumWallet implements Wallet, Validatable {
           amount = amount.divide(BigDecimal.valueOf(config.getWeiMultiplier()));
           txDetail.setAmount(amount);
 
+          BigInteger txBlockNumber = new BigInteger(1, ByteUtilities.toByteArray(blockNumber));
+          txDetail.setConfirmed(
+              config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setMinConfirmations(config.getMinConfirmations());
+
           // For each receiver that is an mSig account, parse the data, check if it's sending data to
           // another account.
           try {
@@ -1011,6 +1022,9 @@ public class EthereumWallet implements Wallet, Validatable {
                   msigTx.setAmount(BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
                       .divide(BigDecimal.valueOf(config.getWeiMultiplier())));
                   msigTx.setTxHash(txDetail.getTxHash());
+                  msigTx.setConfirmed(txDetail.isConfirmed());
+                  msigTx.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+                  msigTx.setMinConfirmations(config.getMinConfirmations());
 
                   if (reverseMsigContracts.containsKey(msigTx.getFromAddress()[0])) {
                     if (!txHistory.containsKey(msigTx.getFromAddress()[0])) {
@@ -1048,6 +1062,36 @@ public class EthereumWallet implements Wallet, Validatable {
     } catch (Exception e) {
       LOGGER.warn("Unable to scan blockchain for Ethereum!", e);
     }
+  }
+
+  @Override
+  public Map<String, String> getConfiguration() {
+    HashMap<String, String> configSummary = new HashMap<>();
+    configSummary.put("Currency Symbol", config.getCurrencySymbol());
+    configSummary.put("Geth Connection", config.getDaemonConnectionString());
+    configSummary.put("Minimum Signatures", ((Integer)config.getMinSignatures()).toString());
+    configSummary.put("Minimum Confirmations", ((Integer)config.getMinConfirmations()).toString());
+    configSummary.put("Maximum Transaction Value", config.getMaxAmountPerTransaction().toPlainString());
+    configSummary.put("Maximum Transaction Value Per Hour", config.getMaxAmountPerHour().toPlainString());
+    configSummary.put("Maximum Transaction Value Per Day", config.getMaxAmountPerDay().toPlainString());
+    return configSummary;
+  }
+
+  private boolean transactionsEnabled = true;
+
+  @Override
+  public void enableTransactions() {
+    transactionsEnabled = true;
+  }
+
+  @Override
+  public void disableTransactions() {
+    transactionsEnabled = false;
+  }
+
+  @Override
+  public boolean transactionsEnabled() {
+    return transactionsEnabled;
   }
 
   private class TxDateComparator implements Comparator<TransactionDetails> {
@@ -1095,6 +1139,8 @@ public class EthereumWallet implements Wallet, Validatable {
         new BigInteger(1, ByteUtilities.toByteArray(txData.get("blockNumber").toString()));
     txDetail.setConfirmed(
         config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+    txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+    txDetail.setMinConfirmations(config.getMinConfirmations());
 
     txDetail.setAmount(
         new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(txData.get("value").toString())))

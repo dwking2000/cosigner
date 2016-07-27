@@ -1,10 +1,17 @@
 package io.emax.cosigner.core.resources;
 
+import io.emax.cosigner.api.core.CurrencyPackageInterface;
 import io.emax.cosigner.api.core.Server;
+import io.emax.cosigner.api.currency.CurrencyAdmin;
+import io.emax.cosigner.common.Json;
+import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -86,5 +93,67 @@ public class AdminResource {
     ClusterInfo.getInstance().getServers().add(server);
 
     return Response.ok().build();
+  }
+
+  // TODO This should probably be read from the cluster.
+  @GET
+  @Path("/GetConfigurations")
+  public Response getConfigurations() {
+    HashMap<String, Map<String, String>> configurations = new HashMap<>();
+    CosignerApplication.getCurrencies().forEach((symbol, currencyPackage) -> {
+      if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
+        configurations
+            .put(symbol, ((CurrencyAdmin) currencyPackage.getWallet()).getConfiguration());
+      }
+    });
+
+    String response = Json.stringifyObject(HashMap.class, configurations);
+    return Response.ok(response).build();
+  }
+
+  @GET
+  @Path("/TransactionsEnabled")
+  public Response getTransactionState(String currency) {
+    if (CosignerApplication.getCurrencies().containsKey(currency)) {
+      CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
+      if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
+        return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).transactionsEnabled())
+            .build();
+      }
+    }
+
+    return Response.noContent().build();
+  }
+
+  // TODO This should probably be broadcast to the cluster
+  @POST
+  @Path("/DisableTransactions")
+  public Response disableTransactions(String currency) {
+    if (CosignerApplication.getCurrencies().containsKey(currency)) {
+      CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
+      if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
+        ((CurrencyAdmin)currencyPackage.getWallet()).disableTransactions();
+        return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).transactionsEnabled())
+            .build();
+      }
+    }
+
+    return Response.noContent().build();
+  }
+
+  // TODO This should probably be broadcast to the cluster
+  @POST
+  @Path("/EnableTransactions")
+  public Response enableTransactions(String currency) {
+    if (CosignerApplication.getCurrencies().containsKey(currency)) {
+      CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
+      if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
+        ((CurrencyAdmin)currencyPackage.getWallet()).enableTransactions();
+        return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).transactionsEnabled())
+            .build();
+      }
+    }
+
+    return Response.noContent().build();
   }
 }
