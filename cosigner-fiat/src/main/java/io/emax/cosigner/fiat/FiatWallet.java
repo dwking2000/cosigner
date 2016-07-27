@@ -1,10 +1,13 @@
 package io.emax.cosigner.fiat;
 
 import io.emax.cosigner.api.core.ServerStatus;
+import io.emax.cosigner.api.currency.CurrencyAdmin;
+import io.emax.cosigner.api.currency.OfflineWallet;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
+import io.emax.cosigner.ethereum.EthereumConfiguration;
 import io.emax.cosigner.ethereum.EthereumResource;
 import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.common.RlpItem;
@@ -36,7 +39,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-public class FiatWallet implements Wallet {
+public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
   private static final Logger LOGGER = LoggerFactory.getLogger(FiatWallet.class);
 
   private static final String TESTNET_VERSION = "2";
@@ -108,8 +111,8 @@ public class FiatWallet implements Wallet {
       }
 
       try {
-        String txCount = ethereumRpc.eth_getTransactionCount("0x" + contractAccount,
-            DefaultBlock.LATEST.toString());
+        String txCount = ethereumRpc
+            .eth_getTransactionCount("0x" + contractAccount, DefaultBlock.LATEST.toString());
         int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
         int baseRounds = 0;
         if (ethereumRpc.net_version().equals(TESTNET_VERSION)) {
@@ -124,8 +127,7 @@ public class FiatWallet implements Wallet {
             LOGGER.info("FIAT Round progress: " + i + "/" + rounds + "...");
           }
           RlpList contractAddress = new RlpList();
-          RlpItem contractCreator =
-              new RlpItem(ByteUtilities.toByteArray(contractAccount));
+          RlpItem contractCreator = new RlpItem(ByteUtilities.toByteArray(contractAccount));
           RlpItem nonce =
               new RlpItem(ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(i).toByteArray()));
           contractAddress.add(contractCreator);
@@ -163,8 +165,9 @@ public class FiatWallet implements Wallet {
           decodedAddresses.add(address);
         });
         tx.getData().setDecodedContents(ByteUtilities.toByteArray(
-            contractInterface.getContractParameters().createContract(config.getAdminAccount(),
-                decodedAddresses, config.getMinSignatures())));
+            contractInterface.getContractParameters()
+                .createContract(config.getAdminAccount(), decodedAddresses,
+                    config.getMinSignatures())));
 
         String rawTx = ByteUtilities.toHexString(tx.encode());
         LOGGER.debug("Creating contract: " + rawTx);
@@ -187,8 +190,7 @@ public class FiatWallet implements Wallet {
         sendTransaction(rawTx);
 
         RlpList calculatedContractAddress = new RlpList();
-        RlpItem contractCreator =
-            new RlpItem(ByteUtilities.toByteArray(contractAddress));
+        RlpItem contractCreator = new RlpItem(ByteUtilities.toByteArray(contractAddress));
         calculatedContractAddress.add(contractCreator);
         calculatedContractAddress.add(tx.getNonce());
 
@@ -562,7 +564,11 @@ public class FiatWallet implements Wallet {
     }
 
     LOGGER.debug("Sending: " + transaction);
-    return ethereumRpc.eth_sendRawTransaction(transaction);
+    if (transactionsEnabled) {
+      return ethereumRpc.eth_sendRawTransaction(transaction);
+    } else {
+      return "Transactions Temporarily Disabled";
+    }
   }
 
   private void scanTransactions(long startingBlock) {
@@ -605,8 +611,7 @@ public class FiatWallet implements Wallet {
               new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
           txDetail.setAmount(BigDecimal.ZERO);
 
-          BigInteger txBlockNumber =
-              new BigInteger(1, ByteUtilities.toByteArray(blockNumber));
+          BigInteger txBlockNumber = new BigInteger(1, ByteUtilities.toByteArray(blockNumber));
           txDetail.setConfirmed(
               config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
           txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
@@ -660,6 +665,39 @@ public class FiatWallet implements Wallet {
     }
   }
 
+  @Override
+  public Map<String, String> getConfiguration() {
+    HashMap<String, String> configSummary = new HashMap<>();
+    configSummary.put("Currency Symbol", config.getCurrencySymbol());
+    configSummary.put("Geth Connection", new EthereumConfiguration().getDaemonConnectionString());
+    configSummary.put("Minimum Signatures", ((Integer) config.getMinSignatures()).toString());
+    configSummary.put("Minimum Confirmations", ((Integer) config.getMinConfirmations()).toString());
+    configSummary
+        .put("Maximum Transaction Value", config.getMaxAmountPerTransaction().toPlainString());
+    configSummary
+        .put("Maximum Transaction Value Per Hour", config.getMaxAmountPerHour().toPlainString());
+    configSummary
+        .put("Maximum Transaction Value Per Day", config.getMaxAmountPerDay().toPlainString());
+    return configSummary;
+  }
+
+  private boolean transactionsEnabled = true;
+
+  @Override
+  public void enableTransactions() {
+    transactionsEnabled = true;
+  }
+
+  @Override
+  public void disableTransactions() {
+    transactionsEnabled = false;
+  }
+
+  @Override
+  public boolean transactionsEnabled() {
+    return transactionsEnabled;
+  }
+
   private class TxDateComparator implements Comparator<TransactionDetails> {
     @Override
     public int compare(TransactionDetails o1, TransactionDetails o2) {
@@ -706,17 +744,14 @@ public class FiatWallet implements Wallet {
     txDetail.setFromAddress(new String[]{txMap.get("from").toString()});
 
     try {
-      if (contractAddress
-          .equalsIgnoreCase(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
+      if (contractAddress.equalsIgnoreCase(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
         String txData = txMap.get("input").toString();
         FiatContractParametersInterface contractParamsInterface =
             contractInterface.getContractParameters();
-        Map<String, List<String>> contractParams =
-            contractParamsInterface.parseTransfer(txData);
+        Map<String, List<String>> contractParams = contractParamsInterface.parseTransfer(txData);
 
         if (contractParams != null) {
-          for (int j = 0; j < contractParams.get(contractParamsInterface.RECIPIENTS).size();
-               j++) {
+          for (int j = 0; j < contractParams.get(contractParamsInterface.RECIPIENTS).size(); j++) {
             txDetail.setFromAddress(
                 contractParams.get(contractParamsInterface.SENDER).toArray(new String[]{}));
             txDetail.setToAddress(
