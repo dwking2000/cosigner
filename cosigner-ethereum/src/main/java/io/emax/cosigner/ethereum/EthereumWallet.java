@@ -986,6 +986,13 @@ public class EthereumWallet implements Wallet, Validatable {
           amount = amount.divide(BigDecimal.valueOf(config.getWeiMultiplier()));
           txDetail.setAmount(amount);
 
+          BigInteger txBlockNumber =
+              new BigInteger(1, ByteUtilities.toByteArray(blockNumber));
+          txDetail.setConfirmed(
+              config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setMinConfirmations(config.getMinConfirmations());
+
           // For each receiver that is an mSig account, parse the data, check if it's sending data to
           // another account.
           try {
@@ -1011,6 +1018,9 @@ public class EthereumWallet implements Wallet, Validatable {
                   msigTx.setAmount(BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
                       .divide(BigDecimal.valueOf(config.getWeiMultiplier())));
                   msigTx.setTxHash(txDetail.getTxHash());
+                  msigTx.setConfirmed(txDetail.isConfirmed());
+                  msigTx.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+                  msigTx.setMinConfirmations(config.getMinConfirmations());
 
                   if (reverseMsigContracts.containsKey(msigTx.getFromAddress()[0])) {
                     if (!txHistory.containsKey(msigTx.getFromAddress()[0])) {
@@ -1095,6 +1105,8 @@ public class EthereumWallet implements Wallet, Validatable {
         new BigInteger(1, ByteUtilities.toByteArray(txData.get("blockNumber").toString()));
     txDetail.setConfirmed(
         config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+    txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+    txDetail.setMinConfirmations(config.getMinConfirmations());
 
     txDetail.setAmount(
         new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(txData.get("value").toString())))

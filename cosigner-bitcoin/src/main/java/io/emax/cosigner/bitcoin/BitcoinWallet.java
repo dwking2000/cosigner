@@ -655,6 +655,11 @@ public class BitcoinWallet implements Wallet, Validatable {
               detail.setAmount(payment.getAmount().abs());
               detail.setTxDate(new Date(payment.getBlocktime().toInstant().toEpochMilli() * 1000L));
 
+              Map txData = bitcoindRpc.gettransaction(payment.getTxid(), true);
+              detail.setConfirmed(config.getMinConfirmations() <= (int) txData.get("confirmations"));
+              detail.setConfirmations((int) txData.get("confirmations"));
+              detail.setMinConfirmations(config.getMinConfirmations());
+
               // Senders
               HashSet<String> senders = new HashSet<>();
               tx.getInputs().forEach(input -> {
@@ -693,6 +698,11 @@ public class BitcoinWallet implements Wallet, Validatable {
                 detail.setAmount(payment.getAmount().abs());
                 detail.setFromAddress(new String[]{address});
                 detail.setToAddress(new String[]{payment.getAddress()});
+
+                Map txData = bitcoindRpc.gettransaction(payment.getTxid(), true);
+                detail.setConfirmed(config.getMinConfirmations() <= (int) txData.get("confirmations"));
+                detail.setConfirmations((int) txData.get("confirmations"));
+                detail.setMinConfirmations(config.getMinConfirmations());
 
                 txDetails.add(detail);
               }
@@ -787,6 +797,8 @@ public class BitcoinWallet implements Wallet, Validatable {
     txDetail.setConfirmed(config.getMinConfirmations() <= (int) txData.get("confirmations"));
     txDetail.setAmount(new BigDecimal(txData.get("amount").toString()));
     txDetail.setTxDate(new Date(((int) txData.get("blocktime")) * 1000L));
+    txDetail.setConfirmations((int) txData.get("confirmations"));
+    txDetail.setMinConfirmations(config.getMinConfirmations());
 
     LinkedList<String> senders = new LinkedList<>();
     LinkedList<String> recipients = new LinkedList<>();

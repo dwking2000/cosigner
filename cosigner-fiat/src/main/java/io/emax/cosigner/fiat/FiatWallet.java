@@ -605,6 +605,13 @@ public class FiatWallet implements Wallet {
               new String[]{ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getTo()))});
           txDetail.setAmount(BigDecimal.ZERO);
 
+          BigInteger txBlockNumber =
+              new BigInteger(1, ByteUtilities.toByteArray(blockNumber));
+          txDetail.setConfirmed(
+              config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setMinConfirmations(config.getMinConfirmations());
+
           // For each receiver that is the fiat account, parse the data, check if it's transferring a balance
           try {
             if (this.contractAddress
@@ -627,6 +634,9 @@ public class FiatWallet implements Wallet {
                   fiatTx.setAmount(
                       new BigDecimal(contractParams.get(contractParamsInterface.AMOUNT).get(j)));
                   fiatTx.setTxHash(txDetail.getTxHash());
+                  fiatTx.setConfirmed(txDetail.isConfirmed());
+                  fiatTx.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+                  fiatTx.setMinConfirmations(config.getMinConfirmations());
 
                   if (!txHistory.containsKey(fiatTx.getToAddress()[0])) {
                     txHistory.put(fiatTx.getToAddress()[0], new HashSet<>());
@@ -689,6 +699,8 @@ public class FiatWallet implements Wallet {
         new BigInteger(1, ByteUtilities.toByteArray(txMap.get("blockNumber").toString()));
     txDetail.setConfirmed(
         config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+    txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+    txDetail.setMinConfirmations(config.getMinConfirmations());
 
     txDetail.setToAddress(new String[]{txMap.get("to").toString()});
     txDetail.setFromAddress(new String[]{txMap.get("from").toString()});
