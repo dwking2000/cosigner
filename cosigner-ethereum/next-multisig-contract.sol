@@ -16,6 +16,10 @@ contract multisigwallet {
 
     uint numSignatures;
     mapping(uint => SigData) signatures;
+
+    address recipient;
+    uint amount;
+    bytes data;
     
     // Transaction and signature structures
     struct Transaction {
@@ -85,6 +89,7 @@ contract multisigwallet {
         }
         m_numOwners = _owners.length;
         m_required = _required;
+        amount = 0;
     }
    
     // kills the contract sending everything to `_to`.
@@ -108,19 +113,50 @@ contract multisigwallet {
          }
     }
 
-    // TODO Create a new execute & confirm method to support the multi-sig standard
-    // execute(address _to, uint _value, bytes _data) returns (bytes32 _id)
-    // confirm(bytes32 _id) returns (bool _success)
+    function execute(address _to, uint _value, bytes _data) returns (bytes32 _id) {
+        transactionHash = sha3(_to, _value, _data);
+        signers = 0;
+        numSigners = 0;
+        recipient = _to;
+        amount = _value;
+        data = _data;
+        return transactionHash;
+    }
 
-    // Change the name here for clarity. It's our custom all-at-once execute
-    function execute(uint nonce, address[] to, uint[] value,  
+    function confirm(bytes32 _id) returns (bool _success) {
+        if(_id == transactionHash && amount != 0) {
+            uint ownerBit = ownerIndexBit(msg.sender);
+            uint ownerValue = 2**ownerBit;
+            if(ownerBit > 0 && (signers & ownerValue == 0)) {
+                signers |= ownerValue;
+                numSigners++;
+            } else {
+                return false;
+            }
+
+            if(numSigners >= m_required) {
+                if(!recipient.send(amount)) {
+                    // Rollback the tx if there'x a problem executing it.
+                    throw;
+                }
+                amount = 0;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    function execute(uint nonce, address[] to, uint[] value,
                       uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
-     	numTransactions = to.length;
-      for(uint i = 0; i < numTransactions; i++) {
-		    transactions[i].to = to[i];
-       	transactions[i].value = value[i];
-	    }
-      transactionNonce = nonce;
+        numTransactions = to.length;
+        for(uint i = 0; i < numTransactions; i++) {
+            transactions[i].to = to[i];
+            transactions[i].value = value[i];
+        }
+        transactionNonce = nonce;
+        amount = 0;
              
       numSignatures = sigV.length;
       for(i = 0; i < numSignatures; i++) {
