@@ -1,6 +1,6 @@
 package io.emax.cosigner.validator;
 
-import io.emax.cosigner.api.core.CurrencyPackage;
+import io.emax.cosigner.api.core.CurrencyPackageInterface;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
 import io.emax.cosigner.api.validation.Validatable;
@@ -19,7 +19,7 @@ public class BasicValidator implements Validator {
   private static final Logger LOGGER = LoggerFactory.getLogger(BasicValidator.class);
 
   @Override
-  public boolean validateTransaction(CurrencyPackage currency, String transaction) {
+  public boolean validateTransaction(CurrencyPackageInterface currency, String transaction) {
     LOGGER.debug("currency: " + currency.toString());
     LOGGER.debug("currency Wallet: " + currency.getWallet());
     LOGGER.debug("currency Wallet Class: " + currency.getWallet().getClass());
