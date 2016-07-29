@@ -25,6 +25,8 @@ contract fiatcontract {
   mapping(address => uint) balances;
   uint totalBalance;
 
+  mapping(address => uint) addressProtected;
+
   // Transaction and signature structures
   struct Transaction {
     address to;
@@ -128,13 +130,94 @@ contract fiatcontract {
     m_required = _required;
   }
 
-  // TODO Consider implementing these, though the token standard is apparently in "E"-RFC
-  // function transfer(address _to, uint256 _value) returns (bool success)
-  // function transferFrom(address _from, address _to, uint256 _value) returns (bool success)
-  // function approve(address _spender, uint256 _value) returns (bool success)
-  // function allowance(address _owner, address _spender) constant returns (uint256 remaining)
+  function confirmAdminTx(uint nonce) internal returns (bool) {
+    transactionHash = sha3(nonce);
+    senderSigned = 0;
+    adminSigned = 0;
+    signers = 0;
+    numSigners = 0;
+    for (uint i = 0; i < numSignatures && i < 8; i++) {
+      address signer = ecrecover(transactionHash, signatures[i].sigV, signatures[i].sigR, signatures[i].sigS);
+      uint ownerBit = ownerIndexBit(signer);
+      uint ownerValue = 2**ownerBit;
+      if(ownerBit > 0 && (signers & ownerValue == 0)) {
+        signers |= ownerValue;
+        numSigners++;
+      } else if(signer == sender && senderSigned == 0) {
+        numSigners++;
+        senderSigned = 1;
+      } else if(signer == admin && adminSigned == 0) {
+        numSigners++;
+        adminSigned = 1;
+      }
+    }
 
-  // TODO Create a suicide function for migration
+    if(numSigners >= m_numOwners && adminSigned == 1) {
+        return true;
+    }
+
+    return false;
+  }
+
+  function updateOwners(uint nonce, address _admin, address[] _owners, uint _required,
+                        uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
+    // Must be signed by everyone and the admin.
+    numSignatures = sigV.length;
+    for(uint i = 0; i < numSignatures; i++) {
+      signatures[i].sigV = sigV[i];
+      signatures[i].sigR = sigR[i];
+      signatures[i].sigS = sigS[i];
+    }
+    if(confirmAdminTx(nonce) == true) {
+        admin = _admin;
+        for (i = 0; i < _owners.length; i++)
+        {
+          owners[i+1] = _owners[i];
+          ownerIndex[_owners[i]] = i+1;
+        }
+        m_numOwners = _owners.length;
+        m_required = _required;
+    }
+  }
+
+  function deleteContract(uint nonce, uint8[] sigV, bytes32[] sigR, bytes32[] sigS) {
+    // Must be signed by everyone and the admin
+    numSignatures = sigV.length;
+    for(uint i = 0; i < numSignatures; i++) {
+      signatures[i].sigV = sigV[i];
+      signatures[i].sigR = sigR[i];
+      signatures[i].sigS = sigS[i];
+    }
+    if(confirmAdminTx(nonce) == true) {
+        suicide(admin);
+    }
+  }
+
+  function approve(address _spender, uint256 _value) returns (bool success) {
+    return false;
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+    return false;
+  }
+
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    if(addressProtected[msg.sender] == 1) {
+        return false;
+    } else if(balances[msg.sender] >= _value) {
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        lastActiveBlock[msg.sender] = block.number;
+        lastActiveBlock[_to] = block.number;
+        Transfer(msg.sender, _to, _value);
+    }
+  }
+
+  function protectAddress(address protectThis) external {
+    if(msg.sender == admin) {
+        addressProtected[protectThis] = 1;
+    }
+  }
 
   function transfer(uint nonce, address _sender, address[] to, uint[] value,
       uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
