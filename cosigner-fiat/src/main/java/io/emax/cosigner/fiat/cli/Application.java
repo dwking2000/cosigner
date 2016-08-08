@@ -37,6 +37,7 @@ public class Application {
       System.out.println("\tcreateTransaction(String fromAddress1, String fromAddress2,"
           + " ..., String toAddress, Decimal amount)");
       System.out.println("\tsignTransaction(String transaction, String address)");
+      System.out.println("\tsignTransactionWithKey(String transaction, String address)");
       System.out.println("\tsendTransaction(String transaction)");
       System.out.println("\tmonitor(String address)");
       System.out.println("\tlistTxs(String address, int resultSize, int skipNumber)");
@@ -115,6 +116,16 @@ public class Application {
         } else {
           System.out.println(wallet.signTransaction(transaction, address, accountName));
         }
+        break;
+      case "signTransactionWithKey":
+        if (args.length >= 3) {
+          address = args[2];
+        }
+        if (args.length >= 2) {
+          transaction = args[1];
+        }
+        char[] key = System.console().readPassword("Private Key: ");
+        System.out.println(wallet.signTransaction(transaction, address, String.valueOf(key)));
         break;
       case "sendTransaction":
         if (args.length >= 2) {
