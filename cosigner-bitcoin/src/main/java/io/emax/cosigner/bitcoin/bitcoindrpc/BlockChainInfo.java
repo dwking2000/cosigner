@@ -31,6 +31,12 @@ public class BlockChainInfo {
   private BlockChainName chain;
 
   /**
+   * Highest block available when pruning is enabled on the node
+   */
+  @JsonProperty("pruneheight")
+  private long pruneheight;
+
+  /**
    * The estimated number of block header hashes checked from the genesis block to this block,
    * encoded as big-endian hex.
    */
@@ -110,6 +116,9 @@ public class BlockChainInfo {
     if (blocks != other.blocks) {
       return false;
     }
+    if (pruneheight != other.pruneheight) {
+      return false;
+    }
     if (chain != other.chain) {
       return false;
     }
@@ -153,6 +162,10 @@ public class BlockChainInfo {
 
   public long getBlocks() {
     return blocks;
+  }
+
+  public long getPruneheight() {
+    return pruneheight;
   }
 
   public BlockChainName getChain() {
@@ -208,7 +221,7 @@ public class BlockChainInfo {
     result = prime * result + (int) (headers ^ (headers >>> 32));
     result = prime * result + ((pruned == null) ? 0 : pruned.hashCode());
     result =
-        prime * result + ((verificationprogress == null) ? 0 : verificationprogress.hashCode());
+            prime * result + ((verificationprogress == null) ? 0 : verificationprogress.hashCode());
     return result;
   }
 
@@ -218,6 +231,10 @@ public class BlockChainInfo {
 
   public void setBlocks(long blocks) {
     this.blocks = blocks;
+  }
+
+  public void setPruneheight(long pruneheight) {
+    this.pruneheight = pruneheight;
   }
 
   public void setChain(BlockChainName chain) {
@@ -246,10 +263,9 @@ public class BlockChainInfo {
 
   @Override
   public String toString() {
-    return "BlockChainInfo [chain=" + chain + ", blocks=" + blocks + ", headers=" + headers
-        + ", bestblockhash=" + bestblockhash + ", difficulty=" + difficulty
-        + ", verificationprogress=" + verificationprogress + ", chainwork=" + chainwork
-        + ", pruned=" + pruned + "]";
+    return "BlockChainInfo [chain=" + chain + ", blocks=" + blocks + ", pruneheight=" + pruneheight
+            + ", headers=" + headers+ ", bestblockhash=" + bestblockhash + ", difficulty=" + difficulty
+            + ", verificationprogress=" + verificationprogress + ", chainwork=" + chainwork
+            + ", pruned=" + pruned + "]";
   }
-
 }
