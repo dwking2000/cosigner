@@ -155,5 +155,8 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
     final FilterRegistration.Dynamic cors =
         environment.servlets().addFilter("crossOriginRequests", CrossOriginFilter.class);
     cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+
+    // Trigger a status check on currencies.
+    ClusterInfo.getInstance().updateCurrencyStatus();
   }
 }
