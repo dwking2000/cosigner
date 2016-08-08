@@ -7,8 +7,8 @@ import io.emax.cosigner.api.currency.Wallet;
 
 public class EthereumCurrencyPackage implements CurrencyPackageInterface {
   private EthereumConfiguration ethereumConfiguration = new EthereumConfiguration();
-  private EthereumWallet ethereumWallet = new EthereumWallet(ethereumConfiguration);
-  private EthereumMonitor ethereumMonitor = new EthereumMonitor(ethereumWallet);
+  private EthereumWallet ethereumWallet = null;
+  private EthereumMonitor ethereumMonitor = null;
 
   @Override
   public CurrencyConfiguration getConfiguration() {
@@ -24,6 +24,9 @@ public class EthereumCurrencyPackage implements CurrencyPackageInterface {
 
   @Override
   public Wallet getWallet() {
+    if(ethereumWallet == null) {
+      ethereumWallet = new EthereumWallet(ethereumConfiguration);
+    }
     return ethereumWallet;
   }
 
@@ -36,6 +39,9 @@ public class EthereumCurrencyPackage implements CurrencyPackageInterface {
 
   @Override
   public Monitor getMonitor() {
+    if(ethereumMonitor == null) {
+      ethereumMonitor = new EthereumMonitor((EthereumWallet) getWallet());
+    }
     return ethereumMonitor;
   }
 

@@ -10,8 +10,8 @@ import io.emax.cosigner.fiat.FiatWallet;
 
 public class UsdCurrencyPackage implements CurrencyPackageInterface {
   private FiatConfiguration fiatConfiguration = new FiatConfiguration("USD");
-  private FiatWallet fiatWallet = new FiatWallet(fiatConfiguration);
-  private FiatMonitor fiatMonitor = new FiatMonitor(fiatWallet);
+  private FiatWallet fiatWallet = null;
+  private FiatMonitor fiatMonitor = null;
 
   @Override
   public CurrencyConfiguration getConfiguration() {
@@ -27,6 +27,9 @@ public class UsdCurrencyPackage implements CurrencyPackageInterface {
 
   @Override
   public Wallet getWallet() {
+    if(fiatWallet == null) {
+      fiatWallet = new FiatWallet(fiatConfiguration);
+    }
     return fiatWallet;
   }
 
@@ -39,6 +42,9 @@ public class UsdCurrencyPackage implements CurrencyPackageInterface {
 
   @Override
   public Monitor getMonitor() {
+    if(fiatMonitor == null) {
+      fiatMonitor = new FiatMonitor((FiatWallet) getWallet());
+    }
     return fiatMonitor;
   }
 

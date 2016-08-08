@@ -7,8 +7,8 @@ import io.emax.cosigner.api.currency.Wallet;
 
 public class BitcoinCurrencyPackage implements CurrencyPackageInterface {
   private BitcoinConfiguration bitcoinConfiguration = new BitcoinConfiguration();
-  private BitcoinWallet bitcoinWallet = new BitcoinWallet(bitcoinConfiguration);
-  private BitcoinMonitor bitcoinMonitor = new BitcoinMonitor(bitcoinWallet);
+  private BitcoinWallet bitcoinWallet = null;
+  private BitcoinMonitor bitcoinMonitor = null;
 
   @Override
   public CurrencyConfiguration getConfiguration() {
@@ -24,6 +24,9 @@ public class BitcoinCurrencyPackage implements CurrencyPackageInterface {
 
   @Override
   public Wallet getWallet() {
+    if(bitcoinWallet == null) {
+      bitcoinWallet = new BitcoinWallet(bitcoinConfiguration);
+    }
     return bitcoinWallet;
   }
 
@@ -36,7 +39,11 @@ public class BitcoinCurrencyPackage implements CurrencyPackageInterface {
 
   @Override
   public Monitor getMonitor() {
+    if(bitcoinMonitor == null) {
+      bitcoinMonitor = new BitcoinMonitor((BitcoinWallet) getWallet());
+    }
     return bitcoinMonitor;
+
   }
 
   @Override
