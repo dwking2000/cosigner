@@ -1,4 +1,5 @@
-##Cosigner Overview
+# Cosigner
+
 Cosigner introduces a best practice implementation for storing, sending and receiving digital financial instruments with the use of blockchain technology as a financial intermediary.
 
 Cosigner is a multi-signature blockchain agnostic gateway, compatible with multiple different blockchains and implementations. Instead of having to implement settlement logic in your application logic, Cosigner maps the Cosigner API with blockchain node RPC's. This abstracts the differences and complexities of each blockchain implementation and makes your application logic cleaner by eliminating edge cases.
