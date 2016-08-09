@@ -49,44 +49,51 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
   private final HashMap<String, String> multiSigRedeemScripts = new HashMap<>();
 
-  public BitcoinWallet(BitcoinConfiguration conf) {
-    config = conf;
-    Thread multiSigSubscription = new Thread(() -> {
-      //noinspection InfiniteLoopStatement
-      while (true) {
-        try {
-          LOGGER.info("Scanning BTC multi-sig addresses");
-          scanForAddresses();
-          Thread.sleep(60000);
-        } catch (Exception e) {
-          LOGGER.debug("Multisig scan interrupted.");
-        }
+  private Thread multiSigSubscription = new Thread(() -> {
+    //noinspection InfiniteLoopStatement
+    while (true) {
+      try {
+        LOGGER.info("Scanning BTC multi-sig addresses");
+        scanForAddresses();
+        Thread.sleep(60000);
+      } catch (Exception e) {
+        LOGGER.debug("Multisig scan interrupted.");
       }
-    });
-    multiSigSubscription.setDaemon(true);
-    multiSigSubscription.start();
+    }
+  });
 
-    Thread rescanThread = new Thread(() -> {
-      //noinspection InfiniteLoopStatement
-      while (true) {
+  private Thread rescanThread = new Thread(() -> {
+    //noinspection InfiniteLoopStatement
+    while (true) {
+      try {
         try {
-          try {
-            LOGGER.debug("Initiating blockchain rescan...");
-            byte[] key = Secp256k1.generatePrivateKey();
-            String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
-            String address = BitcoinTools.getPublicAddress(privateKey, true);
-            bitcoindRpc.importaddress(address, "RESCAN", true);
-          } catch (Exception e) {
-            LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
-          }
-          Thread.sleep(config.getRescanTimer() * 60L * 60L * 1000L);
+          LOGGER.debug("Initiating blockchain rescan...");
+          byte[] key = Secp256k1.generatePrivateKey();
+          String privateKey = BitcoinTools.encodePrivateKey(ByteUtilities.toHexString(key));
+          String address = BitcoinTools.getPublicAddress(privateKey, true);
+          bitcoindRpc.importaddress(address, "RESCAN", true);
         } catch (Exception e) {
           LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
         }
+        Thread.sleep(config.getRescanTimer() * 60L * 60L * 1000L);
+      } catch (Exception e) {
+        LOGGER.debug("Rescan thread interrupted, or import timed out (expected)", e);
       }
-    });
-    rescanThread.setDaemon(true);
-    rescanThread.start();
+    }
+  });
+
+  public BitcoinWallet(BitcoinConfiguration conf) {
+    config = conf;
+
+    if (!multiSigSubscription.isAlive()) {
+      multiSigSubscription.setDaemon(true);
+      multiSigSubscription.start();
+    }
+
+    if (!rescanThread.isAlive()) {
+      rescanThread.setDaemon(true);
+      rescanThread.start();
+    }
   }
 
   @Override
@@ -174,7 +181,11 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         Matcher matcher = pattern.matcher(account);
         if (matcher.matches()) {
           String pubKey = matcher.group(1);
-          generateMultiSigAddress(Collections.singletonList(pubKey), null);
+          try {
+            generateMultiSigAddress(Collections.singletonList(pubKey), null);
+          } catch (Exception e) {
+            LOGGER.info(account + " appears to be an invalid account - ignoring");
+          }
         }
       });
     } catch (Exception e) {
