@@ -47,7 +47,7 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
   // RPC and configuration
   private final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
-  private FiatConfiguration config;
+  FiatConfiguration config;
 
   private String contractAddress = "";
   private FiatContractInterface contractInterface = new FiatContract();
