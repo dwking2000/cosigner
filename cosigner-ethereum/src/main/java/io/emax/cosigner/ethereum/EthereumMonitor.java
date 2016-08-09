@@ -2,6 +2,9 @@ package io.emax.cosigner.ethereum;
 
 import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import rx.Observable;
 import rx.Subscription;
 
@@ -14,6 +17,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class EthereumMonitor implements io.emax.cosigner.api.currency.Monitor {
+  private static final Logger LOGGER = LoggerFactory.getLogger(EthereumMonitor.class);
   private final HashSet<String> monitoredAddresses = new HashSet<>();
   private final HashMap<String, String> accountBalances = new HashMap<>();
   private final HashSet<TransactionDetails> accountTransactions = new HashSet<>();
@@ -47,9 +51,15 @@ public class EthereumMonitor implements io.emax.cosigner.api.currency.Monitor {
   }
 
   private boolean updateBalances() {
+    LOGGER.debug("ETH: Checking balances....");
     monitoredAddresses.forEach(address -> {
-      String currentBalance = wallet.getBalance(address);
-      accountBalances.put(address, currentBalance);
+      try {
+        LOGGER.debug("ETH: Checking balance for: " + address);
+        String currentBalance = wallet.getBalance(address);
+        accountBalances.put(address, currentBalance);
+      } catch (Exception e) {
+        LOGGER.debug(null, e);
+      }
     });
 
     updateTransactions();

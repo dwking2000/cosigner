@@ -247,10 +247,22 @@ public class CommonTest {
         CosignerResponse cosignerResponse =
             (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
         address = cosignerResponse.getResult();
-
         parms.setAccount(Collections.singletonList(address));
+
         parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
         String balance = Common.monitorBalance(parmsString, null);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, balance);
+        System.out.println(balance);
+
+        // Request a second address
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
+        address = Common.getNewAddress(parmsString);
+        cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, address);
+        address = cosignerResponse.getResult();
+        parms.setAccount(Collections.singletonList(address));
+
+        parmsString = Json.stringifyObject(CurrencyParameters.class, parms);
+        balance = Common.monitorBalance(parmsString, null);
         cosignerResponse = (CosignerResponse) Json.objectifyString(CosignerResponse.class, balance);
         System.out.println(balance);
       });

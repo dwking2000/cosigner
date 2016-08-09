@@ -2,6 +2,9 @@ package io.emax.cosigner.bitcoin;
 
 import io.emax.cosigner.api.currency.Wallet.TransactionDetails;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import rx.Observable;
 import rx.Subscription;
 
@@ -14,6 +17,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
+  private static final Logger LOGGER = LoggerFactory.getLogger(BitcoinMonitor.class);
   private final HashSet<String> monitoredAddresses = new HashSet<>();
   private final HashMap<String, String> accountBalances = new HashMap<>();
   private final HashSet<TransactionDetails> accountTransactions = new HashSet<>();
@@ -48,8 +52,12 @@ public class BitcoinMonitor implements io.emax.cosigner.api.currency.Monitor {
 
   private boolean updateBalances() {
     monitoredAddresses.forEach(address -> {
-      String currentBalance = wallet.getBalance(address);
-      accountBalances.put(address, currentBalance);
+      try {
+        String currentBalance = wallet.getBalance(address);
+        accountBalances.put(address, currentBalance);
+      } catch (Exception e) {
+        LOGGER.debug("Bad address passed to monitor: " + address);
+      }
     });
 
     updateTransactions();
