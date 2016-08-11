@@ -79,7 +79,7 @@ Copyright information and contributors are listed in AUTHORS. This project uses
 the MPL v2 license, see LICENSE.
 
 Cosigner uses the
-[C4.1 (Collective Code Construction Contract)](http://rfc.zeromq.org/spec:22)
+[C4 (Collective Code Construction Contract)](http://rfc.zeromq.org/spec:22/C4/)
 process for contributions.
 
 To report an issue, use the
