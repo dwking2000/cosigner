@@ -4,6 +4,8 @@ import io.emax.cosigner.admin.AdminConnector;
 import io.emax.cosigner.api.core.Server;
 import io.emax.cosigner.common.Json;
 
+import java.util.HashMap;
+
 public class AdminApplication {
   /**
    * ListNodes AddNode SetClusterKey GetClusterKey SetLocation.
@@ -22,6 +24,7 @@ public class AdminApplication {
       System.out.println("\tGetClusterKey()");
       System.out.println("\tSetClusterKey(key)");
       System.out.println("\tSetLocation(URIString)");
+      System.out.println("\tGetConfigurations()");
       return;
     }
 
@@ -55,6 +58,9 @@ public class AdminApplication {
         }
         adminConnection.setServerLocation(stringInput);
         System.out.println("Set the server location");
+        break;
+      case "GetConfigurations":
+        System.out.println(Json.stringifyObject(HashMap.class, adminConnection.getConfigurations()));
         break;
       default:
         System.out.println("Method not valid or not supported yet");

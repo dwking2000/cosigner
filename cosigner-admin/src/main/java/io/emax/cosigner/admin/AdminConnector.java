@@ -12,6 +12,9 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class AdminConnector {
   private static final Logger LOGGER = LoggerFactory.getLogger(AdminConnector.class);
   private final ClientConfiguration config = new ClientConfiguration();
@@ -88,5 +91,9 @@ public class AdminConnector {
 
   public void setServerLocation(String location) {
     restPostRequest("/admin/SetLocation", location);
+  }
+
+  public Map<String, Map<String,String>> getConfigurations() {
+    return (HashMap) Json.objectifyString(HashMap.class, restGetRequest("/admin/GetConfigurations"));
   }
 }
