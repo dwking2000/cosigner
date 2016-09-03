@@ -97,7 +97,9 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
   }
 
   private void setupFiatContract() {
+    LOGGER.info("[" + config.getCurrencySymbol() + "] Attempting to setup fiat contract");
     if (config.getContractAddress() != null && !config.getContractAddress().isEmpty()) {
+      LOGGER.info("[" + config.getCurrencySymbol() + "] Using " + config.getContractAddress());
       contractAddress = config.getContractAddress();
       contractInterface = getContractType(contractAddress);
     } else {
@@ -107,7 +109,8 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
       if (!contractKey.isEmpty()) {
         contractAccount = EthereumTools.getPublicAddress(contractKey, true);
-        LOGGER.debug("ContractAccount from key: " + contractAddress);
+        LOGGER.debug(
+            "[" + config.getCurrencySymbol() + "] ContractAccount from key: " + contractAddress);
       }
 
       try {
@@ -120,11 +123,13 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         }
 
         LOGGER.info(
-            "FIAT Rounds: " + (rounds - baseRounds) + "(" + txCount + " - " + baseRounds + ") for "
-                + contractAccount);
+            "[" + config.getCurrencySymbol() + "] FIAT Rounds: " + (rounds - baseRounds) + "("
+                + txCount + " - " + baseRounds + ") for " + contractAccount);
         for (int i = baseRounds; i < rounds; i++) {
           if (i % 10000 == 0) {
-            LOGGER.info("FIAT Round progress: " + i + "/" + rounds + "...");
+            LOGGER.info(
+                "[" + config.getCurrencySymbol() + "] FIAT Round progress: " + i + "/" + rounds
+                    + "...");
           }
           RlpList contractAddress = new RlpList();
           RlpItem contractCreator = new RlpItem(ByteUtilities.toByteArray(contractAccount));
@@ -151,7 +156,7 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
     try {
       if ((contractAddress == null || contractAddress.isEmpty()) && config.generateNewContract()) {
-        LOGGER.debug("Generating new contract...");
+        LOGGER.info("[" + config.getCurrencySymbol() + "] Generating new contract...");
         // Create the TX data structure
         RawTransaction tx = new RawTransaction();
         tx.getGasPrice().setDecodedContents(ByteUtilities
@@ -170,22 +175,24 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
                     config.getMinSignatures())));
 
         String rawTx = ByteUtilities.toHexString(tx.encode());
-        LOGGER.debug("Creating contract: " + rawTx);
+        LOGGER.debug("[" + config.getCurrencySymbol() + "] Creating contract: " + rawTx);
         String contractKey = config.getContractKey();
         contractAddress = config.getContractAccount();
 
         if (!contractKey.isEmpty()) {
           contractAddress = EthereumTools.getPublicAddress(contractKey, true);
-          LOGGER.debug("ContractAccount from key: " + contractAddress);
+          LOGGER.debug(
+              "[" + config.getCurrencySymbol() + "] ContractAccount from key: " + contractAddress);
         } else {
           contractKey = null;
-          LOGGER.debug("ContractAccount from config: " + contractAddress);
+          LOGGER.debug("[" + config.getCurrencySymbol() + "] ContractAccount from config: "
+              + contractAddress);
         }
         Iterable<Iterable<String>> sigData = getSigString(rawTx, contractAddress, true);
         sigData =
             signWithPrivateKey(sigData, contractKey, contractKey == null ? contractAddress : null);
         rawTx = applySignature(rawTx, contractAddress, sigData);
-        LOGGER.debug("Signed contract: " + rawTx);
+        LOGGER.debug("[" + config.getCurrencySymbol() + "] Signed contract: " + rawTx);
 
         sendTransaction(rawTx);
 
@@ -199,15 +206,18 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             EthereumTools.hashKeccak(ByteUtilities.toHexString(calculatedContractAddress.encode()))
                 .substring(96 / 4, 256 / 4);
 
-        LOGGER.debug(
-            "Expecting new contract address of " + expectedContract + " with tx: " + RawTransaction
-                .parseBytes(ByteUtilities.toByteArray(rawTx)));
+        LOGGER.debug("[" + config.getCurrencySymbol() + "] Expecting new contract address of "
+            + expectedContract + " with tx: " + RawTransaction
+            .parseBytes(ByteUtilities.toByteArray(rawTx)));
         contractAddress = expectedContract;
       }
 
-      LOGGER.debug("Got contract address of: " + contractAddress);
+      LOGGER
+          .info("[" + config.getCurrencySymbol() + "] Got contract address of: " + contractAddress);
     } catch (Exception e) {
-      LOGGER.error("Unable to create contract, FIAT module is not usable!");
+      LOGGER.error("[" + config.getCurrencySymbol()
+          + "] Unable to create contract, FIAT module is not usable!");
+      LOGGER.debug("[" + config.getCurrencySymbol() + "] Contract setup", e);
     }
   }
 
@@ -678,6 +688,13 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         .put("Maximum Transaction Value Per Hour", config.getMaxAmountPerHour().toPlainString());
     configSummary
         .put("Maximum Transaction Value Per Day", config.getMaxAmountPerDay().toPlainString());
+    configSummary.put("Contract", this.contractAddress);
+    if (config.getContractKey() != null && !config.getContractKey().isEmpty()) {
+      configSummary
+          .put("Contract Manager", EthereumTools.getPublicAddress(config.getContractKey(), true));
+    } else {
+      configSummary.put("Contract Manager", config.getContractAccount());
+    }
     return configSummary;
   }
 
