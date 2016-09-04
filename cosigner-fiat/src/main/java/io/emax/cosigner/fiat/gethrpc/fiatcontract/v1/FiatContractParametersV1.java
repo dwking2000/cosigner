@@ -3,6 +3,9 @@ package io.emax.cosigner.fiat.gethrpc.fiatcontract.v1;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.fiat.gethrpc.fiatcontract.FiatContractParametersInterface;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FiatContractParametersV1 implements FiatContractParametersInterface {
-  //private static final Logger LOGGER = LoggerFactory.getLogger(FiatContractParametersV1.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(FiatContractParametersV1.class);
 
   @Override
   public String createContract(String adminAddress, List<String> ownerAddresses,
@@ -242,6 +245,7 @@ public class FiatContractParametersV1 implements FiatContractParametersInterface
     // Check that this is a transfer command.
     String function = bytecode.substring(bufPointer, bufPointer + contract.getTransfer().length());
     bufPointer += contract.getTransfer().length();
+    LOGGER.debug("Found function: " + function);
     if (!function.equalsIgnoreCase(contract.getTransfer())) {
       return null;
     }

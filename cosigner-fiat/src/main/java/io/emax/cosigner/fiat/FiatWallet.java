@@ -464,14 +464,9 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         sigData = signWithPrivateKey(sigData, config.getMultiSigKeys()[i], null);
         transaction = applySignature(transaction, address, sigData);
       }
-    } else if (name == null) {
-      sigData = getSigString(transaction, address);
-      sigData = signWithPrivateKey(sigData, address, null);
-      transaction = applySignature(transaction, address, sigData);
     } else {
-      String translatedAddress = address.toLowerCase(Locale.US);
-      sigData = getSigString(transaction, translatedAddress);
-      sigData = signWithPrivateKey(sigData, name, translatedAddress);
+      sigData = getSigString(transaction, address);
+      sigData = signWithPrivateKey(sigData, name, address);
     }
 
     return applySignature(transaction, address, sigData);
@@ -631,7 +626,8 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
           try {
             if (this.contractAddress
                 .equalsIgnoreCase(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
-              String txData = tx.getInput();
+              LOGGER.debug("[" + config.getCurrencySymbol() + "] Found TX: " + tx.getHash());
+              String txData = ByteUtilities.toHexString(ByteUtilities.toByteArray(tx.getInput()));
               FiatContractParametersInterface contractParamsInterface =
                   this.contractInterface.getContractParameters();
               Map<String, List<String>> contractParams =
@@ -653,6 +649,7 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
                   fiatTx.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
                   fiatTx.setMinConfirmations(config.getMinConfirmations());
 
+                  LOGGER.debug("[" + config.getCurrencySymbol() + "] For Address: " + fiatTx.getToAddress()[0]);
                   if (!txHistory.containsKey(fiatTx.getToAddress()[0])) {
                     txHistory.put(fiatTx.getToAddress()[0], new HashSet<>());
                   }
@@ -663,6 +660,8 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
                   txHistory.get(fiatTx.getFromAddress()[0]).add(fiatTx);
                   txHistory.get(fiatTx.getToAddress()[0]).add(fiatTx);
                 }
+              } else {
+                LOGGER.debug("[" + config.getCurrencySymbol() + "] Contract params appear to be null!");
               }
             }
           } catch (Exception e) {
