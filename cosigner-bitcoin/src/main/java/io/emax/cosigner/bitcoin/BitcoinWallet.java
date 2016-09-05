@@ -286,8 +286,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       subTotal = subTotal.add(output.getAmount());
       usedOutputs.add(output);
 
-      // Force tx amount > amount due so there should be enough to pay fees
-      if (subTotal.compareTo(recipient.getAmount()) > 0) {
+      if (subTotal.compareTo(recipient.getAmount()) >= 0) {
         LOGGER.debug("Recipient: " + recipient.getRecipientAddress());
         txnOutput.put(recipient.getRecipientAddress(), recipient.getAmount());
         subTotal = subTotal.subtract(recipient.getAmount());
@@ -311,8 +310,22 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           // Only set a change address if there's change.
           if (subTotal.compareTo(fees) > 0) {
             subTotal = subTotal.subtract(fees);
-            LOGGER.debug("We have change: " + subTotal.toPlainString());
-            txnOutput.put(fromAddress.iterator().next(), subTotal);
+            if (subTotal.compareTo(BigDecimal.ZERO) > 0) {
+              LOGGER.debug("We have change: " + subTotal.toPlainString());
+              txnOutput.put(fromAddress.iterator().next(), subTotal);
+            }
+          } else {
+            try {
+              // Split fees over all recipients if sender can't cover it.
+              BigDecimal individualFees = fees.subtract(subTotal)
+                  .divide(BigDecimal.valueOf(txnOutput.size()), BigDecimal.ROUND_HALF_UP);
+              txnOutput.forEach((address, amount) -> {
+                txnOutput.put(address, amount.subtract(individualFees));
+              });
+            } catch (Exception e) {
+              LOGGER.debug(null, e);
+              throw e;
+            }
           }
           filledAllOutputs = true;
           break;
@@ -639,7 +652,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
   @Override
   public String sendTransaction(String transaction) {
-    if(transactionsEnabled) {
+    if (transactionsEnabled) {
       return bitcoindRpc.sendrawtransaction(transaction, false);
     } else {
       return "Transactions temporarily disabled";
@@ -797,7 +810,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     for (long amount : satoshis) {
       totalAmount = totalAmount.add(BigDecimal.valueOf(amount));
     }
-    totalAmount = totalAmount.divide(BigDecimal.valueOf(100000000), BigDecimal.ROUND_UNNECESSARY);
+    totalAmount = totalAmount.divide(BigDecimal.valueOf(100000000), BigDecimal.ROUND_HALF_UP);
 
     TransactionDetails txDetails = new TransactionDetails();
     txDetails.setAmount(totalAmount);

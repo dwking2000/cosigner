@@ -3,6 +3,7 @@ package io.emax.cosigner.bitcoin.bitcoindrpc;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 
 /**
  * Information about the current state of the local block chain.
@@ -83,16 +84,16 @@ public class BlockChainInfo {
   @JsonProperty("verificationprogress")
   private BigDecimal verificationprogress;
 
-  public Bip9Softforks[] getBip9_softforks() {
+  public HashMap<String, Object> getBip9_softforks() {
     return bip9_softforks;
   }
 
-  public void setBip9_softforks(Bip9Softforks[] bip9_softforks) {
+  public void setBip9_softforks(HashMap<String, Object> bip9_softforks) {
     this.bip9_softforks = bip9_softforks;
   }
 
   @JsonProperty("bip9_softforks")
-  private Bip9Softforks[] bip9_softforks;
+  private HashMap<String, Object> bip9_softforks;
 
   @Override
   public boolean equals(Object obj) {
