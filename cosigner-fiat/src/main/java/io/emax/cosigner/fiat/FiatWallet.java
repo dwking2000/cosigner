@@ -657,6 +657,12 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
                     txHistory.put(fiatTx.getFromAddress()[0], new HashSet<>());
                   }
 
+                  if(txHistory.get(txDetail.getToAddress()[0]).contains(fiatTx)) {
+                    txHistory.get(txDetail.getToAddress()[0]).remove(fiatTx);
+                  }
+                  if(txHistory.get(txDetail.getFromAddress()[0]).contains(fiatTx)) {
+                    txHistory.get(txDetail.getFromAddress()[0]).remove(fiatTx);
+                  }
                   txHistory.get(fiatTx.getFromAddress()[0]).add(fiatTx);
                   txHistory.get(fiatTx.getToAddress()[0]).add(fiatTx);
                 }
