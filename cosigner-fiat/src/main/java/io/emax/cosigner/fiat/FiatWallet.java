@@ -650,6 +650,7 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
                   fiatTx.setMinConfirmations(config.getMinConfirmations());
 
                   LOGGER.debug("[" + config.getCurrencySymbol() + "] For Address: " + fiatTx.getToAddress()[0]);
+                  LOGGER.debug("[" + config.getCurrencySymbol() + "] " + Json.stringifyObject(TransactionDetails.class, fiatTx));
                   if (!txHistory.containsKey(fiatTx.getToAddress()[0])) {
                     txHistory.put(fiatTx.getToAddress()[0], new HashSet<>());
                   }
@@ -657,11 +658,11 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
                     txHistory.put(fiatTx.getFromAddress()[0], new HashSet<>());
                   }
 
-                  if(txHistory.get(txDetail.getToAddress()[0]).contains(fiatTx)) {
-                    txHistory.get(txDetail.getToAddress()[0]).remove(fiatTx);
+                  if(txHistory.get(fiatTx.getToAddress()[0]).contains(fiatTx)) {
+                    txHistory.get(fiatTx.getToAddress()[0]).remove(fiatTx);
                   }
-                  if(txHistory.get(txDetail.getFromAddress()[0]).contains(fiatTx)) {
-                    txHistory.get(txDetail.getFromAddress()[0]).remove(fiatTx);
+                  if(txHistory.get(fiatTx.getFromAddress()[0]).contains(fiatTx)) {
+                    txHistory.get(fiatTx.getFromAddress()[0]).remove(fiatTx);
                   }
                   txHistory.get(fiatTx.getFromAddress()[0]).add(fiatTx);
                   txHistory.get(fiatTx.getToAddress()[0]).add(fiatTx);
@@ -672,11 +673,13 @@ public class FiatWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             }
           } catch (Exception e) {
             LOGGER.debug("Unable to decode tx data");
+            LOGGER.debug("[" + config.getCurrencySymbol() + "]", e);
           }
         });
       }
     } catch (Exception e) {
-      LOGGER.warn("Unable to scan blockchain for FIAT wallet!");
+      LOGGER.warn("[" + config.getCurrencySymbol() + "] Unable to scan blockchain for FIAT wallet!");
+      LOGGER.debug("[" + config.getCurrencySymbol() + "]", e);
     }
   }
 
