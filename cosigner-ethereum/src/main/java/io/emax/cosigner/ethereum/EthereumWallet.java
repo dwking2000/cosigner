@@ -1030,11 +1030,17 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
                     if (!txHistory.containsKey(msigTx.getFromAddress()[0])) {
                       txHistory.put(msigTx.getFromAddress()[0], new HashSet<>());
                     }
+                    if(txHistory.get(txDetail.getFromAddress()[0]).contains(msigTx)) {
+                      txHistory.get(txDetail.getFromAddress()[0]).remove(msigTx);
+                    }
                     txHistory.get(msigTx.getFromAddress()[0]).add(msigTx);
                   }
                   if (reverseMsigContracts.containsKey(msigTx.getToAddress()[0])) {
                     if (!txHistory.containsKey(msigTx.getToAddress()[0])) {
                       txHistory.put(msigTx.getToAddress()[0], new HashSet<>());
+                    }
+                    if(txHistory.get(txDetail.getToAddress()[0]).contains(msigTx)) {
+                      txHistory.get(txDetail.getToAddress()[0]).remove(msigTx);
                     }
                     txHistory.get(msigTx.getToAddress()[0]).add(msigTx);
                   }
@@ -1049,11 +1055,17 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
             if (!txHistory.containsKey(txDetail.getFromAddress()[0])) {
               txHistory.put(txDetail.getFromAddress()[0], new HashSet<>());
             }
+            if(txHistory.get(txDetail.getFromAddress()[0]).contains(txDetail)) {
+              txHistory.get(txDetail.getFromAddress()[0]).remove(txDetail);
+            }
             txHistory.get(txDetail.getFromAddress()[0]).add(txDetail);
           }
           if (reverseMsigContracts.containsKey(txDetail.getToAddress()[0])) {
             if (!txHistory.containsKey(txDetail.getToAddress()[0])) {
               txHistory.put(txDetail.getToAddress()[0], new HashSet<>());
+            }
+            if(txHistory.get(txDetail.getToAddress()[0]).contains(txDetail)) {
+              txHistory.get(txDetail.getToAddress()[0]).remove(txDetail);
             }
             txHistory.get(txDetail.getToAddress()[0]).add(txDetail);
           }
