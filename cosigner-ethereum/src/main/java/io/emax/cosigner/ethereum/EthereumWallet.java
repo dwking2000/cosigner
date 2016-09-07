@@ -5,6 +5,7 @@ import io.emax.cosigner.api.currency.CurrencyAdmin;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.ethereum.common.EthereumTools;
 import io.emax.cosigner.ethereum.common.RlpItem;
@@ -1019,22 +1020,33 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
                   msigTx.setTxDate(new Date(dateConverter.longValue()));
                   msigTx.setFromAddress(txDetail.getToAddress());
                   msigTx.setToAddress(new String[]{multiSig.getAddress().get(j)});
-                  msigTx.setAmount(BigDecimal.valueOf(multiSig.getValue().get(j).longValue())
-                      .divide(BigDecimal.valueOf(config.getWeiMultiplier())));
+                  msigTx.setAmount(new BigDecimal(multiSig.getValue().get(j))
+                      .divide(BigDecimal.valueOf(config.getWeiMultiplier()), BigDecimal.ROUND_HALF_UP));
                   msigTx.setTxHash(txDetail.getTxHash());
                   msigTx.setConfirmed(txDetail.isConfirmed());
                   msigTx.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
                   msigTx.setMinConfirmations(config.getMinConfirmations());
 
+                  LOGGER.debug(Json.stringifyObject(MultiSigContractParametersInterface.class, multiSig));
+                  LOGGER.debug(Json.stringifyObject(TransactionDetails.class, msigTx));
+                  LOGGER.debug(new BigDecimal(multiSig.getValue().get(j)).toPlainString());
+                  LOGGER.debug(BigDecimal.valueOf(config.getWeiMultiplier()).toPlainString());
+
                   if (reverseMsigContracts.containsKey(msigTx.getFromAddress()[0])) {
                     if (!txHistory.containsKey(msigTx.getFromAddress()[0])) {
                       txHistory.put(msigTx.getFromAddress()[0], new HashSet<>());
+                    }
+                    if(txHistory.get(msigTx.getFromAddress()[0]).contains(msigTx)) {
+                      txHistory.get(msigTx.getFromAddress()[0]).remove(msigTx);
                     }
                     txHistory.get(msigTx.getFromAddress()[0]).add(msigTx);
                   }
                   if (reverseMsigContracts.containsKey(msigTx.getToAddress()[0])) {
                     if (!txHistory.containsKey(msigTx.getToAddress()[0])) {
                       txHistory.put(msigTx.getToAddress()[0], new HashSet<>());
+                    }
+                    if(txHistory.get(msigTx.getToAddress()[0]).contains(msigTx)) {
+                      txHistory.get(msigTx.getToAddress()[0]).remove(msigTx);
                     }
                     txHistory.get(msigTx.getToAddress()[0]).add(msigTx);
                   }
@@ -1049,11 +1061,17 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
             if (!txHistory.containsKey(txDetail.getFromAddress()[0])) {
               txHistory.put(txDetail.getFromAddress()[0], new HashSet<>());
             }
+            if(txHistory.get(txDetail.getFromAddress()[0]).contains(txDetail)) {
+              txHistory.get(txDetail.getFromAddress()[0]).remove(txDetail);
+            }
             txHistory.get(txDetail.getFromAddress()[0]).add(txDetail);
           }
           if (reverseMsigContracts.containsKey(txDetail.getToAddress()[0])) {
             if (!txHistory.containsKey(txDetail.getToAddress()[0])) {
               txHistory.put(txDetail.getToAddress()[0], new HashSet<>());
+            }
+            if(txHistory.get(txDetail.getToAddress()[0]).contains(txDetail)) {
+              txHistory.get(txDetail.getToAddress()[0]).remove(txDetail);
             }
             txHistory.get(txDetail.getToAddress()[0]).add(txDetail);
           }

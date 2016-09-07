@@ -54,7 +54,7 @@ public class FiatConfiguration implements CurrencyConfiguration {
 
       FileInputStream propertiesFile = null;
       String propertiesFilePath = "./cosigner-" + currency.toLowerCase(Locale.US) + ".properties";
-
+      LOGGER.info("[" + currency + "] Loading configuration file " + propertiesFilePath);
       try {
         Properties cosignerProperties = new Properties();
         propertiesFile = new FileInputStream(propertiesFilePath);

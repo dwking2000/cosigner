@@ -48,6 +48,17 @@ public class Output extends Outpoint {
   @JsonProperty("spendable")
   private boolean spendable;
 
+  @JsonProperty("solvable")
+  private boolean solvable;
+
+  public boolean isSolvable() {
+    return solvable;
+  }
+
+  public void setSolvable(boolean solvable) {
+    this.solvable = solvable;
+  }
+
   @Override
   public String toString() {
     return "Output [address=" + address + ", account=" + account + ", scriptPubKey=" + scriptPubKey
