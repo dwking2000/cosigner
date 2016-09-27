@@ -1,10 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>cosigner</artifactId>
+        <groupId>io.emax</groupId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>cosigner-core</artifactId>
-    <name>cosigner-core</name>
-    <description>User-facing coordinator for cosigner.</description>
+    <description>Cosigner ethereum token library.</description>
+
+    <artifactId>cosigner-ethereum-token</artifactId>
 
     <dependencies>
         <dependency>
@@ -13,24 +19,9 @@
             <version>0.9.1</version>
         </dependency>
         <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-client</artifactId>
-            <version>0.9.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-server</artifactId>
-            <version>9.2.13.v20150730</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-api</artifactId>
-            <version>9.2.13.v20150730</version>
-        </dependency>
-        <dependency>
-            <groupId>io.reactivex</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>1.1.0</version>
+            <groupId>com.github.Dorgky</groupId>
+            <artifactId>jsonrpc4j</artifactId>
+            <version>9152cd0</version>
         </dependency>
         <dependency>
             <groupId>io.emax</groupId>
@@ -39,13 +30,8 @@
         </dependency>
         <dependency>
             <groupId>io.emax</groupId>
-            <artifactId>cosigner-bitcoin</artifactId>
+            <artifactId>cosigner-common</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.zeromq</groupId>
-            <artifactId>jeromq</artifactId>
-            <version>0.3.5</version>
         </dependency>
         <dependency>
             <groupId>io.emax</groupId>
@@ -53,14 +39,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.emax</groupId>
-            <artifactId>cosigner-ethereum-token</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.emax</groupId>
-            <artifactId>cosigner-basic-validator</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.54</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -69,7 +50,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -121,38 +101,12 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>io.emax.cosigner.core.CosignerApplication</mainClass>
+                            <mainClass>io.emax.cosigner.ethereum.token.cli.Application</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>2.7</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/../../target
-                            </outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.build.directory}</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
-    <parent>
-        <groupId>io.emax</groupId>
-        <artifactId>cosigner</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
-    </parent>
+
 </project>
