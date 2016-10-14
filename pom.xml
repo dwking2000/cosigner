@@ -55,11 +55,11 @@
         <module>cosigner-api</module>
         <module>cosigner-common</module>
         <module>cosigner-bitcoin</module>
-        <module>cosigner-ethereum</module>
+        <module>cosigner-ethereum-core</module>
+        <module>cosigner-ethereum-token</module>
         <module>cosigner-basic-validator</module>
         <module>cosigner-core</module>
         <module>cosigner-admin</module>
-        <module>cosigner-fiat</module>
     </modules>
 
     <distributionManagement>
