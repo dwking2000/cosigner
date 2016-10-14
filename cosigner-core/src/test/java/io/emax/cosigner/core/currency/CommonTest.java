@@ -9,9 +9,9 @@ import io.emax.cosigner.bitcoin.BitcoinResource;
 import io.emax.cosigner.bitcoin.stubrpc.BitcoinTestRpc;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
-import io.emax.cosigner.ethereum.EthereumCurrencyPackage;
-import io.emax.cosigner.ethereum.EthereumResource;
-import io.emax.cosigner.ethereum.stubrpc.EthereumTestRpc;
+import io.emax.cosigner.ethereum.core.EthereumResource;
+import io.emax.cosigner.ethereum.core.stubrpc.EthereumTestRpc;
+import io.emax.cosigner.ethereum.token.CurrencyConfigurations.EthCurrencyPackage;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,7 +38,7 @@ public class CommonTest {
 
     // Register currency packages
     CurrencyPackageInterface bitcoinPackage = new BitcoinCurrencyPackage();
-    CurrencyPackageInterface ethereumPackage = new EthereumCurrencyPackage();
+    CurrencyPackageInterface ethereumPackage = new EthCurrencyPackage();
 
     CosignerApplication.getCurrencies()
         .put(bitcoinPackage.getConfiguration().getCurrencySymbol(), bitcoinPackage);

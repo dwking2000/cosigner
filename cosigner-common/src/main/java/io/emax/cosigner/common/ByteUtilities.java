@@ -10,7 +10,7 @@ public class ByteUtilities {
    */
   public static byte[] stripLeadingNullBytes(byte[] input) {
     byte[] result = Arrays.copyOf(input, input.length);
-    while (result.length > 0 && result[0] == 0x00) {
+    while (result.length > 1 && result[0] == 0x00) {
       result = Arrays.copyOfRange(result, 1, result.length);
     }
     return result;
