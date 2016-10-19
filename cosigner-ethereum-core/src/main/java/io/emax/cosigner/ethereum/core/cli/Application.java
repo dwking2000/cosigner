@@ -4,6 +4,7 @@ import io.emax.cosigner.api.currency.Wallet.Recipient;
 import io.emax.cosigner.ethereum.core.EthereumConfiguration;
 import io.emax.cosigner.ethereum.core.EthereumMonitor;
 import io.emax.cosigner.ethereum.core.EthereumWallet;
+import io.emax.cosigner.ethereum.core.common.EthereumTools;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -40,6 +41,7 @@ public class Application {
       System.out.println("\tmonitor(String address)");
       System.out.println("\tlistTxs(String address, int resultSize, int skipNumber)");
       System.out.println("\tgetTx(String tx-id)");
+      System.out.println("\tconvertKeyToAddress(String key)");
       return;
     }
 
@@ -174,6 +176,12 @@ public class Application {
           accountName = args[1];
         }
         System.out.println(wallet.getTransaction(accountName));
+        break;
+      case "convertKeyToAddress":
+        if (args.length >= 2) {
+          accountName = args[1];
+        }
+        System.out.println(EthereumTools.getPublicAddress(accountName, true));
         break;
       default:
         System.out.println("Method not valid or not supported yet");

@@ -1,9 +1,14 @@
 package io.emax.cosigner.ethereum.token.cli;
 
 import io.emax.cosigner.api.currency.Wallet.Recipient;
-import io.emax.cosigner.ethereum.token.TokenMonitor;
+import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.ethereum.core.EthereumResource;
+import io.emax.cosigner.ethereum.core.gethrpc.EthereumRpc;
+import io.emax.cosigner.ethereum.core.gethrpc.RawTransaction;
 import io.emax.cosigner.ethereum.token.TokenConfiguration;
+import io.emax.cosigner.ethereum.token.TokenMonitor;
 import io.emax.cosigner.ethereum.token.TokenWallet;
+import io.emax.cosigner.ethereum.token.gethrpc.tokencontract.v1.TokenContractParametersV1;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,6 +59,7 @@ public class Application {
       System.out.println(
           "\tscheduleVesting(String recipient, Long amount, Long timeFrame(seconds), Bool prorated)");
       System.out.println("\tcalculateVesting()");
+      System.out.println("\tsetTokenContract()");
       return;
     }
 
@@ -249,6 +255,17 @@ public class Application {
         break;
       case "calculateVesting":
         System.out.println(wallet.calculateVesting());
+        break;
+      case "setTokenContract":
+        TokenContractParametersV1 contractInterface = new TokenContractParametersV1();
+        EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
+        TokenConfiguration config = new TokenConfiguration("EUR");
+        Long nonce = contractInterface.getNonce(ethereumRpc, config.getAdminContractAddress());
+        RawTransaction tx = RawTransaction
+            .createTransaction(config, config.getAdminContractAddress(), null, contractInterface
+                .setTokenChild(nonce, config.getTokenContractAddress(), new LinkedList<>(),
+                    new LinkedList<>(), new LinkedList<>()));
+        System.out.println(ByteUtilities.toHexString(tx.encode()));
         break;
       default:
         System.out.println("Method not valid or not supported yet");
