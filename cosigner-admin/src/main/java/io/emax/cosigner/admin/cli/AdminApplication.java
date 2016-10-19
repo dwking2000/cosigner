@@ -24,6 +24,7 @@ public class AdminApplication {
       System.out.println("\tGetClusterKey()");
       System.out.println("\tSetClusterKey(key)");
       System.out.println("\tSetLocation(URIString)");
+      System.out.println("\tLoadEthToken(TokenSymbol)");
       System.out.println("\tGetConfigurations()");
       return;
     }
@@ -61,6 +62,13 @@ public class AdminApplication {
         break;
       case "GetConfigurations":
         System.out.println(Json.stringifyObject(HashMap.class, adminConnection.getConfigurations()));
+        break;
+      case "LoadEthToken":
+        if (args.length >= 2) {
+          stringInput = args[1];
+        }
+        adminConnection.loadEthToken(stringInput);
+        System.out.println("Loaded eth token [" + stringInput + "]");
         break;
       default:
         System.out.println("Method not valid or not supported yet");

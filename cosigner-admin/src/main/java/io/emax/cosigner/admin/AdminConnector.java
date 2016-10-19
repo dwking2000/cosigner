@@ -93,7 +93,12 @@ public class AdminConnector {
     restPostRequest("/admin/SetLocation", location);
   }
 
-  public Map<String, Map<String,String>> getConfigurations() {
-    return (HashMap) Json.objectifyString(HashMap.class, restGetRequest("/admin/GetConfigurations"));
+  public void loadEthToken(String tokenSymbol) {
+    restPostRequest("/admin/LoadEthToken", tokenSymbol);
+  }
+
+  public Map<String, Map<String, String>> getConfigurations() {
+    return (HashMap) Json
+        .objectifyString(HashMap.class, restGetRequest("/admin/GetConfigurations"));
   }
 }

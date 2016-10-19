@@ -6,6 +6,7 @@ import io.emax.cosigner.api.currency.CurrencyAdmin;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.cluster.ClusterInfo;
+import io.emax.cosigner.ethereum.token.CurrencyConfigurations.GenericCurrencyPackage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,7 +133,7 @@ public class AdminResource {
     if (CosignerApplication.getCurrencies().containsKey(currency)) {
       CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
       if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
-        ((CurrencyAdmin)currencyPackage.getWallet()).disableTransactions();
+        ((CurrencyAdmin) currencyPackage.getWallet()).disableTransactions();
         return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).transactionsEnabled())
             .build();
       }
@@ -148,12 +149,25 @@ public class AdminResource {
     if (CosignerApplication.getCurrencies().containsKey(currency)) {
       CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
       if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
-        ((CurrencyAdmin)currencyPackage.getWallet()).enableTransactions();
+        ((CurrencyAdmin) currencyPackage.getWallet()).enableTransactions();
         return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).transactionsEnabled())
             .build();
       }
     }
 
     return Response.noContent().build();
+  }
+
+  @POST
+  @Path("/LoadEthToken")
+  public Response loadEthToken(String currency) {
+    if (CosignerApplication.getCurrencies().containsKey(currency)) {
+      return Response.noContent().build();
+    } else {
+      CurrencyPackageInterface currencyPackage = new GenericCurrencyPackage(currency);
+      CosignerApplication.getCurrencies()
+          .put(currencyPackage.getConfiguration().getCurrencySymbol(), currencyPackage);
+      return Response.ok().build();
+    }
   }
 }
