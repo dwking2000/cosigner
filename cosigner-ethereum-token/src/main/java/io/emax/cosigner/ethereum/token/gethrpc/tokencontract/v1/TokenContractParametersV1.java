@@ -77,12 +77,12 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   }
 
   @Override
-  public String createStorageContract(TokenConfiguration config, String tokenContract, String adminAddress,
-      List<String> ownerAddresses, int numSignaturesRequired) {
+  public String createStorageContract(TokenConfiguration config, String tokenContract,
+      String adminAddress, List<String> ownerAddresses, int numSignaturesRequired) {
     // Format should be initData/Payload/Arguments
     TokenContractV1 contract = new TokenContractV1();
     String response = contract.getStorageInitData();
-    if(config.useAlternateEtherContract()) {
+    if (config.useAlternateEtherContract()) {
       response = contract.getAlternateStorageInitData();
     }
 
@@ -278,9 +278,9 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     long numberOfParams = 6;
     long sizeOfPreviousArrays = 0;
     List<String> addresses = new LinkedList<>(addressChanges.keySet());
-    List<Long> balanceChanges = new LinkedList<>();
+    List<BigInteger> balanceChanges = new LinkedList<>();
     addresses.forEach(address -> {
-      balanceChanges.add(addressChanges.get(address).longValue());
+      balanceChanges.add(addressChanges.get(address));
     });
 
     // Address Pointer
@@ -316,7 +316,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     response += serializeStringList(addresses);
 
     // Balance Data
-    response += serializeLongList(balanceChanges);
+    response += serializeBigIntList(balanceChanges);
 
     // SigV Data
     response += serializeStringList(sigV);
@@ -456,8 +456,8 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   }
 
   @Override
-  public String transfer(long nonce, String sender, List<String> recipients, List<Long> amount,
-      List<String> sigV, List<String> sigR, List<String> sigS) {
+  public String transfer(long nonce, String sender, List<String> recipients,
+      List<BigInteger> amount, List<String> sigV, List<String> sigR, List<String> sigS) {
     // We expect the list of sig's to be in order such that the index of each matches up.
     // We expect that the recipients and amounts be in order such that the index of each matches up.
     // I.E. sigV[2] belongs with sigR[2] and sigS[2].
@@ -510,7 +510,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     response += serializeStringList(recipients);
 
     // Amount Data
-    response += serializeLongList(amount);
+    response += serializeBigIntList(amount);
 
     // SigV Data
     response += serializeStringList(sigV);
@@ -545,7 +545,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     return response;
   }
 
-  private String serializeLongList(List<Long> data) {
+  private String serializeBigIntList(List<BigInteger> data) {
     String response = "";
 
     String formattedString =
@@ -553,12 +553,12 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     formattedString = String.format("%64s", formattedString).replace(' ', '0');
     response += formattedString;
 
-    for (Long dataItem : data) {
+    for (BigInteger dataItem : data) {
       char pad = '0';
-      if (dataItem < 0) {
+      if (dataItem.compareTo(BigInteger.ZERO) < 0) {
         pad = 'F';
       }
-      formattedString = ByteUtilities.toHexString(BigInteger.valueOf(dataItem).toByteArray());
+      formattedString = ByteUtilities.toHexString(dataItem.toByteArray());
       formattedString = String.format("%64s", formattedString).replace(' ', pad);
       response += formattedString;
     }

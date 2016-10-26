@@ -475,9 +475,11 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
   public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
     // Format tx data
     List<String> recipients = new LinkedList<>();
-    List<Long> amounts = new LinkedList<>();
+    List<BigInteger> amounts = new LinkedList<>();
     toAddresses.forEach(recipient -> {
-      amounts.add(recipient.getAmount().longValue());
+      amounts.add(
+          recipient.getAmount().multiply(BigDecimal.TEN.pow((int) config.getDecimalPlaces()))
+              .toBigInteger());
       recipients.add(recipient.getRecipientAddress());
     });
 
@@ -529,7 +531,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     wrappedTxData.add(txData);
     Iterable<Iterable<String>> sigData = wrappedTxData;
 
-    if (name == null && ownedAddresses.containsKey(address.toLowerCase(Locale.US))) {
+    if (name == null) {
       for (int i = 0; i < config.getMultiSigAccounts().length; i++) {
         if (config.getMultiSigAccounts()[i].isEmpty()) {
           continue;
@@ -663,7 +665,9 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         .equalsIgnoreCase(storageContractAddress)) {
       Map<String, List<String>> contractParams = contractInterface.getContractParameters()
           .parseTransfer(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()));
-      if (contractParams != null) {
+      Map<String, List<String>> adminParams = contractInterface.getContractParameters()
+          .parseAdminFunction(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()));
+      if (contractParams != null || adminParams != null) {
         String contractKey = config.getContractKey();
         String contractAddress = config.getContractAccount();
 
@@ -963,9 +967,9 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         String sender = contractParamData.get(TokenContractParametersInterface.SENDER).get(0);
         List<String> recipients =
             contractParamData.get(TokenContractParametersInterface.RECIPIENTS);
-        List<Long> amounts = new LinkedList<>();
+        List<BigInteger> amounts = new LinkedList<>();
         for (String amount : contractParamData.get(TokenContractParametersInterface.AMOUNT)) {
-          amounts.add(new BigInteger(amount).longValue());
+          amounts.add(new BigInteger(amount));
         }
         List<String> sigV = contractParamData.get(TokenContractParametersInterface.SIGV);
         List<String> sigR = contractParamData.get(TokenContractParametersInterface.SIGR);
