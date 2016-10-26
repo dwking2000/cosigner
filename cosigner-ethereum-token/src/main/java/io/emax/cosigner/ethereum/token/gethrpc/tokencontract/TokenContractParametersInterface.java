@@ -49,7 +49,7 @@ public interface TokenContractParametersInterface {
 
   String getTotalBalance();
 
-  String transfer(long nonce, String sender, List<String> recipients, List<Long> amount,
+  String transfer(long nonce, String sender, List<String> recipients, List<BigInteger> amount,
       List<String> sigV, List<String> sigR, List<String> sigS);
 
   Map<String, List<String>> parseTransfer(String bytecode);
