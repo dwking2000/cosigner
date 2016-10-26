@@ -249,7 +249,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
           }
 
           // Work around for invalid token configuration when running on the ether version
-          if(config.useAlternateEtherContract()) {
+          if (config.useAlternateEtherContract()) {
             tokenContractAddress = "0x12345678901234567890";
           }
 
@@ -453,7 +453,9 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         balance = balance.subtract(txDetail.getAmount());
       }
     }
-    return balance.toPlainString();
+    balance = balance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
+    return balance.divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
+        BigDecimal.ROUND_UNNECESSARY).toPlainString();
   }
 
   public String getTotalBalances() {
@@ -461,8 +463,12 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     LOGGER.debug("Total balance request: " + Json.stringifyObject(CallData.class, callData));
     String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
 
-    BigInteger balance = new BigInteger(1, ByteUtilities.toByteArray(response));
-    return balance.toString(10);
+    BigInteger intBalance = new BigInteger(1, ByteUtilities.toByteArray(response));
+    BigDecimal balance = new BigDecimal(intBalance);
+
+    balance = balance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
+    return balance.divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
+        BigDecimal.ROUND_UNNECESSARY).toPlainString();
   }
 
   @Override
@@ -772,26 +778,31 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
         txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
         txDetail.setMinConfirmations(config.getMinConfirmations());
+
+        ArrayList<String> topics = (ArrayList<String>) result.get("topics");
+
+        if (("0x" + ByteUtilities.toHexString(
+            ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(0)))))
+            .equalsIgnoreCase(functionTopic)) {
+          String from = ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
+          txDetail.setFromAddress(new String[]{from});
+
+          String to = ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(2))));
+          txDetail.setToAddress(new String[]{to});
+
+          String amount = ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(
+              ByteUtilities
+                  .readBytes(ByteUtilities.toByteArray((String) result.get("data")), 0, 32)));
+          txDetail.setAmount(new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(amount))));
+
+          txDetails.add(txDetail);
+        }
       } catch (Exception e) {
         // Pending TX
-        LOGGER.debug("Pending Tx Found", e);
+        LOGGER.debug("Pending Tx Found or wrong event returned by geth.", e);
       }
-
-      ArrayList<String> topics = (ArrayList<String>) result.get("topics");
-
-      String from = ByteUtilities.toHexString(
-          ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
-      txDetail.setFromAddress(new String[]{from});
-
-      String to = ByteUtilities.toHexString(
-          ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(2))));
-      txDetail.setToAddress(new String[]{to});
-
-      String amount = ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(
-          ByteUtilities.readBytes(ByteUtilities.toByteArray((String) result.get("data")), 0, 32)));
-      txDetail.setAmount(new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(amount))));
-
-      txDetails.add(txDetail);
     }
 
     Collections.sort(txDetails, new TxDateComparator());

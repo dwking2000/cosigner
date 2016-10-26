@@ -18,6 +18,7 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
   private static final Logger LOGGER = LoggerFactory.getLogger(TokenConfiguration.class);
 
   private String currencySymbol = "TOKEN";
+  private long decimalPlaces = 0;
   private String serverPrivateKey = "deadbeef";
   private int minSignatures = 10;
   private int minConfirmations = 10;
@@ -70,6 +71,9 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
         // currencySymbol
         currencySymbol = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("currencySymbol", currencySymbol));
+
+        // decimalPlaces
+        decimalPlaces = (int) getLongProp(cosignerProperties, "decimalPlaces", decimalPlaces);
 
         // serverPrivateKey
         serverPrivateKey = EnvironmentVariableParser
@@ -171,6 +175,10 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
   @Override
   public String getCurrencySymbol() {
     return currencySymbol;
+  }
+
+  public long getDecimalPlaces() {
+    return decimalPlaces;
   }
 
   @Override
