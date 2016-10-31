@@ -410,7 +410,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     HashSet<String> userAddresses = ownedAddresses.get(user);
     if (userAddresses.isEmpty()) {
       String balanceCheck = getBalance(createAddress(name));
-      while (balanceCheck != null && !balanceCheck.equals(BigInteger.ZERO.toString(10))) {
+      while (balanceCheck != null && (new BigDecimal(balanceCheck).compareTo(BigDecimal.ZERO)) != 0) {
         LOGGER.debug(
             "BalanceCheck was: " + balanceCheck + " compared to " + BigInteger.ZERO.toString(10));
         userAddresses = ownedAddresses.get(user);
