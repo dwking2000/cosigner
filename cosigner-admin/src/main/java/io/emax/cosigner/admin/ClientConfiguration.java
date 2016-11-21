@@ -1,5 +1,7 @@
 package io.emax.cosigner.admin;
 
+import io.emax.cosigner.common.EnvironmentVariableParser;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,21 +55,24 @@ public class ClientConfiguration {
 
         // Load config
         // rsServerUrl
-        rsServerUrl = cosignerProperties.getProperty("rsServerUrl", rsServerUrl);
+        rsServerUrl = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("rsServerUrl", rsServerUrl));
 
         // tlsKeystore
-        tlsKeystore = cosignerProperties.getProperty("tlsKeystore", tlsKeystore);
+        tlsKeystore = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("tlsKeystore", tlsKeystore));
 
         // tlsKeystorePassword
-        tlsKeystorePassword =
-            cosignerProperties.getProperty("tlsKeystorePassword", tlsKeystorePassword);
+        tlsKeystorePassword = EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties.getProperty("tlsKeystorePassword", tlsKeystorePassword));
 
         // tlsCertAlias
-        tlsCertAlias = cosignerProperties.getProperty("tlsCertAlias", tlsCertAlias);
+        tlsCertAlias = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("tlsCertAlias", tlsCertAlias));
 
         // useTls
-        useTls =
-            Boolean.parseBoolean(cosignerProperties.getProperty("useTls", String.valueOf(useTls)));
+        useTls = Boolean.parseBoolean(EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("useTls", String.valueOf(useTls))));
 
       } catch (IOException e) {
         if (propertiesFile != null) {
