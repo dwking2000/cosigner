@@ -410,7 +410,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     HashSet<String> userAddresses = ownedAddresses.get(user);
     if (userAddresses.isEmpty()) {
       String balanceCheck = getBalance(createAddress(name));
-      while (balanceCheck != null && (new BigDecimal(balanceCheck).compareTo(BigDecimal.ZERO)) != 0) {
+      while (balanceCheck != null
+          && (new BigDecimal(balanceCheck).compareTo(BigDecimal.ZERO)) != 0) {
         LOGGER.debug(
             "BalanceCheck was: " + balanceCheck + " compared to " + BigInteger.ZERO.toString(10));
         userAddresses = ownedAddresses.get(user);
@@ -732,12 +733,27 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     return transactionsEnabled;
   }
 
+  @Override
+  public long getBlockchainHeight() {
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+    return latestBlockNumber.longValue();
+  }
+
+  @Override
+  public long getLastBlockTime() {
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+    Block block = ethereumRpc.eth_getBlockByNumber(latestBlockNumber.toString(), true);
+    BigInteger dateConverter = new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
+    return dateConverter.longValue();
+  }
+
   private class TxDateComparator implements Comparator<TransactionDetails> {
     @Override
     public int compare(TransactionDetails o1, TransactionDetails o2) {
       return o1.getTxDate().compareTo(o2.getTxDate());
     }
-
   }
 
   @Override

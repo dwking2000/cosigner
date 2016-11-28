@@ -62,6 +62,20 @@ public class Block {
   @JsonProperty("uncles")
   private String[] uncles = new String[0];
 
+  @JsonProperty("mixHash")
+  private String mixHash;
+
+  @JsonProperty("receiptsRoot")
+  private String receiptsRoot;
+
+  public String getReceiptsRoot() {
+    return receiptsRoot;
+  }
+
+  public void setReceiptsRoot(String receiptsRoot) {
+    this.receiptsRoot = receiptsRoot;
+  }
+
   public String getNumber() {
     return number;
   }
@@ -341,4 +355,11 @@ public class Block {
         + ", uncles=" + Arrays.toString(uncles) + "]";
   }
 
+  public String getMixHash() {
+    return mixHash;
+  }
+
+  public void setMixHash(String mixHash) {
+    this.mixHash = mixHash;
+  }
 }

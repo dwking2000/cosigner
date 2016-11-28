@@ -170,4 +170,27 @@ public class AdminResource {
       return Response.ok().build();
     }
   }
+
+  @POST
+  @Path("/GetBlockchainHeight")
+  public Response getBlockchainHeigh(String currency) {
+    if (CosignerApplication.getCurrencies().containsKey(currency)) {
+      CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
+      return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).getBlockchainHeight())
+          .build();
+    }
+
+    return Response.noContent().build();
+  }
+
+  @POST
+  @Path("/GetLastBlockTime")
+  public Response getLastBlockTime(String currency) {
+    if (CosignerApplication.getCurrencies().containsKey(currency)) {
+      CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
+      return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).getLastBlockTime()).build();
+    }
+
+    return Response.noContent().build();
+  }
 }

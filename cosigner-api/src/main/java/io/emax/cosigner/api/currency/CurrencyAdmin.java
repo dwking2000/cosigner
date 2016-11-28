@@ -26,4 +26,15 @@ public interface CurrencyAdmin {
    * Informs caller of the transaction state.
    */
   boolean transactionsEnabled();
+
+  /**
+   * Return the height of the blockchain backing the currency, useful for verifying that all nodes
+   * are in sync.
+   */
+  long getBlockchainHeight();
+
+  /**
+   * Returns the time of the last block, allows monitoring for network issues.
+   */
+  long getLastBlockTime();
 }

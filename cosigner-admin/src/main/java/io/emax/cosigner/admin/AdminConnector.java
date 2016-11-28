@@ -101,4 +101,14 @@ public class AdminConnector {
     return (HashMap) Json
         .objectifyString(HashMap.class, restGetRequest("/admin/GetConfigurations"));
   }
+
+  public long getBlockchainHeight(String currency) {
+    return (Long) Json
+        .objectifyString(Long.class, restPostRequest("/admin/GetBlockchainHeight", currency));
+  }
+
+  public long getLastBlockTime(String currency) {
+    return (Long) Json
+        .objectifyString(Long.class, restPostRequest("/admin/GetLastBlockTime", currency));
+  }
 }

@@ -5,6 +5,7 @@ import io.emax.cosigner.api.currency.CurrencyAdmin;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
+import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainInfo;
 import io.emax.cosigner.bitcoin.bitcoindrpc.MultiSig;
 import io.emax.cosigner.bitcoin.bitcoindrpc.Outpoint;
 import io.emax.cosigner.bitcoin.bitcoindrpc.OutpointDetails;
@@ -890,5 +891,19 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   @Override
   public boolean transactionsEnabled() {
     return transactionsEnabled;
+  }
+
+  @Override
+  public long getBlockchainHeight() {
+    BlockChainInfo chainInfo = bitcoindRpc.getblockchaininfo();
+    return chainInfo.getBlocks();
+  }
+
+  @Override
+  public long getLastBlockTime() {
+    BlockChainInfo chainInfo = bitcoindRpc.getblockchaininfo();
+    String blockHash = bitcoindRpc.getBlockHash(chainInfo.getBlocks());
+    Map<String, Object> block = bitcoindRpc.getBlock(blockHash);
+    return Long.parseLong(String.valueOf(block.get("time")));
   }
 }

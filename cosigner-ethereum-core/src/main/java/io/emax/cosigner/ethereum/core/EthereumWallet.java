@@ -9,15 +9,15 @@ import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.ethereum.core.common.EthereumTools;
 import io.emax.cosigner.ethereum.core.common.RlpItem;
 import io.emax.cosigner.ethereum.core.common.RlpList;
-import io.emax.cosigner.ethereum.core.gethrpc.multisig.ContractInformation;
-import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContract;
-import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContractParametersInterface;
 import io.emax.cosigner.ethereum.core.gethrpc.Block;
 import io.emax.cosigner.ethereum.core.gethrpc.CallData;
 import io.emax.cosigner.ethereum.core.gethrpc.DefaultBlock;
 import io.emax.cosigner.ethereum.core.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.core.gethrpc.RawTransaction;
+import io.emax.cosigner.ethereum.core.gethrpc.multisig.ContractInformation;
+import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContract;
 import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContractInterface;
+import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContractParametersInterface;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -944,6 +944,22 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   @Override
   public boolean transactionsEnabled() {
     return transactionsEnabled;
+  }
+
+  @Override
+  public long getBlockchainHeight() {
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+    return latestBlockNumber.longValue();
+  }
+
+  @Override
+  public long getLastBlockTime() {
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+    Block block = ethereumRpc.eth_getBlockByNumber(latestBlockNumber.toString(), true);
+    BigInteger dateConverter = new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
+    return dateConverter.longValue();
   }
 
   private class TxDateComparator implements Comparator<TransactionDetails> {

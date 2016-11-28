@@ -2,6 +2,8 @@ package io.emax.cosigner.bitcoin.bitcoindrpc;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 
+import java.util.Map;
+
 /**
  * Block Chain RPCs.
  *
@@ -38,4 +40,7 @@ public interface BlockChainRpc {
    */
   @JsonRpcMethod("getblockhash")
   String getBlockHash(long blockHeight);
+
+  @JsonRpcMethod("getblock")
+  Map<String, Object> getBlock(String blockHash);
 }
