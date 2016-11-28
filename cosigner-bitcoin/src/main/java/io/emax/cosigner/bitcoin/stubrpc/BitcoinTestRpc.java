@@ -15,7 +15,10 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
 import io.emax.cosigner.bitcoin.common.BitcoinTools;
 import io.emax.cosigner.common.ByteUtilities;
 
+import org.joda.time.DateTime;
+
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
 public class BitcoinTestRpc implements BitcoindRpc {
@@ -34,7 +37,14 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public String getBlockHash(long blockHeight) {
-    return null;
+    return "12abeed";
+  }
+
+  @Override
+  public Map<String, Object> getBlock(String blockHash) {
+    HashMap<String, Object> result = new HashMap<>();
+    result.put("time", ((Long) (DateTime.now().getMillis() / 1000)).toString());
+    return result;
   }
 
   @Override

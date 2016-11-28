@@ -6,6 +6,9 @@ import io.emax.cosigner.api.currency.CurrencyAdmin;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.cluster.ClusterInfo;
+import io.emax.cosigner.core.cluster.Coordinator;
+import io.emax.cosigner.core.cluster.commands.ClusterCommand;
+import io.emax.cosigner.core.cluster.commands.ClusterCommandType;
 import io.emax.cosigner.ethereum.token.CurrencyConfigurations.GenericCurrencyPackage;
 
 import org.slf4j.Logger;
@@ -126,7 +129,6 @@ public class AdminResource {
     return Response.noContent().build();
   }
 
-  // TODO This should probably be broadcast to the cluster
   @POST
   @Path("/DisableTransactions")
   public Response disableTransactions(String currency) {
@@ -134,6 +136,14 @@ public class AdminResource {
       CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
       if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
         ((CurrencyAdmin) currencyPackage.getWallet()).disableTransactions();
+        for (Server server : ClusterInfo.getInstance().getServers()) {
+          ClusterCommand command = new ClusterCommand();
+
+          // Configure command
+          command.setCommandType(ClusterCommandType.DISABLETXS);
+          command.setCommandData(currency);
+          Coordinator.broadcastCommand(command, server);
+        }
         return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).transactionsEnabled())
             .build();
       }
@@ -142,7 +152,6 @@ public class AdminResource {
     return Response.noContent().build();
   }
 
-  // TODO This should probably be broadcast to the cluster
   @POST
   @Path("/EnableTransactions")
   public Response enableTransactions(String currency) {
@@ -150,6 +159,15 @@ public class AdminResource {
       CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
       if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
         ((CurrencyAdmin) currencyPackage.getWallet()).enableTransactions();
+
+        for (Server server : ClusterInfo.getInstance().getServers()) {
+          ClusterCommand command = new ClusterCommand();
+
+          // Configure command
+          command.setCommandType(ClusterCommandType.ENABLETXS);
+          command.setCommandData(currency);
+          Coordinator.broadcastCommand(command, server);
+        }
         return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).transactionsEnabled())
             .build();
       }
@@ -169,5 +187,28 @@ public class AdminResource {
           .put(currencyPackage.getConfiguration().getCurrencySymbol(), currencyPackage);
       return Response.ok().build();
     }
+  }
+
+  @POST
+  @Path("/GetBlockchainHeight")
+  public Response getBlockchainHeigh(String currency) {
+    if (CosignerApplication.getCurrencies().containsKey(currency)) {
+      CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
+      return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).getBlockchainHeight())
+          .build();
+    }
+
+    return Response.noContent().build();
+  }
+
+  @POST
+  @Path("/GetLastBlockTime")
+  public Response getLastBlockTime(String currency) {
+    if (CosignerApplication.getCurrencies().containsKey(currency)) {
+      CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
+      return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).getLastBlockTime()).build();
+    }
+
+    return Response.noContent().build();
   }
 }

@@ -26,6 +26,8 @@ public class AdminApplication {
       System.out.println("\tSetLocation(URIString)");
       System.out.println("\tLoadEthToken(TokenSymbol)");
       System.out.println("\tGetConfigurations()");
+      System.out.println("\tGetChainHeight(Currency)");
+      System.out.println("\tGetLastBlockTime(Currency)");
       return;
     }
 
@@ -69,6 +71,18 @@ public class AdminApplication {
         }
         adminConnection.loadEthToken(stringInput);
         System.out.println("Loaded eth token [" + stringInput + "]");
+        break;
+      case "GetChainHeight":
+        if (args.length >= 2) {
+          stringInput = args[1];
+        }
+        System.out.println(adminConnection.getBlockchainHeight(stringInput));
+        break;
+      case "GetLastBlockTime":
+        if (args.length >= 2) {
+          stringInput = args[1];
+        }
+        System.out.println(adminConnection.getLastBlockTime(stringInput));
         break;
       default:
         System.out.println("Method not valid or not supported yet");

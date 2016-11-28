@@ -5,7 +5,10 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import io.emax.cosigner.api.core.CurrencyPackageInterface;
 import io.emax.cosigner.api.core.Server;
+import io.emax.cosigner.api.currency.CurrencyAdmin;
+import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
 
@@ -20,6 +23,7 @@ public class ClusterCommand implements BaseCommand {
   private static final Logger LOGGER = LoggerFactory.getLogger(ClusterCommand.class);
   private ClusterCommandType commandType;
   private Set<Server> server = new HashSet<>();
+  private String commandData;
 
   public ClusterCommandType getCommandType() {
     return commandType;
@@ -37,6 +41,14 @@ public class ClusterCommand implements BaseCommand {
     this.server = server;
   }
 
+  public String getCommandData() {
+    return commandData;
+  }
+
+  public void setCommandData(String commandData) {
+    this.commandData = commandData;
+  }
+
   @Override
   public String toJson() {
     try {
@@ -52,7 +64,8 @@ public class ClusterCommand implements BaseCommand {
 
   @Override
   public String toString() {
-    return "ClusterCommand [commandType=" + commandType + ", server=" + server + "]";
+    return "ClusterCommand{" + "commandType=" + commandType + ", server=" + server
+        + ", commandData='" + commandData + '\'' + '}';
   }
 
   /**
@@ -90,6 +103,24 @@ public class ClusterCommand implements BaseCommand {
         LOGGER.debug("Got list of known servers: " + command);
         command.getServer()
             .forEach(server -> ClusterInfo.getInstance().addServer(server, server.isOriginator()));
+        return true;
+      case DISABLETXS:
+        if (CosignerApplication.getCurrencies().containsKey(command.getCommandData())) {
+          CurrencyPackageInterface currencyPackage =
+              CosignerApplication.getCurrencies().get(command.getCommandData());
+          if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
+            ((CurrencyAdmin) currencyPackage.getWallet()).disableTransactions();
+          }
+        }
+        return true;
+      case ENABLETXS:
+        if (CosignerApplication.getCurrencies().containsKey(command.getCommandData())) {
+          CurrencyPackageInterface currencyPackage =
+              CosignerApplication.getCurrencies().get(command.getCommandData());
+          if (CurrencyAdmin.class.isAssignableFrom(currencyPackage.getWallet().getClass())) {
+            ((CurrencyAdmin) currencyPackage.getWallet()).enableTransactions();
+          }
+        }
         return true;
       default:
         return false;
