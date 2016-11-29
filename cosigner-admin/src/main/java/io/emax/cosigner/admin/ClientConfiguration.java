@@ -42,6 +42,10 @@ public class ClientConfiguration {
     return tlsCertAlias;
   }
 
+  public static void setRsServerUrl(String rsServerUrl) {
+    ClientConfiguration.rsServerUrl = rsServerUrl;
+  }
+
   private static synchronized void loadConfig() {
     if (!configLoaded) {
       FileInputStream propertiesFile = null;
