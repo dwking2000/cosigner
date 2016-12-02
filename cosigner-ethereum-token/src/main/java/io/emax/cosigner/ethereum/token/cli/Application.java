@@ -60,6 +60,7 @@ public class Application {
           "\tscheduleVesting(String recipient, Long amount, Long timeFrame(seconds), Bool prorated)");
       System.out.println("\tcalculateVesting()");
       System.out.println("\tsetTokenContract()");
+      System.out.println("\tGenerateContracts(String currency, bool apply)");
       return;
     }
 
@@ -266,6 +267,19 @@ public class Application {
                 .setTokenChild(nonce, config.getTokenContractAddress(), new LinkedList<>(),
                     new LinkedList<>(), new LinkedList<>()));
         System.out.println(ByteUtilities.toHexString(tx.encode()));
+        break;
+      case "GenerateContracts":
+        if (args.length >= 2) {
+          accountName = args[1];
+        }
+        boolVal = false;
+        if (args.length >= 3) {
+          boolVal = Boolean.valueOf(args[2]);
+        }
+        config = new TokenConfiguration(accountName);
+        config.generateNewContract(boolVal);
+        wallet = new TokenWallet(config);
+        wallet.setupTokenContract();
         break;
       default:
         System.out.println("Method not valid or not supported yet");

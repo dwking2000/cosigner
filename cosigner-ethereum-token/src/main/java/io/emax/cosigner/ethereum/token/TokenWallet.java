@@ -139,7 +139,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     }
   }
 
-  private void setupTokenContract() {
+  public void setupTokenContract() {
     LOGGER.info("[" + config.getCurrencySymbol() + "] Attempting to setup token contract");
     if (config.getStorageContractAddress() != null && !config.getStorageContractAddress()
         .isEmpty()) {
@@ -295,6 +295,12 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             + "] Unable to create contract, Token module is not usable!");
         LOGGER.debug("[" + config.getCurrencySymbol() + "] Contract setup", e);
       }
+      LOGGER.debug("[" + config.getCurrencySymbol()
+          + "] Admin Contract: " + adminContractAddress);
+      LOGGER.debug("[" + config.getCurrencySymbol()
+          + "] Token Contract: " + tokenContractAddress);
+      LOGGER.debug("[" + config.getCurrencySymbol()
+          + "] Storage Contract: " + storageContractAddress);
     }
   }
 
