@@ -76,7 +76,7 @@ public class Coordinator {
       // Don't wait if there are no messages.
       responder.setReceiveTimeOut(1);
       responder.bind(
-          "tcp://" + cluster.getThisServer().getServerLocation() + ":" + cluster.getThisServer()
+          "tcp://0.0.0.0:" + cluster.getThisServer()
               .getServerRpcPort());
 
       Observable.interval(50, TimeUnit.MILLISECONDS).map(tick -> responder.recvStr())
