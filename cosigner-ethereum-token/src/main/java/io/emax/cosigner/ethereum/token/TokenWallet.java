@@ -295,12 +295,10 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             + "] Unable to create contract, Token module is not usable!");
         LOGGER.debug("[" + config.getCurrencySymbol() + "] Contract setup", e);
       }
-      LOGGER.debug("[" + config.getCurrencySymbol()
-          + "] Admin Contract: " + adminContractAddress);
-      LOGGER.debug("[" + config.getCurrencySymbol()
-          + "] Token Contract: " + tokenContractAddress);
-      LOGGER.debug("[" + config.getCurrencySymbol()
-          + "] Storage Contract: " + storageContractAddress);
+      LOGGER.debug("[" + config.getCurrencySymbol() + "] Admin Contract: " + adminContractAddress);
+      LOGGER.debug("[" + config.getCurrencySymbol() + "] Token Contract: " + tokenContractAddress);
+      LOGGER.debug(
+          "[" + config.getCurrencySymbol() + "] Storage Contract: " + storageContractAddress);
     }
   }
 
@@ -786,7 +784,12 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     topicArray[1] = recipientTopic;
     filterParams.put("topics", topicArray);
     String txFilter = ethereumRpc.eth_newFilter(filterParams);
-    Map<String, Object>[] filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
+    Map<String, Object>[] filterResults;
+    try {
+      filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
+    } catch (Exception e) {
+      filterResults = new Map[0];
+    }
     for (Map<String, Object> result : filterResults) {
       LOGGER.error(result.toString());
       TransactionDetails txDetail = new TransactionDetails();
