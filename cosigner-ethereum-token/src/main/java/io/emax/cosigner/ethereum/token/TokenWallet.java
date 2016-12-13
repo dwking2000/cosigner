@@ -772,7 +772,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     Map<String, Object> filterParams = new HashMap<>();
     filterParams.put("fromBlock", "0x00");
     filterParams.put("toBlock", "pending");
-    filterParams.put("address", storageContractAddress);
+    filterParams.put("address", "0x" + storageContractAddress);
     String functionTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
     String addressTopic =
         "0000000000000000000000000000000000000000000000000000000000000000" + address;
