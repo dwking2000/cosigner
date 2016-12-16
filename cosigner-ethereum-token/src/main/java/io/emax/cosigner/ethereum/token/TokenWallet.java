@@ -769,29 +769,32 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
     filterParams.put("fromBlock", "0x00");
-    filterParams.put("toBlock", "pending");
+    filterParams.put("toBlock", "latest");
     filterParams.put("address", "0x" + storageContractAddress);
     String functionTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
     String addressTopic =
         "0000000000000000000000000000000000000000000000000000000000000000" + address;
     addressTopic = addressTopic.substring(addressTopic.length() - 64);
     addressTopic = "0x" + addressTopic;
-    LOGGER.error(addressTopic);
     Object[] topicArray = new Object[2];
-    String[] senderTopic = {functionTopic, addressTopic, null};
+    String[] senderTopic = {functionTopic, addressTopic};
     String[] recipientTopic = {functionTopic, null, addressTopic};
     topicArray[0] = senderTopic;
     topicArray[1] = recipientTopic;
     filterParams.put("topics", topicArray);
+    LOGGER.debug("Requesting filter for: " + Json.stringifyObject(Map.class, filterParams));
     String txFilter = ethereumRpc.eth_newFilter(filterParams);
+    LOGGER.debug("Setup filter: " + txFilter);
     Map<String, Object>[] filterResults;
     try {
+      LOGGER.debug("Getting filter results...");
       filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
     } catch (Exception e) {
+      LOGGER.debug("Something went wrong", e);
       filterResults = new Map[0];
     }
     for (Map<String, Object> result : filterResults) {
-      LOGGER.error(result.toString());
+      LOGGER.debug(result.toString());
       TransactionDetails txDetail = new TransactionDetails();
       txDetail.setTxHash((String) result.get("transactionHash"));
       try {
@@ -834,6 +837,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
       }
     }
 
+    LOGGER.debug(Json.stringifyObject(LinkedList.class, txDetails));
     Collections.sort(txDetails, new TxDateComparator());
     for (int i = 0; i < skipNumber; i++) {
       txDetails.removeLast();
