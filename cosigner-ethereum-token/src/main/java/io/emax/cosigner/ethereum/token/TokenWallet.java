@@ -771,51 +771,51 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     filterParams.put("fromBlock", "0x00");
     filterParams.put("toBlock", "latest");
     filterParams.put("address", "0x" + storageContractAddress);
-    String functionTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-    String addressTopic =
-        "0000000000000000000000000000000000000000000000000000000000000000" + address;
-    addressTopic = addressTopic.substring(addressTopic.length() - 64);
-    addressTopic = "0x" + addressTopic;
-    Object[] topicArray = new Object[2];
-    String[] senderTopic = {functionTopic, addressTopic};
-    String[] recipientTopic = {functionTopic, null, addressTopic};
-    topicArray[0] = senderTopic;
-    topicArray[1] = recipientTopic;
-    filterParams.put("topics", topicArray);
-    LOGGER.debug("Requesting filter for: " + Json.stringifyObject(Map.class, filterParams));
-    String txFilter = ethereumRpc.eth_newFilter(filterParams);
-    LOGGER.debug("Setup filter: " + txFilter);
-    Map<String, Object>[] filterResults;
-    try {
-      LOGGER.debug("Getting filter results...");
-      filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
-    } catch (Exception e) {
-      LOGGER.debug("Something went wrong", e);
-      filterResults = new Map[0];
-    }
-    for (Map<String, Object> result : filterResults) {
-      LOGGER.debug(result.toString());
-      TransactionDetails txDetail = new TransactionDetails();
-      txDetail.setTxHash((String) result.get("transactionHash"));
+    LinkedList<String> functionTopics = new LinkedList<>();
+    functionTopics.add("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+    functionTopics.add("0x5548c837ab068cf56a2c2479df0882a4922fd203edb7517321831d95078c5f62");
+    for (String functionTopic : functionTopics) {
+      String addressTopic =
+          "0000000000000000000000000000000000000000000000000000000000000000" + address;
+      addressTopic = addressTopic.substring(addressTopic.length() - 64);
+      addressTopic = "0x" + addressTopic;
+      Object[] topicArray = new Object[2];
+      String[] senderTopic = {functionTopic, addressTopic};
+      String[] recipientTopic = {functionTopic, null, addressTopic};
+      topicArray[0] = senderTopic;
+      topicArray[1] = recipientTopic;
+      filterParams.put("topics", topicArray);
+      LOGGER.debug("Requesting filter for: " + Json.stringifyObject(Map.class, filterParams));
+      String txFilter = ethereumRpc.eth_newFilter(filterParams);
+      LOGGER.debug("Setup filter: " + txFilter);
+      Map<String, Object>[] filterResults;
       try {
-        Block block = ethereumRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
-        BigInteger dateConverter =
-            new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
-        dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
-        txDetail.setTxDate(new Date(dateConverter.longValue()));
+        LOGGER.debug("Getting filter results...");
+        filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
+      } catch (Exception e) {
+        LOGGER.debug("Something went wrong", e);
+        filterResults = new Map[0];
+      }
+      for (Map<String, Object> result : filterResults) {
+        LOGGER.debug(result.toString());
+        TransactionDetails txDetail = new TransactionDetails();
+        txDetail.setTxHash((String) result.get("transactionHash"));
+        try {
+          Block block = ethereumRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
+          BigInteger dateConverter =
+              new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
+          dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
+          txDetail.setTxDate(new Date(dateConverter.longValue()));
 
-        BigInteger txBlockNumber =
-            new BigInteger(1, ByteUtilities.toByteArray((String) result.get("blockNumber")));
-        txDetail.setConfirmed(
-            config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
-        txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
-        txDetail.setMinConfirmations(config.getMinConfirmations());
+          BigInteger txBlockNumber =
+              new BigInteger(1, ByteUtilities.toByteArray((String) result.get("blockNumber")));
+          txDetail.setConfirmed(
+              config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setMinConfirmations(config.getMinConfirmations());
 
-        ArrayList<String> topics = (ArrayList<String>) result.get("topics");
+          ArrayList<String> topics = (ArrayList<String>) result.get("topics");
 
-        if (("0x" + ByteUtilities.toHexString(
-            ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(0)))))
-            .equalsIgnoreCase(functionTopic)) {
           String from = ByteUtilities.toHexString(
               ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
           txDetail.setFromAddress(new String[]{from});
@@ -827,13 +827,17 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
           String amount = ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(
               ByteUtilities
                   .readBytes(ByteUtilities.toByteArray((String) result.get("data")), 0, 32)));
-          txDetail.setAmount(new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(amount))));
+          txDetail.setAmount(new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(amount)))
+              .setScale(20, BigDecimal.ROUND_UNNECESSARY)
+              .divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
+                  BigDecimal.ROUND_UNNECESSARY));
 
           txDetails.add(txDetail);
+
+        } catch (Exception e) {
+          // Pending TX
+          LOGGER.debug("Pending Tx Found or wrong event returned by geth.", e);
         }
-      } catch (Exception e) {
-        // Pending TX
-        LOGGER.debug("Pending Tx Found or wrong event returned by geth.", e);
       }
     }
 
