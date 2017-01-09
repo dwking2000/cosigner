@@ -51,6 +51,7 @@ public class Application {
       System.out.println("\tsendTransaction(String transaction)");
       System.out.println("\tmonitor(String address)");
       System.out.println("\tlistTxs(String address, int resultSize, int skipNumber)");
+      System.out.println("\tgetTx(String txid)");
       System.out.println("\tgeneratePrivateKey()");
       System.out.println("\tgenerateAddressFromKey(privateKey)");
       System.out.println("\tgenerateTokens(String recipient, Long tokens)");
@@ -60,6 +61,7 @@ public class Application {
           "\tscheduleVesting(String recipient, Long amount, Long timeFrame(seconds), Bool prorated)");
       System.out.println("\tcalculateVesting()");
       System.out.println("\tsetTokenContract()");
+      System.out.println("\tGenerateContracts(String currency, bool apply)");
       return;
     }
 
@@ -199,6 +201,12 @@ public class Application {
         Arrays.asList(wallet.getTransactions(accountName, resultSize, skipNumber))
             .forEach(System.out::println);
         break;
+      case "getTx":
+        if (args.length >= 2) {
+          accountName = args[1];
+        }
+        System.out.println(wallet.getTransaction(accountName));
+        break;
       case "generatePrivateKey":
         System.out.println(wallet.generatePrivateKey());
         break;
@@ -266,6 +274,19 @@ public class Application {
                 .setTokenChild(nonce, config.getTokenContractAddress(), new LinkedList<>(),
                     new LinkedList<>(), new LinkedList<>()));
         System.out.println(ByteUtilities.toHexString(tx.encode()));
+        break;
+      case "GenerateContracts":
+        if (args.length >= 2) {
+          accountName = args[1];
+        }
+        boolVal = false;
+        if (args.length >= 3) {
+          boolVal = Boolean.valueOf(args[2]);
+        }
+        config = new TokenConfiguration(accountName);
+        config.generateNewContract(boolVal);
+        wallet = new TokenWallet(config);
+        wallet.setupTokenContract();
         break;
       default:
         System.out.println("Method not valid or not supported yet");

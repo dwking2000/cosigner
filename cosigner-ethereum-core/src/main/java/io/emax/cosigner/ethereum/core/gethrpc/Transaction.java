@@ -36,6 +36,15 @@ public class Transaction {
   @JsonProperty("input")
   private String input;
 
+  @JsonProperty("r")
+  private String r;
+
+  @JsonProperty("s")
+  private String s;
+
+  @JsonProperty("v")
+  private String v;
+
   public String getHash() {
     return hash;
   }
@@ -122,6 +131,30 @@ public class Transaction {
 
   public void setInput(String input) {
     this.input = input;
+  }
+
+  public String getR() {
+    return r;
+  }
+
+  public void setR(String r) {
+    this.r = r;
+  }
+
+  public String getS() {
+    return s;
+  }
+
+  public void setS(String s) {
+    this.s = s;
+  }
+
+  public String getV() {
+    return v;
+  }
+
+  public void setV(String v) {
+    this.v = v;
   }
 
   @Override

@@ -277,6 +277,11 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
     return generateNewContract;
   }
 
+  public boolean generateNewContract(boolean val) {
+    generateNewContract = val;
+    return generateNewContract;
+  }
+
   public boolean generateTokenContract() {
     return generateTokenContract;
   }
