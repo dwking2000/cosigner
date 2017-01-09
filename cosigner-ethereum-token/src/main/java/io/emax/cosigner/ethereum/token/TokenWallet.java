@@ -762,6 +762,23 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
   @Override
   public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
+    LinkedList<TransactionDetails> txDetails = new LinkedList<>();
+
+    Arrays.asList(getReconciliations(address)).forEach(txDetails::add);
+    Arrays.asList(getTransfers(address)).forEach(txDetails::add);
+
+    LOGGER.debug(Json.stringifyObject(LinkedList.class, txDetails));
+    Collections.sort(txDetails, new TxDateComparator());
+    for (int i = 0; i < skipNumber; i++) {
+      txDetails.removeLast();
+    }
+    while (txDetails.size() > numberToReturn) {
+      txDetails.removeFirst();
+    }
+    return txDetails.toArray(new TransactionDetails[txDetails.size()]);
+  }
+
+  private TransactionDetails[] getTransfers(String address) {
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
@@ -775,10 +792,14 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     functionTopics.add("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
     functionTopics.add("0x5548c837ab068cf56a2c2479df0882a4922fd203edb7517321831d95078c5f62");
     for (String functionTopic : functionTopics) {
-      String addressTopic =
-          "0000000000000000000000000000000000000000000000000000000000000000" + address;
-      addressTopic = addressTopic.substring(addressTopic.length() - 64);
-      addressTopic = "0x" + addressTopic;
+      String addressTopic;
+      if (address == null) {
+        addressTopic = null;
+      } else {
+        addressTopic = "0000000000000000000000000000000000000000000000000000000000000000" + address;
+        addressTopic = addressTopic.substring(addressTopic.length() - 64);
+        addressTopic = "0x" + addressTopic;
+      }
       Object[] topicArray = new Object[2];
       String[] senderTopic = {functionTopic, addressTopic};
       String[] recipientTopic = {functionTopic, null, addressTopic};
@@ -816,6 +837,10 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
           ArrayList<String> topics = (ArrayList<String>) result.get("topics");
 
+          if (!topics.get(0).equalsIgnoreCase(functionTopic)) {
+            continue;
+          }
+
           String from = ByteUtilities.toHexString(
               ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
           txDetail.setFromAddress(new String[]{from});
@@ -832,7 +857,109 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
               .divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
                   BigDecimal.ROUND_UNNECESSARY));
 
-          txDetails.add(txDetail);
+          if (address == null || ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))))
+              .equalsIgnoreCase(address) || ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(2))))
+              .equalsIgnoreCase(address)) {
+            txDetails.add(txDetail);
+          }
+        } catch (Exception e) {
+          // Pending TX
+          LOGGER.debug("Pending Tx Found or wrong event returned by geth.", e);
+        }
+      }
+    }
+
+    LOGGER.debug(Json.stringifyObject(LinkedList.class, txDetails));
+    Collections.sort(txDetails, new TxDateComparator());
+    return txDetails.toArray(new TransactionDetails[txDetails.size()]);
+  }
+
+  private TransactionDetails[] getReconciliations(String address) {
+    // Get latest block
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+
+    LinkedList<TransactionDetails> txDetails = new LinkedList<>();
+    Map<String, Object> filterParams = new HashMap<>();
+    filterParams.put("fromBlock", "0x00");
+    filterParams.put("toBlock", "latest");
+    filterParams.put("address", "0x" + storageContractAddress);
+    LinkedList<String> functionTopics = new LinkedList<>();
+    functionTopics.add("0x73bb00f3ad09ef6bc524e5cf56563dff2bc6663caa0b4054aa5946811083ed2e");
+    for (String functionTopic : functionTopics) {
+      String addressTopic;
+      if (address == null) {
+        addressTopic = null;
+      } else {
+        addressTopic = "0000000000000000000000000000000000000000000000000000000000000000" + address;
+        addressTopic = addressTopic.substring(addressTopic.length() - 64);
+        addressTopic = "0x" + addressTopic;
+      }
+      Object[] topicArray = new Object[1];
+      String[] senderTopic = {functionTopic, addressTopic};
+      topicArray[0] = senderTopic;
+      filterParams.put("topics", topicArray);
+      LOGGER.debug(
+          "Requesting reconciliation filter for: " + Json.stringifyObject(Map.class, filterParams));
+      String txFilter = ethereumRpc.eth_newFilter(filterParams);
+      LOGGER.debug("Setup filter: " + txFilter);
+      Map<String, Object>[] filterResults;
+      try {
+        LOGGER.debug("Getting filter results...");
+        filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
+      } catch (Exception e) {
+        LOGGER.debug("Something went wrong", e);
+        filterResults = new Map[0];
+      }
+      for (Map<String, Object> result : filterResults) {
+        LOGGER.debug(result.toString());
+        TransactionDetails txDetail = new TransactionDetails();
+        txDetail.setTxHash((String) result.get("transactionHash"));
+        try {
+          Block block = ethereumRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
+          BigInteger dateConverter =
+              new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
+          dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
+          txDetail.setTxDate(new Date(dateConverter.longValue()));
+
+          BigInteger txBlockNumber =
+              new BigInteger(1, ByteUtilities.toByteArray((String) result.get("blockNumber")));
+          txDetail.setConfirmed(
+              config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setMinConfirmations(config.getMinConfirmations());
+
+          ArrayList<String> topics = (ArrayList<String>) result.get("topics");
+
+          if (!topics.get(0).equalsIgnoreCase(functionTopic)) {
+            continue;
+          }
+
+          String amount = ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(
+              ByteUtilities
+                  .readBytes(ByteUtilities.toByteArray((String) result.get("data")), 0, 32)));
+          txDetail.setAmount(new BigDecimal(new BigInteger(ByteUtilities.toByteArray(amount)))
+              .setScale(20, BigDecimal.ROUND_UNNECESSARY)
+              .divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
+                  BigDecimal.ROUND_UNNECESSARY));
+
+          if (BigInteger.ZERO.compareTo(new BigInteger(ByteUtilities.toByteArray(amount))) > 0) {
+            String from = ByteUtilities.toHexString(
+                ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
+            txDetail.setFromAddress(new String[]{from});
+          } else {
+            String to = ByteUtilities.toHexString(
+                ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
+            txDetail.setToAddress(new String[]{to});
+          }
+
+          if (address == null || ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))))
+              .equalsIgnoreCase(address)) {
+            txDetails.add(txDetail);
+          }
 
         } catch (Exception e) {
           // Pending TX
@@ -843,12 +970,6 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
     LOGGER.debug(Json.stringifyObject(LinkedList.class, txDetails));
     Collections.sort(txDetails, new TxDateComparator());
-    for (int i = 0; i < skipNumber; i++) {
-      txDetails.removeLast();
-    }
-    while (txDetails.size() > numberToReturn) {
-      txDetails.removeFirst();
-    }
     return txDetails.toArray(new TransactionDetails[txDetails.size()]);
   }
 
@@ -873,30 +994,22 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     txDetail.setToAddress(new String[]{txMap.get("to").toString()});
     txDetail.setFromAddress(new String[]{txMap.get("from").toString()});
 
-    try {
-      if (storageContractAddress
-          .equalsIgnoreCase(txDetail.getToAddress()[0].toLowerCase(Locale.US))) {
-        String txData = txMap.get("input").toString();
-        TokenContractParametersInterface contractParamsInterface =
-            contractInterface.getContractParameters();
-        Map<String, List<String>> contractParams = contractParamsInterface.parseTransfer(txData);
-
-        if (contractParams != null) {
-          for (int j = 0;
-               j < contractParams.get(TokenContractParametersInterface.RECIPIENTS).size(); j++) {
-            txDetail.setFromAddress(contractParams.get(TokenContractParametersInterface.SENDER)
-                .toArray(new String[]{}));
-            txDetail.setToAddress(new String[]{
-                contractParams.get(TokenContractParametersInterface.RECIPIENTS).get(j)});
-            txDetail.setAmount(
-                new BigDecimal(contractParams.get(TokenContractParametersInterface.AMOUNT).get(j)));
-          }
-        }
+    LinkedList<TransactionDetails> txDetails = new LinkedList<>();
+    Arrays.asList(getTransfers(null)).forEach(tx -> {
+      if (tx.getTxHash().equalsIgnoreCase(transactionId)) {
+        txDetails.add(tx);
       }
-    } catch (Exception e) {
-      LOGGER.debug("Unable to decode tx data");
-    }
+    });
+    Arrays.asList(getReconciliations(null)).forEach(tx -> {
+      if (tx.getTxHash().equalsIgnoreCase(transactionId)) {
+        txDetails.add(tx);
+      }
+    });
 
+    txDetail.setData(Json.stringifyObject(LinkedList.class, txDetails));
+    if (txDetails.size() == 0) {
+      return null;
+    }
     return txDetail;
   }
 
