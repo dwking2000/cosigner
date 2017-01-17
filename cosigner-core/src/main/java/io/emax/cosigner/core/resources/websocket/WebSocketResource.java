@@ -54,6 +54,10 @@ public class WebSocketResource extends WebSocketAdapter {
           LOGGER.debug("[GetBalance:WSRequest]");
           getRemote().sendString(Common.getBalance(arg1));
           break;
+        case "/getpendingbalance":
+          LOGGER.debug("[GetPendingBalance:WSRequest]");
+          getRemote().sendString(Common.getPendingBalance(arg1));
+          break;
         case "/monitorbalance":
           LOGGER.debug("[MonitorBalance:WSRequest]");
           getRemote().sendString(Common.monitorBalance(arg1, getSession()));

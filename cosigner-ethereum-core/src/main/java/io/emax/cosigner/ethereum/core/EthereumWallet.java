@@ -369,6 +369,25 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
+  public String getPendingBalance(String address) {
+    BigInteger latestBlockNumber =
+        new BigInteger("00" + ethereumRpc.eth_blockNumber().substring(2), 16);
+    BigInteger confirmedBlockNumber =
+        latestBlockNumber.subtract(BigInteger.valueOf(config.getMinConfirmations()));
+
+    BigInteger latestBalance = new BigInteger(
+        "00" + ethereumRpc.eth_getBalance(address, "0x" + latestBlockNumber.toString(16))
+            .substring(2), 16);
+    BigInteger confirmedBalance = new BigInteger(
+        "00" + ethereumRpc.eth_getBalance(address, "0x" + confirmedBlockNumber.toString(16))
+            .substring(2), 16);
+
+    latestBalance = latestBalance.subtract(confirmedBalance).max(BigInteger.ZERO);
+    BigDecimal etherBalance =
+        new BigDecimal(latestBalance).divide(BigDecimal.valueOf(config.getWeiMultiplier()));
+    return etherBalance.toPlainString();  }
+
+  @Override
   public String createTransaction(Iterable<String> fromAddress, Iterable<Recipient> toAddress) {
 
     String senderAddress = fromAddress.iterator().next();

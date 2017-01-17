@@ -267,6 +267,22 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
+  public String getPendingBalance(String address) {
+    BigDecimal balance = BigDecimal.ZERO;
+    try {
+      Output[] outputs = bitcoindRpc
+          .listunspent(0, config.getMinConfirmations(),
+              new String[]{address});
+      for (Output output : outputs) {
+        balance = balance.add(output.getAmount());
+      }
+    } catch (Exception e) {
+      LOGGER.debug(null, e);
+    }
+    return balance.toPlainString();
+  }
+
+  @Override
   public String createTransaction(Iterable<String> fromAddress, Iterable<Recipient> toAddress) {
     List<String> fromAddresses = new LinkedList<>();
     fromAddress.forEach(fromAddresses::add);
