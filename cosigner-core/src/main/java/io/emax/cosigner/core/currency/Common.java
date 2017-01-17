@@ -319,6 +319,41 @@ public class Common {
     }
   }
 
+  /**
+   * Returns the combined pending balance of all addresses provided in the parameters.
+   *
+   * @param params {@link CurrencyParameters} with the currency code and addresses filled in.
+   * @return Sum of all pending balances for the provided addresses.
+   */
+  public static String getPendingBalance(String params) {
+    try {
+      CurrencyParameters currencyParams = convertParams(params);
+      CurrencyPackageInterface currency = lookupCurrency(currencyParams);
+
+      BigDecimal balance = BigDecimal.ZERO;
+      if (currencyParams.getAccount() == null || currencyParams.getAccount().isEmpty()) {
+        for (String account : currency.getWallet().getAddresses(currencyParams.getUserKey())) {
+          balance = balance.add(new BigDecimal(currency.getWallet().getPendingBalance(account)));
+        }
+      } else {
+        for (String account : currencyParams.getAccount()) {
+          balance = balance.add(new BigDecimal(currency.getWallet().getPendingBalance(account)));
+        }
+      }
+
+      String response = balance.toPlainString();
+
+      LOGGER.debug("[Response] " + response);
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setResult(response);
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    } catch (Exception e) {
+      CosignerResponse cosignerResponse = new CosignerResponse();
+      cosignerResponse.setError(e.toString());
+      return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
+    }
+  }
+
   private static void cleanUpSubscriptions(String id) {
     if (balanceSubscriptions.containsKey(id)) {
       balanceSubscriptions.get(id).forEach((s, subscription) -> subscription.unsubscribe());

@@ -138,6 +138,22 @@ public class CurrencyResource {
    * REST end-point for the {@link Common} currency methods.
    *
    * @param params JSON representation of {@link CurrencyParameters}
+   * @return Common.getPendingBalance()
+   */
+  @POST
+  @Path("/GetPendingBalance")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getPendingBalance(String params) {
+    LOGGER.debug("[GetPendingBalance:Request]");
+    Response response = Response.ok(Common.getPendingBalance(params)).build();
+    LOGGER.debug("[GetPendingBalance:Response] " + response.toString());
+    return response;
+  }
+
+  /**
+   * REST end-point for the {@link Common} currency methods.
+   *
+   * @param params JSON representation of {@link CurrencyParameters}
    * @return Common.monitorBalance()
    */
   @POST

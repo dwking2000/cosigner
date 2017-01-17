@@ -463,6 +463,21 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         BigDecimal.ROUND_UNNECESSARY).toPlainString();
   }
 
+  @Override
+  public String getPendingBalance(String address) {
+    BigDecimal balance = BigDecimal.ZERO;
+    TransactionDetails[] txDetails = getTransactions(address, 100, 0);
+    for (TransactionDetails txDetail : txDetails) {
+      if (!txDetail.isConfirmed()) {
+        balance = balance.add(txDetail.getAmount());
+      }
+    }
+    balance = balance.max(BigDecimal.ZERO);
+    balance = balance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
+    return balance.divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
+        BigDecimal.ROUND_UNNECESSARY).toPlainString();
+  }
+
   public String getTotalBalances() {
     CallData callData = generateCall(contractInterface.getContractParameters().getTotalBalance());
     LOGGER.debug("Total balance request: " + Json.stringifyObject(CallData.class, callData));

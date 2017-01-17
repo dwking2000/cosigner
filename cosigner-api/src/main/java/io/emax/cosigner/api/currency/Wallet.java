@@ -63,6 +63,11 @@ public interface Wallet extends OfflineWallet {
    */
   String getBalance(String address);
 
+  /**
+   * Returns the pending balance for the given address.
+   */
+  String getPendingBalance(String address);
+
   class Recipient {
     private String recipientAddress;
     private BigDecimal amount;
