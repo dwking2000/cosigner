@@ -8,6 +8,7 @@ import io.emax.cosigner.ethereum.core.gethrpc.RawTransaction;
 import io.emax.cosigner.ethereum.token.TokenConfiguration;
 import io.emax.cosigner.ethereum.token.TokenMonitor;
 import io.emax.cosigner.ethereum.token.TokenWallet;
+import io.emax.cosigner.ethereum.token.gethrpc.tokencontract.TokenContract;
 import io.emax.cosigner.ethereum.token.gethrpc.tokencontract.v1.TokenContractParametersV1;
 
 import java.io.BufferedReader;
@@ -43,6 +44,7 @@ public class Application {
       System.out
           .println("\tgetMultiSigAddress(String address1, String address2, ..., accountName)");
       System.out.println("\tgetBalance(String address)");
+      System.out.println("\tgetPendingBalance(String address)");
       System.out.println("\tgetTotalBalances()");
       System.out.println("\tcreateTransaction(String fromAddress1, String fromAddress2,"
           + " ..., String toAddress, Decimal amount)");
@@ -56,6 +58,7 @@ public class Application {
       System.out.println("\tgenerateAddressFromKey(privateKey)");
       System.out.println("\tgenerateTokens(String recipient, Long tokens)");
       System.out.println("\tdestroyTokens(String sender, Long tokens)");
+      System.out.println("\tdeposit(String recipient, Long tokens)");
       System.out.println("\treconcile(String affectedAddress, Long tokenChange)");
       System.out.println(
           "\tscheduleVesting(String recipient, Long amount, Long timeFrame(seconds), Bool prorated)");
@@ -65,7 +68,8 @@ public class Application {
       return;
     }
 
-    TokenWallet wallet = new TokenWallet(new TokenConfiguration("EUR"));
+    TokenConfiguration config = new TokenConfiguration("EUR");
+    TokenWallet wallet = new TokenWallet(config);
     TokenMonitor monitor = new TokenMonitor(wallet);
     String accountName = "";
     String address = "";
@@ -75,6 +79,7 @@ public class Application {
     Long longVal = 0L;
     Long timeFrame = 0L;
     Boolean boolVal = false;
+    RawTransaction tx = null;
     int resultSize = 0;
     int skipNumber = 0;
     switch (args[0]) {
@@ -102,6 +107,12 @@ public class Application {
           accountName = args[1];
         }
         System.out.println(wallet.getBalance(accountName));
+        break;
+      case "getPendingBalance":
+        if (args.length >= 2) {
+          accountName = args[1];
+        }
+        System.out.println(wallet.getPendingBalance(accountName));
         break;
       case "getTotalBalances":
         System.out.println(wallet.getTotalBalances());
@@ -234,6 +245,18 @@ public class Application {
         }
         System.out.println(wallet.destroyTokens(accountName, longVal));
         break;
+      case "deposit":
+        if (args.length >= 2) {
+          accountName = args[1];
+        }
+        if (args.length >= 3) {
+          longVal = new BigInteger(args[2]).longValue();
+        }
+        tx = RawTransaction.createTransaction(config, config.getTokenContractAddress(), null,
+            new TokenContract().getContractParameters()
+                .deposit(accountName, BigInteger.valueOf(longVal)));
+        System.out.println(ByteUtilities.toHexString(tx.encode()));
+        break;
       case "reconcile":
         if (args.length >= 2) {
           accountName = args[1];
@@ -267,10 +290,9 @@ public class Application {
       case "setTokenContract":
         TokenContractParametersV1 contractInterface = new TokenContractParametersV1();
         EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
-        TokenConfiguration config = new TokenConfiguration("EUR");
         Long nonce = contractInterface.getNonce(ethereumRpc, config.getAdminContractAddress());
-        RawTransaction tx = RawTransaction
-            .createTransaction(config, config.getAdminContractAddress(), null, contractInterface
+        tx = RawTransaction.createTransaction(config, config.getAdminContractAddress(), null,
+            contractInterface
                 .setTokenChild(nonce, config.getTokenContractAddress(), new LinkedList<>(),
                     new LinkedList<>(), new LinkedList<>()));
         System.out.println(ByteUtilities.toHexString(tx.encode()));

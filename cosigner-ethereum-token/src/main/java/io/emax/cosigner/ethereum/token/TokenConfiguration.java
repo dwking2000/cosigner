@@ -32,6 +32,7 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
   private boolean generateNewContract = true;
   private boolean generateTokenContract = true;
   private boolean useAlternateEtherContract = false;
+  private boolean useTokenTransferFunction = false;
   private String adminContractAddress = "";
   private String tokenContractAddress = "";
   private String storageContractAddress = "";
@@ -132,6 +133,11 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
         useAlternateEtherContract = Boolean.valueOf(EnvironmentVariableParser.resolveEnvVars(
             cosignerProperties.getProperty("useAlternateEtherContract",
                 Boolean.toString(useAlternateEtherContract))));
+
+        // useTokenTransferFunction
+        useTokenTransferFunction = Boolean.valueOf(EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties.getProperty("useTokenTransferFunction",
+                Boolean.toString(useTokenTransferFunction))));
 
         // adminContractAddress
         adminContractAddress = EnvironmentVariableParser.resolveEnvVars(
@@ -288,5 +294,9 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
 
   public boolean useAlternateEtherContract() {
     return useAlternateEtherContract;
+  }
+
+  public boolean useTokenTransferFunction() {
+    return useTokenTransferFunction;
   }
 }

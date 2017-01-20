@@ -150,6 +150,9 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
       tokenContractAddress = config.getTokenContractAddress();
       adminContractAddress = config.getAdminContractAddress();
       contractInterface = getContractVersion(storageContractAddress);
+      if (contractInterface == null) {
+        contractInterface = new TokenContract();
+      }
     } else {
       // Attempting to find existing contract on the blockchain given our configuration.
       String contractKey = config.getContractKey();
@@ -451,6 +454,10 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     BigInteger intBalance = new BigInteger(1, ByteUtilities.toByteArray(response));
     BigDecimal balance = new BigDecimal(intBalance);
 
+    balance = balance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
+    balance = balance.divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
+        BigDecimal.ROUND_UNNECESSARY);
+
     // Subtract any pending txs from the available balance
     TransactionDetails[] txDetails = getTransactions(address, 100, 0);
     for (TransactionDetails txDetail : txDetails) {
@@ -458,9 +465,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         balance = balance.subtract(txDetail.getAmount());
       }
     }
-    balance = balance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
-    return balance.divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
-        BigDecimal.ROUND_UNNECESSARY).toPlainString();
+    return balance.toPlainString();
   }
 
   @Override
@@ -468,14 +473,14 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     BigDecimal balance = BigDecimal.ZERO;
     TransactionDetails[] txDetails = getTransactions(address, 100, 0);
     for (TransactionDetails txDetail : txDetails) {
-      if (!txDetail.isConfirmed()) {
+      if (!txDetail.isConfirmed() && txDetail.getToAddress()[0].equalsIgnoreCase(address)) {
         balance = balance.add(txDetail.getAmount());
+      } else if (!txDetail.isConfirmed() && txDetail.getFromAddress()[0].equalsIgnoreCase(address)) {
+        balance = balance.subtract(txDetail.getAmount());
       }
     }
     balance = balance.max(BigDecimal.ZERO);
-    balance = balance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
-    return balance.divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
-        BigDecimal.ROUND_UNNECESSARY).toPlainString();
+    return balance.toPlainString();
   }
 
   public String getTotalBalances() {
@@ -493,28 +498,42 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
   @Override
   public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
-    // Format tx data
-    List<String> recipients = new LinkedList<>();
-    List<BigInteger> amounts = new LinkedList<>();
-    toAddresses.forEach(recipient -> {
-      amounts.add(
+    if (config.useTokenTransferFunction()) {
+      Recipient recipient = toAddresses.iterator().next();
+
+      String rcpt = recipient.getRecipientAddress();
+      BigInteger amount =
           recipient.getAmount().multiply(BigDecimal.TEN.pow((int) config.getDecimalPlaces()))
-              .toBigInteger());
-      recipients.add(recipient.getRecipientAddress());
-    });
+              .toBigInteger();
 
-    String txCount = ethereumRpc
-        .eth_getStorageAt("0x" + storageContractAddress.toLowerCase(Locale.US), "0x1",
-            DefaultBlock.LATEST.toString());
-    BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
+      RawTransaction tx = RawTransaction.createTransaction(config, tokenContractAddress, null,
+          contractInterface.getContractParameters().tokenTransfer(rcpt, amount));
 
-    // Create the TX data structure
-    RawTransaction tx = RawTransaction.createTransaction(config, storageContractAddress, null,
-        contractInterface.getContractParameters()
-            .transfer(nonce.longValue(), fromAddresses.iterator().next(), recipients, amounts,
-                new LinkedList<>(), new LinkedList<>(), new LinkedList<>()));
+      return ByteUtilities.toHexString(tx.encode());
+    } else {
+      // Format tx data
+      List<String> recipients = new LinkedList<>();
+      List<BigInteger> amounts = new LinkedList<>();
+      toAddresses.forEach(recipient -> {
+        amounts.add(
+            recipient.getAmount().multiply(BigDecimal.TEN.pow((int) config.getDecimalPlaces()))
+                .toBigInteger());
+        recipients.add(recipient.getRecipientAddress());
+      });
 
-    return ByteUtilities.toHexString(tx.encode());
+      String txCount = ethereumRpc
+          .eth_getStorageAt("0x" + storageContractAddress.toLowerCase(Locale.US), "0x1",
+              DefaultBlock.LATEST.toString());
+      BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
+
+      // Create the TX data structure
+      RawTransaction tx = RawTransaction.createTransaction(config, storageContractAddress, null,
+          contractInterface.getContractParameters()
+              .transfer(nonce.longValue(), fromAddresses.iterator().next(), recipients, amounts,
+                  new LinkedList<>(), new LinkedList<>(), new LinkedList<>()));
+
+      return ByteUtilities.toHexString(tx.encode());
+    }
   }
 
   @Override

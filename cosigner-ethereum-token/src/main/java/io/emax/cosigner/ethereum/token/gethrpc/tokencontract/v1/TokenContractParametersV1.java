@@ -456,6 +456,36 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   }
 
   @Override
+  public String deposit(String recipient, BigInteger amount) {
+    TokenContractV1 contract = new TokenContractV1();
+    String response = contract.getDeposit();
+
+    String formattedString = String.format("%64s", recipient).replace(' ', '0');
+    response += formattedString;
+
+    formattedString = ByteUtilities.toHexString(amount.toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', '0');
+    response += formattedString;
+
+    return response;
+  }
+
+  @Override
+  public String tokenTransfer(String recipient, BigInteger amount) {
+    TokenContractV1 contract = new TokenContractV1();
+    String response = contract.getTokenTransfer();
+
+    String formattedString = String.format("%64s", recipient).replace(' ', '0');
+    response += formattedString;
+
+    formattedString = ByteUtilities.toHexString(amount.toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', '0');
+    response += formattedString;
+
+    return response;
+  }
+
+  @Override
   public String transfer(long nonce, String sender, List<String> recipients,
       List<BigInteger> amount, List<String> sigV, List<String> sigR, List<String> sigS) {
     // We expect the list of sig's to be in order such that the index of each matches up.

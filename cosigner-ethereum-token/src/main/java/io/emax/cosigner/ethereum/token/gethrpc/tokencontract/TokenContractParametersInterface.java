@@ -49,6 +49,10 @@ public interface TokenContractParametersInterface {
 
   String getTotalBalance();
 
+  String deposit(String recipient, BigInteger amount);
+
+  String tokenTransfer(String recipient, BigInteger amount);
+
   String transfer(long nonce, String sender, List<String> recipients, List<BigInteger> amount,
       List<String> sigV, List<String> sigR, List<String> sigS);
 
