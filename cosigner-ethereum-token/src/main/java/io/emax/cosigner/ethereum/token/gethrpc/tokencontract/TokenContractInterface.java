@@ -15,6 +15,8 @@ public interface TokenContractInterface {
 
   String getReconcile();
 
+  String getDeposit();
+
   String getScheduleVesting();
 
   String getCalculateVesting();
@@ -24,6 +26,8 @@ public interface TokenContractInterface {
   String getGetTotalBalance();
 
   String getTransfer();
+
+  String getTokenTransfer();
 
   String getAdminInitData();
 
