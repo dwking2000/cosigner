@@ -1,11 +1,11 @@
-package io.emax.cosigner.ethereum.token.gethrpc.tokencontract.v1;
+package io.emax.cosigner.ethereum.token.gethrpc.tokencontract.v2;
 
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.ethereum.core.common.EthereumTools;
 import io.emax.cosigner.ethereum.core.gethrpc.DefaultBlock;
 import io.emax.cosigner.ethereum.core.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.token.TokenConfiguration;
-import io.emax.cosigner.ethereum.token.gethrpc.tokencontract.TokenContractParametersInterface;
+import io.emax.cosigner.ethereum.token.gethrpc.tokencontract.v1.TokenContractParametersV1;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,22 +15,36 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 
 import static io.emax.cosigner.ethereum.token.gethrpc.tokencontract.TokenContractInterface.ValueParam;
 
-public class TokenContractParametersV1 implements TokenContractParametersInterface {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TokenContractParametersV1.class);
+public class TokenContractParametersV2 extends TokenContractParametersV1 {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TokenContractParametersV2.class);
 
   @Override
   public Long getNonce(EthereumRpc ethereumRpc, String contractAddress) {
+    TokenContractV2 contract = new TokenContractV2();
     String txCount = ethereumRpc
-        .eth_getStorageAt("0x" + contractAddress.toLowerCase(Locale.US), "0x1",
+        .eth_call(EthereumTools.generateCall(contract.getNonce(), contractAddress),
             DefaultBlock.LATEST.toString());
-    BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
+    LOGGER.debug("Getting nonce for 0x" + contractAddress + ": " + txCount);
+    BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount));
 
     return nonce.longValue();
+  }
+
+  public Long getSecurityValue(EthereumRpc ethereumRpc, String contractAddress) {
+    TokenContractV2 contract = new TokenContractV2();
+    String secValueStr = ethereumRpc
+        .eth_call(EthereumTools.generateCall(contract.getSecurityValue(), contractAddress),
+            DefaultBlock.LATEST.toString());
+
+    LOGGER.debug("Getting securityValue for 0x" + contractAddress + ": " + secValueStr);
+    BigInteger securityValue = new BigInteger(1, ByteUtilities.toByteArray(secValueStr));
+
+    return securityValue.longValue();
   }
 
   @Override
@@ -44,7 +58,16 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     formattedString = String.format("%64s", formattedString).replace(' ', '0');
     String response = formattedString;
 
-    return EthereumTools.hashKeccak(response);
+    formattedString = ByteUtilities.toHexString(
+        BigInteger.valueOf(getSecurityValue(ethereumRpc, contractAddress)).toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', '0');
+    response += formattedString;
+
+    LOGGER.debug("Hashing value: " + response);
+    response = EthereumTools.hashKeccak(response);
+    LOGGER.debug("Calculated Admin Hash: " + response);
+
+    return response;
   }
 
   @Override
@@ -54,8 +77,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   }
 
   @Override
-  public String calculateTxHash(Long nonce, List<String> recipients,
-      List<String> amounts) {
+  public String calculateTxHash(Long nonce, List<String> recipients, List<String> amounts) {
     String hashBytes = String.format("%64s", "0").replace(' ', '0');
     for (int i = 0; i < recipients.size(); i++) {
       hashBytes += String.format("%40s", recipients.get(i)).replace(' ', '0');
@@ -71,82 +93,27 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
       LOGGER.debug("Result: " + hashBytes);
     }
 
+    LOGGER.debug("Got TX Hash: " + hashBytes);
     return hashBytes;
   }
 
   @Override
   public String createAdminContract(String adminAddress, List<String> ownerAddresses,
       int numSignaturesRequired) {
-    // Format should be initData/Payload/Arguments
-    TokenContractV1 contract = new TokenContractV1();
-    String response = contract.getAdminInitData();
-
-    // Now gather the arguments and serialize them.
-    // AdminAddress
-    String formattedString = String.format("%64s", adminAddress).replace(' ', '0');
-    response += formattedString;
-
-    long numberOfParams = 3;
-    long sizeOfPreviousArrays = 0;
-    // OwnerAddress pointer (array)
-    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
-        .replace(' ', '0');
-    response += formattedString;
-
-    // NumSignaturesRequired
-    formattedString =
-        ByteUtilities.toHexString(BigInteger.valueOf(numSignaturesRequired).toByteArray());
-    formattedString = String.format("%64s", formattedString).replace(' ', '0');
-    response += formattedString;
-
-    // OwnerAddress data
-    response += serializeStringList(ownerAddresses);
-
-    return response;
+    return createAdminContract(adminAddress, ownerAddresses, numSignaturesRequired,
+        new Random().nextLong());
   }
 
   @Override
   public String createAdminContract(String adminAddress, List<String> ownerAddresses,
       int numSignaturesRequired, long securityValue) {
-    return createAdminContract(adminAddress, ownerAddresses, numSignaturesRequired);
-  }
-
-  @Override
-  public String createTokenContract(String parentAddress) {
-    // Contract data
-    TokenContractV1 contract = new TokenContractV1();
-    String response = contract.getTokenInitData();
-
-    // Arguments
-    String formattedString = String.format("%64s", parentAddress).replace(' ', '0');
-    response += formattedString;
-
-    return response;
-  }
-
-  @Override
-  public String createTokenContract(String parentAddress, String name, String symbol,
-      int decimals) {
-    return createTokenContract(parentAddress);
-  }
-
-  @Override
-  public String createStorageContract(TokenConfiguration config, String tokenContract,
-      String adminAddress, List<String> ownerAddresses, int numSignaturesRequired) {
     // Format should be initData/Payload/Arguments
-    TokenContractV1 contract = new TokenContractV1();
-    String response = contract.getStorageInitData();
-    if (config.useAlternateEtherContract()) {
-      response = contract.getAlternateStorageInitData();
-    }
+    TokenContractV2 contract = new TokenContractV2();
+    String response = contract.getAdminInitData();
 
     // Now gather the arguments and serialize them.
-    // tokenContract
-    String formattedString = String.format("%64s", tokenContract).replace(' ', '0');
-    response += formattedString;
-
     // AdminAddress
-    formattedString = String.format("%64s", adminAddress).replace(' ', '0');
+    String formattedString = String.format("%64s", adminAddress).replace(' ', '0');
     response += formattedString;
 
     long numberOfParams = 4;
@@ -162,6 +129,11 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     formattedString = String.format("%64s", formattedString).replace(' ', '0');
     response += formattedString;
 
+    // securityValue
+    formattedString = ByteUtilities.toHexString(BigInteger.valueOf(securityValue).toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', '0');
+    response += formattedString;
+
     // OwnerAddress data
     response += serializeStringList(ownerAddresses);
 
@@ -169,18 +141,113 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   }
 
   @Override
+  public String createTokenContract(String parentAddress) {
+    return createTokenContract(parentAddress, null, null, 0);
+  }
+
+  @Override
+  public String createTokenContract(String parentAddress, String name, String symbol,
+      int decimals) {
+    // Contract data
+    TokenContractV2 contract = new TokenContractV2();
+    String response = contract.getTokenInitData();
+
+    // Arguments
+    String formattedString = String.format("%64s", parentAddress).replace(' ', '0');
+    response += formattedString;
+
+    long numberOfParams = 4;
+    long sizeOfPreviousArrays = 0;
+    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
+        .replace(' ', '0');
+    response += formattedString;
+    sizeOfPreviousArrays += serializeString(name).length() / 64;
+
+    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
+        .replace(' ', '0');
+    response += formattedString;
+
+    formattedString = ByteUtilities.toHexString(BigInteger.valueOf(decimals).toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', '0');
+    response += formattedString;
+
+    response += serializeString(name);
+    response += serializeString(symbol);
+
+    return response;
+  }
+
+  @Override
+  public String createStorageContract(TokenConfiguration config, String tokenContract,
+      String adminAddress, List<String> ownerAddresses, int numSignaturesRequired) {
+    return createStorageContract(config, tokenContract, adminAddress, ownerAddresses,
+        numSignaturesRequired, new Random().nextLong(), null, null, 0);
+  }
+
+  @Override
   public String createStorageContract(TokenConfiguration config, String tokenContract,
       String adminAddress, List<String> ownerAddresses, int numSignaturesRequired,
       long securityValue, String name, String symbol, int decimals) {
-    return createStorageContract(config, tokenContract, adminAddress, ownerAddresses,
-        numSignaturesRequired);
+    // Format should be initData/Payload/Arguments
+    TokenContractV2 contract = new TokenContractV2();
+    String response = contract.getStorageInitData();
+    if (config.useAlternateEtherContract()) {
+      response = contract.getAlternateStorageInitData();
+    }
+
+    // Now gather the arguments and serialize them.
+    // tokenContract
+    String formattedString = String.format("%64s", tokenContract).replace(' ', '0');
+    response += formattedString;
+
+    // AdminAddress
+    formattedString = String.format("%64s", adminAddress).replace(' ', '0');
+    response += formattedString;
+
+    long numberOfParams = 8;
+    long sizeOfPreviousArrays = 0;
+    // OwnerAddress pointer (array)
+    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
+        .replace(' ', '0');
+    response += formattedString;
+    sizeOfPreviousArrays += ownerAddresses.size() + 1;
+
+    // NumSignaturesRequired
+    formattedString =
+        ByteUtilities.toHexString(BigInteger.valueOf(numSignaturesRequired).toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', '0');
+    response += formattedString;
+
+    // securityValue
+    formattedString = ByteUtilities.toHexString(BigInteger.valueOf(securityValue).toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', '0');
+    response += formattedString;
+
+    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
+        .replace(' ', '0');
+    response += formattedString;
+    sizeOfPreviousArrays += serializeString(name).length() / 64;
+
+    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
+        .replace(' ', '0');
+    response += formattedString;
+
+    formattedString = ByteUtilities.toHexString(BigInteger.valueOf(decimals).toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', '0');
+    response += formattedString;
+
+    response += serializeStringList(ownerAddresses);
+    response += serializeString(name);
+    response += serializeString(symbol);
+
+    return response;
   }
 
   @Override
   public String setTokenChild(long nonce, String childAddress, List<String> sigV, List<String> sigR,
       List<String> sigS) {
     // Contract data
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     String response = contract.getSetTokenContract();
 
     // Arguments
@@ -227,7 +294,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   public String createTokens(long nonce, String recipient, long numTokens, List<String> sigV,
       List<String> sigR, List<String> sigS) {
     // Contract data
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     String response = contract.getCreateTokens();
 
     // Arguments
@@ -278,7 +345,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   public String destroyTokens(long nonce, String sender, long numTokens, List<String> sigV,
       List<String> sigR, List<String> sigS) {
     // Contract data
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     String response = contract.getDestroyTokens();
 
     // Arguments
@@ -329,7 +396,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   public String reconcile(long nonce, Map<String, BigInteger> addressChanges, List<String> sigV,
       List<String> sigR, List<String> sigS) {
     // Contract data
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     String response = contract.getReconcile();
 
     // Arguments
@@ -392,114 +459,9 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     return response;
   }
 
-  public String scheduleVesting(long nonce, String address, BigInteger amount, BigInteger timeFrame,
-      Boolean prorated, List<String> sigV, List<String> sigR, List<String> sigS) {
-    // Contract data
-    TokenContractV1 contract = new TokenContractV1();
-    String response = contract.getScheduleVesting();
-
-    // Arguments
-    String formattedString = ByteUtilities.toHexString(BigInteger.valueOf(nonce).toByteArray());
-    formattedString = String.format("%64s", formattedString).replace(' ', '0');
-    response += formattedString;
-
-    // Address
-    formattedString = String.format("%64s", address).replace(' ', '0');
-    response += formattedString;
-
-    // Amount
-    formattedString = ByteUtilities.toHexString(amount.toByteArray());
-    formattedString = String.format("%64s", formattedString).replace(' ', '0');
-    response += formattedString;
-
-    // Timeframe
-    formattedString = ByteUtilities.toHexString(timeFrame.toByteArray());
-    formattedString = String.format("%64s", formattedString).replace(' ', '0');
-    response += formattedString;
-
-    // Prorated
-    formattedString = ByteUtilities.toHexString(prorated ? new byte[]{0x01} : new byte[]{0x00});
-    formattedString = String.format("%64s", formattedString).replace(' ', '0');
-    response += formattedString;
-
-    long numberOfParams = 8;
-    long sizeOfPreviousArrays = 0;
-
-    // SigV Pointer
-    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
-        .replace(' ', '0');
-    response += formattedString;
-    sizeOfPreviousArrays += sigV.size() + 1;
-
-    // SigR Pointer
-    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
-        .replace(' ', '0');
-    response += formattedString;
-    sizeOfPreviousArrays += sigR.size() + 1;
-
-    // SigS Pointer
-    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
-        .replace(' ', '0');
-    response += formattedString;
-
-    // SigV Data
-    response += serializeStringList(sigV);
-
-    // SigR Data
-    response += serializeStringList(sigR);
-
-    // SigS Data
-    response += serializeStringList(sigS);
-
-    return response;
-  }
-
-  public String calculateVesting(long nonce, List<String> sigV, List<String> sigR,
-      List<String> sigS) {
-    // Contract data
-    TokenContractV1 contract = new TokenContractV1();
-    String response = contract.getCalculateVesting();
-
-    // Arguments
-    String formattedString = ByteUtilities.toHexString(BigInteger.valueOf(nonce).toByteArray());
-    formattedString = String.format("%64s", formattedString).replace(' ', '0');
-    response += formattedString;
-
-    long numberOfParams = 4;
-    long sizeOfPreviousArrays = 0;
-
-    // SigV Pointer
-    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
-        .replace(' ', '0');
-    response += formattedString;
-    sizeOfPreviousArrays += sigV.size() + 1;
-
-    // SigR Pointer
-    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
-        .replace(' ', '0');
-    response += formattedString;
-    sizeOfPreviousArrays += sigR.size() + 1;
-
-    // SigS Pointer
-    formattedString = String.format("%64s", calculatePointer(numberOfParams, sizeOfPreviousArrays))
-        .replace(' ', '0');
-    response += formattedString;
-
-    // SigV Data
-    response += serializeStringList(sigV);
-
-    // SigR Data
-    response += serializeStringList(sigR);
-
-    // SigS Data
-    response += serializeStringList(sigS);
-
-    return response;
-  }
-
   @Override
   public String getBalance(String address) {
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     String response = contract.getGetBalance();
 
     String formattedString = String.format("%64s", address).replace(' ', '0');
@@ -510,14 +472,14 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
 
   @Override
   public String getTotalBalance() {
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
 
     return contract.getGetTotalBalance();
   }
 
   @Override
   public String deposit(String recipient, BigInteger amount) {
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     String response = contract.getDeposit();
 
     String formattedString = String.format("%64s", recipient).replace(' ', '0');
@@ -532,7 +494,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
 
   @Override
   public String tokenTransfer(String recipient, BigInteger amount) {
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     String response = contract.getTokenTransfer();
 
     String formattedString = String.format("%64s", recipient).replace(' ', '0');
@@ -552,7 +514,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     // We expect that the recipients and amounts be in order such that the index of each matches up.
     // I.E. sigV[2] belongs with sigR[2] and sigS[2].
 
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     String response = contract.getTransfer();
 
     // Nonce
@@ -619,6 +581,35 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
         BigInteger.valueOf(32 * (numberOfParams + sizeOfPreviousArrays)).toByteArray());
   }
 
+  private String serializeString(String data) {
+    String response = "";
+
+    try {
+      data = ByteUtilities.toHexString(data.getBytes("UTF-8"));
+    } catch (Exception e) {
+      LOGGER.error("Couldn't serialize String: " + data, e);
+      return String.format("%64s", "").replace(' ', '0');
+    }
+
+    String formattedString =
+        ByteUtilities.toHexString(BigInteger.valueOf(data.length()).toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', '0');
+    response += formattedString;
+
+    while (data.length() >= 64) {
+      response += data.substring(0, 64);
+      data = data.substring(64);
+    }
+
+    if (data.length() > 0) {
+      formattedString = String.format("%64s", "").replace(' ', '0');
+      formattedString = data + formattedString;
+      response += formattedString.substring(0, 64);
+    }
+
+    return response;
+  }
+
   private String serializeStringList(List<String> data) {
     String response = "";
 
@@ -662,7 +653,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
       return null;
     }
 
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     int bufPointer = 0;
     final int paramSize = 64;
     String readValue;
@@ -716,7 +707,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     if (bytecode == null || bytecode.length() < 8) {
       return null;
     }
-    TokenContractV1 contract = new TokenContractV1();
+    TokenContractV2 contract = new TokenContractV2();
     int bufPointer = 0;
     final int paramSize = 64;
     String readValue;
@@ -777,23 +768,23 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     String function = params.get(FUNCTION).get(0);
     String result;
     switch (function) {
-      case TokenContractV1.createTokens:
+      case TokenContractV2.createTokens:
         result = createTokens(new BigInteger(params.get(NONCE).get(0)).longValue(),
             params.get(PARAM + 0).get(0),
             new BigInteger(1, ByteUtilities.toByteArray(params.get(PARAM + 1).get(0))).longValue(),
             params.get(SIGV), params.get(SIGR), params.get(SIGS));
         break;
-      case TokenContractV1.destroyTokens:
+      case TokenContractV2.destroyTokens:
         result = destroyTokens(new BigInteger(params.get(NONCE).get(0)).longValue(),
             params.get(PARAM + 0).get(0),
             new BigInteger(1, ByteUtilities.toByteArray(params.get(PARAM + 1).get(0))).longValue(),
             params.get(SIGV), params.get(SIGR), params.get(SIGS));
         break;
-      case TokenContractV1.setTokenContract:
+      case TokenContractV2.setTokenContract:
         result = setTokenChild(new BigInteger(params.get(NONCE).get(0)).longValue(),
             params.get(PARAM + 0).get(0), params.get(SIGV), params.get(SIGR), params.get(SIGS));
         break;
-      case TokenContractV1.reconcile:
+      case TokenContractV2.reconcile:
         Map<String, BigInteger> balanceUpdates = new HashMap<>();
         for (int i = 0; i < params.get(PARAM + 0).size(); i++) {
           balanceUpdates.put(params.get(PARAM + 0).get(i),
@@ -801,20 +792,6 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
         }
         result = reconcile(new BigInteger(params.get(NONCE).get(0)).longValue(), balanceUpdates,
             params.get(SIGV), params.get(SIGR), params.get(SIGS));
-        break;
-      case TokenContractV1.scheduleVesting:
-        result = scheduleVesting(new BigInteger(params.get(NONCE).get(0)).longValue(),
-            params.get(PARAM + 0).get(0),
-            new BigInteger(ByteUtilities.toByteArray(params.get(PARAM + 1).get(0))),
-            new BigInteger(ByteUtilities.toByteArray(params.get(PARAM + 2).get(0))),
-            new BigInteger(ByteUtilities.toByteArray(params.get(PARAM + 3).get(0)))
-                .compareTo(BigInteger.ZERO) > 0, params.get(SIGV), params.get(SIGR),
-            params.get(SIGS));
-        break;
-      case TokenContractV1.calculateVesting:
-        result =
-            calculateVesting(new BigInteger(params.get(NONCE).get(0)).longValue(), params.get(SIGV),
-                params.get(SIGR), params.get(SIGS));
         break;
       default:
         result = null;
@@ -830,7 +807,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     String readValue = buffer.substring(bufPointer, bufPointer + paramSize);
     BigInteger intValue = new BigInteger("00" + readValue, 16);
     int arrayPointer = intValue.intValue() * 2; // String vs Bytes
-    arrayPointer += new TokenContractV1().getTransfer()
+    arrayPointer += new TokenContractV2().getTransfer()
         .length(); // Offset by function id, not included in calc.
 
     // Get the size of the array

@@ -1,8 +1,14 @@
-pragma soldity ^0.4.2;
+pragma solidity ^0.4.8;
 
 contract EthStorageContract {
   uint m_required;
   uint lastNonce;
+  uint securityValue;
+  bool contractFrozen;
+
+  string public name;
+  uint8 public decimals;
+  string public symbol;
 
   uint signers;
   uint numSigners;
@@ -26,8 +32,21 @@ contract EthStorageContract {
   mapping(address => uint) balances;
   uint totalBalance;
 
+  // Async signatures
+  struct PendingState {
+    uint yetNeeded;
+    uint ownersDone;
+    uint senderSigned;
+    uint index;
+  }
+
+  mapping (bytes32 => Transaction) m_txs;
+  mapping(bytes32 => PendingState) m_pending;
+  bytes32[] m_pendingIndex;
+
   // Transaction and signature structures
   struct Transaction {
+    address from;
     address to;
     uint value;
   }
@@ -43,6 +62,10 @@ contract EthStorageContract {
   event Reconcile(address indexed _affected, int256 _value);
   event Sweep(address indexed _requestor, address indexed _to, uint256 _value);
   event TopUp(address indexed _from, uint256 _value);
+  event Confirmation(address owner, bytes32 operation);
+  event Revoke(address owner, bytes32 operation);
+  event MultiTransact(address owner, bytes32 operation, address to, address from, uint value);
+  event ConfirmationNeeded(bytes32 operation, address initiator, address to, address from, uint value);
 
   function calculateTxHash() internal returns (bytes32) {
     transactionHash = 0x00;
@@ -53,8 +76,17 @@ contract EthStorageContract {
     return transactionHash;
   }
 
-  function calculateAdminTxHash() internal returns (bytes32) {
-     transactionHash = sha3(lastNonce + 1);
+  function calculateHash(address[] hashTransactions, uint[] hashValues) constant returns (bytes32) {
+    bytes32 hash = 0x00;
+    for(uint i = 0; i < hashTransactions.length; i++) {
+      hash = sha3(hash, hashTransactions[i], hashValues[i], lastNonce + 1);
+    }
+
+    return hash;
+  }
+
+  function calculateAdminTxHash() constant returns (bytes32) {
+     transactionHash = sha3(lastNonce + 1, securityValue);
      return transactionHash;
   }
 
@@ -105,6 +137,14 @@ contract EthStorageContract {
     return ownerIndex[addr];
   }
 
+  function getNonce() constant returns (uint) {
+      return lastNonce + 1;
+  }
+
+  function getSecurityValue() returns (uint) {
+      return securityValue;
+  }
+
   function isOwner(address addr) constant returns (bool) {
     return (ownerIndex[addr] > 0);
   }
@@ -118,23 +158,42 @@ contract EthStorageContract {
     return ownersList;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return 0;
+  function min(uint val1, uint val2) internal returns (uint)  {
+    if(val1 > val2)
+        return val2;
+    return val1;
+  }
+
+  function max(uint val1, uint val2) internal returns (uint)   {
+    if(val1 > val2)
+        return val1;
+    return val2;
   }
 
   function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
+    if(_owner == admin)
+    {
+        return max(0, this.balance - totalBalance) + balances[_owner];
+    } else {
+        return balances[_owner];
+    }
   }
 
   function totalSupply() constant returns (uint256 supply) {
     return totalBalance;
   }
 
-  function EthStorageContract(address _tokenContract, address _admin, address[] _owners, uint _required) {
+  function EthStorageContract(address _tokenContract, address _admin, address[] _owners, uint _required, uint _securityValue,
+                              string _name, string _symbol, uint8 _decimals) {
     // Extra param is for api compatibility with the sub-token version
     lastNonce = 0;
+    securityValue = _securityValue;
     totalBalance = 0;
+    contractFrozen = false;
     admin = _admin;
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
     for (uint i = 0; i < _owners.length; i++)
     {
       owners[i+1] = _owners[i];
@@ -162,6 +221,19 @@ contract EthStorageContract {
         }
         m_numOwners = _owners.length;
         m_required = _required;
+        clearPending();
+    }
+  }
+
+  function freezeContract(bool freeze, uint nonce, uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
+    numSignatures = sigV.length;
+    for(uint i = 0; i < numSignatures; i++) {
+      signatures[i].sigV = sigV[i];
+      signatures[i].sigR = sigR[i];
+      signatures[i].sigS = sigS[i];
+    }
+    if(confirmAdminTx(nonce) == true) {
+        contractFrozen = freeze;
     }
   }
 
@@ -179,6 +251,7 @@ contract EthStorageContract {
   }
 
   function deposit(address _to) payable returns (bool) {
+        if(contractFrozen) return false;
         balances[_to] += msg.value;
         totalBalance += msg.value;
         Deposit(msg.sender, _to, msg.value);
@@ -187,6 +260,7 @@ contract EthStorageContract {
 
   function transfer(uint nonce, address _sender, address[] to, uint[] value,
       uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
+    if(contractFrozen) return;
     sender = _sender;
     numTransactions = to.length;
     for(uint i = 0; i < numTransactions; i++) {
@@ -219,13 +293,99 @@ contract EthStorageContract {
     }
   }
 
-  // try to prevent deposits
-  function () {
-    throw;
+  function () payable {
+     if(contractFrozen) throw;
   }
 
-  function reconcile(uint nonce, address[] _to, int[] amount,
+  function revoke(bytes32 _operation) external {
+    uint owner = ownerIndex[msg.sender];
+    if (owner == 0) return;
+    uint ownerIndexBit = 2**owner;
+    var pending = m_pending[_operation];
+    if (pending.ownersDone & ownerIndexBit > 0) {
+        pending.yetNeeded++;
+        pending.ownersDone -= ownerIndexBit;
+        Revoke(msg.sender, _operation);
+    }
+  }
+
+  function clearPending() internal {
+        uint length = m_pendingIndex.length;
+        for (uint i = 0; i < length; ++i)
+            if (m_pendingIndex[i] != 0)
+                delete m_pending[m_pendingIndex[i]];
+        delete m_pendingIndex;
+  }
+
+  function transfer(address _from, address _to, uint _value) returns (bytes32 _r) {
+     if(!isOwner(msg.sender)) return;
+
+      _r = sha3(msg.data, block.number);
+      if (!confirm(_r) && m_txs[_r].to == 0) {
+            m_txs[_r].from = _from;
+            m_txs[_r].to = _to;
+            m_txs[_r].value = _value;
+            ConfirmationNeeded(_r, msg.sender, _to, _from, _value);
+        }
+    }
+
+    function transfer(address _to, uint _value) returns (bytes32 _r) {
+        return transfer(admin, _to, _value);
+    }
+
+    function confirm(bytes32 _h) returns (bool) {
+        if(!confirmAndCheck(_h)) return;
+
+        if (m_txs[_h].to != 0) {
+            if(balanceOf(m_txs[_h].from) >= m_txs[_h].value) {
+              if(m_txs[_h].to.call(m_txs[_h].value)) {
+                  totalBalance -= min(m_txs[_h].value, balances[m_txs[_h].from]);
+                  balances[m_txs[_h].from] -= min(m_txs[_h].value, balances[m_txs[_h].from]);
+                  MultiTransact(msg.sender, _h, m_txs[_h].to, m_txs[_h].from, m_txs[_h].value);
+                  Transfer(m_txs[_h].from, m_txs[_h].to, m_txs[_h].value);
+                    delete m_txs[_h];
+                    return true;
+              }
+            }
+        }
+    }
+
+    function confirmAndCheck(bytes32 _operation) internal returns (bool) {
+        if(contractFrozen) return false;
+        var pending = m_pending[_operation];
+        if(msg.sender == m_txs[_operation].from) pending.senderSigned = 1;
+
+        uint owner = ownerIndex[msg.sender];
+        if (owner == 0) return;
+
+        if (pending.yetNeeded == 0) {
+            pending.yetNeeded = m_required;
+            pending.ownersDone = 0;
+            pending.senderSigned = 0;
+            pending.index = m_pendingIndex.length++;
+            m_pendingIndex[pending.index] = _operation;
+            return false;
+        }
+
+        uint ownerIndexBit = 2**owner;
+        if (pending.ownersDone & ownerIndexBit == 0) {
+            Confirmation(msg.sender, _operation);
+            if (pending.yetNeeded <= 1 && pending.senderSigned == 1) {
+                delete m_pendingIndex[m_pending[_operation].index];
+                delete m_pending[_operation];
+                return true;
+            }
+            else if(pending.yetNeeded > 1)
+            {
+                pending.yetNeeded--;
+                pending.ownersDone |= ownerIndexBit;
+            }
+        }
+    }
+
+ function reconcile(uint nonce, address[] _to, int[] amount,
                         uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
+    if(contractFrozen) return;
     numSignatures = sigV.length;
     for(uint i = 0; i < numSignatures; i++) {
       signatures[i].sigV = sigV[i];

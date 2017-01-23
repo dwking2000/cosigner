@@ -20,13 +20,31 @@ public interface TokenContractParametersInterface {
 
   Long getNonce(EthereumRpc ethereumRpc, String contractAddress);
 
+  String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress);
+
+  String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress, Long nonce);
+
+  String calculateTxHash(EthereumRpc ethereumRpc, String contractAddress,
+      List<String> recipients, List<String> amounts);
+
+  String calculateTxHash(Long nonce, List<String> recipients, List<String> amounts);
+
   String createAdminContract(String adminAddress, List<String> ownerAddresses,
       int numSignaturesRequired);
 
+  String createAdminContract(String adminAddress, List<String> ownerAddresses,
+      int numSignaturesRequired, long securityValue);
+
   String createTokenContract(String parentAddress);
+
+  String createTokenContract(String parentAddress, String name, String symbol, int decimals);
 
   String createStorageContract(TokenConfiguration config, String tokenContract, String adminAddress,
       List<String> ownerAddresses, int numSignaturesRequired);
+
+  String createStorageContract(TokenConfiguration config, String tokenContract, String adminAddress,
+      List<String> ownerAddresses, int numSignaturesRequired, long securityValue, String name,
+      String symbol, int decimals);
 
   String setTokenChild(long nonce, String childAddress, List<String> sigV, List<String> sigR,
       List<String> sigS);
@@ -39,11 +57,6 @@ public interface TokenContractParametersInterface {
 
   String reconcile(long nonce, Map<String, BigInteger> addressChanges, List<String> sigV,
       List<String> sigR, List<String> sigS);
-
-  String scheduleVesting(long nonce, String address, BigInteger amount, BigInteger timeFrame,
-      Boolean prorated, List<String> sigV, List<String> sigR, List<String> sigS);
-
-  String calculateVesting(long nonce, List<String> sigV, List<String> sigR, List<String> sigS);
 
   String getBalance(String address);
 

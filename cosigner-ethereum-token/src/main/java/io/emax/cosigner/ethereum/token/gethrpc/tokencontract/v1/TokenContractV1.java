@@ -1121,12 +1121,10 @@ public class TokenContractV1 implements TokenContractInterface {
     return deposit;
   }
 
-  @Override
   public String getScheduleVesting() {
     return scheduleVesting;
   }
 
-  @Override
   public String getCalculateVesting() {
     return calculateVesting;
   }

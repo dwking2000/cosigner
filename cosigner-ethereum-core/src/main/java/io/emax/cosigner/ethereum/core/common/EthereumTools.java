@@ -3,6 +3,7 @@ package io.emax.cosigner.ethereum.core.common;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.DeterministicRng;
 import io.emax.cosigner.common.crypto.Secp256k1;
+import io.emax.cosigner.ethereum.core.gethrpc.CallData;
 
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.slf4j.Logger;
@@ -165,5 +166,16 @@ public class EthereumTools {
 
     return EthereumTools.hashKeccak(ByteUtilities.toHexString(contractAddress.encode()))
         .substring(96 / 4, 256 / 4);
+  }
+
+  public static CallData generateCall(String data, String address) {
+    CallData callData = new CallData();
+    callData.setTo("0x" + address);
+    callData.setFrom("0x" + address);
+    callData.setValue("0x0");
+    callData.setData("0x" + data);
+    callData.setGas("0x186A0");
+    callData.setGasPrice("0x186A0");
+    return callData;
   }
 }

@@ -17,10 +17,6 @@ public interface TokenContractInterface {
 
   String getDeposit();
 
-  String getScheduleVesting();
-
-  String getCalculateVesting();
-
   String getGetBalance();
 
   String getGetTotalBalance();
