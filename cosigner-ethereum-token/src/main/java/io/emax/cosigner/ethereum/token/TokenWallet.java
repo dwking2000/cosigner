@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,6 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
@@ -212,7 +212,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             // Token Contract
             // Generate tx structure
             tx = RawTransaction.createContract(config, contractInterface.getContractParameters()
-                .createTokenContract(this.adminContractAddress));
+                .createTokenContract(this.adminContractAddress, config.getCurrencySymbol(),
+                    config.getCurrencySymbol(), (int) config.getDecimalPlaces()));
             rawTx = ByteUtilities.toHexString(tx.encode());
             LOGGER.debug("[" + config.getCurrencySymbol() + "] Creating contract: " + rawTx);
 
@@ -239,11 +240,20 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             LOGGER.debug("[" + config.getCurrencySymbol() + "] Issuing transaction: " + rawTx);
 
             // Sign it
-            // TODO Admin key or contract key is needed here. Currently only works if contract creator = contract admin
+            // Admin key first, because it has to be there.
             sigData = getSigString(rawTx, contractAccount, false);
-            sigData = signWithPrivateKey(sigData, contractKey,
-                contractKey == null ? contractAccount : null);
+            sigData = signWithPrivateKey(sigData, config.getAdminKey(),
+                config.getAdminKey().isEmpty() ? config.getAdminContractAddress() : null);
             rawTx = applySignature(rawTx, contractAccount, sigData);
+
+            // Sign with any multi-sig keys configured to meet minimum req's
+            rawTx = signTransaction(rawTx, contractAccount);
+
+            // Sign with contract account because it's the one that should have funds in it
+            sigData = getSigString(rawTx, contractAccount, false);
+            sigData = signWithPrivateKey(sigData, contractKey, null);
+            rawTx = applySignature(rawTx, contractAccount, sigData);
+
             LOGGER.debug("[" + config.getCurrencySymbol() + "] Signed transaction: " + rawTx);
 
             // Wait for receipt
@@ -272,7 +282,9 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             RawTransaction tx = RawTransaction.createContract(config,
                 contractInterface.getContractParameters()
                     .createStorageContract(config, tokenContractAddress, config.getAdminAccount(),
-                        decodedAddresses, config.getMinSignatures()));
+                        decodedAddresses, config.getMinSignatures(), new Random().nextLong(),
+                        config.getCurrencySymbol(), config.getCurrencySymbol(),
+                        (int) config.getDecimalPlaces()));
             String rawTx = ByteUtilities.toHexString(tx.encode());
             LOGGER.debug("[" + config.getCurrencySymbol() + "] Creating contract: " + rawTx);
 
@@ -313,7 +325,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
       Class<?> contractType = TokenContract.class;
       while (TokenContractInterface.class.isAssignableFrom(contractType)) {
         TokenContractInterface contractParams = (TokenContractInterface) contractType.newInstance();
-        if (contractParams.getStorageRuntime().equalsIgnoreCase(contractCode)) {
+        if (contractParams.getStorageRuntime().equalsIgnoreCase(contractCode) || contractParams
+            .getAdminRuntime().equalsIgnoreCase(contractCode)) {
           return contractParams;
         } else if (config.useAlternateEtherContract() && contractParams.getAlternateStorageRunTime()
             .equalsIgnoreCase(contractCode)) {
@@ -434,20 +447,11 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     return addresses.iterator().next();
   }
 
-  private CallData generateCall(String data) {
-    CallData callData = new CallData();
-    callData.setTo("0x" + storageContractAddress);
-    callData.setFrom("0x" + storageContractAddress);
-    callData.setValue("0");
-    callData.setData("0x" + data);
-    callData.setGas("100000");
-    callData.setGasPrice("100000");
-    return callData;
-  }
-
   @Override
   public String getBalance(String address) {
-    CallData callData = generateCall(contractInterface.getContractParameters().getBalance(address));
+    CallData callData = EthereumTools
+        .generateCall(contractInterface.getContractParameters().getBalance(address),
+            storageContractAddress);
     LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
     String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
 
@@ -475,7 +479,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     for (TransactionDetails txDetail : txDetails) {
       if (!txDetail.isConfirmed() && txDetail.getToAddress()[0].equalsIgnoreCase(address)) {
         balance = balance.add(txDetail.getAmount());
-      } else if (!txDetail.isConfirmed() && txDetail.getFromAddress()[0].equalsIgnoreCase(address)) {
+      } else if (!txDetail.isConfirmed() && txDetail.getFromAddress()[0]
+          .equalsIgnoreCase(address)) {
         balance = balance.subtract(txDetail.getAmount());
       }
     }
@@ -484,7 +489,9 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
   }
 
   public String getTotalBalances() {
-    CallData callData = generateCall(contractInterface.getContractParameters().getTotalBalance());
+    CallData callData = EthereumTools
+        .generateCall(contractInterface.getContractParameters().getTotalBalance(),
+            storageContractAddress);
     LOGGER.debug("Total balance request: " + Json.stringifyObject(CallData.class, callData));
     String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
 
@@ -498,7 +505,13 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
   @Override
   public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
-    if (config.useTokenTransferFunction()) {
+    String firstSender = fromAddresses.iterator().next();
+    String contract = storageContractAddress;
+    TokenContractInterface txInterface = getContractVersion(firstSender);
+    if (txInterface != null && config.useTokenTransferFunction()) {
+      contract = firstSender;
+    }
+    if (txInterface == null && config.useTokenTransferFunction()) {
       Recipient recipient = toAddresses.iterator().next();
 
       String rcpt = recipient.getRecipientAddress();
@@ -511,6 +524,9 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
       return ByteUtilities.toHexString(tx.encode());
     } else {
+      if (txInterface == null) {
+        txInterface = contractInterface;
+      }
       // Format tx data
       List<String> recipients = new LinkedList<>();
       List<BigInteger> amounts = new LinkedList<>();
@@ -521,16 +537,15 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         recipients.add(recipient.getRecipientAddress());
       });
 
-      String txCount = ethereumRpc
-          .eth_getStorageAt("0x" + storageContractAddress.toLowerCase(Locale.US), "0x1",
-              DefaultBlock.LATEST.toString());
+      String txCount = ethereumRpc.eth_getStorageAt("0x" + contract.toLowerCase(Locale.US), "0x1",
+          DefaultBlock.LATEST.toString());
       BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
 
       // Create the TX data structure
-      RawTransaction tx = RawTransaction.createTransaction(config, storageContractAddress, null,
-          contractInterface.getContractParameters()
-              .transfer(nonce.longValue(), fromAddresses.iterator().next(), recipients, amounts,
-                  new LinkedList<>(), new LinkedList<>(), new LinkedList<>()));
+      RawTransaction tx = RawTransaction.createTransaction(config, contract, null,
+          txInterface.getContractParameters()
+              .transfer(nonce.longValue(), firstSender, recipients, amounts, new LinkedList<>(),
+                  new LinkedList<>(), new LinkedList<>()));
 
       return ByteUtilities.toHexString(tx.encode());
     }
@@ -562,13 +577,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     if (tx == null) {
       return transaction;
     }
-
-    // Prepare sigData so that if we can't sign, it returns the original.
-    LinkedList<String> txData = new LinkedList<>();
-    txData.add(transaction);
-    LinkedList<Iterable<String>> wrappedTxData = new LinkedList<>();
-    wrappedTxData.add(txData);
-    Iterable<Iterable<String>> sigData = wrappedTxData;
+    Iterable<Iterable<String>> sigData;
 
     if (name == null) {
       for (int i = 0; i < config.getMultiSigAccounts().length; i++) {
@@ -588,10 +597,10 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         sigData = signWithPrivateKey(sigData, config.getMultiSigKeys()[i], null);
         transaction = applySignature(transaction, address, sigData);
       }
-    } else {
-      sigData = getSigString(transaction, address);
-      sigData = signWithPrivateKey(sigData, name, address);
     }
+
+    sigData = getSigString(transaction, address);
+    sigData = signWithPrivateKey(sigData, name, address);
 
     return applySignature(transaction, address, sigData);
   }
@@ -616,53 +625,51 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     }
 
     if (!ignoreContractCode) {
-      // Initialize hash (IV = 0x00)
-      String hashBytes = String.format("%64s", "0").replace(' ', '0');
+      LOGGER.debug("Attempting to parse contract code...");
+      String hashBytes;
 
       // Get the transaction data
-      Map<String, List<String>> contractParams = contractInterface.getContractParameters()
-          .parseTransfer(ByteUtilities.toHexString(tx.getData().getDecodedContents()));
-      if (contractParams != null) {
-        LOGGER.debug(Json.stringifyObject(Map.class, contractParams));
+      TokenContractInterface txContractInterface =
+          getContractVersion(ByteUtilities.toHexString(tx.getTo().getDecodedContents()));
 
-        BigInteger nonce =
-            new BigInteger(contractParams.get(TokenContractParametersInterface.NONCE).get(0));
-        List<String> recipients = contractParams.get(TokenContractParametersInterface.RECIPIENTS);
-        List<String> amounts = contractParams.get(TokenContractParametersInterface.AMOUNT);
+      LOGGER.debug("Found contract interface: " + (txContractInterface == null ? "null" :
+          txContractInterface.getClass().getCanonicalName()) + " at " + ByteUtilities
+          .toHexString(tx.getTo().getDecodedContents()));
 
-        // Hash to sign is hash(previous hash + recipient + amount + nonce)
-        for (int i = 0; i < recipients.size(); i++) {
-          hashBytes += String.format("%40s", recipients.get(i)).replace(' ', '0');
-          hashBytes += String.format("%64s",
-              ByteUtilities.toHexString(new BigInteger(amounts.get(i)).toByteArray()))
-              .replace(' ', '0');
-          hashBytes += String.format("%64s", ByteUtilities.toHexString(nonce.toByteArray()))
-              .replace(' ', '0');
-
-          LOGGER.debug("Hashing: " + hashBytes);
-          hashBytes = EthereumTools.hashKeccak(hashBytes);
-          LOGGER.debug("Result: " + hashBytes);
-        }
-        LinkedList<String> msigString = new LinkedList<>();
-        msigString.add(contractInterface.getClass().getCanonicalName());
-        msigString.add(hashBytes);
-        sigStrings.add(msigString);
-      } else {
-        contractParams = contractInterface.getContractParameters()
-            .parseAdminFunction(ByteUtilities.toHexString(tx.getData().getDecodedContents()));
+      if (txContractInterface != null) {
+        Map<String, List<String>> contractParams = txContractInterface.getContractParameters()
+            .parseTransfer(ByteUtilities.toHexString(tx.getData().getDecodedContents()));
         if (contractParams != null) {
-          // Sign it as an admin function
+          LOGGER.debug(Json.stringifyObject(Map.class, contractParams));
+
           BigInteger nonce =
               new BigInteger(contractParams.get(TokenContractParametersInterface.NONCE).get(0));
-          hashBytes = String.format("%64s", ByteUtilities.toHexString(nonce.toByteArray()))
-              .replace(' ', '0');
-          LOGGER.debug("Hashing: " + hashBytes);
-          hashBytes = EthereumTools.hashKeccak(hashBytes);
-          LOGGER.debug("Result: " + hashBytes);
+          List<String> recipients = contractParams.get(TokenContractParametersInterface.RECIPIENTS);
+          List<String> amounts = contractParams.get(TokenContractParametersInterface.AMOUNT);
+
+          // Hash to sign is hash(previous hash + recipient + amount + nonce)
+          hashBytes = txContractInterface.getContractParameters()
+              .calculateTxHash(nonce.longValue(), recipients, amounts);
           LinkedList<String> msigString = new LinkedList<>();
-          msigString.add(contractInterface.getClass().getCanonicalName());
+          msigString.add(txContractInterface.getClass().getCanonicalName());
           msigString.add(hashBytes);
           sigStrings.add(msigString);
+        } else {
+          contractParams = txContractInterface.getContractParameters()
+              .parseAdminFunction(ByteUtilities.toHexString(tx.getData().getDecodedContents()));
+          if (contractParams != null) {
+            // Sign it as an admin function
+            BigInteger nonce =
+                new BigInteger(contractParams.get(TokenContractParametersInterface.NONCE).get(0));
+
+            hashBytes = txContractInterface.getContractParameters().calculateAdminHash(ethereumRpc,
+                ByteUtilities.toHexString(tx.getTo().getDecodedContents()), nonce.longValue());
+            LOGGER.debug("Result: " + hashBytes);
+            LinkedList<String> msigString = new LinkedList<>();
+            msigString.add(txContractInterface.getClass().getCanonicalName());
+            msigString.add(hashBytes);
+            sigStrings.add(msigString);
+          }
         }
       }
     }
@@ -725,7 +732,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
     LOGGER.debug("Sending: " + transaction);
     if (transactionsEnabled) {
-      return ethereumRpc.eth_sendRawTransaction(transaction);
+      return ethereumRpc.eth_sendRawTransaction("0x" + transaction);
     } else {
       return "Transactions Temporarily Disabled";
     }
@@ -1126,8 +1133,16 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
       }
 
       // If we've added mSig data then update the TX.
-      if (signedData.size() > 0 && contractInterface.getContractParameters()
+      // Get the contract that corresponds to the recipients code if possible.
+      TokenContractInterface txContractInterface =
+          getContractVersion(ByteUtilities.toHexString(rawTx.getTo().getDecodedContents()));
+      if (txContractInterface == null) {
+        txContractInterface = contractInterface;
+      }
+      if (signedData.size() > 0 && txContractInterface.getContractParameters()
           .parseTransfer(ByteUtilities.toHexString(rawTx.getData().getDecodedContents())) != null) {
+        // There are new signatures and the TX appears to be a transfer
+        // Load the right contract version so we put the data in the right places.
         String contractVersion = contractData.getFirst();
         TokenContractInterface contract =
             (TokenContractInterface) TokenContractInterface.class.getClassLoader()
@@ -1136,11 +1151,13 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         Map<String, List<String>> contractParamData = contractParms
             .parseTransfer(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()));
 
+        // Append the signature data to data structures
         Iterator<String> msigSig = signedData.getFirst().iterator();
         contractParamData.get(TokenContractParametersInterface.SIGR).add(msigSig.next());
         contractParamData.get(TokenContractParametersInterface.SIGS).add(msigSig.next());
         contractParamData.get(TokenContractParametersInterface.SIGV).add(msigSig.next());
 
+        // Convert all the components into values we can pass into the transfer call
         Long nonce =
             new BigInteger(contractParamData.get(TokenContractParametersInterface.NONCE).get(0))
                 .longValue();
@@ -1155,11 +1172,14 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         List<String> sigR = contractParamData.get(TokenContractParametersInterface.SIGR);
         List<String> sigS = contractParamData.get(TokenContractParametersInterface.SIGS);
 
+        // Rebuild the function data
         rawTx.getData().setDecodedContents(ByteUtilities.toByteArray(
             contractParms.transfer(nonce, sender, recipients, amounts, sigV, sigR, sigS)));
-      } else if (signedData.size() > 0 && contractInterface.getContractParameters()
+      } else if (signedData.size() > 0 && txContractInterface.getContractParameters()
           .parseAdminFunction(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()))
           != null) {
+        // There are new signatures and the TX appears to be an admin function
+        // Get the right contract version.
         String contractVersion = contractData.getFirst();
         TokenContractInterface contract =
             (TokenContractInterface) TokenContractInterface.class.getClassLoader()
@@ -1169,18 +1189,22 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         Map<String, List<String>> contractParamData = contractParms
             .parseAdminFunction(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()));
 
+        // Update the contract data with the new signatures.
         Iterator<String> msigSig = signedData.getFirst().iterator();
         contractParamData.get(TokenContractParametersInterface.SIGR).add(msigSig.next());
         contractParamData.get(TokenContractParametersInterface.SIGS).add(msigSig.next());
         contractParamData.get(TokenContractParametersInterface.SIGV).add(msigSig.next());
 
+        // Rebuild the function data
         rawTx.getData().setDecodedContents(
             ByteUtilities.toByteArray(contractParms.rebuildAdminFunction(contractParamData)));
       }
-      // Sign the TX
+
+      // Sign the TX itself so it can be broadcast.
       String txCount = txData.getLast();
       BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount));
 
+      // RLP formatting quirks
       if (nonce.equals(BigInteger.ZERO)) {
         rawTx.getNonce().setDecodedContents(new byte[]{});
       } else {
@@ -1195,6 +1219,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
       LOGGER.debug("Hashed: " + sigString);
       byte[][] sigData = signData(sigString, address, privateKey);
       if (sigData.length < 3) {
+        // Signature data is bad, return the original transaction.
         LinkedList<String> signature = new LinkedList<>();
         signature.add(txData.getFirst());
         LinkedList<Iterable<String>> result = new LinkedList<>();
@@ -1202,6 +1227,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         return result;
       }
 
+      // Apply the signature to the tx structure.
       rawTx.getSigR().setDecodedContents(sigData[0]);
       rawTx.getSigS().setDecodedContents(sigData[1]);
       rawTx.getSigV().setDecodedContents(sigData[2]);
@@ -1214,6 +1240,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
       result.add(new LinkedList<>(Collections.singletonList(sigString)));
       return result;
     } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+      // Something went very wrong, return the original transaction.
       LOGGER.warn(null, e);
       LinkedList<String> signature = new LinkedList<>();
       signature.add(txData.getFirst());
@@ -1225,11 +1252,12 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
   private byte[][] signData(String data, String address, String name) {
     if (name == null) {
-      // Catch errors here
+      // We have nothing to go on but address, we have to ask a 3rd party to sign for us.
+      // At this point, that's geth/whatever node software we're using.
       String sig;
       try {
-        LOGGER.debug("Asking geth to sign " + data + " for 0x" + address);
-        sig = ethereumRpc.eth_sign("0x" + address, data);
+        LOGGER.debug("Asking geth to sign 0x" + data + " for 0x" + address);
+        sig = ethereumRpc.eth_sign("0x" + address, "0x" + data);
       } catch (Exception e) {
         LOGGER.warn(null, e);
         return new byte[0][0];
@@ -1264,6 +1292,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     } else {
       int maxRounds = 100;
 
+      // Attempt to recover the address as if it's a user key.
       String privateKey = "";
       if (address != null) {
         for (int i = 1; i <= maxRounds; i++) {
@@ -1274,11 +1303,13 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             break;
           }
         }
+        // If we couldn't match the address, assume the name is actually a private key
         if (privateKey.isEmpty()) {
           privateKey = name;
           address = EthereumTools.getPublicAddress(privateKey);
         }
       } else {
+        // If the address is empty assume the name is a private key and generate it from that.
         privateKey = name;
         address = EthereumTools.getPublicAddress(privateKey);
       }
@@ -1357,28 +1388,6 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         contractInterface.getContractParameters()
             .reconcile(nonce, addressChanges, new LinkedList<>(), new LinkedList<>(),
                 new LinkedList<>()));
-
-    return ByteUtilities.toHexString(tx.encode());
-  }
-
-  public String scheduleVesting(String recipient, BigInteger amount, Duration timeFrame,
-      Boolean prorated) {
-    Long nonce =
-        contractInterface.getContractParameters().getNonce(ethereumRpc, adminContractAddress);
-    RawTransaction tx = RawTransaction.createTransaction(config, adminContractAddress, null,
-        contractInterface.getContractParameters()
-            .scheduleVesting(nonce, recipient, amount, BigInteger.valueOf(timeFrame.getSeconds()),
-                prorated, new LinkedList<>(), new LinkedList<>(), new LinkedList<>()));
-
-    return ByteUtilities.toHexString(tx.encode());
-  }
-
-  public String calculateVesting() {
-    Long nonce =
-        contractInterface.getContractParameters().getNonce(ethereumRpc, adminContractAddress);
-    RawTransaction tx = RawTransaction.createTransaction(config, adminContractAddress, null,
-        contractInterface.getContractParameters()
-            .calculateVesting(nonce, new LinkedList<>(), new LinkedList<>(), new LinkedList<>()));
 
     return ByteUtilities.toHexString(tx.encode());
   }

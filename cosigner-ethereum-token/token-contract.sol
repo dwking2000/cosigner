@@ -1,7 +1,11 @@
-pragma soldity ^0.4.2;
+pragma solidity ^0.4.8;
 
 contract TokenContract {
   address owner;
+
+  string public name;
+  string public symbol;
+  uint8 public decimals;
 
   mapping(address => uint) balances;
   uint totalBalance;
@@ -28,8 +32,11 @@ contract TokenContract {
     return totalBalance;
   }
 
-  function TokenContract(address _owner) {
+  function TokenContract(address _owner, string _name, string _symbol, uint8 _decimals) {
     owner = _owner;
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
   }
 
   function updateOwner(address _owner) {
@@ -102,15 +109,12 @@ contract TokenContract {
         }
     }
   }
-
-  function () {
-    throw;
-  }
 }
 
 contract TokenAdminContract {
   uint m_required;
   uint lastNonce;
+  uint securityValue;
 
   uint signers;
   uint numSigners;
@@ -135,9 +139,6 @@ contract TokenAdminContract {
   mapping(address => uint) balances;
   uint totalBalance;
 
-  address[] vestingAddresses;
-  mapping(address => VestingSchedule[]) vestingData;
-
   // Transaction and signature structures
   struct Transaction {
     address to;
@@ -150,21 +151,11 @@ contract TokenAdminContract {
     bytes32 sigS;
   }
 
-  struct VestingSchedule {
-      uint256 startTime;
-      uint256 totalAmount;
-      uint256 totalTime;
-      bool prorated;
-      uint256 lastUpdated;
-      uint256 issuedToDate;
-  }
-
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
   event Deposit(address indexed _from, address indexed _to, uint256 _value);
   event Reconcile(address indexed _affected, int256 _value);
   event Issuance(uint256 _value);
   event Retirement(uint256 _value);
-  event VestingCalculated();
 
   function calculateTxHash() internal returns (bytes32) {
     transactionHash = 0x00;
@@ -175,8 +166,17 @@ contract TokenAdminContract {
     return transactionHash;
   }
 
-  function calculateAdminTxHash() internal returns (bytes32) {
-     transactionHash = sha3(lastNonce + 1);
+  function calculateHash(address[] hashTransactions, uint[] hashValues) constant returns (bytes32) {
+    bytes32 hash = 0x00;
+    for(uint i = 0; i < hashTransactions.length; i++) {
+      hash = sha3(hash, hashTransactions[i], hashValues[i], lastNonce + 1);
+    }
+
+    return hash;
+  }
+
+  function calculateAdminTxHash() constant returns (bytes32) {
+     transactionHash = sha3(lastNonce + 1, securityValue);
      return transactionHash;
   }
 
@@ -231,6 +231,14 @@ contract TokenAdminContract {
     return (ownerIndex[addr] > 0);
   }
 
+  function getNonce() constant returns (uint) {
+      return lastNonce + 1;
+  }
+
+  function getSecurityValue() constant returns (uint) {
+      return securityValue;
+  }
+
   function getOwners() constant returns (address[]) {
     address[] memory ownersList = new address[](m_numOwners);
     for(uint i = 0; i < m_numOwners; i++) {
@@ -238,10 +246,6 @@ contract TokenAdminContract {
     }
 
     return ownersList;
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return 0;
   }
 
   function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -252,8 +256,9 @@ contract TokenAdminContract {
     return totalBalance;
   }
 
-  function TokenAdminContract(address _admin, address[] _owners, uint _required) {
+  function TokenAdminContract(address _admin, address[] _owners, uint _required, uint _securityValue) {
     lastNonce = 0;
+    securityValue = _securityValue;
     totalBalance = 0;
     admin = _admin;
     for (uint i = 0; i < _owners.length; i++)
@@ -347,11 +352,6 @@ contract TokenAdminContract {
     }
   }
 
-  // try to prevent deposits
-  function () {
-    throw;
-  }
-
   function setTokenContract(uint nonce, address _child,
                         uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
       numSignatures = sigV.length;
@@ -424,113 +424,17 @@ contract TokenAdminContract {
       throw;
     }
   }
-
-  function scheduleVesting(uint nonce, address _to, uint _amount, uint _timeFrame, bool _prorated,
-                        uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
-    numSignatures = sigV.length;
-    for(uint i = 0; i < numSignatures; i++) {
-      signatures[i].sigV = sigV[i];
-      signatures[i].sigR = sigR[i];
-      signatures[i].sigS = sigS[i];
-    }
-
-    if(confirmAdminTx(nonce)) {
-        VestingSchedule memory schedule;
-        schedule.startTime = block.timestamp;
-        schedule.totalAmount = _amount;
-        schedule.totalTime = _timeFrame;
-        schedule.prorated = _prorated;
-        schedule.lastUpdated = block.timestamp;
-        schedule.issuedToDate = 0;
-
-        VestingSchedule[] existingSchedules = vestingData[_to];
-        if(existingSchedules.length == 0) {
-          vestingAddresses.length++;
-          vestingAddresses[vestingAddresses.length-1] = _to;
-        }
-        existingSchedules.length += 1;
-        existingSchedules[existingSchedules.length-1] = schedule;
-        vestingData[_to] = existingSchedules;
-    }
-  }
-
-  function cancelVesting(uint nonce, address _to, uint _index,
-      uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
-      numSignatures = sigV.length;
-      for(uint i = 0; i < numSignatures; i++) {
-        signatures[i].sigV = sigV[i];
-        signatures[i].sigR = sigR[i];
-        signatures[i].sigS = sigS[i];
-      }
-
-      if(confirmAdminTx(nonce)) {
-        VestingSchedule[] existingSchedules = vestingData[_to];
-        VestingSchedule schedule = existingSchedules[_index];
-        schedule.totalAmount = schedule.issuedToDate;
-        schedule.lastUpdated = block.timestamp;
-        existingSchedules[_index] = schedule;
-        vestingData[_to] = existingSchedules;
-      }
-  }
-
-  function calculateVesting(uint nonce,
-                        uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
-    numSignatures = sigV.length;
-    for(uint i = 0; i < numSignatures; i++) {
-      signatures[i].sigV = sigV[i];
-      signatures[i].sigR = sigR[i];
-      signatures[i].sigS = sigS[i];
-    }
-
-    if(confirmAdminTx(nonce)) {
-        TokenContract child = TokenContract(tokenContract);
-        for(i = 0; i < vestingAddresses.length; i++) {
-            VestingSchedule[] existingSchedules = vestingData[vestingAddresses[i]];
-            for(uint j = 0; j < existingSchedules.length; j++) {
-                VestingSchedule schedule = existingSchedules[j];
-                if(schedule.issuedToDate < schedule.totalAmount) {
-                    uint percentFilled = ((block.timestamp - schedule.startTime) * 100) / schedule.totalTime;
-                    if(schedule.prorated || percentFilled >= 100) {
-                        uint amountDue = ((schedule.totalAmount * percentFilled) / 100) - schedule.issuedToDate;
-                        if(amountDue >= (schedule.totalAmount - schedule.issuedToDate) || percentFilled >= 100) {
-                            amountDue = schedule.totalAmount - schedule.issuedToDate;
-                        }
-                        if(child.transfer(vestingAddresses[i], amountDue)) {
-                            schedule.issuedToDate += amountDue;
-                            Issuance(amountDue);
-                        } else {
-                            throw;
-                        }
-                    }
-                    schedule.lastUpdated = block.timestamp;
-                    existingSchedules[j] = schedule;
-                }
-            }
-            vestingData[vestingAddresses[i]] = existingSchedules;
-        }
-        VestingCalculated();
-    }
-  }
-
-  function listVestees() constant returns (address[]) {
-    return vestingAddresses;
-  }
-
-  function getScheduleCount(address _vestee) constant returns (uint256) {
-      return vestingData[_vestee].length;
-  }
-
-  function listVestingSchedule(address _vestee, uint _scheduleIndex) constant returns (uint256, uint256, uint256,
-                                                                              bool, uint256, uint256) {
-      VestingSchedule schedule = vestingData[_vestee][_scheduleIndex];
-      return (schedule.startTime, schedule.totalAmount, schedule.totalTime,
-              schedule.prorated , schedule.lastUpdated, schedule.issuedToDate);
-  }
 }
 
 contract TokenStorageContract {
   uint m_required;
   uint lastNonce;
+  uint securityValue;
+  bool contractFrozen;
+
+  string public name;
+  uint8 public decimals;
+  string public symbol;
 
   uint signers;
   uint numSigners;
@@ -555,8 +459,21 @@ contract TokenStorageContract {
   mapping(address => uint) balances;
   uint totalBalance;
 
+  // Async signatures
+  struct PendingState {
+    uint yetNeeded;
+    uint ownersDone;
+    uint senderSigned;
+    uint index;
+  }
+
+  mapping (bytes32 => Transaction) m_txs;
+  mapping(bytes32 => PendingState) m_pending;
+  bytes32[] m_pendingIndex;
+
   // Transaction and signature structures
   struct Transaction {
+    address from;
     address to;
     uint value;
   }
@@ -571,6 +488,10 @@ contract TokenStorageContract {
   event Deposit(address indexed _from, address indexed _to, uint256 _value);
   event Reconcile(address indexed _affected, int256 _value);
   event Sweep(address indexed _requestor, address indexed _to, uint256 _value);
+  event Confirmation(address owner, bytes32 operation);
+  event Revoke(address owner, bytes32 operation);
+  event MultiTransact(address owner, bytes32 operation, address to, address from, uint value);
+  event ConfirmationNeeded(bytes32 operation, address initiator, address to, address from, uint value);
 
   function calculateTxHash() internal returns (bytes32) {
     transactionHash = 0x00;
@@ -581,8 +502,17 @@ contract TokenStorageContract {
     return transactionHash;
   }
 
-  function calculateAdminTxHash() internal returns (bytes32) {
-     transactionHash = sha3(lastNonce + 1);
+  function calculateHash(address[] hashTransactions, uint[] hashValues) constant returns (bytes32) {
+    bytes32 hash = 0x00;
+    for(uint i = 0; i < hashTransactions.length; i++) {
+      hash = sha3(hash, hashTransactions[i], hashValues[i], lastNonce + 1);
+    }
+
+    return hash;
+  }
+
+  function calculateAdminTxHash() constant returns (bytes32) {
+     transactionHash = sha3(lastNonce + 1, securityValue);
      return transactionHash;
   }
 
@@ -633,6 +563,14 @@ contract TokenStorageContract {
     return ownerIndex[addr];
   }
 
+  function getNonce() constant returns (uint) {
+      return lastNonce + 1;
+  }
+
+  function getSecurityValue() returns (uint) {
+      return securityValue;
+  }
+
   function isOwner(address addr) constant returns (bool) {
     return (ownerIndex[addr] > 0);
   }
@@ -646,22 +584,42 @@ contract TokenStorageContract {
     return ownersList;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return 0;
+  function min(uint val1, uint val2) internal returns (uint)  {
+    if(val1 > val2)
+        return val2;
+    return val1;
+  }
+
+  function max(uint val1, uint val2) internal returns (uint)   {
+    if(val1 > val2)
+        return val1;
+    return val2;
   }
 
   function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
+    if(_owner == admin)
+    {
+        TokenContract child = TokenContract(tokenContract);
+        return max(0, child.balanceOf(this) - totalBalance) + balances[_owner];
+    } else {
+        return balances[_owner];
+    }
   }
 
   function totalSupply() constant returns (uint256 supply) {
     return totalBalance;
   }
 
-  function TokenStorageContract(address _tokenContract, address _admin, address[] _owners, uint _required) {
+  function TokenStorageContract(address _tokenContract, address _admin, address[] _owners, uint _required, uint _securityValue,
+                                string _name, string _symbol, uint8 _decimals) {
     lastNonce = 0;
+    securityValue = _securityValue;
     totalBalance = 0;
+    contractFrozen = false;
     admin = _admin;
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
     for (uint i = 0; i < _owners.length; i++)
     {
       owners[i+1] = _owners[i];
@@ -674,7 +632,6 @@ contract TokenStorageContract {
 
   function updateOwners(uint nonce, address _admin, address[] _owners, uint _required,
                         uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
-    // Must be signed by everyone and the admin.
     numSignatures = sigV.length;
     for(uint i = 0; i < numSignatures; i++) {
       signatures[i].sigV = sigV[i];
@@ -690,11 +647,23 @@ contract TokenStorageContract {
         }
         m_numOwners = _owners.length;
         m_required = _required;
+        clearPending();
+    }
+  }
+
+  function freezeContract(bool freeze, uint nonce, uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
+    numSignatures = sigV.length;
+    for(uint i = 0; i < numSignatures; i++) {
+      signatures[i].sigV = sigV[i];
+      signatures[i].sigR = sigR[i];
+      signatures[i].sigS = sigS[i];
+    }
+    if(confirmAdminTx(nonce) == true) {
+        contractFrozen = freeze;
     }
   }
 
   function deleteContract(uint nonce, uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
-    // Must be signed by everyone and the admin
     numSignatures = sigV.length;
     for(uint i = 0; i < numSignatures; i++) {
       signatures[i].sigV = sigV[i];
@@ -709,6 +678,7 @@ contract TokenStorageContract {
   }
 
   function deposit(address _to, uint256 _value) external returns (bool) {
+      if(contractFrozen) return false;
       TokenContract child = TokenContract(tokenContract);
       if(child.transferFrom(msg.sender, this, _value)) {
         balances[_to] += _value;
@@ -722,6 +692,7 @@ contract TokenStorageContract {
 
   function transfer(uint nonce, address _sender, address[] to, uint[] value,
       uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
+    if(contractFrozen) return;
     sender = _sender;
     numTransactions = to.length;
     for(uint i = 0; i < numTransactions; i++) {
@@ -740,10 +711,10 @@ contract TokenStorageContract {
     if(confirmTransaction() && senderSigned == 1) {
       TokenContract child = TokenContract(tokenContract);
       for(i = 0; i < numTransactions; i++) {
-        if(balances[sender] >= transactions[i].value) {
+        if(balanceOf(sender) >= transactions[i].value) {
           if(child.transfer(transactions[i].to, transactions[i].value)) {
-              balances[sender] -= transactions[i].value;
-              totalBalance -= transactions[i].value;
+              totalBalance -= min(transactions[i].value, balances[sender]);
+              balances[sender] -= min(transactions[i].value, balances[sender]);
               Transfer(sender, transactions[i].to, transactions[i].value);
           } else {
               throw;
@@ -755,10 +726,92 @@ contract TokenStorageContract {
     }
   }
 
-  // try to prevent deposits
-  function () {
-    throw;
+  function revoke(bytes32 _operation) external {
+    uint owner = ownerIndex[msg.sender];
+    if (owner == 0) return;
+    uint ownerIndexBit = 2**owner;
+    var pending = m_pending[_operation];
+    if (pending.ownersDone & ownerIndexBit > 0) {
+        pending.yetNeeded++;
+        pending.ownersDone -= ownerIndexBit;
+        Revoke(msg.sender, _operation);
+    }
   }
+
+  function clearPending() internal {
+        uint length = m_pendingIndex.length;
+        for (uint i = 0; i < length; ++i)
+            if (m_pendingIndex[i] != 0)
+                delete m_pending[m_pendingIndex[i]];
+        delete m_pendingIndex;
+  }
+
+  function transfer(address _from, address _to, uint _value) returns (bytes32 _r) {
+     if(!isOwner(msg.sender)) return;
+
+      _r = sha3(msg.data, block.number);
+      if (!confirm(_r) && m_txs[_r].to == 0) {
+            m_txs[_r].from = _from;
+            m_txs[_r].to = _to;
+            m_txs[_r].value = _value;
+            ConfirmationNeeded(_r, msg.sender, _to, _from, _value);
+        }
+    }
+
+    function transfer(address _to, uint _value) returns (bytes32 _r) {
+        return transfer(admin, _to, _value);
+    }
+
+    function confirm(bytes32 _h) returns (bool) {
+        if(!confirmAndCheck(_h)) return;
+
+        if (m_txs[_h].to != 0) {
+            TokenContract child = TokenContract(tokenContract);
+            if(balanceOf(m_txs[_h].from) >= m_txs[_h].value) {
+              if(child.transfer(m_txs[_h].to, m_txs[_h].value)) {
+                  totalBalance -= min(m_txs[_h].value, balances[m_txs[_h].from]);
+                  balances[m_txs[_h].from] -= min(m_txs[_h].value, balances[m_txs[_h].from]);
+                  MultiTransact(msg.sender, _h, m_txs[_h].to, m_txs[_h].from, m_txs[_h].value);
+                  Transfer(m_txs[_h].from, m_txs[_h].to, m_txs[_h].value);
+                    delete m_txs[_h];
+                    return true;
+              }
+            }
+        }
+    }
+
+    function confirmAndCheck(bytes32 _operation) internal returns (bool) {
+        if(contractFrozen) return false;
+        var pending = m_pending[_operation];
+        if(msg.sender == m_txs[_operation].from) pending.senderSigned = 1;
+
+        uint owner = ownerIndex[msg.sender];
+        if (owner == 0) return;
+
+        if (pending.yetNeeded == 0) {
+            pending.yetNeeded = m_required;
+            pending.ownersDone = 0;
+            pending.senderSigned = 0;
+            pending.index = m_pendingIndex.length++;
+            m_pendingIndex[pending.index] = _operation;
+            return false;
+        }
+
+        uint ownerIndexBit = 2**owner;
+        if (pending.ownersDone & ownerIndexBit == 0) {
+            Confirmation(msg.sender, _operation);
+            if (pending.yetNeeded <= 1 && pending.senderSigned == 1) {
+                delete m_pendingIndex[m_pending[_operation].index];
+                delete m_pending[_operation];
+                return true;
+            }
+            else if(pending.yetNeeded > 1)
+            {
+                pending.yetNeeded--;
+                pending.ownersDone |= ownerIndexBit;
+            }
+        }
+    }
 
   function setTokenContract(uint nonce, address _child,
                         uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
@@ -775,6 +828,7 @@ contract TokenStorageContract {
 
   function reconcile(uint nonce, address[] _to, int[] amount,
                         uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
+    if(contractFrozen) return;
     numSignatures = sigV.length;
     for(uint i = 0; i < numSignatures; i++) {
       signatures[i].sigV = sigV[i];
@@ -797,6 +851,7 @@ contract TokenStorageContract {
 
   function sweep(uint nonce, address _to, uint amount,
                     uint8[] sigV, bytes32[] sigR, bytes32[] sigS) external {
+       if(contractFrozen) return;
        numSignatures = sigV.length;
        for(uint i = 0; i < numSignatures; i++) {
          signatures[i].sigV = sigV[i];

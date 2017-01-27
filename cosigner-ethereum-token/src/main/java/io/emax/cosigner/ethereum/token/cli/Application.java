@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -60,9 +59,6 @@ public class Application {
       System.out.println("\tdestroyTokens(String sender, Long tokens)");
       System.out.println("\tdeposit(String recipient, Long tokens)");
       System.out.println("\treconcile(String affectedAddress, Long tokenChange)");
-      System.out.println(
-          "\tscheduleVesting(String recipient, Long amount, Long timeFrame(seconds), Bool prorated)");
-      System.out.println("\tcalculateVesting()");
       System.out.println("\tsetTokenContract()");
       System.out.println("\tGenerateContracts(String currency, bool apply)");
       return;
@@ -77,7 +73,6 @@ public class Application {
     LinkedList<String> addressList = new LinkedList<>();
     BigDecimal amount = BigDecimal.ZERO;
     Long longVal = 0L;
-    Long timeFrame = 0L;
     Boolean boolVal = false;
     RawTransaction tx = null;
     int resultSize = 0;
@@ -268,25 +263,6 @@ public class Application {
         balanceChanges.put(accountName, BigInteger.valueOf(longVal));
         System.out.println(wallet.reconcile(balanceChanges));
         break;
-      case "scheduleVesting":
-        if (args.length >= 2) {
-          accountName = args[1];
-        }
-        if (args.length >= 3) {
-          longVal = new BigInteger(args[2]).longValue();
-        }
-        if (args.length >= 4) {
-          timeFrame = new BigInteger(args[3]).longValue();
-        }
-        if (args.length >= 5) {
-          boolVal = Boolean.valueOf(args[4]);
-        }
-        System.out.println(wallet.scheduleVesting(accountName, BigInteger.valueOf(longVal),
-            Duration.ofSeconds(timeFrame), boolVal));
-        break;
-      case "calculateVesting":
-        System.out.println(wallet.calculateVesting());
-        break;
       case "setTokenContract":
         TokenContractParametersV1 contractInterface = new TokenContractParametersV1();
         EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
@@ -306,8 +282,8 @@ public class Application {
           boolVal = Boolean.valueOf(args[2]);
         }
         config = new TokenConfiguration(accountName);
-        config.generateNewContract(boolVal);
         wallet = new TokenWallet(config);
+        config.generateNewContract(boolVal);
         wallet.setupTokenContract();
         break;
       default:

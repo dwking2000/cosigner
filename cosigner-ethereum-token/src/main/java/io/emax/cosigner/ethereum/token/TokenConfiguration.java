@@ -26,6 +26,7 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
   private long contractGas = 3000000L;
   private String contractKey = "";
   private String contractAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
+  private String adminKey = "";
   private String adminAccount = "4839540a0ae3242fadf288622f7de1a9278a5858";
   private String[] multiSigKeys = {};
   private String[] multiSigAccounts = {"4839540a0ae3242fadf288622f7de1a9278a5858"};
@@ -100,6 +101,10 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
         // contractAccount
         contractAccount = EnvironmentVariableParser
             .resolveEnvVars(cosignerProperties.getProperty("contractAccount", contractAccount));
+
+        // adminKey
+        adminKey = EnvironmentVariableParser
+            .resolveEnvVars(cosignerProperties.getProperty("adminKey", adminKey));
 
         // adminAccount
         adminAccount = EnvironmentVariableParser
@@ -243,6 +248,10 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
     return contractAccount;
   }
 
+  public String getAdminKey() {
+    return adminKey;
+  }
+
   public String getAdminAccount() {
     return adminAccount;
   }
@@ -298,5 +307,21 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
 
   public boolean useTokenTransferFunction() {
     return useTokenTransferFunction;
+  }
+
+  public void useTokenTransferFunction(boolean useTokenTransferFunction) {
+    this.useTokenTransferFunction = useTokenTransferFunction;
+  }
+
+  public void setAdminContractAddress(String adminContractAddress) {
+    this.adminContractAddress = adminContractAddress;
+  }
+
+  public void setTokenContractAddress(String tokenContractAddress) {
+    this.tokenContractAddress = tokenContractAddress;
+  }
+
+  public void setStorageContractAddress(String storageContractAddress) {
+    this.storageContractAddress = storageContractAddress;
   }
 }
