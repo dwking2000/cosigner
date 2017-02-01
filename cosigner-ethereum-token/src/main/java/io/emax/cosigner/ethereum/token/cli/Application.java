@@ -249,7 +249,7 @@ public class Application {
         }
         tx = RawTransaction.createTransaction(config, config.getTokenContractAddress(), null,
             new TokenContract().getContractParameters()
-                .deposit(accountName, BigInteger.valueOf(longVal)));
+                .deposit(config, accountName, BigInteger.valueOf(longVal)));
         System.out.println(ByteUtilities.toHexString(tx.encode()));
         break;
       case "reconcile":

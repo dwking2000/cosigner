@@ -1185,6 +1185,11 @@ public class TokenContractV1 implements TokenContractInterface {
   }
 
   @Override
+  public String getAlternateDeposit() {
+    return new AlternateContractV1().getDeposit();
+  }
+
+  @Override
   public String getSetTokenContract() {
     return setTokenContract;
   }

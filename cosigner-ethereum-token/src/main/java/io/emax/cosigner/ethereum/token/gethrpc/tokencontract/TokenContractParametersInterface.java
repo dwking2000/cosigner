@@ -62,7 +62,7 @@ public interface TokenContractParametersInterface {
 
   String getTotalBalance();
 
-  String deposit(String recipient, BigInteger amount);
+  String deposit(TokenConfiguration config, String recipient, BigInteger amount);
 
   String tokenTransfer(String recipient, BigInteger amount);
 

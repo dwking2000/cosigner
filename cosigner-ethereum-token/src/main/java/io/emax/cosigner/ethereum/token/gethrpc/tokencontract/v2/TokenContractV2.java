@@ -1402,6 +1402,11 @@ public class TokenContractV2 extends TokenContractV1 {
   }
 
   @Override
+  public String getAlternateDeposit() {
+    return new AlternateContractV2().getDeposit();
+  }
+
+  @Override
   public String getSetTokenContract() {
     return setTokenContract;
   }
