@@ -145,7 +145,7 @@ public class RawTransaction extends RlpList {
   }
 
   public static RawTransaction createTransaction(EthereumTransactionConfiguration config, String to,
-      Long value, String data) {
+      BigInteger value, String data) {
     RawTransaction tx = new RawTransaction();
     tx.getGasPrice().setDecodedContents(ByteUtilities
         .stripLeadingNullBytes(BigInteger.valueOf(config.getGasPrice()).toByteArray()));
@@ -153,7 +153,7 @@ public class RawTransaction extends RlpList {
         .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
     tx.getTo().setDecodedContents(ByteUtilities.toByteArray(to));
     if (value != null) {
-      tx.getValue().setDecodedContents(BigInteger.valueOf(value).toByteArray());
+      tx.getValue().setDecodedContents(value.toByteArray());
     }
     tx.getData().setDecodedContents(ByteUtilities.toByteArray(data));
     return tx;
