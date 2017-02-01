@@ -350,6 +350,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
   @Override
   public String getBalance(String address) {
+    address = "0x" + ByteUtilities.toHexString(ByteUtilities.toByteArray(address));
     BigInteger latestBlockNumber =
         new BigInteger("00" + ethereumRpc.eth_blockNumber().substring(2), 16);
     BigInteger confirmedBlockNumber =
@@ -363,13 +364,16 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
             .substring(2), 16);
 
     confirmedBalance = confirmedBalance.min(latestBalance);
-    BigDecimal etherBalance =
-        new BigDecimal(confirmedBalance).divide(BigDecimal.valueOf(config.getWeiMultiplier()));
+    BigDecimal etherBalance = new BigDecimal(confirmedBalance);
+    etherBalance = etherBalance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
+    etherBalance = etherBalance
+        .divide(BigDecimal.valueOf(config.getWeiMultiplier()), BigDecimal.ROUND_UNNECESSARY);
     return etherBalance.toPlainString();
   }
 
   @Override
   public String getPendingBalance(String address) {
+    address = "0x" + ByteUtilities.toHexString(ByteUtilities.toByteArray(address));
     BigInteger latestBlockNumber =
         new BigInteger("00" + ethereumRpc.eth_blockNumber().substring(2), 16);
     BigInteger confirmedBlockNumber =
@@ -383,9 +387,12 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
             .substring(2), 16);
 
     latestBalance = latestBalance.subtract(confirmedBalance).max(BigInteger.ZERO);
-    BigDecimal etherBalance =
-        new BigDecimal(latestBalance).divide(BigDecimal.valueOf(config.getWeiMultiplier()));
-    return etherBalance.toPlainString();  }
+    BigDecimal etherBalance = new BigDecimal(latestBalance);
+    etherBalance = etherBalance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
+    etherBalance = etherBalance
+        .divide(BigDecimal.valueOf(config.getWeiMultiplier()), BigDecimal.ROUND_UNNECESSARY);
+    return etherBalance.toPlainString();
+  }
 
   @Override
   public String createTransaction(Iterable<String> fromAddress, Iterable<Recipient> toAddress) {

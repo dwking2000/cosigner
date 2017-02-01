@@ -231,4 +231,16 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
   public BigDecimal getMaxAmountPerTransaction() {
     return maxAmountPerTransaction;
   }
+
+  public void setGasPrice(long gasPrice) {
+    this.gasPrice = gasPrice;
+  }
+
+  public void setSimpleTxGas(long simpleTxGas) {
+    this.simpleTxGas = simpleTxGas;
+  }
+
+  public void setContractGas(long contractGas) {
+    this.contractGas = contractGas;
+  }
 }

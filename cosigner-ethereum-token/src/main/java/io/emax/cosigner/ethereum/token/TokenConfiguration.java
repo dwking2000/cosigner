@@ -324,4 +324,12 @@ public class TokenConfiguration implements CurrencyConfiguration, EthereumTransa
   public void setStorageContractAddress(String storageContractAddress) {
     this.storageContractAddress = storageContractAddress;
   }
+
+  public void setGasPrice(long gasPrice) {
+    this.gasPrice = gasPrice;
+  }
+
+  public void setContractGas(long contractGas) {
+    this.contractGas = contractGas;
+  }
 }
