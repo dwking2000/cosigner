@@ -153,7 +153,7 @@ public class RawTransaction extends RlpList {
         .stripLeadingNullBytes(BigInteger.valueOf(config.getContractGas()).toByteArray()));
     tx.getTo().setDecodedContents(ByteUtilities.toByteArray(to));
     if (value != null) {
-      tx.getValue().setDecodedContents(value.toByteArray());
+      tx.getValue().setDecodedContents(ByteUtilities.stripLeadingNullBytes(value.toByteArray()));
     }
     tx.getData().setDecodedContents(ByteUtilities.toByteArray(data));
     return tx;
