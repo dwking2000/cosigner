@@ -54,8 +54,7 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   }
 
   @Override
-  public String calculateTxHash(Long nonce, List<String> recipients,
-      List<String> amounts) {
+  public String calculateTxHash(Long nonce, List<String> recipients, List<String> amounts) {
     String hashBytes = String.format("%64s", "0").replace(' ', '0');
     for (int i = 0; i < recipients.size(); i++) {
       hashBytes += String.format("%40s", recipients.get(i)).replace(' ', '0');
@@ -516,16 +515,22 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
   }
 
   @Override
-  public String deposit(String recipient, BigInteger amount) {
+  public String deposit(TokenConfiguration config, String recipient, BigInteger amount) {
     TokenContractV1 contract = new TokenContractV1();
     String response = contract.getDeposit();
+
+    if (config.useAlternateEtherContract()) {
+      response = contract.getAlternateDeposit();
+    }
 
     String formattedString = String.format("%64s", recipient).replace(' ', '0');
     response += formattedString;
 
-    formattedString = ByteUtilities.toHexString(amount.toByteArray());
-    formattedString = String.format("%64s", formattedString).replace(' ', '0');
-    response += formattedString;
+    if (!config.useAlternateEtherContract()) {
+      formattedString = ByteUtilities.toHexString(amount.toByteArray());
+      formattedString = String.format("%64s", formattedString).replace(' ', '0');
+      response += formattedString;
+    }
 
     return response;
   }

@@ -478,16 +478,22 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
   }
 
   @Override
-  public String deposit(String recipient, BigInteger amount) {
+  public String deposit(TokenConfiguration config, String recipient, BigInteger amount) {
     TokenContractV2 contract = new TokenContractV2();
     String response = contract.getDeposit();
+
+    if (config.useAlternateEtherContract()) {
+      response = contract.getAlternateDeposit();
+    }
 
     String formattedString = String.format("%64s", recipient).replace(' ', '0');
     response += formattedString;
 
-    formattedString = ByteUtilities.toHexString(amount.toByteArray());
-    formattedString = String.format("%64s", formattedString).replace(' ', '0');
-    response += formattedString;
+    if (!config.useAlternateEtherContract()) {
+      formattedString = ByteUtilities.toHexString(amount.toByteArray());
+      formattedString = String.format("%64s", formattedString).replace(' ', '0');
+      response += formattedString;
+    }
 
     return response;
   }

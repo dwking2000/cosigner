@@ -41,6 +41,8 @@ public interface TokenContractInterface {
 
   String getAlternateStorageRunTime();
 
+  String getAlternateDeposit();
+
   String getSetTokenContract();
 
   TokenContractParametersInterface getContractParameters();

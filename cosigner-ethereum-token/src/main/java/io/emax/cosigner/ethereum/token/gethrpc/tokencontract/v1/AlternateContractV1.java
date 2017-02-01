@@ -314,4 +314,10 @@ class AlternateContractV1 {
   String getStorageRuntime() {
     return storageRuntime;
   }
+
+  private String deposit = "f340fa01";
+
+  String getDeposit() {
+    return deposit;
+  }
 }
