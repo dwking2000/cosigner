@@ -317,7 +317,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     }
   }
 
-  private TokenContractInterface getContractVersion(String contract) {
+  public TokenContractInterface getContractVersion(String contract) {
     try {
       String contractCode = ethereumRpc
           .eth_getCode("0x" + contract.toLowerCase(Locale.US), DefaultBlock.LATEST.toString());
@@ -345,7 +345,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
   private static final String TOKEN = "token";
   private static final String STORAGE = "storage";
 
-  private String getContractType(String contract) {
+  public String getContractType(String contract) {
     try {
       String contractCode = ethereumRpc
           .eth_getCode("0x" + contract.toLowerCase(Locale.US), DefaultBlock.LATEST.toString());
