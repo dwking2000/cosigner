@@ -517,12 +517,12 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
   @Override
   public String signTransaction(String transaction, String address) {
-    LOGGER.debug("Attempting to sign for address: " + address);
     return signTransaction(transaction, address, null);
   }
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
+    LOGGER.debug("Attempting to sign for address: " + address);
     TransactionDetails txDetails = decodeRawTransaction(transaction);
     String sender = address;
     if (reverseMsigContracts.containsKey(address.toLowerCase(Locale.US))) {
@@ -545,6 +545,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     Iterable<Iterable<String>> sigData = wrappedTxdata;
 
     if (name == null && reverseMsigContracts.containsKey(address.toLowerCase(Locale.US))) {
+      LOGGER.debug("Attempting to sign with multi-sig keys");
       for (int i = 0; i < config.getMultiSigAddresses().length; i++) {
         if (config.getMultiSigAddresses()[i].isEmpty()) {
           continue;
@@ -563,13 +564,19 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
         transaction = applySignature(transaction, address, sigData);
       }
     } else if (name == null) {
+      LOGGER.debug("Attempting to sign with 3rd party signer");
       sigData = getSigString(transaction, address);
       sigData = signTx(sigData, address, null);
       transaction = applySignature(transaction, address, sigData);
-    } else {
+    } else if (reverseMsigContracts.containsKey(address.toLowerCase(Locale.US))) {
+      LOGGER.debug("Attempting to sign with userKey, translated contract address");
       String translatedAddress = reverseMsigContracts.get(address.toLowerCase(Locale.US));
       sigData = getSigString(transaction, translatedAddress);
       sigData = signTx(sigData, translatedAddress, name);
+    } else {
+      LOGGER.debug("Attempting to sign with userKey key");
+      sigData = getSigString(transaction, address);
+      sigData = signTx(sigData, address, name);
     }
 
     return applySignature(transaction, address, sigData);
@@ -613,16 +620,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
         return new byte[0][0];
       }
     } else {
-      int rounds = 1;
-      if (address != null) {
-        if (addressRounds.containsKey(name)) {
-          rounds = addressRounds.get(name);
-        } else {
-          // Generate rounds
-          createAddress(name);
-          rounds = addressRounds.get(name);
-        }
-      }
+      int rounds = 100;
 
       String privateKey = "";
       if (address != null) {
@@ -635,8 +633,10 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
           }
         }
         if (privateKey.isEmpty()) {
+          LOGGER.debug("Couldn't determine private key for address: " + address);
           return new byte[0][0];
         }
+        LOGGER.debug("Found private key for address: " + address + " using user key.");
       } else {
         privateKey = name;
         address = EthereumTools.getPublicAddress(privateKey);
@@ -885,6 +885,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
   @Override
   public String sendTransaction(String transaction) {
+    transaction = ByteUtilities.toHexString(ByteUtilities.toByteArray(transaction));
     // If this is one of ours, re-sign the whole tx with the contract account.
     RawTransaction decodedTransaction =
         RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
@@ -933,7 +934,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     LOGGER.debug("TX bytes: " + EthereumTools
         .hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes())));
     if (transactionsEnabled) {
-      return ethereumRpc.eth_sendRawTransaction(transaction);
+      return ethereumRpc.eth_sendRawTransaction("0x" + transaction);
     } else {
       return "Transactions Temporarily Disabled";
     }
@@ -1001,10 +1002,12 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
 
+    address = "0x" + ByteUtilities.toHexString(ByteUtilities.toByteArray(address));
+
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
     filterParams.put("fromBlock", "0x00");
-    filterParams.put("toBlock", "pending");
+    filterParams.put("toBlock", "latest");
     filterParams.put("address", address);
     String txFilter = ethereumRpc.eth_newFilter(filterParams);
     Map<String, Object>[] filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
