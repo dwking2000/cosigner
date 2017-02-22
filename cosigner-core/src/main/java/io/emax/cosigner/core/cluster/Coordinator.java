@@ -23,12 +23,8 @@ import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Poller;
 import org.zeromq.ZMQ.Socket;
 
-import rx.Observable;
-import rx.functions.Action1;
-
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.concurrent.TimeUnit;
 
 public class Coordinator {
   private static final Logger LOGGER = LoggerFactory.getLogger(Coordinator.class);
@@ -67,81 +63,91 @@ public class Coordinator {
           }
         }
       });
-
-      beacon.start();
+      beacon.setBroadcastInterval(10000);
+      if (CosignerApplication.getConfig().enableBeacon()) {
+        beacon.start();
+      }
 
       // Register a ZMQ REP socket
       Context context = ZMQ.context(1);
       responder = context.socket(ZMQ.REP);
       // Don't wait if there are no messages.
-      responder.setReceiveTimeOut(1);
-      responder.bind(
-          "tcp://0.0.0.0:" + cluster.getThisServer()
-              .getServerRpcPort());
+      responder.bind("tcp://0.0.0.0:" + cluster.getThisServer().getServerRpcPort());
 
-      Observable.interval(50, TimeUnit.MILLISECONDS).map(tick -> responder.recvStr())
-          .subscribe(new Action1<String>() {
-            @Override
-            public void call(String commandString) {
-              // Try to decode it as one of the known command types
-              if (commandString == null || commandString.isEmpty()) {
-                return;
-              }
-              LOGGER.debug("Got a remote command: " + commandString);
+      Thread responderThread = new Thread(() -> {
+        while (true) {
+          try {
+            String commandString = responder.recvStr();
 
-              // Check if it's an encrypted command first.
-              EncryptedCommand encryptedCommand =
-                  EncryptedCommand.parseCommandString(commandString);
-              if (encryptedCommand != null) {
-                LOGGER.debug("Command is an EncryptedCommand");
-                commandString =
-                    EncryptedCommand.handleCommand(ServerKey.getMykey(), encryptedCommand);
-                LOGGER.debug("Decrypted to: " + commandString);
-              }
-
-              // CurrencyCommand
-              CurrencyCommand currencyCommand = CurrencyCommand.parseCommandString(commandString);
-              if (currencyCommand != null) {
-                LOGGER.debug("Command is a CurrencyCommand");
-                responder.send(CurrencyCommand.handleCommand(currencyCommand));
-                return;
-              }
-
-              ClusterCommand clusterCommand = ClusterCommand.parseCommandString(commandString);
-              if (clusterCommand != null) {
-                LOGGER.debug("Command is a ClusterCommand");
-                responder.send(Boolean.toString(ClusterCommand.handleCommand(clusterCommand)));
-                return;
-              }
-
-              // Catch-all
-              LOGGER.debug("Command isn't valid.");
-              responder.send("Invalid command format");
-            }
-          });
-
-      // Setup the hearbeat cycle
-      Observable.interval(30, TimeUnit.SECONDS).map(tick -> true).subscribe(new Action1<Boolean>() {
-        @Override
-        public void call(Boolean arg0) {
-          LOGGER.debug("Heartbeat tick");
-          ClusterInfo.getInstance().getServers().forEach(server -> {
-            if (server.isOriginator()) {
-              // Skip ourselves.
+            // Try to decode it as one of the known command types
+            if (commandString == null || commandString.isEmpty()) {
               return;
             }
-            ClusterCommand command = new ClusterCommand();
-            command.setCommandType(ClusterCommandType.HEARTBEAT);
-            command.getServer().add(ClusterInfo.getInstance().getThisServer());
-            LOGGER.debug("Sending heartbeat to: " + server);
-            String response = broadcastCommand(command, server);
-            LOGGER.debug("Response: " + response);
-          });
+            LOGGER.debug("Got a remote command: " + commandString);
 
-          cluster.updateCurrencyStatus();
+            // Check if it's an encrypted command first.
+            EncryptedCommand encryptedCommand = EncryptedCommand.parseCommandString(commandString);
+            if (encryptedCommand != null) {
+              LOGGER.debug("Command is an EncryptedCommand");
+              commandString =
+                  EncryptedCommand.handleCommand(ServerKey.getMykey(), encryptedCommand);
+              LOGGER.debug("Decrypted to: " + commandString);
+            }
+
+            // CurrencyCommand
+            CurrencyCommand currencyCommand = CurrencyCommand.parseCommandString(commandString);
+            if (currencyCommand != null) {
+              LOGGER.debug("Command is a CurrencyCommand");
+              responder.send(CurrencyCommand.handleCommand(currencyCommand));
+              return;
+            }
+
+            ClusterCommand clusterCommand = ClusterCommand.parseCommandString(commandString);
+            if (clusterCommand != null) {
+              LOGGER.debug("Command is a ClusterCommand");
+              responder.send(Boolean.toString(ClusterCommand.handleCommand(clusterCommand)));
+              return;
+            }
+
+            // Catch-all
+            LOGGER.debug("Command isn't valid.");
+            responder.send("Invalid command format");
+          } catch (Exception e) {
+            LOGGER.debug("Responder Exception", e);
+          }
         }
-
       });
+      responderThread.setDaemon(true);
+      responderThread.start();
+
+      // Setup the hearbeat cycle
+      Thread heartbeatThread = new Thread(() -> {
+        while (true) {
+          try {
+            Thread.sleep(30000);
+
+            LOGGER.debug("Heartbeat tick");
+            ClusterInfo.getInstance().getServers().forEach(server -> {
+              if (server.isOriginator()) {
+                // Skip ourselves.
+                return;
+              }
+              ClusterCommand command = new ClusterCommand();
+              command.setCommandType(ClusterCommandType.HEARTBEAT);
+              command.getServer().add(ClusterInfo.getInstance().getThisServer());
+              LOGGER.debug("Sending heartbeat to: " + server);
+              String response = broadcastCommand(command, server);
+              LOGGER.debug("Response: " + response);
+            });
+
+            cluster.updateCurrencyStatus();
+          } catch (Exception e) {
+            LOGGER.debug("Heartbeat exception", e);
+          }
+        }
+      });
+      heartbeatThread.setDaemon(true);
+      heartbeatThread.start();
 
     } catch (IOException e) {
       LOGGER.warn(null, e);
