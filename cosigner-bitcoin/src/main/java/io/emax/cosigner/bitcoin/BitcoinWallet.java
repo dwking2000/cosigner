@@ -19,6 +19,7 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.SigHash;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
 import io.emax.cosigner.bitcoin.common.BitcoinTools;
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 
 import org.slf4j.Logger;
@@ -270,9 +271,8 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   public String getPendingBalance(String address) {
     BigDecimal balance = BigDecimal.ZERO;
     try {
-      Output[] outputs = bitcoindRpc
-          .listunspent(0, config.getMinConfirmations(),
-              new String[]{address});
+      Output[] outputs =
+          bitcoindRpc.listunspent(0, config.getMinConfirmations(), new String[]{address});
       for (Output output : outputs) {
         balance = balance.add(output.getAmount());
       }
@@ -283,7 +283,35 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public String createTransaction(Iterable<String> fromAddress, Iterable<Recipient> toAddress) {
+  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
+    return createTransaction(fromAddresses, toAddresses, null);
+  }
+
+  private boolean getOption(String options, String option) {
+    if (options != null && !options.isEmpty()) {
+      try {
+        LinkedList<String> optionList =
+            (LinkedList) Json.objectifyString(LinkedList.class, options);
+        for (String optionPossiblilty : optionList) {
+          if (optionPossiblilty.equalsIgnoreCase(option)) {
+            return true;
+          }
+        }
+      } catch (Exception e) {
+        LOGGER.debug("Bad options");
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public String createTransaction(Iterable<String> fromAddress, Iterable<Recipient> toAddress,
+      String options) {
+    boolean includeFees = false;
+    if (getOption(options, "includeFees")) {
+      includeFees = true;
+    }
+
     List<String> fromAddresses = new LinkedList<>();
     fromAddress.forEach(fromAddresses::add);
     String[] addresses = new String[fromAddresses.size()];
@@ -325,7 +353,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               BigDecimal.valueOf((double) byteSize).multiply(BigDecimal.valueOf(0.0001));
           LOGGER.debug("Expecting fees of: " + fees.toPlainString());
           // Only set a change address if there's change.
-          if (subTotal.compareTo(fees) > 0) {
+          if (!includeFees && subTotal.compareTo(fees) > 0) {
             subTotal = subTotal.subtract(fees);
             if (subTotal.compareTo(BigDecimal.ZERO) > 0) {
               LOGGER.debug("We have change: " + subTotal.toPlainString());

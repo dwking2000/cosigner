@@ -395,7 +395,13 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public String createTransaction(Iterable<String> fromAddress, Iterable<Recipient> toAddress) {
+  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
+    return createTransaction(fromAddresses, toAddresses, null);
+  }
+
+  @Override
+  public String createTransaction(Iterable<String> fromAddress, Iterable<Recipient> toAddress,
+      String options) {
 
     String senderAddress = fromAddress.iterator().next();
     boolean isMsigSender = false;

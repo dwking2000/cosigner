@@ -505,6 +505,12 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
   @Override
   public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
+    return createTransaction(fromAddresses, toAddresses, null);
+  }
+
+  @Override
+  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses,
+      String options) {
     String firstSender = fromAddresses.iterator().next();
     String contract = storageContractAddress;
     TokenContractInterface txInterface = getContractVersion(firstSender);

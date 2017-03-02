@@ -23,6 +23,9 @@ public class CurrencyParameters {
   @JsonProperty
   private String transactionData;
 
+  @JsonProperty
+  private String options;
+
   public String getCurrencySymbol() {
     return currencySymbol;
   }
@@ -71,14 +74,19 @@ public class CurrencyParameters {
     this.transactionData = transactionData;
   }
 
+  public String getOptions() {
+    return options;
+  }
+
+  public void setOptions(String options) {
+    this.options = options;
+  }
+
   @Override
   public String toString() {
-    return "CurrencyParameters [currencySymbol=" + currencySymbol + ", userKey=" + userKey
-        + ", account=" + account + ", callback=" + callback + ", receivingAccount="
-        + receivingAccount + ", transactionData=" + transactionData + ", getCurrencySymbol()="
-        + getCurrencySymbol() + ", getUserKey()=" + getUserKey() + ", getAccount()=" + getAccount()
-        + ", getCallback()=" + getCallback() + ", getReceivingAccount()=" + getReceivingAccount()
-        + ", getTransactionData()=" + getTransactionData() + ", hashCode()=" + hashCode()
-        + ", getClass()=" + getClass() + ", toString()=" + super.toString() + "]";
+    return "CurrencyParameters{" + "currencySymbol='" + currencySymbol + '\'' + ", userKey='"
+        + userKey + '\'' + ", account=" + account + ", callback='" + callback + '\''
+        + ", receivingAccount=" + receivingAccount + ", transactionData='" + transactionData + '\''
+        + ", options='" + options + '\'' + '}';
   }
 }

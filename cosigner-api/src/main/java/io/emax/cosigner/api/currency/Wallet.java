@@ -95,6 +95,16 @@ public interface Wallet extends OfflineWallet {
   String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses);
 
   /**
+   * <p>Create an unsigned transaction transferring funds between the provided accounts.</p>
+   *
+   * <p>Options are a stringified JSON list of the following:
+   * <li>includeFees: If applicable, fees for the transfer will be taken out of the amount instead of
+   * from the remaining balance.</li></p>
+   */
+  String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses,
+      String options);
+
+  /**
    * Get the list of addresses that are signers for this transaction.
    */
   Iterable<String> getSignersForTransaction(String transaction);
