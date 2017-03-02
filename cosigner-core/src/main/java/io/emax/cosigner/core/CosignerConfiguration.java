@@ -10,6 +10,7 @@ public class CosignerConfiguration extends io.dropwizard.Configuration {
   private int clusterPort = 5555;
   private int clusterRpcPort = 8080;
   private List<String> enabledCurrencies = new LinkedList<>();
+  private boolean enableBeacon = true;
 
   @JsonProperty
   public String getClusterLocation() {
@@ -51,4 +52,8 @@ public class CosignerConfiguration extends io.dropwizard.Configuration {
     this.enabledCurrencies = enabledCurrencies;
   }
 
+  @JsonProperty
+  public boolean enableBeacon() {
+    return enableBeacon;
+  }
 }

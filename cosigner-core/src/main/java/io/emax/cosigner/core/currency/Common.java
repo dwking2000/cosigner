@@ -614,8 +614,8 @@ public class Common {
           recipient.setRecipientAddress(account.getRecipientAddress());
           recipients.add(recipient);
         });
-        currencyParams
-            .setTransactionData(currency.getWallet().createTransaction(addresses, recipients));
+        currencyParams.setTransactionData(currency.getWallet()
+            .createTransaction(addresses, recipients, currencyParams.getOptions()));
       }
 
       // Authorize it with the user account
