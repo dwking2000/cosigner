@@ -6,6 +6,24 @@ public class Transaction {
   @JsonProperty("hash")
   private String hash;
 
+  @JsonProperty("networkId")
+  private String networkId;
+
+  @JsonProperty("publicKey")
+  private String publicKey;
+
+  @JsonProperty("raw")
+  private String raw;
+
+  @JsonProperty("standardV")
+  private String standardV;
+
+  @JsonProperty("condition")
+  private String condition;
+
+  @JsonProperty("creates")
+  private String creates;
+
   @JsonProperty("nonce")
   private String nonce;
 
@@ -269,9 +287,61 @@ public class Transaction {
 
   @Override
   public String toString() {
-    return "Transaction [hash=" + hash + ", nonce=" + nonce + ", blockHash=" + blockHash
-        + ", blockNumber=" + blockNumber + ", transactionIndex=" + transactionIndex + ", from="
-        + from + ", to=" + to + ", value=" + value + ", gasPrice=" + gasPrice + ", gas=" + gas
-        + ", input=" + input + "]";
+    return "Transaction{" + "hash='" + hash + '\'' + ", networkId='" + networkId + '\''
+        + ", publicKey='" + publicKey + '\'' + ", raw='" + raw + '\'' + ", standardV='" + standardV
+        + '\'' + ", condition='" + condition + '\'' + ", creates='" + creates + '\'' + ", nonce='"
+        + nonce + '\'' + ", blockHash='" + blockHash + '\'' + ", blockNumber='" + blockNumber + '\''
+        + ", transactionIndex='" + transactionIndex + '\'' + ", from='" + from + '\'' + ", to='"
+        + to + '\'' + ", value='" + value + '\'' + ", gasPrice='" + gasPrice + '\'' + ", gas='"
+        + gas + '\'' + ", input='" + input + '\'' + ", r='" + r + '\'' + ", s='" + s + '\''
+        + ", v='" + v + '\'' + '}';
+  }
+
+  public String getCreates() {
+    return creates;
+  }
+
+  public void setCreates(String creates) {
+    this.creates = creates;
+  }
+
+  public String getCondition() {
+    return condition;
+  }
+
+  public void setCondition(String condition) {
+    this.condition = condition;
+  }
+
+  public String getNetworkId() {
+    return networkId;
+  }
+
+  public void setNetworkId(String networkId) {
+    this.networkId = networkId;
+  }
+
+  public String getPublicKey() {
+    return publicKey;
+  }
+
+  public void setPublicKey(String publicKey) {
+    this.publicKey = publicKey;
+  }
+
+  public String getRaw() {
+    return raw;
+  }
+
+  public void setRaw(String raw) {
+    this.raw = raw;
+  }
+
+  public String getStandardV() {
+    return standardV;
+  }
+
+  public void setStandardV(String standardV) {
+    this.standardV = standardV;
   }
 }
