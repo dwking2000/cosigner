@@ -863,6 +863,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
         filterResults = new Map[0];
+      } finally {
+        ethereumRpc.eth_uninstallFilter(txFilter);
       }
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());

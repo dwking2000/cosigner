@@ -17,5 +17,7 @@ public interface WalletRpc {
 
   Map<String, Object>[] eth_getFilterLogs(String filterId);
 
+  Boolean eth_uninstallFilter(String filterId);
+
   Map<String, Object>[] eth_getLogs(String filterId);
 }

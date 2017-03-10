@@ -51,7 +51,12 @@ public class EthereumTestRpc implements EthereumRpc {
 
   @Override
   public Map<String, Object>[] eth_getFilterLogs(String filterId) {
-    return new Map[] {};
+    return new Map[]{};
+  }
+
+  @Override
+  public Boolean eth_uninstallFilter(String filterId) {
+    return true;
   }
 
   @Override
