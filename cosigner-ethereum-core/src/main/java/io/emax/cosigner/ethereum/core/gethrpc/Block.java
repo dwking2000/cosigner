@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 
 public class Block {
+  @JsonProperty("author")
+  private String author;
+
   @JsonProperty("number")
   private String number;
 
@@ -67,6 +70,14 @@ public class Block {
 
   @JsonProperty("receiptsRoot")
   private String receiptsRoot;
+
+  public String getAuthor() {
+    return author;
+  }
+
+  public void setAuthor(String author) {
+    this.author = author;
+  }
 
   public String getReceiptsRoot() {
     return receiptsRoot;
