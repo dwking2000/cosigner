@@ -1017,6 +1017,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     filterParams.put("address", address);
     String txFilter = ethereumRpc.eth_newFilter(filterParams);
     Map<String, Object>[] filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
+    ethereumRpc.eth_uninstallFilter(txFilter);
     for (Map<String, Object> result : filterResults) {
       LOGGER.error(result.toString());
       TransactionDetails txDetail = new TransactionDetails();

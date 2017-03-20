@@ -839,20 +839,10 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     functionTopics.add("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
     functionTopics.add("0x5548c837ab068cf56a2c2479df0882a4922fd203edb7517321831d95078c5f62");
     for (String functionTopic : functionTopics) {
-      String addressTopic;
-      if (address == null) {
-        addressTopic = null;
-      } else {
-        addressTopic = "0000000000000000000000000000000000000000000000000000000000000000" + address;
-        addressTopic = addressTopic.substring(addressTopic.length() - 64);
-        addressTopic = "0x" + addressTopic;
-      }
-      Object[] topicArray = new Object[2];
-      String[] senderTopic = {functionTopic, addressTopic};
-      String[] recipientTopic = {functionTopic, null, addressTopic};
+      Object[] topicArray = new Object[1];
+      String[] senderTopic = {functionTopic};
       topicArray[0] = senderTopic;
-      topicArray[1] = recipientTopic;
-      filterParams.put("topics", topicArray);
+            filterParams.put("topics", topicArray);
       LOGGER.debug("Requesting filter for: " + Json.stringifyObject(Map.class, filterParams));
       String txFilter = ethereumRpc.eth_newFilter(filterParams);
       LOGGER.debug("Setup filter: " + txFilter);
@@ -863,6 +853,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
         filterResults = new Map[0];
+      } finally {
+        ethereumRpc.eth_uninstallFilter(txFilter);
       }
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
@@ -936,16 +928,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     LinkedList<String> functionTopics = new LinkedList<>();
     functionTopics.add("0x73bb00f3ad09ef6bc524e5cf56563dff2bc6663caa0b4054aa5946811083ed2e");
     for (String functionTopic : functionTopics) {
-      String addressTopic;
-      if (address == null) {
-        addressTopic = null;
-      } else {
-        addressTopic = "0000000000000000000000000000000000000000000000000000000000000000" + address;
-        addressTopic = addressTopic.substring(addressTopic.length() - 64);
-        addressTopic = "0x" + addressTopic;
-      }
       Object[] topicArray = new Object[1];
-      String[] senderTopic = {functionTopic, addressTopic};
+      String[] senderTopic = {functionTopic};
       topicArray[0] = senderTopic;
       filterParams.put("topics", topicArray);
       LOGGER.debug(

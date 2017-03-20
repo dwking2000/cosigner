@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 
 public class Block {
+  @JsonProperty("author")
+  private String author;
+
   @JsonProperty("number")
   private String number;
 
@@ -62,11 +65,22 @@ public class Block {
   @JsonProperty("uncles")
   private String[] uncles = new String[0];
 
+  @JsonProperty("sealFields")
+  private String[] sealFields = new String[0];
+
   @JsonProperty("mixHash")
   private String mixHash;
 
   @JsonProperty("receiptsRoot")
   private String receiptsRoot;
+
+  public String getAuthor() {
+    return author;
+  }
+
+  public void setAuthor(String author) {
+    this.author = author;
+  }
 
   public String getReceiptsRoot() {
     return receiptsRoot;
@@ -346,13 +360,17 @@ public class Block {
 
   @Override
   public String toString() {
-    return "Block [number=" + number + ", hash=" + hash + ", parentHash=" + parentHash + ", nonce="
-        + nonce + ", sha3Uncles=" + sha3Uncles + ", logsBloom=" + logsBloom + ", transactionsRoot="
-        + transactionsRoot + ", stateRoot=" + stateRoot + ", receiptsRoot=" + receiptRoot
-        + ", miner=" + miner + ", difficulty=" + difficulty + ", totalDifficulty=" + totalDifficulty
-        + ", extraData=" + extraData + ", size=" + size + ", gasLimit=" + gasLimit + ", gasUsed="
-        + gasUsed + ", timestamp=" + timestamp + ", transactions=" + Arrays.toString(transactions)
-        + ", uncles=" + Arrays.toString(uncles) + "]";
+    return "Block{" + "author='" + author + '\'' + ", number='" + number + '\'' + ", hash='" + hash
+        + '\'' + ", parentHash='" + parentHash + '\'' + ", nonce='" + nonce + '\''
+        + ", sha3Uncles='" + sha3Uncles + '\'' + ", logsBloom='" + logsBloom + '\''
+        + ", transactionsRoot='" + transactionsRoot + '\'' + ", stateRoot='" + stateRoot + '\''
+        + ", receiptRoot='" + receiptRoot + '\'' + ", miner='" + miner + '\'' + ", difficulty='"
+        + difficulty + '\'' + ", totalDifficulty='" + totalDifficulty + '\'' + ", extraData='"
+        + extraData + '\'' + ", size='" + size + '\'' + ", gasLimit='" + gasLimit + '\''
+        + ", gasUsed='" + gasUsed + '\'' + ", timestamp='" + timestamp + '\'' + ", transactions="
+        + Arrays.toString(transactions) + ", uncles=" + Arrays.toString(uncles) + ", sealFields="
+        + Arrays.toString(sealFields) + ", mixHash='" + mixHash + '\'' + ", receiptsRoot='"
+        + receiptsRoot + '\'' + '}';
   }
 
   public String getMixHash() {
@@ -361,5 +379,13 @@ public class Block {
 
   public void setMixHash(String mixHash) {
     this.mixHash = mixHash;
+  }
+
+  public String[] getSealFields() {
+    return sealFields;
+  }
+
+  public void setSealFields(String[] sealFields) {
+    this.sealFields = sealFields;
   }
 }

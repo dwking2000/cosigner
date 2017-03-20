@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 
 /**
  * Static connection to a geth RPC server.
@@ -29,7 +30,9 @@ public class EthereumResource {
   private EthereumResource() {
     EthereumConfiguration config = new EthereumConfiguration();
     try {
-      this.client = new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()));
+      HashMap<String, String> headers = new HashMap<>();
+      headers.put("Content-Type", "application/json");
+      this.client = new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()), headers);
     } catch (MalformedURLException e) {
       LOGGER.error(null, e);
     }
