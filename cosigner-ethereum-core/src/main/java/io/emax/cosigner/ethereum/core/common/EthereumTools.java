@@ -5,6 +5,7 @@ import io.emax.cosigner.common.DeterministicRng;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.ethereum.core.gethrpc.CallData;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +123,9 @@ public class EthereumTools {
       LOGGER.debug("Got address hash: " + ByteUtilities.toHexString(publicShaKeyBytes));
       byte[] decodedPublicKey = Arrays.copyOfRange(publicShaKeyBytes, 96 / 8, 256 / 8);
       BigInteger publicKey = new BigInteger(1, decodedPublicKey);
-      return publicKey.toString(16);
+      String address = publicKey.toString(16);
+      address = StringUtils.leftPad(address, 40, "0");
+      return address;
 
     } catch (Exception e) {
       LOGGER.error(null, e);
