@@ -360,13 +360,22 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               txnOutput.put(fromAddress.iterator().next(), subTotal);
             }
           } else {
+            BigDecimal feeTotal = fees;
+            if(!includeFees) {
+              feeTotal = fees.subtract(subTotal);
+              subTotal = BigDecimal.ZERO;
+            }
             try {
               // Split fees over all recipients if sender can't cover it.
-              BigDecimal individualFees = fees.subtract(subTotal)
+              BigDecimal individualFees = feeTotal
                   .divide(BigDecimal.valueOf(txnOutput.size()), BigDecimal.ROUND_HALF_UP);
               txnOutput.forEach((address, amount) -> {
                 txnOutput.put(address, amount.subtract(individualFees));
               });
+              if (subTotal.compareTo(BigDecimal.ZERO) > 0) {
+                LOGGER.debug("We have change: " + subTotal.toPlainString());
+                txnOutput.put(fromAddress.iterator().next(), subTotal);
+              }
             } catch (Exception e) {
               LOGGER.debug(null, e);
               throw e;
