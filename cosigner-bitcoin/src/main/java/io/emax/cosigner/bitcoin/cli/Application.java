@@ -36,6 +36,7 @@ public class Application {
           + " ..., String toAddress, Decimal amount)");
       System.out.println("\tsignTransaction(String transaction, String address)");
       System.out.println("\tsendTransaction(String transaction)");
+      System.out.println("\tgetSignersForTransaction(String transaction)");
       System.out.println("\tmonitor(String address)");
       System.out.println("\tlistTxs(String address, int resultSize, int skipNumber)");
       System.out.println("\tgetTx(String tx-id)");
@@ -106,6 +107,12 @@ public class Application {
         } else {
           System.out.println(wallet.signTransaction(transaction, address, accountName));
         }
+        break;
+      case "getSignersForTransaction":
+        if (args.length >= 2) {
+          transaction = args[1];
+        }
+        System.out.println(wallet.getSignersForTransaction(transaction));
         break;
       case "sendTransaction":
         if (args.length >= 2) {

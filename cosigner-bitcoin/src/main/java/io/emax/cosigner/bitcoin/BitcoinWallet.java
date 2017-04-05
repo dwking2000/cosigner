@@ -65,6 +65,10 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   });
 
   private Thread rescanThread = new Thread(() -> {
+    if (config.getRescanTimer() == 0) {
+      return;
+    }
+
     //noinspection InfiniteLoopStatement
     while (true) {
       try {
@@ -361,14 +365,14 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
             }
           } else {
             BigDecimal feeTotal = fees;
-            if(!includeFees) {
+            if (!includeFees) {
               feeTotal = fees.subtract(subTotal);
               subTotal = BigDecimal.ZERO;
             }
             try {
               // Split fees over all recipients if sender can't cover it.
-              BigDecimal individualFees = feeTotal
-                  .divide(BigDecimal.valueOf(txnOutput.size()), BigDecimal.ROUND_HALF_UP);
+              BigDecimal individualFees =
+                  feeTotal.divide(BigDecimal.valueOf(txnOutput.size()), BigDecimal.ROUND_HALF_UP);
               txnOutput.forEach((address, amount) -> {
                 txnOutput.put(address, amount.subtract(individualFees));
               });
@@ -439,12 +443,17 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(), new String[]{});
 
     tx.getInputs().forEach(input -> {
+      LOGGER.debug("Checking input: " + input.getTxHash());
       for (Outpoint output : outputs) {
         if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
             && output.getOutputIndex() == input.getTxIndex()) {
 
+          LOGGER.debug("Found match: " + output.getTransactionId());
+
           String redeemScript = multiSigRedeemScripts.get(output.getAddress());
+          LOGGER.debug("Found redeem script: " + redeemScript);
           Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
+          LOGGER.debug("Got public keys: " + publicKeys.toString());
           publicKeys.forEach(key -> addresses.add(BitcoinTools.getPublicAddress(key, false)));
         }
       }
