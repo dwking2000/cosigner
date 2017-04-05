@@ -597,57 +597,61 @@ public final class RawTransaction {
     LinkedList<String> stack = new LinkedList<>();
     LinkedList<String> publicKeys = new LinkedList<>();
     VariableInt varInt;
-    while ((varInt = readOpCodeInt(scriptBytes, buffPointer)) != null) {
-      LOGGER.debug("VAL: " + varInt.getValue());
-      if (readVariableStackInt(scriptBytes, buffPointer).getValue() == 0 && varInt.getSize() == 1
-          && varInt.getValue() > 16) {
-        LOGGER.debug("OPCODE: " + varInt.getValue());
-        // We got an opcode.
-        if (varInt.getValue() == 0xae) {
-          LOGGER.debug("OP_CHECKMULTISIG");
-          // OP_CHECKMULTISIG, process the stack.
-          long numberKeys = Long.parseLong(stack.getLast());
-          LOGGER.debug("NUMBER OF KEYS: " + numberKeys);
-          stack.removeLast();
-
-          if (numberKeys > stack.size()) {
-            // Data's garabage, we won't even try to read it. Bail out.
-            LOGGER.debug("Error reading script: " + stack.size());
-            return new LinkedList<>();
-          }
-
-          for (int i = 0; i < numberKeys; i++) {
-            String pubKey = stack.getLast();
+    try {
+      while ((varInt = readOpCodeInt(scriptBytes, buffPointer)) != null) {
+        LOGGER.debug("VAL: " + varInt.getValue());
+        if (readVariableStackInt(scriptBytes, buffPointer).getValue() == 0 && varInt.getSize() == 1
+            && varInt.getValue() > 16) {
+          LOGGER.debug("OPCODE: " + varInt.getValue());
+          // We got an opcode.
+          if (varInt.getValue() == 0xae) {
+            LOGGER.debug("OP_CHECKMULTISIG");
+            // OP_CHECKMULTISIG, process the stack.
+            long numberKeys = Long.parseLong(stack.getLast());
+            LOGGER.debug("NUMBER OF KEYS: " + numberKeys);
             stack.removeLast();
 
-            byte[] keyBytes = ByteUtilities.toByteArray(pubKey);
-            keyBytes = ByteUtilities.stripLeadingNullBytes(keyBytes);
-            publicKeys.add(ByteUtilities.toHexString(keyBytes));
-          }
+            if (numberKeys > stack.size()) {
+              // Data's garabage, we won't even try to read it. Bail out.
+              LOGGER.debug("Error reading script: " + stack.size());
+              return new LinkedList<>();
+            }
 
-          return publicKeys;
+            for (int i = 0; i < numberKeys; i++) {
+              String pubKey = stack.getLast();
+              stack.removeLast();
+
+              byte[] keyBytes = ByteUtilities.toByteArray(pubKey);
+              keyBytes = ByteUtilities.stripLeadingNullBytes(keyBytes);
+              publicKeys.add(ByteUtilities.toHexString(keyBytes));
+            }
+
+            return publicKeys;
+          } else {
+            // Non-standard script. Bail out.
+            LOGGER.debug("Non-standard script, cannot process");
+            return new LinkedList<>();
+          }
         } else {
-          // Non-standard script. Bail out.
-          LOGGER.debug("Non-standard script, cannot process");
-          return new LinkedList<>();
-        }
-      } else {
-        // Push it.
-        LOGGER.debug("Pushing stack variable");
-        if (readVariableStackInt(scriptBytes, buffPointer).getValue() == 0 && varInt.getSize() == 1
-            && varInt.getValue() <= 16) {
-          LOGGER.debug("Pushing: " + ((Long) varInt.getValue()).toString());
-          stack.add(((Long) varInt.getValue()).toString());
-          buffPointer += varInt.getSize();
-        } else {
-          buffPointer += varInt.getSize();
-          LOGGER.debug("Pushing: " + ByteUtilities.toHexString(
-              ByteUtilities.readBytes(scriptBytes, buffPointer, (int) varInt.getValue())));
-          stack.add(ByteUtilities.toHexString(
-              ByteUtilities.readBytes(scriptBytes, buffPointer, (int) varInt.getValue())));
-          buffPointer += varInt.getValue();
+          // Push it.
+          LOGGER.debug("Pushing stack variable");
+          if (readVariableStackInt(scriptBytes, buffPointer).getValue() == 0 && varInt.getSize() == 1
+              && varInt.getValue() <= 16) {
+            LOGGER.debug("Pushing: " + ((Long) varInt.getValue()).toString());
+            stack.add(((Long) varInt.getValue()).toString());
+            buffPointer += varInt.getSize();
+          } else {
+            buffPointer += varInt.getSize();
+            LOGGER.debug("Pushing: " + ByteUtilities.toHexString(
+                ByteUtilities.readBytes(scriptBytes, buffPointer, (int) varInt.getValue())));
+            stack.add(ByteUtilities.toHexString(ByteUtilities.readBytes(scriptBytes, buffPointer, (int) varInt.getValue())));
+            buffPointer += varInt.getValue();
+          }
         }
       }
+    } catch (Exception e) {
+      LOGGER.debug("Bad script caused exception, cannot process", e);
+      return new LinkedList<>();
     }
 
     // We ran out of script without seeing what we expected. Bail out.
