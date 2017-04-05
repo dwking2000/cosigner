@@ -625,7 +625,7 @@ public class Common {
       if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
         currencyParams.setTransactionData(currency.getWallet()
             .signTransaction(initalTx, currencyParams.getAccount().get(0),
-                currencyParams.getUserKey()));
+                currencyParams.getUserKey(), currencyParams.getOptions()));
         LOGGER.debug("Sign with userKey: " + currencyParams.getTransactionData());
       }
 
@@ -774,13 +774,14 @@ public class Common {
           if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
             String sigAttempt = currency.getWallet()
                 .signTransaction(currencyParams.getTransactionData(),
-                    currencyParams.getAccount().get(0), currencyParams.getUserKey());
+                    currencyParams.getAccount().get(0), currencyParams.getUserKey(),
+                    currencyParams.getOptions());
             currencyParams.setTransactionData(sigAttempt);
           }
 
           String sigAttempt = currency.getWallet()
               .signTransaction(currencyParams.getTransactionData(),
-                  currencyParams.getAccount().get(0));
+                  currencyParams.getAccount().get(0), null, currencyParams.getOptions());
           currencyParams.setTransactionData(sigAttempt);
         } else if (sendToRemotes) {
           try {

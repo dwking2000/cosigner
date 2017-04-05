@@ -528,6 +528,11 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
+    return signTransaction(transaction, address, name, null);
+  }
+
+  @Override
+  public String signTransaction(String transaction, String address, String name, String options) {
     LOGGER.debug("Attempting to sign for address: " + address);
     TransactionDetails txDetails = decodeRawTransaction(transaction);
     String sender = address;

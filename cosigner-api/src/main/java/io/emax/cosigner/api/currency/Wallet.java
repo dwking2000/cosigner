@@ -97,9 +97,9 @@ public interface Wallet extends OfflineWallet {
   /**
    * <p>Create an unsigned transaction transferring funds between the provided accounts.</p>
    *
-   * <p>Options are a stringified JSON list of the following:
-   * <li>includeFees: If applicable, fees for the transfer will be taken out of the amount instead of
-   * from the remaining balance.</li></p>
+   * <p>Options are a stringified JSON list of the following: <li>includeFees: If applicable, fees
+   * for the transfer will be taken out of the amount instead of from the remaining
+   * balance.</li></p>
    */
   String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses,
       String options);
@@ -125,6 +125,14 @@ public interface Wallet extends OfflineWallet {
    * @return Same transaction with new signature data
    */
   String signTransaction(String transaction, String address, String name);
+
+  /**
+   * Sign the provided transaction, the address' private key will be generated with the provided
+   * account name.
+   *
+   * @return Same transaction with new signature data
+   */
+  String signTransaction(String transaction, String address, String name, String options);
 
   /**
    * Get the data we need to sign from the TX.
