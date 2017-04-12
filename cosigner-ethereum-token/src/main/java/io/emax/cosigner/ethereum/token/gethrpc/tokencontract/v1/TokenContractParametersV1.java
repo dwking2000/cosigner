@@ -619,6 +619,16 @@ public class TokenContractParametersV1 implements TokenContractParametersInterfa
     return response;
   }
 
+  @Override
+  public String approve(String grantee, BigInteger amount) {
+    return null;
+  }
+
+  @Override
+  public String allowance(String owner, String grantee) {
+    return null;
+  }
+
   private String calculatePointer(long numberOfParams, long sizeOfPreviousArrays) {
     return ByteUtilities.toHexString(
         BigInteger.valueOf(32 * (numberOfParams + sizeOfPreviousArrays)).toByteArray());

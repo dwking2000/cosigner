@@ -582,6 +582,38 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
     return response;
   }
 
+  @Override
+  public String approve(String grantee, BigInteger amount) {
+    TokenContractV2 contract = new TokenContractV2();
+    String response = contract.getApprove();
+
+    // Grantee
+    String formattedString = String.format("%64s", grantee).replace(' ', '0');
+    response += formattedString;
+
+    // Amount
+    formattedString = serializeBigInt(amount);
+    response += formattedString;
+
+    return response;
+  }
+
+  @Override
+  public String allowance(String owner, String grantee) {
+    TokenContractV2 contract = new TokenContractV2();
+    String response = contract.getAllowance();
+
+    // owner
+    String formattedString = String.format("%64s", owner).replace(' ', '0');
+    response += formattedString;
+
+    // Grantee
+    formattedString = String.format("%64s", grantee).replace(' ', '0');
+    response += formattedString;
+
+    return response;
+  }
+
   private String calculatePointer(long numberOfParams, long sizeOfPreviousArrays) {
     return ByteUtilities.toHexString(
         BigInteger.valueOf(32 * (numberOfParams + sizeOfPreviousArrays)).toByteArray());
@@ -632,6 +664,17 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
     return response;
   }
 
+  private String serializeBigInt(BigInteger data) {
+    String formattedString;
+    char pad = '0';
+    if (data.compareTo(BigInteger.ZERO) < 0) {
+      pad = 'F';
+    }
+    formattedString = ByteUtilities.toHexString(data.toByteArray());
+    formattedString = String.format("%64s", formattedString).replace(' ', pad);
+    return formattedString;
+  }
+
   private String serializeBigIntList(List<BigInteger> data) {
     String response = "";
 
@@ -641,13 +684,7 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
     response += formattedString;
 
     for (BigInteger dataItem : data) {
-      char pad = '0';
-      if (dataItem.compareTo(BigInteger.ZERO) < 0) {
-        pad = 'F';
-      }
-      formattedString = ByteUtilities.toHexString(dataItem.toByteArray());
-      formattedString = String.format("%64s", formattedString).replace(' ', pad);
-      response += formattedString;
+      response += serializeBigInt(dataItem);
     }
 
     return response;

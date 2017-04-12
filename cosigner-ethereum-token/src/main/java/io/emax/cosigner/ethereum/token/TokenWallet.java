@@ -1386,4 +1386,22 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
     return ByteUtilities.toHexString(tx.encode());
   }
+
+  public String allowance(String owner, String grantee) {
+    CallData callData = EthereumTools
+        .generateCall(contractInterface.getContractParameters().allowance(owner, grantee),
+            tokenContractAddress);
+    LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
+
+    return ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+  }
+
+  public String approve(String grantee, BigDecimal amount) {
+    RawTransaction tx = RawTransaction.createTransaction(config, tokenContractAddress, null,
+        contractInterface.getContractParameters()
+            .approve(grantee, amount.multiply(BigDecimal.TEN.pow((int)config.getDecimalPlaces())).toBigInteger()));
+
+    return ByteUtilities.toHexString(tx.encode());
+  }
+
 }
