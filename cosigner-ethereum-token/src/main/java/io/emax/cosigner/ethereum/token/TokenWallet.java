@@ -578,6 +578,11 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
+    return signTransaction(transaction, address, name, null);
+  }
+
+  @Override
+  public String signTransaction(String transaction, String address, String name, String options) {
     // Convert transaction to data, and to parsed input.
     RawTransaction tx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
     if (tx == null) {
@@ -842,7 +847,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
       Object[] topicArray = new Object[1];
       String[] senderTopic = {functionTopic};
       topicArray[0] = senderTopic;
-            filterParams.put("topics", topicArray);
+      filterParams.put("topics", topicArray);
       LOGGER.debug("Requesting filter for: " + Json.stringifyObject(Map.class, filterParams));
       String txFilter = ethereumRpc.eth_newFilter(filterParams);
       LOGGER.debug("Setup filter: " + txFilter);
@@ -1381,4 +1386,22 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
     return ByteUtilities.toHexString(tx.encode());
   }
+
+  public String allowance(String owner, String grantee) {
+    CallData callData = EthereumTools
+        .generateCall(contractInterface.getContractParameters().allowance(owner, grantee),
+            tokenContractAddress);
+    LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
+
+    return ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+  }
+
+  public String approve(String grantee, BigDecimal amount) {
+    RawTransaction tx = RawTransaction.createTransaction(config, tokenContractAddress, null,
+        contractInterface.getContractParameters()
+            .approve(grantee, amount.multiply(BigDecimal.TEN.pow((int)config.getDecimalPlaces())).toBigInteger()));
+
+    return ByteUtilities.toHexString(tx.encode());
+  }
+
 }

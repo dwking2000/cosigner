@@ -65,6 +65,10 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   });
 
   private Thread rescanThread = new Thread(() -> {
+    if (config.getRescanTimer() == 0) {
+      return;
+    }
+
     //noinspection InfiniteLoopStatement
     while (true) {
       try {
@@ -360,13 +364,22 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               txnOutput.put(fromAddress.iterator().next(), subTotal);
             }
           } else {
+            BigDecimal feeTotal = fees;
+            if (!includeFees) {
+              feeTotal = fees.subtract(subTotal);
+              subTotal = BigDecimal.ZERO;
+            }
             try {
               // Split fees over all recipients if sender can't cover it.
-              BigDecimal individualFees = fees.subtract(subTotal)
-                  .divide(BigDecimal.valueOf(txnOutput.size()), BigDecimal.ROUND_HALF_UP);
+              BigDecimal individualFees =
+                  feeTotal.divide(BigDecimal.valueOf(txnOutput.size()), BigDecimal.ROUND_HALF_UP);
               txnOutput.forEach((address, amount) -> {
                 txnOutput.put(address, amount.subtract(individualFees));
               });
+              if (subTotal.compareTo(BigDecimal.ZERO) > 0) {
+                LOGGER.debug("We have change: " + subTotal.toPlainString());
+                txnOutput.put(fromAddress.iterator().next(), subTotal);
+              }
             } catch (Exception e) {
               LOGGER.debug(null, e);
               throw e;
@@ -430,12 +443,17 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(), new String[]{});
 
     tx.getInputs().forEach(input -> {
+      LOGGER.debug("Checking input: " + input.getTxHash());
       for (Outpoint output : outputs) {
         if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
             && output.getOutputIndex() == input.getTxIndex()) {
 
+          LOGGER.debug("Found match: " + output.getTransactionId());
+
           String redeemScript = multiSigRedeemScripts.get(output.getAddress());
+          LOGGER.debug("Found redeem script: " + redeemScript);
           Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
+          LOGGER.debug("Got public keys: " + publicKeys.toString());
           publicKeys.forEach(key -> addresses.add(BitcoinTools.getPublicAddress(key, false)));
         }
       }
@@ -450,11 +468,23 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
   @Override
   public String signTransaction(String transaction, String address, String name) {
+    return signTransaction(transaction, address, name, null);
+  }
+
+  @Override
+  public String signTransaction(String transaction, String address, String name, String options) {
     LOGGER.debug("Attempting to sign a transaction");
     int rounds = 1;
     String privateKey;
     String userAddress;
     SignedTransaction signedTransaction;
+
+    LOGGER.debug("Options: " + options);
+    boolean onlyMatching = false;
+    if (getOption(options, "onlyMatching")) {
+      LOGGER.debug("onlyMatching");
+      onlyMatching = true;
+    }
 
     if (name != null) {
       LOGGER.debug("User key has value, trying to determine private key");
@@ -483,7 +513,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       // BTC TX is re-verified since we look up the outputs in getSigString
       signedTransaction = new SignedTransaction();
       Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
-      signatureData = signWithPrivateKey(signatureData, privateKey);
+      signatureData = signWithPrivateKey(signatureData, privateKey, onlyMatching);
       signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
     } else {
       try {
@@ -501,7 +531,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           address = BitcoinTools.getPublicAddress(accountKey, true);
           signedTransaction = new SignedTransaction();
           Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
-          signatureData = signWithPrivateKey(signatureData, accountKey);
+          signatureData = signWithPrivateKey(signatureData, accountKey, onlyMatching);
           signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
         }
       }
@@ -575,6 +605,11 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   @Override
   public Iterable<Iterable<String>> signWithPrivateKey(Iterable<Iterable<String>> data,
       String privateKey) {
+    return signWithPrivateKey(data, privateKey, false);
+  }
+
+  private Iterable<Iterable<String>> signWithPrivateKey(Iterable<Iterable<String>> data,
+      String privateKey, boolean onlyMatching) {
     final byte[] addressData = BitcoinTools.getPublicKeyBytes(privateKey);
     final byte[] privateKeyBytes =
         ByteUtilities.toByteArray(BitcoinTools.decodeAddress(privateKey));
@@ -589,7 +624,27 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       // Index
       signatureResults.add(signatureEntry.next());
       // Redeem Script
-      signatureResults.add(signatureEntry.next());
+      String redeemScript = signatureEntry.next();
+      signatureResults.add(redeemScript);
+      Iterable<String> possibleSigners = RawTransaction.decodeRedeemScript(redeemScript);
+      if (possibleSigners.iterator().hasNext()) {
+        LOGGER.debug("There are possible signers");
+      }
+      boolean foundSigner = false;
+      if (onlyMatching && possibleSigners.iterator().hasNext()) {
+        LOGGER.debug("Checking that signer is on the script.");
+        for (String signer : possibleSigners) {
+          if (BitcoinTools.getPublicKey(privateKey).equalsIgnoreCase(signer)) {
+            foundSigner = true;
+            LOGGER.debug("Signer is OK.");
+          }
+        }
+
+        if (!foundSigner) {
+          LOGGER.debug("Signer not on the script.");
+          continue;
+        }
+      }
       signatureResults.add(ByteUtilities.toHexString(addressData));
       // Sig string
       byte[] sigData = ByteUtilities.toByteArray(signatureEntry.next());

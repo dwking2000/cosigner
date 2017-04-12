@@ -1293,7 +1293,7 @@ public class TokenContractV2 extends TokenContractV1 {
   static final String destroyTokens = "3d432808";
   static final String setTokenContract = "59167b9d";
   static final String reconcile = "df603769";
-  private final String deposit = "47e7ef24";
+  private static final String deposit = "47e7ef24";
   private static final String getBalance = "70a08231";
   private static final String getTotalBalance = "18160ddd";
   private static final String transfer = "fd764e68";
@@ -1301,6 +1301,8 @@ public class TokenContractV2 extends TokenContractV1 {
   private static final String getNonce = "d087d288";
   private static final String getSecurityValue = "39907af1";
   private static final String getAdminHash = "adf2d029";
+  private static final String approve = "095ea7b3";
+  private static final String allowance = "dd62ed3e";
 
   @Override
   public Map<String, List<String>> getAdminParamTypes() {
@@ -1419,5 +1421,13 @@ public class TokenContractV2 extends TokenContractV1 {
   @Override
   public TokenContractParametersInterface getContractParameters() {
     return new TokenContractParametersV2();
+  }
+
+  public String getApprove() {
+    return approve;
+  }
+
+  public String getAllowance() {
+    return allowance;
   }
 }

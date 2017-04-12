@@ -69,6 +69,10 @@ public interface TokenContractParametersInterface {
   String transfer(long nonce, String sender, List<String> recipients, List<BigInteger> amount,
       List<String> sigV, List<String> sigR, List<String> sigS);
 
+  String approve(String grantee, BigInteger amount);
+
+  String allowance(String owner, String grantee);
+
   Map<String, List<String>> parseTransfer(String bytecode);
 
   Map<String, List<String>> parseAdminFunction(String bytecode);
