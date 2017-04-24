@@ -74,7 +74,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public String addmultisigaddress(int nrequired, String[] keys, String account) {
-    return null;
+    return account;
   }
 
   @Override
@@ -92,7 +92,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public String getnewaddress(String accountName) {
-    return null;
+    return accountName;
   }
 
   @Override
