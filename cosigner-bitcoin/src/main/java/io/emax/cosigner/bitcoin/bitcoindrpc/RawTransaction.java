@@ -233,8 +233,8 @@ public final class RawTransaction {
   }
 
   public static class VariableInt {
-    int size;
-    long value;
+    int size = 0;
+    long value = 0;
 
     public int getSize() {
       return size;
@@ -261,6 +261,9 @@ public final class RawTransaction {
    * @return Information about the integer
    */
   public static VariableInt readVariableInt(byte[] data, int start) {
+    if(data == null || data.length <= start) {
+      return new VariableInt();
+    }
     int checkSize = 0xFF & data[start];
     VariableInt varInt = new VariableInt();
     varInt.setSize(0);
@@ -557,6 +560,10 @@ public final class RawTransaction {
    * @return The address that the redeem script corresponds to.
    */
   public static String decodePubKeyScript(String script) {
+    if(script == null) {
+      return null;
+    }
+
     // Regular address
     Pattern pattern = Pattern.compile("^76a914(.{40})88ac$");
     Matcher matcher = pattern.matcher(script);
@@ -593,6 +600,11 @@ public final class RawTransaction {
   public static Iterable<String> decodeRedeemScript(String script) {
     byte[] scriptBytes = ByteUtilities.toByteArray(script);
     int buffPointer = 0;
+
+    LOGGER.debug("Attempting to decode: " + script);
+    if(script == null) {
+      return new LinkedList<>();
+    }
 
     LinkedList<String> stack = new LinkedList<>();
     LinkedList<String> publicKeys = new LinkedList<>();

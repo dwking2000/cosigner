@@ -451,10 +451,20 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           LOGGER.debug("Found match: " + output.getTransactionId());
 
           String redeemScript = multiSigRedeemScripts.get(output.getAddress());
-          LOGGER.debug("Found redeem script: " + redeemScript);
-          Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
-          LOGGER.debug("Got public keys: " + publicKeys.toString());
-          publicKeys.forEach(key -> addresses.add(BitcoinTools.getPublicAddress(key, false)));
+          if (redeemScript != null) {
+            LOGGER.debug("Found redeem script: " + redeemScript);
+            Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
+            LOGGER.debug("Got public keys: " + publicKeys.toString());
+            publicKeys.forEach(key -> addresses.add(BitcoinTools.getPublicAddress(key, false)));
+          } else {
+            String address = RawTransaction.decodePubKeyScript(output.getScriptPubKey());
+            if (address != null) {
+              LOGGER.debug("Found pubkey script");
+              addresses.add(address);
+            } else {
+              LOGGER.debug("Unable to parse input " + input.getTxHash());
+            }
+          }
         }
       }
     });
@@ -846,7 +856,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
       LinkedList<TransactionDetails> removeThese = new LinkedList<>();
       for (TransactionDetails detail : txDetails) {
-        boolean noMatch = false;
+        boolean noMatch = true;
         for (String from : Arrays.asList(detail.getFromAddress())) {
           boolean subMatch = false;
           for (String to : Arrays.asList(detail.getToAddress())) {
@@ -855,14 +865,15 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               break;
             }
           }
-          if (!subMatch) {
-            noMatch = true;
+          if (subMatch) {
+            noMatch = false;
             break;
           }
         }
 
         // If the from & to's match then it's just a return amount, simpler if we don't list it.
         if (!noMatch) {
+          LOGGER.debug(Json.stringifyObject(TransactionDetails.class, detail));
           removeThese.add(detail);
         }
       }
@@ -889,9 +900,12 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     tx.getInputs().forEach(input -> {
       String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
       RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
-      String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
+      String script = senderTx.getOutputCount() > input.getTxIndex() ?
+          senderTx.getOutputs().get(input.getTxIndex()).getScript() : null;
       String scriptAddress = RawTransaction.decodePubKeyScript(script);
-      senders.add(scriptAddress);
+      if (scriptAddress != null) {
+        senders.add(scriptAddress);
+      }
     });
 
     Set<String> recipients = new HashSet<>();
