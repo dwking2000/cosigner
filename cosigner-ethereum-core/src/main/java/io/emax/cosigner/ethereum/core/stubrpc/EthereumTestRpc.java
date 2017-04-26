@@ -8,6 +8,7 @@ import io.emax.cosigner.ethereum.core.gethrpc.EthereumRpc;
 import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContract;
 
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +28,14 @@ public class EthereumTestRpc implements EthereumRpc {
 
   @Override
   public Map<String, Object> eth_getTransactionByHash(String txid) {
-    return null;
+    Map<String, Object> txFilter = new HashMap<>();
+    txFilter.put("transactionHash", "deadbeef");
+    txFilter.put("blockNumber", "0x0A");
+    txFilter.put("hash", "deadbeef");
+    txFilter.put("value", "0x100");
+    txFilter.put("to", "deadbeef");
+    txFilter.put("from", "deadbeef1234");
+    return txFilter;
   }
 
   @Override
@@ -51,7 +59,10 @@ public class EthereumTestRpc implements EthereumRpc {
 
   @Override
   public Map<String, Object>[] eth_getFilterLogs(String filterId) {
-    return new Map[]{};
+    Map<String, Object> txFilter = new HashMap<>();
+    txFilter.put("transactionHash", "deadbeef");
+    txFilter.put("blockNumber", "0x0A");
+    return new Map[]{txFilter};
   }
 
   @Override
@@ -98,7 +109,9 @@ public class EthereumTestRpc implements EthereumRpc {
 
   @Override
   public Block eth_getBlockByNumber(String number, boolean returnTxData) {
-    return null;
+    Block block = new Block();
+    block.setTimestamp(((Long) Instant.now().getEpochSecond()).toString());
+    return block;
   }
 
   @Override

@@ -2,6 +2,7 @@ package io.emax.cosigner.ethereum.core;
 
 import io.emax.cosigner.api.currency.Wallet.Recipient;
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.ethereum.core.common.EthereumTools;
 import io.emax.cosigner.ethereum.core.gethrpc.RawTransaction;
@@ -14,7 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 public class WalletTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(WalletTest.class);
@@ -189,5 +192,16 @@ public class WalletTest {
     String tested = EthereumTools.hashKeccak("");
 
     Assert.assertEquals(expected, tested);
+  }
+
+  @Test
+  public void testTransactionLookup() {
+    String singleAddress = wallet.createAddress(userKey);
+    String multiAddress =
+        wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
+    System.out.println(Json.stringifyObject(List.class,
+        Arrays.asList(wallet.getTransactions(multiAddress, 100, 0))));
+
+    System.out.println(wallet.getTransaction("deadbeef"));
   }
 }
