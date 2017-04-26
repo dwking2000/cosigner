@@ -910,7 +910,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
           }
         } catch (Exception e) {
           // Pending TX
-          LOGGER.debug("Pending Tx Found or wrong event returned by geth.", e);
+          LOGGER.debug("Pending Tx Found or wrong event returned by geth.");
+          LOGGER.trace(null, e);
         }
       }
     }
@@ -999,7 +1000,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
         } catch (Exception e) {
           // Pending TX
-          LOGGER.debug("Pending Tx Found or wrong event returned by geth.", e);
+          LOGGER.debug("Pending Tx Found or wrong event returned by geth.");
+          LOGGER.trace(null, e);
         }
       }
     }
@@ -1271,7 +1273,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
               Secp256k1.recoverPublicKey(sigR, sigS, sigV, ByteUtilities.toByteArray(data)))
               .substring(2);
         } catch (Exception e) {
-          LOGGER.debug("Couldn't recover public key from signature", e);
+          LOGGER.debug("Couldn't recover public key from signature");
+          LOGGER.trace(null, e);
         }
         signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
         LOGGER.debug("Appears to be signed by: " + signingAddress);
@@ -1342,7 +1345,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
               ByteUtilities.toHexString(Secp256k1.recoverPublicKey(sigR, sigS, sigV, sigBytes))
                   .substring(2);
         } catch (Exception e) {
-          LOGGER.debug("Couldn't recover the public key", e);
+          LOGGER.debug("Couldn't recover the public key");
+          LOGGER.trace(null, e);
         }
         signingAddress = EthereumTools.getPublicAddress(signingAddress, false);
       } while (!address.equalsIgnoreCase(signingAddress));
@@ -1398,10 +1402,9 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
   public String approve(String grantee, BigDecimal amount) {
     RawTransaction tx = RawTransaction.createTransaction(config, tokenContractAddress, null,
-        contractInterface.getContractParameters()
-            .approve(grantee, amount.multiply(BigDecimal.TEN.pow((int)config.getDecimalPlaces())).toBigInteger()));
+        contractInterface.getContractParameters().approve(grantee,
+            amount.multiply(BigDecimal.TEN.pow((int) config.getDecimalPlaces())).toBigInteger()));
 
     return ByteUtilities.toHexString(tx.encode());
   }
-
 }

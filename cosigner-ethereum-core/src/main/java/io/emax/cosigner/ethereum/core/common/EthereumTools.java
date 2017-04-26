@@ -35,8 +35,9 @@ public class EthereumTools {
   public static String getDeterministicPrivateKey(String userKeyPart, String serverKeyPart,
       int rounds) {
 
-    byte[] userKey = new BigInteger(userKeyPart, 16).toByteArray();
-    byte[] serverKey = new BigInteger(serverKeyPart, 16).toByteArray();
+    byte[] userKey = new BigInteger(userKeyPart.isEmpty() ? "00" : userKeyPart, 16).toByteArray();
+    byte[] serverKey =
+        new BigInteger(serverKeyPart.isEmpty() ? "00" : serverKeyPart, 16).toByteArray();
     SecureRandom secureRandom = DeterministicRng.getSecureRandom(userKey, serverKey);
 
     // Set up our private key variables
