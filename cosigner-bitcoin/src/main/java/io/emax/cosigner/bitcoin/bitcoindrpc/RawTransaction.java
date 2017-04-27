@@ -261,7 +261,7 @@ public final class RawTransaction {
    * @return Information about the integer
    */
   public static VariableInt readVariableInt(byte[] data, int start) {
-    if(data == null || data.length <= start) {
+    if (data == null || data.length <= start) {
       return new VariableInt();
     }
     int checkSize = 0xFF & data[start];
@@ -560,7 +560,7 @@ public final class RawTransaction {
    * @return The address that the redeem script corresponds to.
    */
   public static String decodePubKeyScript(String script) {
-    if(script == null) {
+    if (script == null) {
       return null;
     }
 
@@ -602,7 +602,7 @@ public final class RawTransaction {
     int buffPointer = 0;
 
     LOGGER.debug("Attempting to decode: " + script);
-    if(script == null) {
+    if (script == null) {
       return new LinkedList<>();
     }
 
@@ -647,8 +647,8 @@ public final class RawTransaction {
         } else {
           // Push it.
           LOGGER.debug("Pushing stack variable");
-          if (readVariableStackInt(scriptBytes, buffPointer).getValue() == 0 && varInt.getSize() == 1
-              && varInt.getValue() <= 16) {
+          if (readVariableStackInt(scriptBytes, buffPointer).getValue() == 0
+              && varInt.getSize() == 1 && varInt.getValue() <= 16) {
             LOGGER.debug("Pushing: " + ((Long) varInt.getValue()).toString());
             stack.add(((Long) varInt.getValue()).toString());
             buffPointer += varInt.getSize();
@@ -656,7 +656,8 @@ public final class RawTransaction {
             buffPointer += varInt.getSize();
             LOGGER.debug("Pushing: " + ByteUtilities.toHexString(
                 ByteUtilities.readBytes(scriptBytes, buffPointer, (int) varInt.getValue())));
-            stack.add(ByteUtilities.toHexString(ByteUtilities.readBytes(scriptBytes, buffPointer, (int) varInt.getValue())));
+            stack.add(ByteUtilities.toHexString(
+                ByteUtilities.readBytes(scriptBytes, buffPointer, (int) varInt.getValue())));
             buffPointer += varInt.getValue();
           }
         }

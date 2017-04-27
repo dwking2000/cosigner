@@ -16,6 +16,10 @@ public class EnvironmentVariableParser {
     return resolveEnvVars(input, System.getenv());
   }
 
+  /**
+   * Parses a string and resolves any environment variables.
+   * Allows for a custom environment map.
+   */
   public static String resolveEnvVars(String input, Map envVars) {
     if (input == null) {
       return null;

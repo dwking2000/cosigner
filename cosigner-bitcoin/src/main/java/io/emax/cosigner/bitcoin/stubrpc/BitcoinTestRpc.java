@@ -150,12 +150,12 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public Map<String, Object> gettransaction(String txid, boolean includeWatchOnly) {
-    if(txid.equalsIgnoreCase("deadbeef")) {
+    if (txid.equalsIgnoreCase("deadbeef")) {
       Map<String, Object> txMap = new HashMap<>();
       txMap.put("txid", "deadbeef");
       txMap.put("confirmations", 18);
       txMap.put("amount", "23.1");
-      txMap.put("blocktime", (int)Instant.now().getEpochSecond());
+      txMap.put("blocktime", (int) Instant.now().getEpochSecond());
       txMap.put("category", "send");
       txMap.put("address", new BitcoinWallet(new BitcoinConfiguration()).createAddress("deadbeef"));
       txMap.put("details", new ArrayList<Map<String, Object>>());

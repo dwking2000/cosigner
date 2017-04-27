@@ -168,6 +168,9 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
     return true;
   }
 
+  /**
+   * Returns the multi-sig keys from the configuration.
+   */
   public String[] getMultiSigKeys() {
     String[] retArray = new String[multiSigKeys.length];
     System.arraycopy(multiSigKeys, 0, retArray, 0, multiSigKeys.length);

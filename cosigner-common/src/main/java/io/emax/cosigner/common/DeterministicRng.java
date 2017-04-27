@@ -13,6 +13,9 @@ public class DeterministicRng {
   private static final String RANDOM_NUMBER_ALGORITHM = "SHA1PRNG";
   private static final String RANDOM_NUMBER_ALGORITHM_PROVIDER = "SUN";
 
+  /**
+   * Generates a deterministic SecureRandom based on the userKey and serverKey.
+   */
   public static SecureRandom getSecureRandom(byte[] userKey, byte[] serverKey) {
     SecureRandom secureRandom;
     try {

@@ -26,7 +26,7 @@ public interface WalletRpc {
    * @param account   The account name in which the address should be stored. Default is the default
    *                  account, "" (an empty string)
    * @return The P2SH multisig address. The address will also be added to the wallet, and outputs
-   * paying that address will be tracked by the wallet
+   *         paying that address will be tracked by the wallet
    */
   @JsonRpcMethod("addmultisigaddress")
   String addmultisigaddress(int nrequired, String[] keys, String account);
@@ -49,10 +49,10 @@ public interface WalletRpc {
    * @param accountName The name of the account to put the address in. The default is the default
    *                    account, an empty string ("")
    * @return A P2PKH address which has not previously been returned by this RPC. The address will be
-   * marked as a receiving address in the wallet. The address may already have been part of the
-   * keypool, so other RPCs such as the dumpwallet RPC may have disclosed it previously. If the
-   * wallet is unlocked, its keypool will also be filled to its max (by default, 100 unused keys ).
-   * If the wallet is locked and its keypool is empty, this RPC will fail
+   *         marked as a receiving address in the wallet. The address may already have been part of
+   *         the keypool, so other RPCs such as the dumpwallet RPC may have disclosed it previously.
+   *         If the wallet is unlocked, its keypool will also be filled to its max (by default, 100
+   *         unused keys ). If the wallet is locked and its keypool is empty, this RPC will fail
    */
   @JsonRpcMethod("getnewaddress")
   String getnewaddress(String accountName);

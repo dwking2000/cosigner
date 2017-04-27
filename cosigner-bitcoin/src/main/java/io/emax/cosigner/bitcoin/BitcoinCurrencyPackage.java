@@ -24,7 +24,7 @@ public class BitcoinCurrencyPackage implements CurrencyPackageInterface {
 
   @Override
   public Wallet getWallet() {
-    if(bitcoinWallet == null) {
+    if (bitcoinWallet == null) {
       bitcoinWallet = new BitcoinWallet(bitcoinConfiguration);
     }
     return bitcoinWallet;
@@ -39,7 +39,7 @@ public class BitcoinCurrencyPackage implements CurrencyPackageInterface {
 
   @Override
   public Monitor getMonitor() {
-    if(bitcoinMonitor == null) {
+    if (bitcoinMonitor == null) {
       bitcoinMonitor = new BitcoinMonitor((BitcoinWallet) getWallet());
     }
     return bitcoinMonitor;

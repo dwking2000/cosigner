@@ -88,6 +88,9 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     }
   });
 
+  /**
+   * Creates a Bitcoin wallet object with the given configuration.
+   */
   public BitcoinWallet(BitcoinConfiguration conf) {
     config = conf;
 
@@ -286,26 +289,28 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     return balance.toPlainString();
   }
 
-  @Override
-  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
-    return createTransaction(fromAddresses, toAddresses, null);
-  }
-
   private boolean getOption(String options, String option) {
     if (options != null && !options.isEmpty()) {
       try {
-        LinkedList<String> optionList =
-            (LinkedList) Json.objectifyString(LinkedList.class, options);
-        for (String optionPossiblilty : optionList) {
-          if (optionPossiblilty.equalsIgnoreCase(option)) {
-            return true;
+        LinkedList optionList = (LinkedList) Json.objectifyString(LinkedList.class, options);
+        if (optionList != null) {
+          for (Object optionPossiblilty : optionList) {
+            if (((String) optionPossiblilty).equalsIgnoreCase(option)) {
+              return true;
+            }
           }
         }
       } catch (Exception e) {
         LOGGER.debug("Bad options");
+        LOGGER.trace(null, e);
       }
     }
     return false;
+  }
+
+  @Override
+  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
+    return createTransaction(fromAddresses, toAddresses, null);
   }
 
   @Override
@@ -373,9 +378,8 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               // Split fees over all recipients if sender can't cover it.
               BigDecimal individualFees =
                   feeTotal.divide(BigDecimal.valueOf(txnOutput.size()), BigDecimal.ROUND_HALF_UP);
-              txnOutput.forEach((address, amount) -> {
-                txnOutput.put(address, amount.subtract(individualFees));
-              });
+              txnOutput.forEach(
+                  (address, amount) -> txnOutput.put(address, amount.subtract(individualFees)));
               if (subTotal.compareTo(BigDecimal.ZERO) > 0) {
                 LOGGER.debug("We have change: " + subTotal.toPlainString());
                 txnOutput.put(fromAddress.iterator().next(), subTotal);
@@ -414,7 +418,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       String decodedAddress = BitcoinTools.decodeAddress(address);
       LOGGER.debug("Decoded address: " + decodedAddress);
       byte[] addressBytes = ByteUtilities.toByteArray(decodedAddress);
-      String scriptData = "";
+      String scriptData;
       if (!BitcoinTools.isMultiSigAddress(address)) {
         // Regular address
         scriptData = "76a914";
@@ -878,7 +882,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         }
       }
 
-      removeThese.forEach(txDetails::remove);
+      txDetails.removeAll(removeThese);
 
       pageNumber++;
     }
@@ -947,14 +951,15 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
     LinkedList<String> senders = new LinkedList<>();
     LinkedList<String> recipients = new LinkedList<>();
-    ArrayList<Map<String, Object>> txd = (ArrayList<Map<String, Object>>) txData.get("details");
-    txd.forEach((txdMap) -> {
+    ArrayList txd = (ArrayList) txData.get("details");
+    for (Object txdObject : txd) {
+      Map txdMap = (Map) txdObject;
       if (txdMap.get("category").toString().equalsIgnoreCase("send")) {
         senders.add(txdMap.get("address").toString());
       } else if (txdMap.get("category").toString().equalsIgnoreCase("receive")) {
         recipients.add(txdMap.get("address").toString());
       }
-    });
+    }
 
     txDetail.setFromAddress(senders.toArray(new String[senders.size()]));
     txDetail.setToAddress(recipients.toArray(new String[recipients.size()]));
@@ -965,7 +970,9 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   @Override
   public ServerStatus getWalletStatus() {
     try {
-      bitcoindRpc.getblockchaininfo().getChain();
+      // This will throw an exception on no response/connection.
+      LOGGER.debug(
+          "Wallet status detected chain: " + bitcoindRpc.getblockchaininfo().getChain().name());
       return ServerStatus.CONNECTED;
     } catch (Exception e) {
       return ServerStatus.DISCONNECTED;
