@@ -1,6 +1,7 @@
 package io.emax.cosigner.ethereum.token.gethrpc.tokencontract.v2;
 
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.ethereum.core.common.EthereumTools;
 import io.emax.cosigner.ethereum.core.gethrpc.DefaultBlock;
 import io.emax.cosigner.ethereum.core.gethrpc.EthereumRpc;
@@ -395,6 +396,9 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
   @Override
   public String reconcile(long nonce, Map<String, BigInteger> addressChanges, List<String> sigV,
       List<String> sigR, List<String> sigS) {
+
+    LOGGER.debug("Asked to reconcile: " + Json.stringifyObject(Map.class, addressChanges));
+    
     // Contract data
     TokenContractV2 contract = new TokenContractV2();
     String response = contract.getReconcile();
@@ -667,10 +671,13 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
   private String serializeBigInt(BigInteger data) {
     String formattedString;
     char pad = '0';
+    LOGGER.debug("Serializing " + data.toString());
     if (data.compareTo(BigInteger.ZERO) < 0) {
       pad = 'F';
     }
+    LOGGER.debug("Using pad " + pad);
     formattedString = ByteUtilities.toHexString(data.toByteArray());
+    LOGGER.debug("Got bytes: " + formattedString);
     formattedString = String.format("%64s", formattedString).replace(' ', pad);
     return formattedString;
   }
