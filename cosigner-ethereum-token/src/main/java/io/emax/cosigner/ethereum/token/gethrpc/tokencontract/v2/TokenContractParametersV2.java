@@ -791,7 +791,7 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
         readValue = bytecode.substring(bufPointer, bufPointer + paramSize);
         bufPointer += paramSize;
         readValue = ByteUtilities
-            .toHexString(ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(readValue)));
+            .toHexString(ByteUtilities.toByteArray(readValue));
         parameters.put(PARAM + i, Collections.singletonList(readValue));
       } else {
         parameters.put(PARAM + i, parseArray(bufPointer, bytecode, false));
