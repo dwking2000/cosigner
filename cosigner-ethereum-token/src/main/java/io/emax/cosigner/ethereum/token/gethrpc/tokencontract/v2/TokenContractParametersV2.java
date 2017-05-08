@@ -398,7 +398,7 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
       List<String> sigR, List<String> sigS) {
 
     LOGGER.debug("Asked to reconcile: " + Json.stringifyObject(Map.class, addressChanges));
-    
+
     // Contract data
     TokenContractV2 contract = new TokenContractV2();
     String response = contract.getReconcile();
@@ -731,23 +731,23 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
     parameters.put(SENDER, Collections.singletonList(readValue));
 
     // Recipient
-    parameters.put(RECIPIENTS, parseArray(bufPointer, bytecode, false));
+    parameters.put(RECIPIENTS, parseArray(bufPointer, bytecode, false, true));
     bufPointer += paramSize;
 
     // Amount
-    parameters.put(AMOUNT, parseArray(bufPointer, bytecode, true));
+    parameters.put(AMOUNT, parseArray(bufPointer, bytecode, true, true));
     bufPointer += paramSize;
 
     // SigV
-    parameters.put(SIGV, parseArray(bufPointer, bytecode, false));
+    parameters.put(SIGV, parseArray(bufPointer, bytecode, false, true));
     bufPointer += paramSize;
 
     // SigR
-    parameters.put(SIGR, parseArray(bufPointer, bytecode, false));
+    parameters.put(SIGR, parseArray(bufPointer, bytecode, false, true));
     bufPointer += paramSize;
 
     // SigS
-    parameters.put(SIGS, parseArray(bufPointer, bytecode, false));
+    parameters.put(SIGS, parseArray(bufPointer, bytecode, false, true));
 
     return parameters;
   }
@@ -790,25 +790,24 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
           .equalsIgnoreCase(ValueParam)) {
         readValue = bytecode.substring(bufPointer, bufPointer + paramSize);
         bufPointer += paramSize;
-        readValue = ByteUtilities
-            .toHexString(ByteUtilities.toByteArray(readValue));
+        readValue = ByteUtilities.toHexString(ByteUtilities.toByteArray(readValue));
         parameters.put(PARAM + i, Collections.singletonList(readValue));
       } else {
-        parameters.put(PARAM + i, parseArray(bufPointer, bytecode, false));
+        parameters.put(PARAM + i, parseArray(bufPointer, bytecode, false, false));
         bufPointer += paramSize;
       }
     }
 
     // SigV
-    parameters.put(SIGV, parseArray(bufPointer, bytecode, false));
+    parameters.put(SIGV, parseArray(bufPointer, bytecode, false, true));
     bufPointer += paramSize;
 
     // SigR
-    parameters.put(SIGR, parseArray(bufPointer, bytecode, false));
+    parameters.put(SIGR, parseArray(bufPointer, bytecode, false, true));
     bufPointer += paramSize;
 
     // SigS
-    parameters.put(SIGS, parseArray(bufPointer, bytecode, false));
+    parameters.put(SIGS, parseArray(bufPointer, bytecode, false, true));
 
     return parameters;
   }
@@ -851,7 +850,8 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
     return result;
   }
 
-  private List<String> parseArray(int bufPointer, String buffer, boolean decodeToInt) {
+  private List<String> parseArray(int bufPointer, String buffer, boolean decodeToInt,
+      boolean stripLeadingZeros) {
     final int paramSize = 64;
     // Find the location of the array data
     String readValue = buffer.substring(bufPointer, bufPointer + paramSize);
@@ -871,8 +871,9 @@ public class TokenContractParametersV2 extends TokenContractParametersV1 {
     for (int i = 0; i < arraySize; i++) {
       readValue = buffer.substring(arrayPointer, arrayPointer + paramSize);
       arrayPointer += paramSize;
-      readValue = ByteUtilities
-          .toHexString(ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(readValue)));
+      readValue = ByteUtilities.toHexString(stripLeadingZeros ?
+          ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(readValue)) :
+          ByteUtilities.toByteArray(readValue));
 
       // If we want the int value of the hex data
       if (decodeToInt) {
