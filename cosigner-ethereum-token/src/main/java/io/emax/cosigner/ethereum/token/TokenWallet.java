@@ -511,7 +511,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
   @Override
   public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses,
       String options) {
-    String firstSender = fromAddresses.iterator().next();
+    String firstSender =
+        ByteUtilities.toHexString(ByteUtilities.toByteArray(fromAddresses.iterator().next()));
     String contract = storageContractAddress;
     TokenContractInterface txInterface = getContractVersion(firstSender);
     if (txInterface != null && config.useTokenTransferFunction()) {
@@ -520,7 +521,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
     if (txInterface == null && config.useTokenTransferFunction()) {
       Recipient recipient = toAddresses.iterator().next();
 
-      String rcpt = recipient.getRecipientAddress();
+      String rcpt =
+          ByteUtilities.toHexString(ByteUtilities.toByteArray(recipient.getRecipientAddress()));
       BigInteger amount =
           recipient.getAmount().multiply(BigDecimal.TEN.pow((int) config.getDecimalPlaces()))
               .toBigInteger();
@@ -540,7 +542,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
         amounts.add(
             recipient.getAmount().multiply(BigDecimal.TEN.pow((int) config.getDecimalPlaces()))
                 .toBigInteger());
-        recipients.add(recipient.getRecipientAddress());
+        recipients.add(
+            ByteUtilities.toHexString(ByteUtilities.toByteArray(recipient.getRecipientAddress())));
       });
 
       String txCount = ethereumRpc.eth_getStorageAt("0x" + contract.toLowerCase(Locale.US), "0x1",
