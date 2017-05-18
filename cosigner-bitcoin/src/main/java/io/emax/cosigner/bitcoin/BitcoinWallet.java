@@ -577,13 +577,16 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
       for (String accountKey : config.getMultiSigKeys()) {
         if (!accountKey.isEmpty()) {
-          transaction = signedTransaction.getTransaction();
+          //transaction = signedTransaction.getTransaction();
           String msigAddress = BitcoinTools.getPublicAddress(accountKey, true);
-          LOGGER.debug("Attempting to sign with msig address: " + msigAddress);
-          signedTransaction = new SignedTransaction();
-          Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
-          signatureData = signWithPrivateKey(signatureData, accountKey, onlyMatching);
-          signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
+          if (possibleSigners.contains(msigAddress)) {
+            LOGGER.debug("Attempting to sign with msig address: " + msigAddress);
+            LOGGER.debug("Transaction is: " + transaction);
+            signedTransaction = new SignedTransaction();
+            Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
+            signatureData = signWithPrivateKey(signatureData, accountKey, onlyMatching);
+            signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
+          }
         }
       }
     }
@@ -598,11 +601,12 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(), new String[]{});
 
     RawTransaction rawTx = RawTransaction.parse(transaction);
+    LOGGER.debug("Looking for outputs we can sign");
     for (RawInput input : rawTx.getInputs()) {
       for (Outpoint output : outputs) {
-        LOGGER.debug("Looking for outputs we can sign");
         if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
             && output.getOutputIndex() == input.getTxIndex()) {
+          LOGGER.debug("Found input/output match: " + input.getTxHash() + ":" + input.getTxIndex());
           OutpointDetails outpoint = new OutpointDetails();
           outpoint.setTransactionId(output.getTransactionId());
           outpoint.setOutputIndex(output.getOutputIndex());
@@ -613,6 +617,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
             RawTransaction signingTx = RawTransaction.stripInputScripts(rawTx);
             byte[] sigData;
 
+            LOGGER.debug("Found address match: " + address);
             LOGGER.debug("Found an output, matching to inputs in the transaction");
             for (RawInput sigInput : signingTx.getInputs()) {
               if (sigInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
@@ -628,6 +633,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
                     ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(1).toByteArray());
                 hashTypeBytes = ByteUtilities.leftPad(hashTypeBytes, 4, (byte) 0x00);
                 hashTypeBytes = ByteUtilities.flipEndian(hashTypeBytes);
+                LOGGER.debug("Asking to encode: " + signingTx.toString());
                 String sigString = signingTx.encode() + ByteUtilities.toHexString(hashTypeBytes);
                 LOGGER.debug("Signing: " + sigString);
 

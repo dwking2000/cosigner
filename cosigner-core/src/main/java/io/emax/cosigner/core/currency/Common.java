@@ -821,6 +821,7 @@ public class Common {
       cosignerResponse.setResult(response);
       return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     } catch (Exception e) {
+      LOGGER.debug(e.getMessage(), e);
       CosignerResponse cosignerResponse = new CosignerResponse();
       cosignerResponse.setError(e.toString());
       return Json.stringifyObject(CosignerResponse.class, cosignerResponse);

@@ -70,8 +70,8 @@ public class CurrencyCommand implements BaseCommand {
       JsonParser jsonParser = jsonFact.createParser(commandString);
       return new ObjectMapper().readValue(jsonParser, CurrencyCommand.class);
     } catch (IOException e) {
-      LOGGER.warn(null, e);
-      return null;
+      LOGGER.debug("Problem parsing Currency Command, may be another type.");
+      LOGGER.trace(e.getMessage(), e);      return null;
     }
   }
 
