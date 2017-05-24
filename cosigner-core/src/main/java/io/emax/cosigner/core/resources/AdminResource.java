@@ -31,16 +31,17 @@ public class AdminResource {
   /**
    * Add a node to the current cluster.
    *
-   * @param newServer Server information
+   * @param newServerString Server information
    * @return If the server is added, it will return the same data back. Otherwise an appropriate
    * status message is returned.
    */
   @POST
   @Path("/AddNode")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response addNode(Server newServer) {
+  public Response addNode(String newServerString) {
     LOGGER.debug("[AddNode:Request]");
     ClusterInfo cluster = ClusterInfo.getInstance();
+    Server newServer = (Server) Json.objectifyString(Server.class, newServerString);
 
     if (newServer == null) {
       return Response.serverError().build();
@@ -115,7 +116,7 @@ public class AdminResource {
     return Response.ok(response).build();
   }
 
-  @GET
+  @POST
   @Path("/TransactionsEnabled")
   public Response getTransactionState(String currency) {
     if (CosignerApplication.getCurrencies().containsKey(currency)) {

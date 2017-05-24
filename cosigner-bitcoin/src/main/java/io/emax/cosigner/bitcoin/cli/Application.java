@@ -119,9 +119,11 @@ public class Application {
           transaction = args[1];
         }
         if (args.length < 4) {
-          System.out.println(wallet.signTransaction(transaction, address, null, "[\"onlyMatching\"]"));
+          System.out
+              .println(wallet.signTransaction(transaction, address, null, "[\"onlyMatching\"]"));
         } else {
-          System.out.println(wallet.signTransaction(transaction, address, accountName, "[\"onlyMatching\"]"));
+          System.out.println(
+              wallet.signTransaction(transaction, address, accountName, "[\"onlyMatching\"]"));
         }
         break;
       case "getSignersForTransaction":

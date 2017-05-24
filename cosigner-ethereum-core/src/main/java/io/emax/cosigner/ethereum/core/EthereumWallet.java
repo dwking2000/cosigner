@@ -159,7 +159,8 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
               }
               break;
             } catch (Exception e) {
-              LOGGER.warn("Could not process contract data for contract at " + contract + "!", e);
+              LOGGER.warn("Could not process contract data for contract at " + contract + "!");
+              LOGGER.trace(null, e);
               break;
             }
           }
@@ -513,7 +514,8 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
         return addresses;
       } catch (Exception e) {
-        LOGGER.debug("Something went wrong with decoding the contract.", e);
+        LOGGER.debug("Something went wrong with decoding the contract.");
+        LOGGER.trace(null, e);
         return new LinkedList<String>();
       }
     } else {
@@ -929,7 +931,8 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
         }
       }
     } catch (Exception e) {
-      LOGGER.debug("Non-contract tx sent to contract address", e);
+      LOGGER.debug("Non-contract tx sent to contract address");
+      LOGGER.trace(null, e);
     }
 
     try {
@@ -940,7 +943,8 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
               ByteUtilities.toByteArray(EthereumTools
                   .hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes()))))));
     } catch (Exception e) {
-      LOGGER.error("Couldn't determine signer", e);
+      LOGGER.warn("Couldn't determine signer");
+      LOGGER.trace(null, e);
     }
     LOGGER.debug("TX bytes: " + EthereumTools
         .hashKeccak(ByteUtilities.toHexString(decodedTransaction.getSigBytes())));

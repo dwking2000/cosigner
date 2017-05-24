@@ -32,7 +32,7 @@ public class BlockChainInfo {
   private BlockChainName chain;
 
   /**
-   * Highest block available when pruning is enabled on the node
+   * Highest block available when pruning is enabled on the node.
    */
   @JsonProperty("pruneheight")
   private long pruneheight;
@@ -265,8 +265,8 @@ public class BlockChainInfo {
   @Override
   public String toString() {
     return "BlockChainInfo [chain=" + chain + ", blocks=" + blocks + ", pruneheight=" + pruneheight
-            + ", headers=" + headers+ ", bestblockhash=" + bestblockhash + ", difficulty=" + difficulty
-            + ", verificationprogress=" + verificationprogress + ", chainwork=" + chainwork
-            + ", pruned=" + pruned + "]";
+            + ", headers=" + headers + ", bestblockhash=" + bestblockhash + ", difficulty="
+            + difficulty + ", verificationprogress=" + verificationprogress + ", chainwork="
+            + chainwork + ", pruned=" + pruned + "]";
   }
 }

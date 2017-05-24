@@ -138,7 +138,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
 
   @Override
   public String getCurrencySymbol() {
-    return "ETH";
+    return "ETHR";
   }
 
   @Override

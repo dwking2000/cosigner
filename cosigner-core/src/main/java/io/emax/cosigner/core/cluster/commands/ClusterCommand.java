@@ -77,7 +77,8 @@ public class ClusterCommand implements BaseCommand {
       JsonParser jsonParser = jsonFact.createParser(commandString);
       return new ObjectMapper().readValue(jsonParser, ClusterCommand.class);
     } catch (IOException e) {
-      LOGGER.warn(null, e);
+      LOGGER.debug("Problem parsing Cluster Command, may be another type.");
+      LOGGER.trace(e.getMessage(), e);
       return null;
     }
   }

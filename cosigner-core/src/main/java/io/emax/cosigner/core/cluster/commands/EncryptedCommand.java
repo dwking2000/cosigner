@@ -28,6 +28,10 @@ public class EncryptedCommand implements BaseCommand {
   private String iv;
   private long nonce;
 
+  public EncryptedCommand() {
+
+  }
+
   /**
    * Encrypts a command to be sent to the recipient.
    */
@@ -75,6 +79,22 @@ public class EncryptedCommand implements BaseCommand {
     return nonce;
   }
 
+  public void setSender(Server sender) {
+    this.sender = sender;
+  }
+
+  public void setPayload(String payload) {
+    this.payload = payload;
+  }
+
+  public void setIv(String iv) {
+    this.iv = iv;
+  }
+
+  public void setNonce(long nonce) {
+    this.nonce = nonce;
+  }
+
   @Override
   public String toJson() {
     try {
@@ -103,7 +123,8 @@ public class EncryptedCommand implements BaseCommand {
       JsonParser jsonParser = jsonFact.createParser(commandString);
       return new ObjectMapper().readValue(jsonParser, EncryptedCommand.class);
     } catch (IOException e) {
-      LOGGER.warn(null, e);
+      LOGGER.debug("Problem parsing Encrypted Command, may be another type.");
+      LOGGER.trace(e.getMessage(), e);
       return null;
     }
   }

@@ -15,7 +15,6 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.Payment.PaymentCategory;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawInput;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawOutput;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction;
-import io.emax.cosigner.bitcoin.bitcoindrpc.SigHash;
 import io.emax.cosigner.bitcoin.bitcoindrpc.SignedTransaction;
 import io.emax.cosigner.bitcoin.common.BitcoinTools;
 import io.emax.cosigner.common.ByteUtilities;
@@ -88,6 +87,9 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     }
   });
 
+  /**
+   * Creates a Bitcoin wallet object with the given configuration.
+   */
   public BitcoinWallet(BitcoinConfiguration conf) {
     config = conf;
 
@@ -116,10 +118,11 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     String pubKey = BitcoinTools.getPublicKey(privateKey);
     String internalName = PUBKEY_PREFIX + pubKey;
 
-    String[] existingAddresses = bitcoindRpc.getaddressesbyaccount(internalName);
+    String[] existingAddresses;
     boolean oldAddress = true;
 
     while (oldAddress && rounds <= config.getMaxDeterministicAddresses()) {
+      existingAddresses = bitcoindRpc.getaddressesbyaccount(internalName);
       oldAddress = false;
       for (String existingAddress : existingAddresses) {
         if (existingAddress.equalsIgnoreCase(newAddress)) {
@@ -128,6 +131,8 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           privateKey =
               BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
           newAddress = BitcoinTools.getPublicAddress(privateKey, true);
+          pubKey = BitcoinTools.getPublicKey(privateKey);
+          internalName = PUBKEY_PREFIX + pubKey;
           break;
         }
       }
@@ -190,6 +195,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           try {
             generateMultiSigAddress(Collections.singletonList(pubKey), null);
           } catch (Exception e) {
+            LOGGER.debug(null, e);
             LOGGER.info(account + " appears to be an invalid account - ignoring");
           }
         }
@@ -200,6 +206,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   private String generateMultiSigAddress(Iterable<String> addresses, String name) {
+    LOGGER.debug("Attempting to generate msig for " + Json.stringifyObject(List.class, addresses));
     LinkedList<String> multisigAddresses = new LinkedList<>();
     addresses.forEach(address -> {
       // Check if any of the addresses belong to the user
@@ -221,8 +228,12 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       }
 
       if (address.equalsIgnoreCase(userAddress)) {
+        LOGGER.debug(BitcoinTools.getPublicKey(userPrivateKey));
+        LOGGER
+            .debug(BitcoinTools.getPublicAddress(BitcoinTools.getPublicKey(userPrivateKey), false));
         multisigAddresses.add(BitcoinTools.getPublicKey(userPrivateKey));
       } else {
+        LOGGER.debug(BitcoinTools.getPublicAddress(address, false));
         multisigAddresses.add(address);
       }
     });
@@ -239,9 +250,12 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       }
     }
 
+    LOGGER.debug(Json.stringifyObject(List.class, multisigAddresses));
+
     String[] addressArray = new String[multisigAddresses.size()];
     MultiSig newAddress = bitcoindRpc
         .createmultisig(config.getMinSignatures(), multisigAddresses.toArray(addressArray));
+    LOGGER.debug("Msig address found: " + newAddress.getAddress());
     if (name != null && !name.isEmpty()) {
       // Bitcoind refuses to connect the address it has to the p2sh script even when provided.
       // Simplest to just load it, it still doesn't have the private keys.
@@ -286,26 +300,28 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     return balance.toPlainString();
   }
 
-  @Override
-  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
-    return createTransaction(fromAddresses, toAddresses, null);
-  }
-
   private boolean getOption(String options, String option) {
     if (options != null && !options.isEmpty()) {
       try {
-        LinkedList<String> optionList =
-            (LinkedList) Json.objectifyString(LinkedList.class, options);
-        for (String optionPossiblilty : optionList) {
-          if (optionPossiblilty.equalsIgnoreCase(option)) {
-            return true;
+        LinkedList optionList = (LinkedList) Json.objectifyString(LinkedList.class, options);
+        if (optionList != null) {
+          for (Object optionPossiblilty : optionList) {
+            if (((String) optionPossiblilty).equalsIgnoreCase(option)) {
+              return true;
+            }
           }
         }
       } catch (Exception e) {
         LOGGER.debug("Bad options");
+        LOGGER.trace(null, e);
       }
     }
     return false;
+  }
+
+  @Override
+  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
+    return createTransaction(fromAddresses, toAddresses, null);
   }
 
   @Override
@@ -373,9 +389,8 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               // Split fees over all recipients if sender can't cover it.
               BigDecimal individualFees =
                   feeTotal.divide(BigDecimal.valueOf(txnOutput.size()), BigDecimal.ROUND_HALF_UP);
-              txnOutput.forEach((address, amount) -> {
-                txnOutput.put(address, amount.subtract(individualFees));
-              });
+              txnOutput.forEach(
+                  (address, amount) -> txnOutput.put(address, amount.subtract(individualFees)));
               if (subTotal.compareTo(BigDecimal.ZERO) > 0) {
                 LOGGER.debug("We have change: " + subTotal.toPlainString());
                 txnOutput.put(fromAddress.iterator().next(), subTotal);
@@ -414,7 +429,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       String decodedAddress = BitcoinTools.decodeAddress(address);
       LOGGER.debug("Decoded address: " + decodedAddress);
       byte[] addressBytes = ByteUtilities.toByteArray(decodedAddress);
-      String scriptData = "";
+      String scriptData;
       if (!BitcoinTools.isMultiSigAddress(address)) {
         // Regular address
         scriptData = "76a914";
@@ -451,13 +466,38 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           LOGGER.debug("Found match: " + output.getTransactionId());
 
           String redeemScript = multiSigRedeemScripts.get(output.getAddress());
-          LOGGER.debug("Found redeem script: " + redeemScript);
-          Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
-          LOGGER.debug("Got public keys: " + publicKeys.toString());
-          publicKeys.forEach(key -> addresses.add(BitcoinTools.getPublicAddress(key, false)));
+          if (redeemScript != null) {
+            LOGGER.debug("Found redeem script: " + redeemScript);
+            Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
+            LOGGER.debug("Got public keys: " + publicKeys.toString());
+            publicKeys.forEach(key -> addresses.add(BitcoinTools.getPublicAddress(key, false)));
+          } else {
+            String address = RawTransaction.decodePubKeyScript(output.getScriptPubKey());
+            if (address != null) {
+              LOGGER.debug("Found pubkey script");
+              addresses.add(address);
+            } else {
+              LOGGER.debug("Unable to parse input " + input.getTxHash());
+            }
+          }
         }
       }
     });
+    return addresses;
+  }
+
+  private Iterable<String> getSignersForAddress(String address) {
+    LinkedList<String> addresses = new LinkedList<>();
+    String redeemScript = multiSigRedeemScripts.get(address);
+    if (redeemScript != null) {
+      LOGGER.debug("Found redeem script: " + redeemScript);
+      Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
+      LOGGER.debug("Got public keys: " + publicKeys.toString());
+      publicKeys.forEach(key -> addresses.add(BitcoinTools.getPublicAddress(key, false)));
+    } else {
+      addresses.add(address);
+    }
+
     return addresses;
   }
 
@@ -486,11 +526,14 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       onlyMatching = true;
     }
 
+    LinkedList<String> possibleSigners = new LinkedList<>();
+    getSignersForAddress(address).forEach(possibleSigners::add);
     if (name != null) {
       LOGGER.debug("User key has value, trying to determine private key");
       privateKey =
           BitcoinTools.getDeterministicPrivateKey(name, config.getServerPrivateKey(), rounds);
       userAddress = BitcoinTools.getPublicAddress(privateKey, true);
+
       while (!(userAddress != null && userAddress.equalsIgnoreCase(address))
           && !generateMultiSigAddress(Collections.singletonList(userAddress), name)
           .equalsIgnoreCase(address) && rounds < config.getMaxDeterministicAddresses()) {
@@ -516,23 +559,34 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       signatureData = signWithPrivateKey(signatureData, privateKey, onlyMatching);
       signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
     } else {
-      try {
-        LOGGER.debug("Asking bitcoind to sign...");
-        signedTransaction =
-            bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[]{}, null, SigHash.ALL);
-      } catch (Exception e) {
-        signedTransaction = new SignedTransaction();
-        signedTransaction.setTransaction(transaction);
-      }
+      /* TODO If bitcoind cannot sign, it adds a 0 signature to the script which will
+              cause CHECKSIG to fail. Ideally we should be looking for this and just falling back
+              to the original TX if it's there. For now, we're assuming anyone using this wouldn't
+              store their keys in an unlocked bitcoind wallet so it is commented out.
+
+              Eventually this will be moved into more generic 3rd-party signer logic.
+      */
+      // try {
+      //  LOGGER.debug("Asking bitcoind to sign...");
+      //  signedTransaction =
+      //  bitcoindRpc.signrawtransaction(transaction, new OutpointDetails[]{}, null, SigHash.ALL);
+      // } catch (Exception e) {
+      signedTransaction = new SignedTransaction();
+      signedTransaction.setTransaction(transaction);
+      // }
 
       for (String accountKey : config.getMultiSigKeys()) {
         if (!accountKey.isEmpty()) {
-          transaction = signedTransaction.getTransaction();
-          address = BitcoinTools.getPublicAddress(accountKey, true);
-          signedTransaction = new SignedTransaction();
-          Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
-          signatureData = signWithPrivateKey(signatureData, accountKey, onlyMatching);
-          signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
+          //transaction = signedTransaction.getTransaction();
+          String msigAddress = BitcoinTools.getPublicAddress(accountKey, true);
+          if (possibleSigners.contains(msigAddress)) {
+            LOGGER.debug("Attempting to sign with msig address: " + msigAddress);
+            LOGGER.debug("Transaction is: " + transaction);
+            signedTransaction = new SignedTransaction();
+            Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
+            signatureData = signWithPrivateKey(signatureData, accountKey, onlyMatching);
+            signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
+          }
         }
       }
     }
@@ -547,11 +601,12 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         .listunspent(config.getMinConfirmations(), config.getMaxConfirmations(), new String[]{});
 
     RawTransaction rawTx = RawTransaction.parse(transaction);
+    LOGGER.debug("Looking for outputs we can sign");
     for (RawInput input : rawTx.getInputs()) {
       for (Outpoint output : outputs) {
-        LOGGER.debug("Looking for outputs we can sign");
         if (output.getTransactionId().equalsIgnoreCase(input.getTxHash())
             && output.getOutputIndex() == input.getTxIndex()) {
+          LOGGER.debug("Found input/output match: " + input.getTxHash() + ":" + input.getTxIndex());
           OutpointDetails outpoint = new OutpointDetails();
           outpoint.setTransactionId(output.getTransactionId());
           outpoint.setOutputIndex(output.getOutputIndex());
@@ -562,6 +617,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
             RawTransaction signingTx = RawTransaction.stripInputScripts(rawTx);
             byte[] sigData;
 
+            LOGGER.debug("Found address match: " + address);
             LOGGER.debug("Found an output, matching to inputs in the transaction");
             for (RawInput sigInput : signingTx.getInputs()) {
               if (sigInput.getTxHash().equalsIgnoreCase(outpoint.getTransactionId())
@@ -577,6 +633,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
                     ByteUtilities.stripLeadingNullBytes(BigInteger.valueOf(1).toByteArray());
                 hashTypeBytes = ByteUtilities.leftPad(hashTypeBytes, 4, (byte) 0x00);
                 hashTypeBytes = ByteUtilities.flipEndian(hashTypeBytes);
+                LOGGER.debug("Asking to encode: " + signingTx.toString());
                 String sigString = signingTx.encode() + ByteUtilities.toHexString(hashTypeBytes);
                 LOGGER.debug("Signing: " + sigString);
 
@@ -599,6 +656,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         }
       }
     }
+    LOGGER.debug(Json.stringifyObject(Iterable.class, signatureData));
     return signatureData;
   }
 
@@ -679,6 +737,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       signatures.add(signatureResults);
 
     }
+    LOGGER.debug(Json.stringifyObject(Iterable.class, signatures));
     return signatures;
   }
 
@@ -699,13 +758,18 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
       // Determine how we need to format the sig data
       if (BitcoinTools.isMultiSigAddress(address)) {
+        LOGGER.debug("Merging multi-sig signatures");
+        LOGGER.debug("Original TX: " + transaction);
         for (RawInput signedInput : rawTx.getInputs()) {
           if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer
               .toString(signedInput.getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
+            LOGGER.debug("Merging signatures for: " + signedTxHash + ":" + signedTxIndex);
             // Merge the new signature with existing ones.
+            LOGGER.debug("Unstripped: " + signedInput.getScript());
             signedInput.stripMultiSigRedeemScript(signedTxRedeemScript);
-
             String scriptData = signedInput.getScript();
+            LOGGER.debug("Stripped: " + signedInput.getScript());
+
             if (scriptData.isEmpty()) {
               scriptData += "00";
             }
@@ -725,6 +789,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           }
         }
       } else {
+        LOGGER.debug("Single sign tx");
         for (RawInput signedInput : rawTx.getInputs()) {
           if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer
               .toString(signedInput.getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
@@ -846,7 +911,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
       LinkedList<TransactionDetails> removeThese = new LinkedList<>();
       for (TransactionDetails detail : txDetails) {
-        boolean noMatch = false;
+        boolean noMatch = true;
         for (String from : Arrays.asList(detail.getFromAddress())) {
           boolean subMatch = false;
           for (String to : Arrays.asList(detail.getToAddress())) {
@@ -855,19 +920,20 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               break;
             }
           }
-          if (!subMatch) {
-            noMatch = true;
+          if (subMatch) {
+            noMatch = false;
             break;
           }
         }
 
         // If the from & to's match then it's just a return amount, simpler if we don't list it.
         if (!noMatch) {
+          LOGGER.debug(Json.stringifyObject(TransactionDetails.class, detail));
           removeThese.add(detail);
         }
       }
 
-      removeThese.forEach(txDetails::remove);
+      txDetails.removeAll(removeThese);
 
       pageNumber++;
     }
@@ -889,9 +955,12 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     tx.getInputs().forEach(input -> {
       String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
       RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
-      String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
+      String script = senderTx.getOutputCount() > input.getTxIndex() ?
+          senderTx.getOutputs().get(input.getTxIndex()).getScript() : null;
       String scriptAddress = RawTransaction.decodePubKeyScript(script);
-      senders.add(scriptAddress);
+      if (scriptAddress != null) {
+        senders.add(scriptAddress);
+      }
     });
 
     Set<String> recipients = new HashSet<>();
@@ -933,14 +1002,15 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
     LinkedList<String> senders = new LinkedList<>();
     LinkedList<String> recipients = new LinkedList<>();
-    ArrayList<Map<String, Object>> txd = (ArrayList<Map<String, Object>>) txData.get("details");
-    txd.forEach((txdMap) -> {
+    ArrayList txd = (ArrayList) txData.get("details");
+    for (Object txdObject : txd) {
+      Map txdMap = (Map) txdObject;
       if (txdMap.get("category").toString().equalsIgnoreCase("send")) {
         senders.add(txdMap.get("address").toString());
       } else if (txdMap.get("category").toString().equalsIgnoreCase("receive")) {
         recipients.add(txdMap.get("address").toString());
       }
-    });
+    }
 
     txDetail.setFromAddress(senders.toArray(new String[senders.size()]));
     txDetail.setToAddress(recipients.toArray(new String[recipients.size()]));
@@ -951,7 +1021,9 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   @Override
   public ServerStatus getWalletStatus() {
     try {
-      bitcoindRpc.getblockchaininfo().getChain();
+      // This will throw an exception on no response/connection.
+      LOGGER.debug(
+          "Wallet status detected chain: " + bitcoindRpc.getblockchaininfo().getChain().name());
       return ServerStatus.CONNECTED;
     } catch (Exception e) {
       return ServerStatus.DISCONNECTED;

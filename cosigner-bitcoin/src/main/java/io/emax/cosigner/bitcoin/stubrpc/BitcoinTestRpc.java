@@ -18,6 +18,9 @@ import io.emax.cosigner.common.ByteUtilities;
 import org.joda.time.DateTime;
 
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,7 +77,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public String addmultisigaddress(int nrequired, String[] keys, String account) {
-    return null;
+    return account;
   }
 
   @Override
@@ -92,7 +95,7 @@ public class BitcoinTestRpc implements BitcoindRpc {
 
   @Override
   public String getnewaddress(String accountName) {
-    return null;
+    return accountName;
   }
 
   @Override
@@ -129,11 +132,36 @@ public class BitcoinTestRpc implements BitcoindRpc {
   @Override
   public Payment[] listtransactions(String account, int numberToReturn, int numberToSkip,
       boolean includeWatchOnly) {
-    return new Payment[]{};
+    if (numberToSkip != 0) {
+      return new Payment[]{};
+    }
+
+    Payment payment = new Payment();
+    payment.setAccount(account);
+    payment.setAddress(new BitcoinWallet(new BitcoinConfiguration()).createAddress("deadbeef"));
+    payment.setAmount(BigDecimal.valueOf(27.3));
+    payment.setBlockhash("deadbeef");
+    payment.setTxid("deadbeef");
+    payment.setBlocktime(Date.from(Instant.now()));
+    payment.setCategory(Payment.PaymentCategory.receive);
+    payment.setTo("deadbeef");
+    return new Payment[]{payment};
   }
 
   @Override
   public Map<String, Object> gettransaction(String txid, boolean includeWatchOnly) {
+    if (txid.equalsIgnoreCase("deadbeef")) {
+      Map<String, Object> txMap = new HashMap<>();
+      txMap.put("txid", "deadbeef");
+      txMap.put("confirmations", 18);
+      txMap.put("amount", "23.1");
+      txMap.put("blocktime", (int) Instant.now().getEpochSecond());
+      txMap.put("category", "send");
+      txMap.put("address", new BitcoinWallet(new BitcoinConfiguration()).createAddress("deadbeef"));
+      txMap.put("details", new ArrayList<Map<String, Object>>());
+      return txMap;
+    }
+
     return null;
   }
 }

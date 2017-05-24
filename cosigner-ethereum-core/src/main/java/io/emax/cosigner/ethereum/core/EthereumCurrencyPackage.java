@@ -1,10 +1,11 @@
 package io.emax.cosigner.ethereum.core;
 
+import io.emax.cosigner.api.core.CurrencyPackageInterface;
 import io.emax.cosigner.api.currency.CurrencyConfiguration;
 import io.emax.cosigner.api.currency.Monitor;
 import io.emax.cosigner.api.currency.Wallet;
 
-public class EthereumCurrencyPackage {
+public class EthereumCurrencyPackage implements CurrencyPackageInterface {
   private EthereumConfiguration ethereumConfiguration = new EthereumConfiguration();
   private EthereumWallet ethereumWallet = null;
   private EthereumMonitor ethereumMonitor = null;

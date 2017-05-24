@@ -63,9 +63,9 @@ public interface RawTransactionRpc {
    *                      user including a change address to return most of the difference back to
    *                      themselves
    * @return If the transaction was accepted by the node for broadcast, this will be the TXID of the
-   * transaction encoded as hex in RPC byte order. If the transaction was rejected by the node, this
-   * will set to null, the JSON-RPC error field will be set to a code, and the JSON-RPC message
-   * field may contain an informative error message
+   *         transaction encoded as hex in RPC byte order. If the transaction was rejected by the
+   *         node, this will set to null, the JSON-RPC error field will be set to a code, and the
+   *         JSON-RPC message field may contain an informative error message
    */
   @JsonRpcMethod("sendrawtransaction")
   String sendrawtransaction(String transaction, boolean allowHighFees);

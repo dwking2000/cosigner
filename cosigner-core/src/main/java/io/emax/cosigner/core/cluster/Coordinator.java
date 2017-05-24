@@ -76,12 +76,15 @@ public class Coordinator {
 
       Thread responderThread = new Thread(() -> {
         while (true) {
+          // TODO Decoding command types causes JSON parsing exceptions, lower the log level for
+          // those to debug/trace
+          // TODO Encrypted commands appear to be breaking during sign requests.
           try {
             String commandString = responder.recvStr();
 
             // Try to decode it as one of the known command types
             if (commandString == null || commandString.isEmpty()) {
-              return;
+              continue;
             }
             LOGGER.debug("Got a remote command: " + commandString);
 
@@ -99,18 +102,18 @@ public class Coordinator {
             if (currencyCommand != null) {
               LOGGER.debug("Command is a CurrencyCommand");
               responder.send(CurrencyCommand.handleCommand(currencyCommand));
-              return;
+              continue;
             }
 
             ClusterCommand clusterCommand = ClusterCommand.parseCommandString(commandString);
             if (clusterCommand != null) {
               LOGGER.debug("Command is a ClusterCommand");
               responder.send(Boolean.toString(ClusterCommand.handleCommand(clusterCommand)));
-              return;
+              continue;
             }
 
             // Catch-all
-            LOGGER.debug("Command isn't valid.");
+            LOGGER.warn("Command isn't valid.");
             responder.send("Invalid command format");
           } catch (Exception e) {
             LOGGER.debug("Responder Exception", e);
