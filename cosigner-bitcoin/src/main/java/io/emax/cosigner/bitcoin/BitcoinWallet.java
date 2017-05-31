@@ -301,13 +301,28 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   private boolean getOption(String options, String option) {
+    if (getOptionValue(options, option) != null) {
+      return true;
+    }
+    return false;
+  }
+
+  private String getOptionValue(String options, String option) {
     if (options != null && !options.isEmpty()) {
       try {
+        option = option.toLowerCase();
         LinkedList optionList = (LinkedList) Json.objectifyString(LinkedList.class, options);
         if (optionList != null) {
           for (Object optionPossiblilty : optionList) {
-            if (((String) optionPossiblilty).equalsIgnoreCase(option)) {
-              return true;
+            String possibleString = (String) optionPossiblilty;
+            possibleString = possibleString.toLowerCase();
+            if (possibleString.contains(option)) {
+              String[] possibleValues = possibleString.split(":");
+              if (possibleValues.length >= 2) {
+                return possibleValues[1];
+              } else {
+                return "";
+              }
             }
           }
         }
@@ -316,7 +331,19 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         LOGGER.trace(null, e);
       }
     }
-    return false;
+    return null;
+  }
+
+  private Long getOptionValueLong(String options, String option) {
+    String optionValue = getOptionValue(options, option);
+    try {
+      Long parseValue = Long.parseLong(optionValue);
+      return parseValue;
+    } catch (Exception e) {
+      LOGGER.debug("Problem Reading long value for " + option);
+      LOGGER.trace(null, e);
+      return null;
+    }
   }
 
   @Override
@@ -330,6 +357,11 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     boolean includeFees = false;
     if (getOption(options, "includeFees")) {
       includeFees = true;
+    }
+    int feeIntRate = config.getSatoshiPerByteFee();
+    Long optionFeeRate = getOptionValueLong(options, "feeRate");
+    if (optionFeeRate != null) {
+      feeIntRate = optionFeeRate.intValue();
     }
 
     List<String> fromAddresses = new LinkedList<>();
@@ -369,8 +401,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           // round up to the nearest KB.
           LOGGER.debug("Estimated tx size: " + byteSize);
           byteSize = (int) Math.ceil(((double) byteSize) / 1000);
-          BigDecimal feeRate = BigDecimal.valueOf(config.getSatoshiPerByteFee())
-              .setScale(8, BigDecimal.ROUND_HALF_UP);
+          BigDecimal feeRate = BigDecimal.valueOf(feeIntRate).setScale(8, BigDecimal.ROUND_HALF_UP);
           feeRate = feeRate.divide(BigDecimal.valueOf(100000000), BigDecimal.ROUND_HALF_UP);
           BigDecimal fees = BigDecimal.valueOf((double) byteSize).multiply(feeRate);
           LOGGER.debug("Expecting fees of: " + fees.toPlainString());
