@@ -369,8 +369,10 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           // round up to the nearest KB.
           LOGGER.debug("Estimated tx size: " + byteSize);
           byteSize = (int) Math.ceil(((double) byteSize) / 1000);
-          BigDecimal fees =
-              BigDecimal.valueOf((double) byteSize).multiply(BigDecimal.valueOf(0.0001));
+          BigDecimal feeRate = BigDecimal.valueOf(config.getSatoshiPerByteFee())
+              .setScale(8, BigDecimal.ROUND_HALF_UP);
+          feeRate = feeRate.divide(BigDecimal.valueOf(100000000), BigDecimal.ROUND_HALF_UP);
+          BigDecimal fees = BigDecimal.valueOf((double) byteSize).multiply(feeRate);
           LOGGER.debug("Expecting fees of: " + fees.toPlainString());
           // Only set a change address if there's change.
           if (!includeFees && subTotal.compareTo(fees) > 0) {

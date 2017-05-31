@@ -19,6 +19,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   private int minConfirmations = 6;
   private int maxConfirmations = 9999999;
   private int minSignatures = 1;
+  private int satoshiPerByteFee = 10;
   private String[] multiSigKeys = {};
   private String[] multiSigAccounts = {};
   private int maxDeterministicAddresses = 100;
@@ -70,6 +71,9 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
 
         // maxConfirmations
         maxConfirmations = getIntProp(cosignerProperties, "maxConfirmations", maxConfirmations);
+
+        // satoshiPerByteFee
+        satoshiPerByteFee = getIntProp(cosignerProperties, "satoshiPerByteFee", satoshiPerByteFee);
 
         // multiSigKeys
         String arrayParser = EnvironmentVariableParser
@@ -156,6 +160,10 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
 
   public int getMinSignatures() {
     return minSignatures;
+  }
+
+  public int getSatoshiPerByteFee() {
+    return satoshiPerByteFee;
   }
 
   @Override
