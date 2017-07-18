@@ -97,6 +97,14 @@ public class AdminConnector {
     restPostRequest("/admin/LoadEthToken", tokenSymbol);
   }
 
+  public void disableTransactions(String currency) {
+    restPostRequest("/admin/DisableTransactions", currency);
+  }
+
+  public void enableTransactions(String currency) {
+    restPostRequest("/admin/EnableTransactions", currency);
+  }
+
   public Map<String, Map<String, String>> getConfigurations() {
     return (HashMap) Json
         .objectifyString(HashMap.class, restGetRequest("/admin/GetConfigurations"));
