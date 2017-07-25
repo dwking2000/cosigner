@@ -599,7 +599,7 @@ contract TokenStorageContract {
   function balanceOf(address _owner) constant returns(uint256 balance) {
     if (_owner == admin) {
       TokenContract child = TokenContract(tokenContract);
-      return max(0, (child.balanceOf(this) > totalBalance) ? 0 : child.balanceOf(this) - totalBalance) +
+      return max(0, (child.balanceOf(this) < totalBalance) ? 0 : child.balanceOf(this) - totalBalance) +
         balances[_owner];
     } else {
       return balances[_owner];
