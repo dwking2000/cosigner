@@ -116,6 +116,22 @@ public class Application {
           System.out.println(wallet.signTransaction(transaction, address, accountName));
         }
         break;
+      case "signTransactionWithKey":
+        if (args.length == 4) {
+          accountName = args[3];
+        }
+        if (args.length >= 3) {
+          address = args[2];
+        }
+        if (args.length >= 2) {
+          transaction = args[1];
+        }
+        Iterable<Iterable<String>> sigData;
+        sigData = wallet.getSigString(transaction, address);
+        sigData = wallet.signTx(sigData, null, accountName);
+        transaction = wallet.applySignature(transaction, address, sigData);
+        System.out.println(transaction);
+        break;
       case "sendTransaction":
         if (args.length >= 2) {
           transaction = args[1];

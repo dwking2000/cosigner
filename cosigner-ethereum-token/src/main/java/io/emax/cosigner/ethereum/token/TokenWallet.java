@@ -840,7 +840,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
-    filterParams.put("fromBlock", "0x00");
+    filterParams.put("fromBlock", "0x0");
     filterParams.put("toBlock", "latest");
     filterParams.put("address", "0x" + storageContractAddress);
     LinkedList<String> functionTopics = new LinkedList<>();
@@ -931,7 +931,7 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
 
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
-    filterParams.put("fromBlock", "0x00");
+    filterParams.put("fromBlock", "0x0");
     filterParams.put("toBlock", "latest");
     filterParams.put("address", "0x" + storageContractAddress);
     LinkedList<String> functionTopics = new LinkedList<>();
