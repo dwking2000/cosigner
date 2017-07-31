@@ -390,7 +390,6 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         if (recipients.hasNext()) {
           recipient = recipients.next();
         } else {
-          // 0.0001 BTC * 1000 Bytes suggested by spec
           int byteSize = 0;
           // inputs for normal TXs should only be ~181 bytes
           byteSize += usedOutputs.size() * 181;
@@ -398,9 +397,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           byteSize += (txnOutput.size() + 1) * 34;
           // tx overhead should be ~10 bytes
           byteSize += 10;
-          // round up to the nearest KB.
           LOGGER.debug("Estimated tx size: " + byteSize);
-          byteSize = (int) Math.ceil(((double) byteSize) / 1000);
           BigDecimal feeRate = BigDecimal.valueOf(feeIntRate).setScale(8, BigDecimal.ROUND_HALF_UP);
           feeRate = feeRate.divide(BigDecimal.valueOf(100000000), BigDecimal.ROUND_HALF_UP);
           BigDecimal fees = BigDecimal.valueOf((double) byteSize).multiply(feeRate);
