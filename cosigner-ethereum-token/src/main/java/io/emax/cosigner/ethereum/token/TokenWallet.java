@@ -259,6 +259,8 @@ public class TokenWallet implements Wallet, OfflineWallet, CurrencyAdmin {
             // Wait for receipt
             txId = sendTransaction(rawTx);
             waitForReceipt(txId);
+          } else {
+            tokenContractAddress = config.getTokenContractAddress();
           }
 
           // Work around for invalid token configuration when running on the ether version
