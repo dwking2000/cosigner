@@ -70,7 +70,7 @@ public class AdminApplication {
           stringInput = args[1];
         }
         adminConnection.loadEthToken(stringInput);
-        System.out.println("Loaded eth token [" + stringInput + "]");
+        System.out.println("Loaded eth tokenstorage [" + stringInput + "]");
         break;
       case "GetChainHeight":
         if (args.length >= 2) {

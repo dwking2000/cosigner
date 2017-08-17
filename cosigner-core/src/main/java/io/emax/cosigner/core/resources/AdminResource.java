@@ -9,7 +9,7 @@ import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
 import io.emax.cosigner.core.cluster.commands.ClusterCommand;
 import io.emax.cosigner.core.cluster.commands.ClusterCommandType;
-import io.emax.cosigner.ethereum.token.CurrencyConfigurations.GenericCurrencyPackage;
+import io.emax.cosigner.ethereum.tokenstorage.currencyconfigurations.GenericCurrencyPackage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
