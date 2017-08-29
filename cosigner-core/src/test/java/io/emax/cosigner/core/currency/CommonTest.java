@@ -11,7 +11,7 @@ import io.emax.cosigner.common.Json;
 import io.emax.cosigner.core.CosignerApplication;
 import io.emax.cosigner.ethereum.core.EthereumResource;
 import io.emax.cosigner.ethereum.core.stubrpc.EthereumTestRpc;
-import io.emax.cosigner.ethereum.token.CurrencyConfigurations.EthCurrencyPackage;
+import io.emax.cosigner.ethereum.tokenstorage.currencyconfigurations.EthCurrencyPackage;
 
 import org.junit.Assert;
 import org.junit.Before;
