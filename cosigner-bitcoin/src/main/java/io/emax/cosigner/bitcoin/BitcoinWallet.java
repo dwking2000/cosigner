@@ -788,9 +788,17 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
       // Determine how we need to format the sig data
       if (BitcoinTools.isMultiSigAddress(address)) {
+        // TODO Check that each new signature isn't for an existing address
+        // TODO Re-order the signatures to match the script
         LOGGER.debug("Merging multi-sig signatures");
         LOGGER.debug("Original TX: " + transaction);
         for (RawInput signedInput : rawTx.getInputs()) {
+          // Prevent adding more signatures than are required, OP_CHECKMULTISIG doesn't play nice with that
+          // TODO Get the minimum number from the script instead of the config.
+          if(signedInput.numberOfSigners(signedTxRedeemScript) >= config.getMinSignatures()) {
+            LOGGER.debug("Minimum number of signers met, not merging any new signatures");
+            break;
+          }
           if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer
               .toString(signedInput.getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
             LOGGER.debug("Merging signatures for: " + signedTxHash + ":" + signedTxIndex);
@@ -890,10 +898,19 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               tx.getInputs().forEach(input -> {
                 try {
                   String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
-                  RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
-                  String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
-                  String scriptAddress = RawTransaction.decodePubKeyScript(script);
-                  senders.add(scriptAddress);
+                  Map<String, Object> decodedSenderTx =
+                      bitcoindRpc.decoderawtransaction(rawSenderTx);
+                  ArrayList workingSenderArray = (ArrayList) decodedSenderTx.get("vout");
+                  workingSenderArray.forEach(vout -> {
+                    Map scriptPubKey = (Map) ((Map) vout).get("scriptPubKey");
+                    ArrayList addresses = (ArrayList) scriptPubKey.get("addresses");
+                    if (addresses == null) {
+                      return;
+                    }
+                    addresses.forEach(senderAddress -> {
+                      senders.add((String) senderAddress);
+                    });
+                  });
                 } catch (Exception e) {
                   LOGGER.debug(null, e);
                   senders.add(null);

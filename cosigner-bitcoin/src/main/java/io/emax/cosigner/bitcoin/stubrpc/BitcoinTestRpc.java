@@ -76,6 +76,11 @@ public class BitcoinTestRpc implements BitcoindRpc {
   }
 
   @Override
+  public Map<String, Object> decoderawtransaction(String transaction) {
+    return null;
+  }
+
+  @Override
   public String addmultisigaddress(int nrequired, String[] keys, String account) {
     return account;
   }

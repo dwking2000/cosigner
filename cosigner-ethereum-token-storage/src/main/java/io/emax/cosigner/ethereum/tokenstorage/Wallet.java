@@ -419,9 +419,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
 
   @Override
   public long getLastBlockTime() {
-    BigInteger latestBlockNumber =
-        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
-    Block block = ethereumRpc.eth_getBlockByNumber(latestBlockNumber.toString(), true);
+    Block block = ethereumRpc.eth_getBlockByNumber(DefaultBlock.LATEST.getValue(), true);
     BigInteger dateConverter = new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
     return dateConverter.longValue();
   }

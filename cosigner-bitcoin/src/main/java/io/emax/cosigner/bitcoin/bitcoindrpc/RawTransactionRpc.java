@@ -93,4 +93,6 @@ public interface RawTransactionRpc {
   SignedTransaction signrawtransaction(String transaction, OutpointDetails[] outputs,
       String[] privateKeys, SigHash sigHash);
 
+  @JsonRpcMethod("decoderawtransaction")
+  Map<String, Object> decoderawtransaction(String transaction);
 }

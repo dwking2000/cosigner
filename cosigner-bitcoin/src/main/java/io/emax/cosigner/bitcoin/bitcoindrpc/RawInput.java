@@ -3,10 +3,14 @@ package io.emax.cosigner.bitcoin.bitcoindrpc;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.cosigner.common.ByteUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigInteger;
 import java.util.LinkedList;
 
 public final class RawInput {
+  private static final Logger LOGGER = LoggerFactory.getLogger(RawInput.class);
   private String txHash;
   private int txIndex;
   private long scriptSize = 0;
@@ -233,6 +237,7 @@ public final class RawInput {
       }
     }
 
+    LOGGER.debug("Rebuilding script with stack: " + stackItems);
     StringBuilder myScriptString = new StringBuilder();
     for (String item : stackItems) {
       byte[] itemBytes = ByteUtilities.toByteArray(item);
@@ -242,5 +247,28 @@ public final class RawInput {
     }
 
     setScript(myScriptString.toString());
+  }
+
+  /**
+   * Returns the number of signatures already on the redeemscript.
+   */
+  public int numberOfSigners(String redeemScript) {
+    LinkedList<String> stackItems = new LinkedList<>();
+    byte[] myScript = ByteUtilities.toByteArray(getScript());
+    int bufferPointer = 0;
+    VariableInt stackItemSize;
+    String stackItem;
+    while (bufferPointer < myScript.length) {
+      stackItemSize = RawTransaction.readVariableStackInt(myScript, bufferPointer);
+      bufferPointer += stackItemSize != null ? stackItemSize.getSize() : 0;
+      stackItem = ByteUtilities.toHexString(ByteUtilities.readBytes(myScript, bufferPointer,
+          (int) (stackItemSize != null ? stackItemSize.getValue() : 0)));
+      bufferPointer += stackItemSize != null ? stackItemSize.getValue() : 0;
+      if (!stackItem.equalsIgnoreCase(redeemScript) && stackItem != null && !stackItem.isEmpty()) {
+        stackItems.add(stackItem);
+      }
+    }
+
+    return stackItems.size();
   }
 }
