@@ -185,6 +185,23 @@ public class Secp256k1 {
     return new byte[0];
   }
 
+  public boolean verifySignature(byte[] sigR, byte sigS[], byte[] publicKey, byte[] message) {
+    try {
+      Security.addProvider(new BouncyCastleProvider());
+      ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec(SECP256K1);
+      ECDomainParameters domain = new ECDomainParameters(spec.getCurve(), spec.getG(), spec.getN());
+      ECPublicKeyParameters publicKeyParams =
+          new ECPublicKeyParameters(spec.getCurve().decodePoint(publicKey), domain);
+
+      ECDSASigner signer = new ECDSASigner();
+      signer.init(false, publicKeyParams);
+      return signer.verifySignature(message, new BigInteger(1, sigR), new BigInteger(1, sigS));
+    } catch (Exception e) {
+      LOGGER.error(null, e);
+      return false;
+    }
+  }
+
   /**
    * Generate a shared AES key using ECDH.
    */

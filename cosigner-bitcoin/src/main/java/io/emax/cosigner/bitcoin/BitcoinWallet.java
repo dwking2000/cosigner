@@ -573,6 +573,10 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         userAddress = BitcoinTools.getPublicAddress(privateKey, true);
       }
 
+      // If running from the library we need to build the signers after determining the multi-sig script
+      possibleSigners.clear();
+      getSignersForAddress(address).forEach(possibleSigners::add);
+
       // If we hit max addresses/user bail out
       if (!(userAddress != null && userAddress.equalsIgnoreCase(address))
           && !generateMultiSigAddress(Collections.singletonList(userAddress), name)
@@ -588,6 +592,25 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
       signatureData = signWithPrivateKey(signatureData, privateKey, onlyMatching);
       signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
+
+      // Sign with any multi-sig keys.
+      for (String accountKey : config.getMultiSigKeys()) {
+        if (!accountKey.isEmpty()) {
+          //transaction = signedTransaction.getTransaction();
+          String msigAddress = BitcoinTools.getPublicAddress(accountKey, true);
+          LOGGER.debug("[Checking if we can sign with] " + msigAddress);
+          LOGGER.debug("[Possible Signers] " + possibleSigners);
+          if (possibleSigners.contains(msigAddress)) {
+            transaction = signedTransaction.getTransaction();
+            LOGGER.debug("Attempting to sign with msig address: " + msigAddress);
+            LOGGER.debug("Transaction is: " + transaction);
+            signedTransaction = new SignedTransaction();
+            signatureData = getSigString(transaction, address);
+            signatureData = signWithPrivateKey(signatureData, accountKey, onlyMatching);
+            signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
+          }
+        }
+      }
     } else {
       /* TODO If bitcoind cannot sign, it adds a 0 signature to the script which will
               cause CHECKSIG to fail. Ideally we should be looking for this and just falling back
@@ -609,7 +632,10 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         if (!accountKey.isEmpty()) {
           //transaction = signedTransaction.getTransaction();
           String msigAddress = BitcoinTools.getPublicAddress(accountKey, true);
+          LOGGER.debug("[Checking if we can sign with] " + msigAddress);
+          LOGGER.debug("[Possible Signers] " + possibleSigners);
           if (possibleSigners.contains(msigAddress)) {
+            transaction = signedTransaction.getTransaction();
             LOGGER.debug("Attempting to sign with msig address: " + msigAddress);
             LOGGER.debug("Transaction is: " + transaction);
             signedTransaction = new SignedTransaction();
@@ -776,12 +802,14 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       Iterable<Iterable<String>> signatureData) {
     Iterator<Iterable<String>> signatures = signatureData.iterator();
     RawTransaction rawTx = RawTransaction.parse(transaction);
+    LOGGER.debug("[raw tx deocded]: " + rawTx.toString());
     while (signatures.hasNext()) {
       Iterable<String> signature = signatures.next();
       Iterator<String> sigDataIterator = signature.iterator();
       rawTx = RawTransaction.parse(transaction);
       String signedTxHash = sigDataIterator.next();
       String signedTxIndex = sigDataIterator.next();
+      // TODO This needs a new name, it's the unsigned redeemScript, from the Signed TX...
       String signedTxRedeemScript = sigDataIterator.next();
       byte[] addressData = ByteUtilities.toByteArray(sigDataIterator.next());
       byte[] sigData = ByteUtilities.toByteArray(sigDataIterator.next());
@@ -795,7 +823,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         for (RawInput signedInput : rawTx.getInputs()) {
           // Prevent adding more signatures than are required, OP_CHECKMULTISIG doesn't play nice with that
           // TODO Get the minimum number from the script instead of the config.
-          if(signedInput.numberOfSigners(signedTxRedeemScript) >= config.getMinSignatures()) {
+          if (signedInput.numberOfSigners(signedTxRedeemScript) >= config.getMinSignatures()) {
             LOGGER.debug("Minimum number of signers met, not merging any new signatures");
             break;
           }
