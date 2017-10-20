@@ -790,6 +790,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       signatureString = "30" + signatureString;
 
       signatureResults.add(signatureString);
+      signatureResults.add(ByteUtilities.toHexString(sigData));
       signatures.add(signatureResults);
 
     }
@@ -802,7 +803,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       Iterable<Iterable<String>> signatureData) {
     Iterator<Iterable<String>> signatures = signatureData.iterator();
     RawTransaction rawTx = RawTransaction.parse(transaction);
-    LOGGER.debug("[raw tx deocded]: " + rawTx.toString());
+    LOGGER.debug("[Raw TX Decoded]: " + rawTx.toString());
     while (signatures.hasNext()) {
       Iterable<String> signature = signatures.next();
       Iterator<String> sigDataIterator = signature.iterator();
@@ -813,17 +814,16 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       String signedTxRedeemScript = sigDataIterator.next();
       byte[] addressData = ByteUtilities.toByteArray(sigDataIterator.next());
       byte[] sigData = ByteUtilities.toByteArray(sigDataIterator.next());
+      byte[] message = ByteUtilities.toByteArray(sigDataIterator.next());
 
       // Determine how we need to format the sig data
       if (BitcoinTools.isMultiSigAddress(address)) {
-        // TODO Check that each new signature isn't for an existing address
-        // TODO Re-order the signatures to match the script
         LOGGER.debug("Merging multi-sig signatures");
         LOGGER.debug("Original TX: " + transaction);
         for (RawInput signedInput : rawTx.getInputs()) {
           // Prevent adding more signatures than are required, OP_CHECKMULTISIG doesn't play nice with that
-          // TODO Get the minimum number from the script instead of the config.
-          if (signedInput.numberOfSigners(signedTxRedeemScript) >= config.getMinSignatures()) {
+          if (signedInput.numberOfSigners(signedTxRedeemScript) >= RawTransaction
+              .getRedeemScriptKeyCount(signedTxRedeemScript)) {
             LOGGER.debug("Minimum number of signers met, not merging any new signatures");
             break;
           }
@@ -850,7 +850,9 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
             scriptData += ByteUtilities.toHexString(dataSize);
             scriptData += ByteUtilities.toHexString(redeemScriptBytes);
 
+            scriptData = BitcoinTools.reorgSignatures(scriptData, signedTxRedeemScript, message);
             signedInput.setScript(scriptData);
+
             break;
           }
         }

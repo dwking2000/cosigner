@@ -185,7 +185,7 @@ public class Secp256k1 {
     return new byte[0];
   }
 
-  public boolean verifySignature(byte[] sigR, byte sigS[], byte[] publicKey, byte[] message) {
+  public static boolean verifySignature(byte[] sigR, byte sigS[], byte[] publicKey, byte[] message) {
     try {
       Security.addProvider(new BouncyCastleProvider());
       ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec(SECP256K1);

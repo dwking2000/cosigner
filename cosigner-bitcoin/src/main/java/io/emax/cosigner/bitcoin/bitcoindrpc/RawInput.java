@@ -221,8 +221,23 @@ public final class RawInput {
    * @param redeemScript Script that we want to remove.
    */
   public void stripMultiSigRedeemScript(String redeemScript) {
+    Iterable<String> stackItems = getSignatures(this.getScript(), redeemScript);
+
+    LOGGER.debug("Rebuilding script with stack: " + stackItems);
+    StringBuilder myScriptString = new StringBuilder();
+    for (String item : stackItems) {
+      byte[] itemBytes = ByteUtilities.toByteArray(item);
+      byte[] prefixBytes = RawTransaction.writeVariableStackInt(itemBytes.length);
+      myScriptString.append(ByteUtilities.toHexString(prefixBytes));
+      myScriptString.append(ByteUtilities.toHexString(itemBytes));
+    }
+
+    setScript(myScriptString.toString());
+  }
+
+  public static Iterable<String> getSignatures(String signedScript, String redeemScript) {
     LinkedList<String> stackItems = new LinkedList<>();
-    byte[] myScript = ByteUtilities.toByteArray(getScript());
+    byte[] myScript = ByteUtilities.toByteArray(signedScript);
     int bufferPointer = 0;
     VariableInt stackItemSize;
     String stackItem;
@@ -237,24 +252,19 @@ public final class RawInput {
       }
     }
 
-    LOGGER.debug("Rebuilding script with stack: " + stackItems);
-    StringBuilder myScriptString = new StringBuilder();
-    for (String item : stackItems) {
-      byte[] itemBytes = ByteUtilities.toByteArray(item);
-      byte[] prefixBytes = RawTransaction.writeVariableStackInt(itemBytes.length);
-      myScriptString.append(ByteUtilities.toHexString(prefixBytes));
-      myScriptString.append(ByteUtilities.toHexString(itemBytes));
-    }
-
-    setScript(myScriptString.toString());
+    return stackItems;
   }
 
   /**
    * Returns the number of signatures already on the redeemscript.
    */
   public int numberOfSigners(String redeemScript) {
+    return numberOfSigners(this.getScript(), redeemScript);
+  }
+
+  public static int numberOfSigners(String signedScript, String redeemScript) {
     LinkedList<String> stackItems = new LinkedList<>();
-    byte[] myScript = ByteUtilities.toByteArray(getScript());
+    byte[] myScript = ByteUtilities.toByteArray(signedScript);
     int bufferPointer = 0;
     VariableInt stackItemSize;
     String stackItem;
