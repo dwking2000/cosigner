@@ -573,6 +573,10 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         userAddress = BitcoinTools.getPublicAddress(privateKey, true);
       }
 
+      // If running from the library we need to build the signers after determining the multi-sig script
+      possibleSigners.clear();
+      getSignersForAddress(address).forEach(possibleSigners::add);
+
       // If we hit max addresses/user bail out
       if (!(userAddress != null && userAddress.equalsIgnoreCase(address))
           && !generateMultiSigAddress(Collections.singletonList(userAddress), name)
@@ -588,6 +592,25 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       Iterable<Iterable<String>> signatureData = getSigString(transaction, address);
       signatureData = signWithPrivateKey(signatureData, privateKey, onlyMatching);
       signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
+
+      // Sign with any multi-sig keys.
+      for (String accountKey : config.getMultiSigKeys()) {
+        if (!accountKey.isEmpty()) {
+          //transaction = signedTransaction.getTransaction();
+          String msigAddress = BitcoinTools.getPublicAddress(accountKey, true);
+          LOGGER.debug("[Checking if we can sign with] " + msigAddress);
+          LOGGER.debug("[Possible Signers] " + possibleSigners);
+          if (possibleSigners.contains(msigAddress)) {
+            transaction = signedTransaction.getTransaction();
+            LOGGER.debug("Attempting to sign with msig address: " + msigAddress);
+            LOGGER.debug("Transaction is: " + transaction);
+            signedTransaction = new SignedTransaction();
+            signatureData = getSigString(transaction, address);
+            signatureData = signWithPrivateKey(signatureData, accountKey, onlyMatching);
+            signedTransaction.setTransaction(applySignature(transaction, address, signatureData));
+          }
+        }
+      }
     } else {
       /* TODO If bitcoind cannot sign, it adds a 0 signature to the script which will
               cause CHECKSIG to fail. Ideally we should be looking for this and just falling back
@@ -609,7 +632,10 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         if (!accountKey.isEmpty()) {
           //transaction = signedTransaction.getTransaction();
           String msigAddress = BitcoinTools.getPublicAddress(accountKey, true);
+          LOGGER.debug("[Checking if we can sign with] " + msigAddress);
+          LOGGER.debug("[Possible Signers] " + possibleSigners);
           if (possibleSigners.contains(msigAddress)) {
+            transaction = signedTransaction.getTransaction();
             LOGGER.debug("Attempting to sign with msig address: " + msigAddress);
             LOGGER.debug("Transaction is: " + transaction);
             signedTransaction = new SignedTransaction();
@@ -764,6 +790,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       signatureString = "30" + signatureString;
 
       signatureResults.add(signatureString);
+      signatureResults.add(ByteUtilities.toHexString(sigData));
       signatures.add(signatureResults);
 
     }
@@ -776,21 +803,30 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       Iterable<Iterable<String>> signatureData) {
     Iterator<Iterable<String>> signatures = signatureData.iterator();
     RawTransaction rawTx = RawTransaction.parse(transaction);
+    LOGGER.debug("[Raw TX Decoded]: " + rawTx.toString());
     while (signatures.hasNext()) {
       Iterable<String> signature = signatures.next();
       Iterator<String> sigDataIterator = signature.iterator();
       rawTx = RawTransaction.parse(transaction);
       String signedTxHash = sigDataIterator.next();
       String signedTxIndex = sigDataIterator.next();
+      // TODO This needs a new name, it's the unsigned redeemScript, from the Signed TX...
       String signedTxRedeemScript = sigDataIterator.next();
       byte[] addressData = ByteUtilities.toByteArray(sigDataIterator.next());
       byte[] sigData = ByteUtilities.toByteArray(sigDataIterator.next());
+      byte[] message = ByteUtilities.toByteArray(sigDataIterator.next());
 
       // Determine how we need to format the sig data
       if (BitcoinTools.isMultiSigAddress(address)) {
         LOGGER.debug("Merging multi-sig signatures");
         LOGGER.debug("Original TX: " + transaction);
         for (RawInput signedInput : rawTx.getInputs()) {
+          // Prevent adding more signatures than are required, OP_CHECKMULTISIG doesn't play nice with that
+          if (signedInput.numberOfSigners(signedTxRedeemScript) >= RawTransaction
+              .getRedeemScriptKeyCount(signedTxRedeemScript)) {
+            LOGGER.debug("Minimum number of signers met, not merging any new signatures");
+            break;
+          }
           if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer
               .toString(signedInput.getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
             LOGGER.debug("Merging signatures for: " + signedTxHash + ":" + signedTxIndex);
@@ -814,7 +850,9 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
             scriptData += ByteUtilities.toHexString(dataSize);
             scriptData += ByteUtilities.toHexString(redeemScriptBytes);
 
+            scriptData = BitcoinTools.reorgSignatures(scriptData, signedTxRedeemScript, message);
             signedInput.setScript(scriptData);
+
             break;
           }
         }
@@ -890,10 +928,19 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               tx.getInputs().forEach(input -> {
                 try {
                   String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
-                  RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
-                  String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
-                  String scriptAddress = RawTransaction.decodePubKeyScript(script);
-                  senders.add(scriptAddress);
+                  Map<String, Object> decodedSenderTx =
+                      bitcoindRpc.decoderawtransaction(rawSenderTx);
+                  ArrayList workingSenderArray = (ArrayList) decodedSenderTx.get("vout");
+                  workingSenderArray.forEach(vout -> {
+                    Map scriptPubKey = (Map) ((Map) vout).get("scriptPubKey");
+                    ArrayList addresses = (ArrayList) scriptPubKey.get("addresses");
+                    if (addresses == null) {
+                      return;
+                    }
+                    addresses.forEach(senderAddress -> {
+                      senders.add((String) senderAddress);
+                    });
+                  });
                 } catch (Exception e) {
                   LOGGER.debug(null, e);
                   senders.add(null);

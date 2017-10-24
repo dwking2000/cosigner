@@ -3,10 +3,14 @@ package io.emax.cosigner.bitcoin.bitcoindrpc;
 import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction.VariableInt;
 import io.emax.cosigner.common.ByteUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigInteger;
 import java.util.LinkedList;
 
 public final class RawInput {
+  private static final Logger LOGGER = LoggerFactory.getLogger(RawInput.class);
   private String txHash;
   private int txIndex;
   private long scriptSize = 0;
@@ -217,8 +221,23 @@ public final class RawInput {
    * @param redeemScript Script that we want to remove.
    */
   public void stripMultiSigRedeemScript(String redeemScript) {
+    Iterable<String> stackItems = getSignatures(this.getScript(), redeemScript);
+
+    LOGGER.debug("Rebuilding script with stack: " + stackItems);
+    StringBuilder myScriptString = new StringBuilder();
+    for (String item : stackItems) {
+      byte[] itemBytes = ByteUtilities.toByteArray(item);
+      byte[] prefixBytes = RawTransaction.writeVariableStackInt(itemBytes.length);
+      myScriptString.append(ByteUtilities.toHexString(prefixBytes));
+      myScriptString.append(ByteUtilities.toHexString(itemBytes));
+    }
+
+    setScript(myScriptString.toString());
+  }
+
+  public static Iterable<String> getSignatures(String signedScript, String redeemScript) {
     LinkedList<String> stackItems = new LinkedList<>();
-    byte[] myScript = ByteUtilities.toByteArray(getScript());
+    byte[] myScript = ByteUtilities.toByteArray(signedScript);
     int bufferPointer = 0;
     VariableInt stackItemSize;
     String stackItem;
@@ -233,14 +252,33 @@ public final class RawInput {
       }
     }
 
-    StringBuilder myScriptString = new StringBuilder();
-    for (String item : stackItems) {
-      byte[] itemBytes = ByteUtilities.toByteArray(item);
-      byte[] prefixBytes = RawTransaction.writeVariableStackInt(itemBytes.length);
-      myScriptString.append(ByteUtilities.toHexString(prefixBytes));
-      myScriptString.append(ByteUtilities.toHexString(itemBytes));
+    return stackItems;
+  }
+
+  /**
+   * Returns the number of signatures already on the redeemscript.
+   */
+  public int numberOfSigners(String redeemScript) {
+    return numberOfSigners(this.getScript(), redeemScript);
+  }
+
+  public static int numberOfSigners(String signedScript, String redeemScript) {
+    LinkedList<String> stackItems = new LinkedList<>();
+    byte[] myScript = ByteUtilities.toByteArray(signedScript);
+    int bufferPointer = 0;
+    VariableInt stackItemSize;
+    String stackItem;
+    while (bufferPointer < myScript.length) {
+      stackItemSize = RawTransaction.readVariableStackInt(myScript, bufferPointer);
+      bufferPointer += stackItemSize != null ? stackItemSize.getSize() : 0;
+      stackItem = ByteUtilities.toHexString(ByteUtilities.readBytes(myScript, bufferPointer,
+          (int) (stackItemSize != null ? stackItemSize.getValue() : 0)));
+      bufferPointer += stackItemSize != null ? stackItemSize.getValue() : 0;
+      if (!stackItem.equalsIgnoreCase(redeemScript) && stackItem != null && !stackItem.isEmpty()) {
+        stackItems.add(stackItem);
+      }
     }
 
-    setScript(myScriptString.toString());
+    return stackItems.size();
   }
 }

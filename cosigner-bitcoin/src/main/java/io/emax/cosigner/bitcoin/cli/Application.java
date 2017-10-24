@@ -4,6 +4,7 @@ import io.emax.cosigner.api.currency.Wallet.Recipient;
 import io.emax.cosigner.bitcoin.BitcoinConfiguration;
 import io.emax.cosigner.bitcoin.BitcoinMonitor;
 import io.emax.cosigner.bitcoin.BitcoinWallet;
+import io.emax.cosigner.bitcoin.common.BitcoinTools;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -40,6 +41,7 @@ public class Application {
       System.out.println("\tmonitor(String address)");
       System.out.println("\tlistTxs(String address, int resultSize, int skipNumber)");
       System.out.println("\tgetTx(String tx-id)");
+      System.out.println("\tencodePrivateKey raw-key");
       return;
     }
 
@@ -190,6 +192,12 @@ public class Application {
           accountName = args[1];
         }
         System.out.println(wallet.getTransaction(accountName));
+        break;
+      case "encodePrivateKey":
+        if (args.length >= 2) {
+          accountName = args[1];
+        }
+        System.out.println(BitcoinTools.encodePrivateKey(accountName));
         break;
       default:
         System.out.println("Method not valid or not supported yet");

@@ -3,9 +3,12 @@ package io.emax.cosigner.bitcoin.common;
 import io.emax.cosigner.bitcoin.BitcoinResource;
 import io.emax.cosigner.bitcoin.bitcoindrpc.BlockChainName;
 import io.emax.cosigner.bitcoin.bitcoindrpc.NetworkBytes;
+import io.emax.cosigner.bitcoin.bitcoindrpc.RawInput;
+import io.emax.cosigner.bitcoin.bitcoindrpc.RawTransaction;
 import io.emax.cosigner.common.Base58;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.DeterministicRng;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
@@ -18,6 +21,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Locale;
 
 public class BitcoinTools {
@@ -320,5 +324,110 @@ public class BitcoinTools {
       LOGGER.error(null, e);
       return new byte[0];
     }
+  }
+
+  public static Iterable<String> getSigners(String signedScript, String redeemScript,
+      byte[] message) {
+    LOGGER.debug("[Get BTC Signers");
+    // Break up the signedScript into signatures
+    Iterable<String> signatures = RawInput.getSignatures(signedScript, redeemScript);
+    // Get the public keys from the redeemScript (These in the reverse order).
+    Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
+    LinkedList<String> signers = new LinkedList<>();
+
+    LOGGER.debug("[Signatures] " + Json.stringifyObject(Iterable.class, signatures));
+    LOGGER.debug("[Public Keys] " + Json.stringifyObject(Iterable.class, publicKeys));
+    // Foreach public key, check it against the signatures in order
+    for (String publicKey : publicKeys) {
+      for (String signature : signatures) {
+        // Break signature back up into R/S
+        // [DER Format] 30 sigsize 02 sigsize sigR 02 sigsize sigS
+        LOGGER.debug("[Signature] " + signature);
+        byte[] sigBytes = ByteUtilities.toByteArray(signature);
+        int buffPointer = 3;
+        int sigSize =
+            new BigInteger(1, ByteUtilities.readBytes(sigBytes, buffPointer, 1)).intValue();
+        buffPointer += 1;
+        byte[] r = ByteUtilities.readBytes(sigBytes, buffPointer, sigSize);
+        // Skip the type byte (02)
+        buffPointer += 1;
+        buffPointer += sigSize;
+        sigSize = new BigInteger(1, ByteUtilities.readBytes(sigBytes, buffPointer, 1)).intValue();
+        buffPointer += 1;
+        byte[] s = ByteUtilities.readBytes(sigBytes, buffPointer, sigSize);
+
+        LOGGER.debug("[R] " + ByteUtilities.toHexString(r));
+        LOGGER.debug("[S] " + ByteUtilities.toHexString(s));
+
+        if (Secp256k1.verifySignature(r, s, ByteUtilities.toByteArray(publicKey), message)) {
+          LOGGER.debug("Signature matches, adding");
+          signers.add(BitcoinTools.getPublicAddress(publicKey, false));
+          break;
+        }
+      }
+    }
+
+    return signers;
+  }
+
+  public static String reorgSignatures(String signedScript, String redeemScript, byte[] message) {
+    LOGGER.debug("[Re-org BTC Signatures");
+    // Break up the signedScript into signatures
+    Iterable<String> signatures = RawInput.getSignatures(signedScript, redeemScript);
+    // Get the public keys from the redeemScript (These in the reverse order).
+    Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
+    LinkedList<String> sortedSignatures = new LinkedList<>();
+
+    LOGGER.debug("[Signatures] " + Json.stringifyObject(Iterable.class, signatures));
+    LOGGER.debug("[Public Keys] " + Json.stringifyObject(Iterable.class, publicKeys));
+    // Foreach public key, check it against the signatures in order
+    for (String publicKey : publicKeys) {
+      if (sortedSignatures.size() >= RawTransaction.getRedeemScriptKeyCount(redeemScript)) {
+        LOGGER.debug("Already met signature requirements, stopping.");
+        break;
+      }
+      for (String signature : signatures) {
+        // Break signature back up into R/S
+        // [DER Format] 30 sigsize 02 sigsize sigR 02 sigsize sigS
+        LOGGER.debug("[Signature] " + signature);
+        byte[] sigBytes = ByteUtilities.toByteArray(signature);
+        int buffPointer = 3;
+        int sigSize =
+            new BigInteger(1, ByteUtilities.readBytes(sigBytes, buffPointer, 1)).intValue();
+        buffPointer += 1;
+        byte[] r = ByteUtilities.readBytes(sigBytes, buffPointer, sigSize);
+        // Skip the type byte (02)
+        buffPointer += 1;
+        buffPointer += sigSize;
+        sigSize = new BigInteger(1, ByteUtilities.readBytes(sigBytes, buffPointer, 1)).intValue();
+        buffPointer += 1;
+        byte[] s = ByteUtilities.readBytes(sigBytes, buffPointer, sigSize);
+
+        LOGGER.debug("[R] " + ByteUtilities.toHexString(r));
+        LOGGER.debug("[S] " + ByteUtilities.toHexString(s));
+
+        if (Secp256k1.verifySignature(r, s, ByteUtilities.toByteArray(publicKey), message)) {
+          LOGGER.debug("Signature matches, adding");
+          sortedSignatures.add(signature);
+          break;
+        }
+      }
+    }
+
+    String reOrgedScript = "00";
+    // Keys are in reverse order, which means the signatures are too now. Flip Them.
+    for (int i = sortedSignatures.size(); i > 0; i--) {
+      String sig = sortedSignatures.get(i - 1);
+      byte[] sigData = ByteUtilities.toByteArray(sig);
+      byte[] dataSize = RawTransaction.writeVariableStackInt(sigData.length);
+      reOrgedScript += ByteUtilities.toHexString(dataSize);
+      reOrgedScript += sig;
+    }
+    byte[] redeemScriptBytes = ByteUtilities.toByteArray(redeemScript);
+    byte[] dataSize = RawTransaction.writeVariableStackInt(redeemScriptBytes.length);
+    reOrgedScript += ByteUtilities.toHexString(dataSize);
+    reOrgedScript += redeemScript;
+
+    return reOrgedScript;
   }
 }

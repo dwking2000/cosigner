@@ -51,6 +51,17 @@ public class Output extends Outpoint {
   @JsonProperty("solvable")
   private boolean solvable;
 
+  @JsonProperty("safe")
+  private String safe;
+
+  public String getSafe() {
+    return safe;
+  }
+
+  public void setSafe(String safe) {
+    this.safe = safe;
+  }
+
   public boolean isSolvable() {
     return solvable;
   }

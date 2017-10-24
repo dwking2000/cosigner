@@ -5,6 +5,7 @@ import io.emax.cosigner.api.currency.CurrencyAdmin;
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.api.validation.Validatable;
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 import io.emax.cosigner.ethereum.core.common.EthereumTools;
 import io.emax.cosigner.ethereum.core.common.RlpItem;
@@ -997,9 +998,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
   @Override
   public long getLastBlockTime() {
-    BigInteger latestBlockNumber =
-        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
-    Block block = ethereumRpc.eth_getBlockByNumber(latestBlockNumber.toString(), true);
+    Block block = ethereumRpc.eth_getBlockByNumber(DefaultBlock.LATEST.getValue(), true);
     BigInteger dateConverter = new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
     return dateConverter.longValue();
   }
@@ -1021,9 +1020,10 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
-    filterParams.put("fromBlock", "0x00");
+    filterParams.put("fromBlock", "0x0");
     filterParams.put("toBlock", "latest");
     filterParams.put("address", address);
+    LOGGER.debug("Filter: " + Json.stringifyObject(Map.class, filterParams));
     String txFilter = ethereumRpc.eth_newFilter(filterParams);
     Map<String, Object>[] filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
     ethereumRpc.eth_uninstallFilter(txFilter);

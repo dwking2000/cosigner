@@ -594,6 +594,82 @@ public final class RawTransaction {
     return null;
   }
 
+  public static long getRedeemScriptKeyCount(String script) {
+    byte[] scriptBytes = ByteUtilities.toByteArray(script);
+    int buffPointer = 0;
+
+    LOGGER.debug("Attempting to decode: " + script);
+    if (script == null) {
+      return 0L;
+    }
+
+    LinkedList<String> stack = new LinkedList<>();
+    LinkedList<String> publicKeys = new LinkedList<>();
+    VariableInt varInt;
+    try {
+      while ((varInt = readOpCodeInt(scriptBytes, buffPointer)) != null) {
+        LOGGER.debug("VAL: " + varInt.getValue());
+        if (readVariableStackInt(scriptBytes, buffPointer).getValue() == 0 && varInt.getSize() == 1
+            && varInt.getValue() > 16) {
+          LOGGER.debug("OPCODE: " + varInt.getValue());
+          // We got an opcode.
+          if (varInt.getValue() == 0xae) {
+            LOGGER.debug("OP_CHECKMULTISIG");
+            // OP_CHECKMULTISIG, process the stack.
+            long numberKeys = Long.parseLong(stack.getLast());
+            LOGGER.debug("NUMBER OF KEYS: " + numberKeys);
+            stack.removeLast();
+
+            if (numberKeys > stack.size()) {
+              // Data's garabage, we won't even try to read it. Bail out.
+              LOGGER.debug("Error reading script: " + stack.size());
+              return 0L;
+            }
+
+            for (int i = 0; i < numberKeys; i++) {
+              String pubKey = stack.getLast();
+              stack.removeLast();
+
+              byte[] keyBytes = ByteUtilities.toByteArray(pubKey);
+              keyBytes = ByteUtilities.stripLeadingNullBytes(keyBytes);
+              publicKeys.add(ByteUtilities.toHexString(keyBytes));
+            }
+
+            long requiredKeys = Long.parseLong(stack.getLast());
+            LOGGER.debug("[Required Keys] " + requiredKeys);
+            return requiredKeys;
+          } else {
+            // Non-standard script. Bail out.
+            LOGGER.debug("Non-standard script, cannot process");
+            return 0L;
+          }
+        } else {
+          // Push it.
+          LOGGER.debug("Pushing stack variable");
+          if (readVariableStackInt(scriptBytes, buffPointer).getValue() == 0
+              && varInt.getSize() == 1 && varInt.getValue() <= 16) {
+            LOGGER.debug("Pushing: " + ((Long) varInt.getValue()).toString());
+            stack.add(((Long) varInt.getValue()).toString());
+            buffPointer += varInt.getSize();
+          } else {
+            buffPointer += varInt.getSize();
+            LOGGER.debug("Pushing: " + ByteUtilities.toHexString(
+                ByteUtilities.readBytes(scriptBytes, buffPointer, (int) varInt.getValue())));
+            stack.add(ByteUtilities.toHexString(
+                ByteUtilities.readBytes(scriptBytes, buffPointer, (int) varInt.getValue())));
+            buffPointer += varInt.getValue();
+          }
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Bad script caused exception, cannot process", e);
+      return 0L;
+    }
+
+    // We ran out of script without seeing what we expected. Bail out.
+    return 0L;
+  }
+
   /**
    * Assuming standard scripts, decodes a multi-sig redeem script into its public keys.
    */
