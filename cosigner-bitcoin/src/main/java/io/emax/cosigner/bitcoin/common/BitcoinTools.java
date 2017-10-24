@@ -326,6 +326,50 @@ public class BitcoinTools {
     }
   }
 
+  public static Iterable<String> getSigners(String signedScript, String redeemScript,
+      byte[] message) {
+    LOGGER.debug("[Get BTC Signers");
+    // Break up the signedScript into signatures
+    Iterable<String> signatures = RawInput.getSignatures(signedScript, redeemScript);
+    // Get the public keys from the redeemScript (These in the reverse order).
+    Iterable<String> publicKeys = RawTransaction.decodeRedeemScript(redeemScript);
+    LinkedList<String> signers = new LinkedList<>();
+
+    LOGGER.debug("[Signatures] " + Json.stringifyObject(Iterable.class, signatures));
+    LOGGER.debug("[Public Keys] " + Json.stringifyObject(Iterable.class, publicKeys));
+    // Foreach public key, check it against the signatures in order
+    for (String publicKey : publicKeys) {
+      for (String signature : signatures) {
+        // Break signature back up into R/S
+        // [DER Format] 30 sigsize 02 sigsize sigR 02 sigsize sigS
+        LOGGER.debug("[Signature] " + signature);
+        byte[] sigBytes = ByteUtilities.toByteArray(signature);
+        int buffPointer = 3;
+        int sigSize =
+            new BigInteger(1, ByteUtilities.readBytes(sigBytes, buffPointer, 1)).intValue();
+        buffPointer += 1;
+        byte[] r = ByteUtilities.readBytes(sigBytes, buffPointer, sigSize);
+        // Skip the type byte (02)
+        buffPointer += 1;
+        buffPointer += sigSize;
+        sigSize = new BigInteger(1, ByteUtilities.readBytes(sigBytes, buffPointer, 1)).intValue();
+        buffPointer += 1;
+        byte[] s = ByteUtilities.readBytes(sigBytes, buffPointer, sigSize);
+
+        LOGGER.debug("[R] " + ByteUtilities.toHexString(r));
+        LOGGER.debug("[S] " + ByteUtilities.toHexString(s));
+
+        if (Secp256k1.verifySignature(r, s, ByteUtilities.toByteArray(publicKey), message)) {
+          LOGGER.debug("Signature matches, adding");
+          signers.add(BitcoinTools.getPublicAddress(publicKey, false));
+          break;
+        }
+      }
+    }
+
+    return signers;
+  }
+
   public static String reorgSignatures(String signedScript, String redeemScript, byte[] message) {
     LOGGER.debug("[Re-org BTC Signatures");
     // Break up the signedScript into signatures
