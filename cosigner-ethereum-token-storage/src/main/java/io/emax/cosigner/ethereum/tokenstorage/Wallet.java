@@ -333,14 +333,20 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
       return "Bad Transaction";
     }
 
+    LOGGER.debug("Checking if we should re-sign with contract address...");
+    LOGGER.debug("[TX Recipient] " + ByteUtilities.toHexString(rawTx.getTo().getDecodedContents()));
+    LOGGER.debug("[StorageContract] " + config.getStorageContractAddress());
+
     if (ByteUtilities.toHexString(rawTx.getTo().getDecodedContents())
         .equalsIgnoreCase(config.getStorageContractAddress())) {
+      LOGGER.debug("Recipient matches, finding function...");
       Map<String, List<String>> contractParams =
           config.getContractInterface().getContractParameters()
               .parseTransfer(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()));
       Map<String, List<String>> adminParams = config.getContractInterface().getContractParameters()
           .parseAdminFunction(ByteUtilities.toHexString(rawTx.getData().getDecodedContents()));
       if (contractParams != null || adminParams != null) {
+        LOGGER.debug("Found signable function.");
         String contractKey = config.getContractKey();
         String contractAddress = config.getContractAccount();
 
