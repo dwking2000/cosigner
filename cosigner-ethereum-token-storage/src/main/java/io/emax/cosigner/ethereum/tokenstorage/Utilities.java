@@ -74,9 +74,13 @@ public class Utilities {
         ContractInterface contractParams = (ContractInterface) contractType.newInstance();
         if (contractParams.getStorageRuntime().equalsIgnoreCase(contractCode) || contractParams
             .getAdminRuntime().equalsIgnoreCase(contractCode)) {
+          LOGGER.debug("[" + config.getCurrencySymbol() + "] Existing contract version found: "
+              + contractParams.getClass().getCanonicalName());
           return contractParams;
         } else if (config.useAlternateEtherContract() && contractParams.getAlternateStorageRunTime()
             .equalsIgnoreCase(contractCode)) {
+          LOGGER.debug("[" + config.getCurrencySymbol() + "] Existing contract version found: "
+              + contractParams.getClass().getCanonicalName());
           return contractParams;
         }
         contractType = contractType.getSuperclass();
@@ -85,6 +89,7 @@ public class Utilities {
       LOGGER.debug(null, e);
       return null;
     }
+    LOGGER.debug("[" + config.getCurrencySymbol() + "] Could not determine contract version.");
     return null;
   }
 
