@@ -438,6 +438,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
 
     // We don't have enough to complete the transaction
     if (!filledAllOutputs) {
+      LOGGER.debug("Cannot fill transaction, aborting");
       return null;
     }
 
@@ -810,6 +811,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       rawTx = RawTransaction.parse(transaction);
       String signedTxHash = sigDataIterator.next();
       String signedTxIndex = sigDataIterator.next();
+      LOGGER.debug("Processing signature for [" + signedTxHash + ":" + signedTxIndex + "]");
       // TODO This needs a new name, it's the unsigned redeemScript, from the Signed TX...
       String signedTxRedeemScript = sigDataIterator.next();
       byte[] addressData = ByteUtilities.toByteArray(sigDataIterator.next());
@@ -821,14 +823,19 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         LOGGER.debug("Merging multi-sig signatures");
         LOGGER.debug("Original TX: " + transaction);
         for (RawInput signedInput : rawTx.getInputs()) {
-          // Prevent adding more signatures than are required, OP_CHECKMULTISIG doesn't play nice with that
-          if (signedInput.numberOfSigners(signedTxRedeemScript) >= RawTransaction
-              .getRedeemScriptKeyCount(signedTxRedeemScript)) {
-            LOGGER.debug("Minimum number of signers met, not merging any new signatures");
-            break;
-          }
           if (signedInput.getTxHash().equalsIgnoreCase(signedTxHash) && Integer
               .toString(signedInput.getTxIndex()).equalsIgnoreCase(signedTxIndex)) {
+
+            // Prevent adding more signatures than are required, OP_CHECKMULTISIG doesn't play nice with that
+            if (signedInput.numberOfSigners(signedTxRedeemScript) >= RawTransaction
+                .getRedeemScriptKeyCount(signedTxRedeemScript)) {
+              LOGGER.debug(
+                  "Minimum number of signers (" + signedInput.numberOfSigners(signedTxRedeemScript)
+                      + "/" + RawTransaction.getRedeemScriptKeyCount(signedTxRedeemScript)
+                      + ") met, not merging any new signatures");
+              break;
+            }
+
             LOGGER.debug("Merging signatures for: " + signedTxHash + ":" + signedTxIndex);
             // Merge the new signature with existing ones.
             LOGGER.debug("Unstripped: " + signedInput.getScript());
