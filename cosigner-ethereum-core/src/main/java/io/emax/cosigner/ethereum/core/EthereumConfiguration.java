@@ -14,11 +14,12 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Properties;
 
-public class EthereumConfiguration implements CurrencyConfiguration, ValidatorConfiguration,
-    EthereumTransactionConfiguration {
+public class EthereumConfiguration
+    implements CurrencyConfiguration, ValidatorConfiguration, EthereumTransactionConfiguration {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumConfiguration.class);
   // Defaults
   private String daemonConnectionString = "http://localhost:8101";
+  private String daemonReadConnectionString = "http://localhost:8101";
   private int minConfirmations = 10;
   private long gasPrice = 100000000000L;
   private long simpleTxGas = 90000L;
@@ -33,6 +34,7 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
   private BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
   private String serverPrivateKey =
       "b0837faed56bc7c48dc29d564b1c030f03eee53b0317c53d784c8f40654821c6";
+  private int maxNodeConnections = 10;
 
   private boolean configLoaded = false;
 
@@ -64,6 +66,14 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
         // daemonConnectionString
         daemonConnectionString = EnvironmentVariableParser.resolveEnvVars(
             cosignerProperties.getProperty("daemonConnectionString", daemonConnectionString));
+
+        // daemonReadConnectionString
+        daemonReadConnectionString = EnvironmentVariableParser.resolveEnvVars(cosignerProperties
+            .getProperty("daemonReadConnectionString", daemonReadConnectionString));
+
+        // maxNodeConnections
+        maxNodeConnections =
+            (int) getLongProp(cosignerProperties, "maxNodeConnections", maxNodeConnections);
 
         // minConfirmations
         minConfirmations =
@@ -150,12 +160,20 @@ public class EthereumConfiguration implements CurrencyConfiguration, ValidatorCo
     return daemonConnectionString;
   }
 
+  public String getDaemonReadConnectionString() {
+    return daemonReadConnectionString;
+  }
+
   public String getServerPrivateKey() {
     return serverPrivateKey;
   }
 
   public int getMinConfirmations() {
     return minConfirmations;
+  }
+
+  public int getMaxNodeConnections() {
+    return maxNodeConnections;
   }
 
   @Override

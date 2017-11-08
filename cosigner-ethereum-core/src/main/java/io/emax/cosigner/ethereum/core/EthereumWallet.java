@@ -41,7 +41,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   private static final String TESTNET_VERSION = "2";
   private static final long TESTNET_BASE_ROUNDS = (long) Math.pow(2, 20);
 
-  private final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
+  private final EthereumRpc ethereumRpc = EthereumResource.getResource().getEthWriteRPC();
   EthereumConfiguration config;
 
   private final HashMap<String, Integer> addressRounds = new HashMap<>();

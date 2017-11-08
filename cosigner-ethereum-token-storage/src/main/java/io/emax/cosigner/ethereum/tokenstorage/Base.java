@@ -17,5 +17,5 @@ public class Base {
   static final String STORAGE = "storage";
 
   // RPC
-  public static final EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
+  public static final EthereumRpc ethereumRpc = EthereumResource.getResource().getEthWriteRPC();
 }

@@ -268,7 +268,7 @@ public class Application {
         break;
       case "setTokenContract":
         ContractParametersV1 contractInterface = new ContractParametersV1();
-        EthereumRpc ethereumRpc = EthereumResource.getResource().getGethRpc();
+        EthereumRpc ethereumRpc = EthereumResource.getResource().getEthWriteRPC();
         Long nonce = contractInterface
             .getNonce(ethereumRpc, config.getAdminContractAddress(), config.getAdminAccount());
         tx = RawTransaction.createTransaction(config, config.getAdminContractAddress(), null,

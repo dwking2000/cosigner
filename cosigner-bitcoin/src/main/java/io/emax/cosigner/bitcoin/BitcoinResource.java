@@ -8,8 +8,6 @@ import io.emax.cosigner.bitcoin.bitcoindrpc.BitcoindRpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.Authenticator;
 import java.net.MalformedURLException;
@@ -37,13 +35,13 @@ public class BitcoinResource {
 
   private static BitcoindRpc innerRpc;
   private static LinkedList<Lock> requestLocks = new LinkedList<>();
-  // TODO Put this in the BTC config
   private int concurrentRpcRequests = 10;
 
   private BitcoinResource() {
     this.config = new BitcoinConfiguration();
-    try {
+    concurrentRpcRequests = config.getMaxNodeConnections();
 
+    try {
       // Set up our RPC authentication
       Authenticator.setDefault(new Authenticator() {
         @Override
@@ -82,35 +80,33 @@ public class BitcoinResource {
       }
       innerRpc =
           ProxyUtil.createClientProxy(getClass().getClassLoader(), BitcoindRpc.class, client);
+      // Proxy wrapped around the jsonrpc4j calls, will only make the actual call to the node
+      // when it can obtain a lock. Otherwise it will wait for a small amount of time before
+      // trying the next availble lock.
       this.bitcoindRpc = (BitcoindRpc) Proxy
           .newProxyInstance(getClass().getClassLoader(), new Class<?>[]{BitcoindRpc.class},
-              new InvocationHandler() {
-                // Proxy wrapped around the jsonrpc4j calls, will only make the actual call to the node
-                // when it can obtain a lock. Otherwise it will wait for a small amount of time before
-                // trying the next availble lock.
-                @Override
-                public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-                  int lockNumber = 0;
-                  while (true) {
-                    if (requestLocks.get(lockNumber).tryLock()) {
-                      try {
-                        return method.invoke(innerRpc, objects);
-                      } catch (Exception e) {
-                        LOGGER.error("Problem invoking RPC call", e);
-                        break;
-                      } finally {
-                        requestLocks.get(lockNumber).unlock();
-                      }
-                    } else {
-                      lockNumber++;
-                      lockNumber %= requestLocks.size();
-                      LOGGER.debug("Failed to obtain bitcoinRpc lock, trying the next one: " + lockNumber);
-                      Thread.sleep(1);
+              (o, method, objects) -> {
+                int lockNumber = 0;
+                while (true) {
+                  if (requestLocks.get(lockNumber).tryLock()) {
+                    try {
+                      return method.invoke(innerRpc, objects);
+                    } catch (Exception e) {
+                      LOGGER.error("Problem invoking RPC call", e);
+                      break;
+                    } finally {
+                      requestLocks.get(lockNumber).unlock();
                     }
+                  } else {
+                    lockNumber++;
+                    lockNumber %= requestLocks.size();
+                    LOGGER.debug(
+                        "Failed to obtain bitcoinRpc lock, trying the next one: " + lockNumber);
+                    Thread.sleep(1);
                   }
-                  // Should never hit this, but if it all goes sideways, return null.
-                  return null;
                 }
+                // Should never hit this, but if it all goes sideways, return null.
+                return null;
               });
     }
 
