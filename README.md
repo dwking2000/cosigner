@@ -4,7 +4,7 @@ Cosigner introduces a best practice implementation for storing, sending and rece
 
 Cosigner is a multi-signature blockchain agnostic gateway, compatible with multiple different blockchains and implementations. Instead of having to implement settlement logic in your application logic, Cosigner maps the Cosigner API with blockchain node RPC's. This abstracts the differences and complexities of each blockchain implementation and makes your application logic cleaner by eliminating edge cases.
 
-##Cosigner Client
+## Cosigner Client
 There are currently two clients:
 
 cosigner-client-java
@@ -20,13 +20,13 @@ These handle the TLS connection and provide object to RPC call conversion method
 
 [UserKey Address + Cosigner Node Addresses] => Multi-sig contract/address => Used for transactions
 
-###Transactions
+### Transactions
 Cosigner can create, sign and pass transactions to other Cosigner nodes for additional signing, and broadcast signed transactions.
 
-####Multi-Signature
+#### Multi-Signature
 The default setup is for Cosigner to hold 2 out of 4 keys in a 3-of-4 multi-signature address. The other 2 keys are 1) controlled by the user via the userkey, and 2) held offline for emergencies.
 
-####Offline Signing
+#### Offline Signing
 Cosigner provides APIs to retrieve enough data from a transaction that a client can sign with no direct network/Cosigner connection. This allows for a private key that never leaves the client’s control, while still using Cosigner’s features.
 
 ### Transaction monitoring
