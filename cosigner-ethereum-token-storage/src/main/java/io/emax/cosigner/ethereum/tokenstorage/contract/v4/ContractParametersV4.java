@@ -84,7 +84,7 @@ public class ContractParametersV4 extends ContractParametersV3 {
 
     LOGGER.debug("Requesting TX Hash: " + request);
 
-    String response = Base.ethereumRpc
+    String response = Base.ethereumReadRpc
         .eth_call(EthereumTools.generateCall(request, contractAddress),
             DefaultBlock.LATEST.toString());
     LOGGER.debug("Getting TX hash");

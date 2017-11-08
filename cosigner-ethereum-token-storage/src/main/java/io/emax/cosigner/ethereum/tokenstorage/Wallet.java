@@ -32,7 +32,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumRpc;
+import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumReadRpc;
+import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumWriteRpc;
 import static io.emax.cosigner.ethereum.tokenstorage.Utilities.getContractVersion;
 
 /**
@@ -130,7 +131,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
         .generateCall(config.getContractInterface().getContractParameters().getBalance(address),
             config.getStorageContractAddress());
     LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
-    String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+    String response = ethereumReadRpc.eth_call(callData, DefaultBlock.LATEST.toString());
 
     BigInteger intBalance = new BigInteger(1, ByteUtilities.toByteArray(response));
     BigDecimal balance = new BigDecimal(intBalance);
@@ -170,7 +171,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
         .generateCall(config.getContractInterface().getContractParameters().getTotalBalance(),
             config.getStorageContractAddress());
     LOGGER.debug("Total balance request: " + Json.stringifyObject(CallData.class, callData));
-    String response = ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+    String response = ethereumReadRpc.eth_call(callData, DefaultBlock.LATEST.toString());
 
     BigInteger intBalance = new BigInteger(1, ByteUtilities.toByteArray(response));
     BigDecimal balance = new BigDecimal(intBalance);
@@ -224,7 +225,8 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
             ByteUtilities.toHexString(ByteUtilities.toByteArray(recipient.getRecipientAddress())));
       });
 
-      String txCount = ethereumRpc.eth_getStorageAt("0x" + contract.toLowerCase(Locale.US), "0x1",
+      String txCount = ethereumReadRpc
+          .eth_getStorageAt("0x" + contract.toLowerCase(Locale.US), "0x1",
           DefaultBlock.LATEST.toString());
       BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
 
@@ -367,7 +369,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
 
     LOGGER.debug("Sending: " + transaction);
     if (config.areTransactionsEnabled()) {
-      return ethereumRpc.eth_sendRawTransaction("0x" + transaction);
+      return ethereumWriteRpc.eth_sendRawTransaction("0x" + transaction);
     } else {
       return "Transactions Temporarily Disabled";
     }
@@ -419,13 +421,13 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   @Override
   public long getBlockchainHeight() {
     BigInteger latestBlockNumber =
-        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
     return latestBlockNumber.longValue();
   }
 
   @Override
   public long getLastBlockTime() {
-    Block block = ethereumRpc.eth_getBlockByNumber(DefaultBlock.LATEST.getValue(), true);
+    Block block = ethereumReadRpc.eth_getBlockByNumber(DefaultBlock.LATEST.getValue(), true);
     BigInteger dateConverter = new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
     return dateConverter.longValue();
   }
@@ -457,15 +459,15 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
 
   @Override
   public TransactionDetails getTransaction(String transactionId) {
-    Map txMap = ethereumRpc.eth_getTransactionByHash(transactionId);
+    Map txMap = ethereumReadRpc.eth_getTransactionByHash(transactionId);
 
-    Block txBlock = ethereumRpc.eth_getBlockByNumber(txMap.get("blockNumber").toString(), true);
+    Block txBlock = ethereumReadRpc.eth_getBlockByNumber(txMap.get("blockNumber").toString(), true);
     TransactionDetails txDetail = new TransactionDetails();
     txDetail.setTxHash(txMap.get("hash").toString());
     txDetail.setTxDate(new Date(
         new BigInteger(1, ByteUtilities.toByteArray(txBlock.getTimestamp())).longValue() * 1000L));
     BigInteger latestBlockNumber =
-        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
     BigInteger txBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(txMap.get("blockNumber").toString()));
     txDetail.setConfirmed(
@@ -498,7 +500,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   @Override
   public ServerStatus getWalletStatus() {
     try {
-      ethereumRpc.eth_blockNumber();
+      ethereumReadRpc.eth_blockNumber();
       return ServerStatus.CONNECTED;
     } catch (Exception e) {
       return ServerStatus.DISCONNECTED;

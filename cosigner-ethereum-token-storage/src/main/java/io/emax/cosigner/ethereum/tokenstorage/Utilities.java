@@ -18,7 +18,7 @@ import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 
-import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumRpc;
+import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumReadRpc;
 
 /**
  * Common utility functions for Tokens.
@@ -35,7 +35,7 @@ public class Utilities {
   @Deprecated
   public static String getContractType(String contractAddress, Configuration config) {
     try {
-      String contractCode = ethereumRpc.eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
+      String contractCode = ethereumReadRpc.eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
           DefaultBlock.LATEST.toString());
       contractCode = contractCode.substring(2);
       Class<?> contractType = Contract.class;
@@ -66,7 +66,7 @@ public class Utilities {
    */
   public static ContractInterface getContractVersion(String contractAddress, Configuration config) {
     try {
-      String contractCode = ethereumRpc.eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
+      String contractCode = ethereumReadRpc.eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
           DefaultBlock.LATEST.toString());
       contractCode = contractCode.substring(2);
       Class<?> contractType = Contract.class;
@@ -101,7 +101,7 @@ public class Utilities {
   @Deprecated
   public static String generateTokens(String recipient, long amount, Configuration config) {
     Long nonce = config.getContractInterface().getContractParameters()
-        .getNonce(ethereumRpc, config.getAdminContractAddress(), config.getAdminAccount());
+        .getNonce(ethereumReadRpc, config.getAdminContractAddress(), config.getAdminAccount());
     RawTransaction tx = RawTransaction
         .createTransaction(config, config.getAdminContractAddress(), null,
             config.getContractInterface().getContractParameters()
@@ -119,7 +119,7 @@ public class Utilities {
   @Deprecated
   public static String destroyTokens(String sender, long amount, Configuration config) {
     Long nonce = config.getContractInterface().getContractParameters()
-        .getNonce(ethereumRpc, config.getAdminContractAddress(), config.getAdminAccount());
+        .getNonce(ethereumReadRpc, config.getAdminContractAddress(), config.getAdminAccount());
     RawTransaction tx = RawTransaction
         .createTransaction(config, config.getAdminContractAddress(), null,
             config.getContractInterface().getContractParameters()
@@ -136,7 +136,7 @@ public class Utilities {
    */
   public static String reconcile(Map<String, BigInteger> addressChanges, Configuration config) {
     Long nonce = config.getContractInterface().getContractParameters()
-        .getNonce(ethereumRpc, config.getStorageContractAddress(), config.getAdminAccount());
+        .getNonce(ethereumReadRpc, config.getStorageContractAddress(), config.getAdminAccount());
     RawTransaction tx = RawTransaction
         .createTransaction(config, config.getStorageContractAddress(), null,
             config.getContractInterface().getContractParameters()
@@ -159,7 +159,7 @@ public class Utilities {
         config.getTokenContractAddress());
     LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
 
-    return ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+    return ethereumReadRpc.eth_call(callData, DefaultBlock.LATEST.toString());
   }
 
   /**

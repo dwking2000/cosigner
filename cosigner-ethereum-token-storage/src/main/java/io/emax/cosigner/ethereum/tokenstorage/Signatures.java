@@ -20,7 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumRpc;
+import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumReadRpc;
 
 /**
  * Signature methods
@@ -88,7 +88,8 @@ public class Signatures {
             BigInteger nonce =
                 new BigInteger(contractParams.get(ContractParametersInterface.NONCE).get(0));
 
-            hashBytes = txContractInterface.getContractParameters().calculateAdminHash(ethereumRpc,
+            hashBytes = txContractInterface.getContractParameters().calculateAdminHash(
+                ethereumReadRpc,
                 ByteUtilities.toHexString(tx.getTo().getDecodedContents()), nonce.longValue());
             LOGGER.debug("Result: " + hashBytes);
             LinkedList<String> msigString = new LinkedList<>();
@@ -102,7 +103,7 @@ public class Signatures {
 
     // Calculate the transaction's signature data.
     String txCount =
-        ethereumRpc.eth_getTransactionCount("0x" + address, DefaultBlock.LATEST.toString());
+        ethereumReadRpc.eth_getTransactionCount("0x" + address, DefaultBlock.LATEST.toString());
     LinkedList<String> txString = new LinkedList<>();
     txString.add(transaction);
     txString.add(txCount);
@@ -399,7 +400,7 @@ public class Signatures {
     String sig;
     try {
       LOGGER.debug("Asking geth to sign 0x" + data + " for 0x" + address);
-      sig = ethereumRpc.eth_sign("0x" + address, "0x" + data);
+      sig = ethereumReadRpc.eth_sign("0x" + address, "0x" + data);
     } catch (Exception e) {
       LOGGER.warn(null, e);
       return new byte[0][0];

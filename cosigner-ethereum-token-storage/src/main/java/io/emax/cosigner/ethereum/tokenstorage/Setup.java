@@ -30,11 +30,11 @@ public class Setup {
    */
   static void findExistingContract(String contractAccount, Configuration config) {
     try {
-      String txCount = Base.ethereumRpc
+      String txCount = Base.ethereumReadRpc
           .eth_getTransactionCount("0x" + contractAccount, DefaultBlock.LATEST.toString());
       int rounds = new BigInteger(1, ByteUtilities.toByteArray(txCount)).intValue();
       int baseRounds = 0;
-      if (Base.ethereumRpc.net_version().equals(Base.TESTNET_VERSION)) {
+      if (Base.ethereumReadRpc.net_version().equals(Base.TESTNET_VERSION)) {
         baseRounds = (int) Base.TESTNET_BASE_ROUNDS;
       }
 
@@ -84,18 +84,18 @@ public class Setup {
   static String waitForReceipt(String txId, Configuration config) {
     String minedContractAddress = null;
     int confirmations = 0;
-    Map<String, Object> receiptData = Base.ethereumRpc.eth_getTransactionReceipt(txId);
+    Map<String, Object> receiptData = Base.ethereumReadRpc.eth_getTransactionReceipt(txId);
     try {
       while (receiptData == null || config.getMinConfirmations() > confirmations) {
         LOGGER.info("Waiting for transaction receipt...");
         Thread.sleep(5000);
-        receiptData = Base.ethereumRpc.eth_getTransactionReceipt(txId);
+        receiptData = Base.ethereumReadRpc.eth_getTransactionReceipt(txId);
         if (receiptData != null) {
           minedContractAddress = (String) receiptData.get("contractAddress");
           minedContractAddress =
               ByteUtilities.toHexString(ByteUtilities.toByteArray(minedContractAddress));
           BigInteger latestBlockNumber =
-              new BigInteger(1, ByteUtilities.toByteArray(Base.ethereumRpc.eth_blockNumber()));
+              new BigInteger(1, ByteUtilities.toByteArray(Base.ethereumReadRpc.eth_blockNumber()));
           BigInteger txBlockNumber =
               new BigInteger(1, ByteUtilities.toByteArray((String) receiptData.get("blockNumber")));
           confirmations = latestBlockNumber.subtract(txBlockNumber).intValue();
@@ -209,7 +209,7 @@ public class Setup {
             // Token Contract Assignment
             // Generate tx structure
             Long nonce = config.getContractInterface().getContractParameters()
-                .getNonce(Base.ethereumRpc, config.getAdminContractAddress(),
+                .getNonce(Base.ethereumReadRpc, config.getAdminContractAddress(),
                     config.getAdminAccount());
             tx = RawTransaction.createTransaction(config, config.getAdminContractAddress(), null,
                 config.getContractInterface().getContractParameters()
