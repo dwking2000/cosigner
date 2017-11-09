@@ -92,7 +92,7 @@ public class BitcoinResource {
                     try {
                       return method.invoke(innerRpc, objects);
                     } catch (Exception e) {
-                      LOGGER.error("Problem invoking RPC call", e);
+                      LOGGER.debug("Problem invoking RPC call", e);
                       break;
                     } finally {
                       requestLocks.get(lockNumber).unlock();
