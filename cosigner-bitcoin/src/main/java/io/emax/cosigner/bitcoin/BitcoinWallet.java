@@ -281,6 +281,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       }
     } catch (Exception e) {
       LOGGER.debug(null, e);
+      throw e;
     }
     return balance.toPlainString();
   }
@@ -296,6 +297,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
       }
     } catch (Exception e) {
       LOGGER.debug(null, e);
+      throw e;
     }
     return balance.toPlainString();
   }
