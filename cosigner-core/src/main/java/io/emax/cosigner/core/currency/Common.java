@@ -78,6 +78,7 @@ public class Common {
     if (CosignerApplication.getCurrencies().containsKey(params.getCurrencySymbol())) {
       return CosignerApplication.getCurrencies().get(params.getCurrencySymbol());
     } else {
+      LOGGER.warn("Requested currency not loaded: " + params.getCurrencySymbol());
       return null;
     }
   }
@@ -313,6 +314,7 @@ public class Common {
       cosignerResponse.setResult(response);
       return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     } catch (Exception e) {
+      LOGGER.debug(null, e);
       CosignerResponse cosignerResponse = new CosignerResponse();
       cosignerResponse.setError(e.toString());
       return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
