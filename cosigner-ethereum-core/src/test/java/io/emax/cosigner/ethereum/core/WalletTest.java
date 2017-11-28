@@ -196,12 +196,17 @@ public class WalletTest {
 
   @Test
   public void testTransactionLookup() {
-    String singleAddress = wallet.createAddress(userKey);
-    String multiAddress =
-        wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
-    System.out.println(Json.stringifyObject(List.class,
-        Arrays.asList(wallet.getTransactions(multiAddress, 100, 0))));
+    try {
+      String singleAddress = wallet.createAddress(userKey);
+      String multiAddress =
+          wallet.getMultiSigAddress(Collections.singletonList(singleAddress), userKey);
+      System.out.println(Json.stringifyObject(List.class,
+          Arrays.asList(wallet.getTransactions(multiAddress, 100, 0))));
 
-    System.out.println(wallet.getTransaction("deadbeef"));
+      System.out.println(wallet.getTransaction("deadbeef"));
+    } catch (Exception e) {
+      LOGGER.debug(null, e);
+      Assert.fail("Problem testing transaction lookup");
+    }
   }
 }
