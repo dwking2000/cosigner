@@ -46,7 +46,7 @@ public class EthereumConfiguration
     try {
       return Long.parseLong(EnvironmentVariableParser.resolveEnvVars(prop.getProperty(value)));
     } catch (Exception e) {
-      LOGGER.warn(null, e);
+      LOGGER.warn("Could not parse value for: " + value + ", using default of: " + defaultValue);
       return defaultValue;
     }
   }

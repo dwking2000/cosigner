@@ -81,7 +81,7 @@ public class Setup {
    * Useful for transactions that must be confirmed before continuing, such as needing to be sure of
    * a contract address.
    */
-  static String waitForReceipt(String txId, Configuration config) {
+  static String waitForReceipt(String txId, Configuration config) throws Exception {
     String minedContractAddress = null;
     int confirmations = 0;
     Map<String, Object> receiptData = Base.ethereumReadRpc.eth_getTransactionReceipt(txId);

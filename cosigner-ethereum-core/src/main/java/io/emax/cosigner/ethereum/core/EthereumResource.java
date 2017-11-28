@@ -88,7 +88,9 @@ public class EthereumResource {
                       return method.invoke(innerRpc, objects);
                     } catch (Exception e) {
                       LOGGER.error("Problem invoking RPC call", e);
-                      break;
+                      // We don't want the invocation error, we want the node response.
+                      LOGGER.error("Throwing", e.getCause());
+                      throw e.getCause();
                     } finally {
                       requestLocks.get(lockNumber).unlock();
                     }
@@ -100,8 +102,6 @@ public class EthereumResource {
                     Thread.sleep(1);
                   }
                 }
-                // Should never hit this, but if it all goes sideways, return null.
-                return null;
               });
     }
 
@@ -136,7 +136,9 @@ public class EthereumResource {
                       return method.invoke(innerRpc, objects);
                     } catch (Exception e) {
                       LOGGER.error("Problem invoking RPC call", e);
-                      break;
+                      // We don't want the invocation error, we want the node response.
+                      LOGGER.error("Throwing", e.getCause());
+                      throw e.getCause();
                     } finally {
                       requestLocks.get(lockNumber).unlock();
                     }
@@ -148,8 +150,6 @@ public class EthereumResource {
                     Thread.sleep(1);
                   }
                 }
-                // Should never hit this, but if it all goes sideways, return null.
-                return null;
               });
     }
 

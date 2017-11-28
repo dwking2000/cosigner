@@ -31,10 +31,10 @@ public interface CurrencyAdmin {
    * Return the height of the blockchain backing the currency, useful for verifying that all nodes
    * are in sync.
    */
-  long getBlockchainHeight();
+  long getBlockchainHeight() throws Exception;
 
   /**
    * Returns the time of the last block, allows monitoring for network issues.
    */
-  long getLastBlockTime();
+  long getLastBlockTime() throws Exception;
 }

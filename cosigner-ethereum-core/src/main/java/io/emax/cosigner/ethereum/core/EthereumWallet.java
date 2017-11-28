@@ -250,7 +250,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public String getMultiSigAddress(Iterable<String> addresses, String name) {
+  public String getMultiSigAddress(Iterable<String> addresses, String name) throws Exception {
     String userAddress = "";
     Iterator<String> addIter = addresses.iterator();
     List<String> addressesUsed = new LinkedList<>();
@@ -352,7 +352,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public String getBalance(String address) {
+  public String getBalance(String address) throws Exception {
     address = "0x" + ByteUtilities.toHexString(ByteUtilities.toByteArray(address));
     BigInteger latestBlockNumber =
         new BigInteger("00" + ethereumReadRpc.eth_blockNumber().substring(2), 16);
@@ -375,7 +375,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public String getPendingBalance(String address) {
+  public String getPendingBalance(String address) throws Exception {
     address = "0x" + ByteUtilities.toHexString(ByteUtilities.toByteArray(address));
     BigInteger latestBlockNumber =
         new BigInteger("00" + ethereumReadRpc.eth_blockNumber().substring(2), 16);
@@ -398,13 +398,14 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
+  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses)
+      throws Exception {
     return createTransaction(fromAddresses, toAddresses, null);
   }
 
   @Override
   public String createTransaction(Iterable<String> fromAddress, Iterable<Recipient> toAddress,
-      String options) {
+      String options) throws Exception {
 
     String senderAddress = fromAddress.iterator().next();
     boolean isMsigSender = false;
@@ -526,17 +527,18 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public String signTransaction(String transaction, String address) {
+  public String signTransaction(String transaction, String address) throws Exception {
     return signTransaction(transaction, address, null);
   }
 
   @Override
-  public String signTransaction(String transaction, String address, String name) {
+  public String signTransaction(String transaction, String address, String name) throws Exception {
     return signTransaction(transaction, address, name, null);
   }
 
   @Override
-  public String signTransaction(String transaction, String address, String name, String options) {
+  public String signTransaction(String transaction, String address, String name, String options)
+      throws Exception {
     LOGGER.debug("Attempting to sign for address: " + address);
     TransactionDetails txDetails = decodeRawTransaction(transaction);
     String sender = address;
@@ -711,12 +713,13 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
    * <p>The next result will be the original transaction along with the expected nonce for the
    * address provided.
    */
-  public Iterable<Iterable<String>> getSigString(String transaction, String address) {
+  public Iterable<Iterable<String>> getSigString(String transaction, String address)
+      throws Exception {
     return getSigString(transaction, address, true);
   }
 
   public Iterable<Iterable<String>> getSigString(String transaction, String address,
-      boolean withAnyMsig) {
+      boolean withAnyMsig) throws Exception {
     // Turn the tx into a useful data structure.
     RawTransaction decodedTransaction =
         RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
@@ -899,7 +902,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public String sendTransaction(String transaction) {
+  public String sendTransaction(String transaction) throws Exception {
     transaction = ByteUtilities.toHexString(ByteUtilities.toByteArray(transaction));
     // If this is one of ours, re-sign the whole tx with the contract account.
     RawTransaction decodedTransaction =
@@ -991,14 +994,14 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public long getBlockchainHeight() {
+  public long getBlockchainHeight() throws Exception {
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
     return latestBlockNumber.longValue();
   }
 
   @Override
-  public long getLastBlockTime() {
+  public long getLastBlockTime() throws Exception {
     Block block = ethereumReadRpc.eth_getBlockByNumber(DefaultBlock.LATEST.getValue(), true);
     BigInteger dateConverter = new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
     return dateConverter.longValue();
@@ -1012,7 +1015,8 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
+  public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber)
+      throws Exception {
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
@@ -1033,7 +1037,8 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
       TransactionDetails txDetail = new TransactionDetails();
       txDetail.setTxHash((String) result.get("transactionHash"));
       try {
-        Block block = ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
+        Block block =
+            ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
         BigInteger dateConverter =
             new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
         dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
@@ -1082,10 +1087,11 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
-  public TransactionDetails getTransaction(String transactionId) {
+  public TransactionDetails getTransaction(String transactionId) throws Exception {
     Map txData = ethereumReadRpc.eth_getTransactionByHash(transactionId);
 
-    Block txBlock = ethereumReadRpc.eth_getBlockByNumber(txData.get("blockNumber").toString(), true);
+    Block txBlock =
+        ethereumReadRpc.eth_getBlockByNumber(txData.get("blockNumber").toString(), true);
     TransactionDetails txDetail = new TransactionDetails();
     txDetail.setTxHash(txData.get("hash").toString());
     txDetail.setTxDate(new Date(

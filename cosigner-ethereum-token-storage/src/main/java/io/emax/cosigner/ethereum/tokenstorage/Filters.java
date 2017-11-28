@@ -30,7 +30,8 @@ public class Filters {
     }
   }
 
-  static Wallet.TransactionDetails[] getReconciliations(String address, Configuration config) {
+  static Wallet.TransactionDetails[] getReconciliations(String address, Configuration config)
+      throws Exception {
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
@@ -64,8 +65,8 @@ public class Filters {
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
         txDetail.setTxHash((String) result.get("transactionHash"));
         try {
-          Block block = ethereumReadRpc
-              .eth_getBlockByNumber((String) result.get("blockNumber"), true);
+          Block block =
+              ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
           BigInteger dateConverter =
               new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
           dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
@@ -121,7 +122,8 @@ public class Filters {
     return txDetails.toArray(new Wallet.TransactionDetails[txDetails.size()]);
   }
 
-  static Wallet.TransactionDetails[] getTransfers(String address, Configuration config) {
+  static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
+      throws Exception {
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
@@ -157,8 +159,8 @@ public class Filters {
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
         txDetail.setTxHash((String) result.get("transactionHash"));
         try {
-          Block block = ethereumReadRpc
-              .eth_getBlockByNumber((String) result.get("blockNumber"), true);
+          Block block =
+              ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
           BigInteger dateConverter =
               new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
           dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));

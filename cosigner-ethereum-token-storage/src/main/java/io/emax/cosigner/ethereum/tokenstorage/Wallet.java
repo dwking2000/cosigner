@@ -52,12 +52,12 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public String createAddress(String name) {
+  public String createAddress(String name) throws Exception {
     return createAddress(name, 0);
   }
 
   @Override
-  public String createAddress(String name, int skipNumber) {
+  public String createAddress(String name, int skipNumber) throws Exception {
     // Generate the next private key
     LOGGER.debug("Creating a new normal address...");
     String user = EthereumTools.encodeUserKey(name);
@@ -99,7 +99,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public Iterable<String> getAddresses(String name) {
+  public Iterable<String> getAddresses(String name) throws Exception {
     String user = EthereumTools.encodeUserKey(name);
     if (!ownedAddresses.containsKey(user)) {
       ownedAddresses.put(user, new HashSet<>());
@@ -126,7 +126,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public String getBalance(String address) {
+  public String getBalance(String address) throws Exception {
     CallData callData = EthereumTools
         .generateCall(config.getContractInterface().getContractParameters().getBalance(address),
             config.getStorageContractAddress());
@@ -151,7 +151,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public String getPendingBalance(String address) {
+  public String getPendingBalance(String address) throws Exception {
     BigDecimal balance = BigDecimal.ZERO;
     TransactionDetails[] txDetails = getTransactions(address, 100, 0);
     for (TransactionDetails txDetail : txDetails) {
@@ -166,7 +166,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
     return balance.toPlainString();
   }
 
-  public String getTotalBalances() {
+  public String getTotalBalances() throws Exception {
     CallData callData = EthereumTools
         .generateCall(config.getContractInterface().getContractParameters().getTotalBalance(),
             config.getStorageContractAddress());
@@ -182,13 +182,14 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses) {
+  public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses)
+      throws Exception {
     return createTransaction(fromAddresses, toAddresses, null);
   }
 
   @Override
   public String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses,
-      String options) {
+      String options) throws Exception {
     String firstSender =
         ByteUtilities.toHexString(ByteUtilities.toByteArray(fromAddresses.iterator().next()));
     String contract = config.getStorageContractAddress();
@@ -227,7 +228,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
 
       String txCount = ethereumReadRpc
           .eth_getStorageAt("0x" + contract.toLowerCase(Locale.US), "0x1",
-          DefaultBlock.LATEST.toString());
+              DefaultBlock.LATEST.toString());
       BigInteger nonce = new BigInteger(1, ByteUtilities.toByteArray(txCount)).add(BigInteger.ONE);
 
       // Create the TX data structure
@@ -255,22 +256,23 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public String signTransaction(String transaction, String address) {
+  public String signTransaction(String transaction, String address) throws Exception {
     return signTransaction(transaction, address, null);
   }
 
   @Override
-  public String signTransaction(String transaction, String address, String key) {
+  public String signTransaction(String transaction, String address, String key) throws Exception {
     return signTransaction(transaction, address, key, null);
   }
 
   @Override
-  public String signTransaction(String transaction, String address, String key, String options) {
+  public String signTransaction(String transaction, String address, String key, String options)
+      throws Exception {
     return signTransaction(transaction, address, key, null, config);
   }
 
   public static String signTransaction(String transaction, String address, String key,
-      String options, Configuration config) {
+      String options, Configuration config) throws Exception {
     // Convert transaction to data, and to parsed input.
     RawTransaction tx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
     if (tx == null) {
@@ -307,7 +309,8 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public Iterable<Iterable<String>> getSigString(String transaction, String address) {
+  public Iterable<Iterable<String>> getSigString(String transaction, String address)
+      throws Exception {
     return Signatures.getSigString(transaction, address, false, config);
   }
 
@@ -327,7 +330,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
     return applySignature(transaction, address, signatureData, config);
   }
 
-  public static String sendTransaction(String transaction, Configuration config) {
+  public static String sendTransaction(String transaction, Configuration config) throws Exception {
     LOGGER.debug("Asked to send: " + transaction);
     RawTransaction rawTx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
 
@@ -376,7 +379,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public String sendTransaction(String transaction) {
+  public String sendTransaction(String transaction) throws Exception {
     return sendTransaction(transaction, config);
   }
 
@@ -419,14 +422,14 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public long getBlockchainHeight() {
+  public long getBlockchainHeight() throws Exception {
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
     return latestBlockNumber.longValue();
   }
 
   @Override
-  public long getLastBlockTime() {
+  public long getLastBlockTime() throws Exception {
     Block block = ethereumReadRpc.eth_getBlockByNumber(DefaultBlock.LATEST.getValue(), true);
     BigInteger dateConverter = new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
     return dateConverter.longValue();
@@ -440,7 +443,8 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
+  public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber)
+      throws Exception {
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
 
     Arrays.asList(Filters.getReconciliations(address, config)).forEach(txDetails::add);
@@ -458,7 +462,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
-  public TransactionDetails getTransaction(String transactionId) {
+  public TransactionDetails getTransaction(String transactionId) throws Exception {
     Map txMap = ethereumReadRpc.eth_getTransactionByHash(transactionId);
 
     Block txBlock = ethereumReadRpc.eth_getBlockByNumber(txMap.get("blockNumber").toString(), true);

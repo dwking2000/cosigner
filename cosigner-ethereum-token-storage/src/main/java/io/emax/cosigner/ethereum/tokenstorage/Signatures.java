@@ -29,7 +29,7 @@ public class Signatures {
   private static final Logger LOGGER = LoggerFactory.getLogger(Signatures.class);
 
   static Iterable<Iterable<String>> getSigString(String transaction, String address,
-      boolean ignoreContractCode, Configuration config) {
+      boolean ignoreContractCode, Configuration config) throws Exception {
     RawTransaction tx = RawTransaction.parseBytes(ByteUtilities.toByteArray(transaction));
     LinkedList<Iterable<String>> sigStrings = new LinkedList<>();
 
@@ -88,9 +88,9 @@ public class Signatures {
             BigInteger nonce =
                 new BigInteger(contractParams.get(ContractParametersInterface.NONCE).get(0));
 
-            hashBytes = txContractInterface.getContractParameters().calculateAdminHash(
-                ethereumReadRpc,
-                ByteUtilities.toHexString(tx.getTo().getDecodedContents()), nonce.longValue());
+            hashBytes = txContractInterface.getContractParameters()
+                .calculateAdminHash(ethereumReadRpc,
+                    ByteUtilities.toHexString(tx.getTo().getDecodedContents()), nonce.longValue());
             LOGGER.debug("Result: " + hashBytes);
             LinkedList<String> msigString = new LinkedList<>();
             msigString.add(txContractInterface.getClass().getCanonicalName());

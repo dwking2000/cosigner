@@ -35,8 +35,9 @@ public class Utilities {
   @Deprecated
   public static String getContractType(String contractAddress, Configuration config) {
     try {
-      String contractCode = ethereumReadRpc.eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
-          DefaultBlock.LATEST.toString());
+      String contractCode = ethereumReadRpc
+          .eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
+              DefaultBlock.LATEST.toString());
       contractCode = contractCode.substring(2);
       Class<?> contractType = Contract.class;
       while (ContractInterface.class.isAssignableFrom(contractType)) {
@@ -66,8 +67,9 @@ public class Utilities {
    */
   public static ContractInterface getContractVersion(String contractAddress, Configuration config) {
     try {
-      String contractCode = ethereumReadRpc.eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
-          DefaultBlock.LATEST.toString());
+      String contractCode = ethereumReadRpc
+          .eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
+              DefaultBlock.LATEST.toString());
       contractCode = contractCode.substring(2);
       Class<?> contractType = Contract.class;
       while (ContractInterface.class.isAssignableFrom(contractType)) {
@@ -99,7 +101,8 @@ public class Utilities {
    * @deprecated This library will no longer support token contract management going forward.
    */
   @Deprecated
-  public static String generateTokens(String recipient, long amount, Configuration config) {
+  public static String generateTokens(String recipient, long amount, Configuration config)
+      throws Exception {
     Long nonce = config.getContractInterface().getContractParameters()
         .getNonce(ethereumReadRpc, config.getAdminContractAddress(), config.getAdminAccount());
     RawTransaction tx = RawTransaction
@@ -117,7 +120,8 @@ public class Utilities {
    * @deprecated This library will no longer support token contract management going forward.
    */
   @Deprecated
-  public static String destroyTokens(String sender, long amount, Configuration config) {
+  public static String destroyTokens(String sender, long amount, Configuration config)
+      throws Exception {
     Long nonce = config.getContractInterface().getContractParameters()
         .getNonce(ethereumReadRpc, config.getAdminContractAddress(), config.getAdminAccount());
     RawTransaction tx = RawTransaction
@@ -134,7 +138,8 @@ public class Utilities {
    *
    * @param addressChanges Map of addresses and the change in balance to apply to them.
    */
-  public static String reconcile(Map<String, BigInteger> addressChanges, Configuration config) {
+  public static String reconcile(Map<String, BigInteger> addressChanges, Configuration config)
+      throws Exception {
     Long nonce = config.getContractInterface().getContractParameters()
         .getNonce(ethereumReadRpc, config.getStorageContractAddress(), config.getAdminAccount());
     RawTransaction tx = RawTransaction
@@ -153,7 +158,8 @@ public class Utilities {
    * @deprecated This library will no longer support token contract management going forward.
    */
   @Deprecated
-  public static String allowance(String owner, String grantee, Configuration config) {
+  public static String allowance(String owner, String grantee, Configuration config)
+      throws Exception {
     CallData callData = EthereumTools.generateCall(
         config.getContractInterface().getContractParameters().allowance(owner, grantee),
         config.getTokenContractAddress());
