@@ -193,10 +193,15 @@ public class AdminResource {
   @POST
   @Path("/GetBlockchainHeight")
   public Response getBlockchainHeigh(String currency) {
-    if (CosignerApplication.getCurrencies().containsKey(currency)) {
-      CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
-      return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).getBlockchainHeight())
-          .build();
+    try {
+      if (CosignerApplication.getCurrencies().containsKey(currency)) {
+        CurrencyPackageInterface currencyPackage =
+            CosignerApplication.getCurrencies().get(currency);
+        return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).getBlockchainHeight())
+            .build();
+      }
+    } catch (Exception e) {
+      LOGGER.error("Problem getting blockchain height", e);
     }
 
     return Response.noContent().build();
@@ -205,9 +210,15 @@ public class AdminResource {
   @POST
   @Path("/GetLastBlockTime")
   public Response getLastBlockTime(String currency) {
-    if (CosignerApplication.getCurrencies().containsKey(currency)) {
-      CurrencyPackageInterface currencyPackage = CosignerApplication.getCurrencies().get(currency);
-      return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).getLastBlockTime()).build();
+    try {
+      if (CosignerApplication.getCurrencies().containsKey(currency)) {
+        CurrencyPackageInterface currencyPackage =
+            CosignerApplication.getCurrencies().get(currency);
+        return Response.ok(((CurrencyAdmin) currencyPackage.getWallet()).getLastBlockTime())
+            .build();
+      }
+    } catch (Exception e) {
+      LOGGER.error("Problem getting block time", e);
     }
 
     return Response.noContent().build();

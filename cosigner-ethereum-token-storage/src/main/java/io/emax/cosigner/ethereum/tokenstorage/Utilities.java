@@ -18,7 +18,7 @@ import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 
-import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumRpc;
+import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumReadRpc;
 
 /**
  * Common utility functions for Tokens.
@@ -35,8 +35,9 @@ public class Utilities {
   @Deprecated
   public static String getContractType(String contractAddress, Configuration config) {
     try {
-      String contractCode = ethereumRpc.eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
-          DefaultBlock.LATEST.toString());
+      String contractCode = ethereumReadRpc
+          .eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
+              DefaultBlock.LATEST.toString());
       contractCode = contractCode.substring(2);
       Class<?> contractType = Contract.class;
       while (ContractInterface.class.isAssignableFrom(contractType)) {
@@ -66,17 +67,22 @@ public class Utilities {
    */
   public static ContractInterface getContractVersion(String contractAddress, Configuration config) {
     try {
-      String contractCode = ethereumRpc.eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
-          DefaultBlock.LATEST.toString());
+      String contractCode = ethereumReadRpc
+          .eth_getCode("0x" + contractAddress.toLowerCase(Locale.US),
+              DefaultBlock.LATEST.toString());
       contractCode = contractCode.substring(2);
       Class<?> contractType = Contract.class;
       while (ContractInterface.class.isAssignableFrom(contractType)) {
         ContractInterface contractParams = (ContractInterface) contractType.newInstance();
         if (contractParams.getStorageRuntime().equalsIgnoreCase(contractCode) || contractParams
             .getAdminRuntime().equalsIgnoreCase(contractCode)) {
+          LOGGER.debug("[" + config.getCurrencySymbol() + "] Existing contract version found: "
+              + contractParams.getClass().getCanonicalName());
           return contractParams;
         } else if (config.useAlternateEtherContract() && contractParams.getAlternateStorageRunTime()
             .equalsIgnoreCase(contractCode)) {
+          LOGGER.debug("[" + config.getCurrencySymbol() + "] Existing contract version found: "
+              + contractParams.getClass().getCanonicalName());
           return contractParams;
         }
         contractType = contractType.getSuperclass();
@@ -85,6 +91,7 @@ public class Utilities {
       LOGGER.debug(null, e);
       return null;
     }
+    LOGGER.debug("[" + config.getCurrencySymbol() + "] Could not determine contract version.");
     return null;
   }
 
@@ -94,9 +101,10 @@ public class Utilities {
    * @deprecated This library will no longer support token contract management going forward.
    */
   @Deprecated
-  public static String generateTokens(String recipient, long amount, Configuration config) {
+  public static String generateTokens(String recipient, long amount, Configuration config)
+      throws Exception {
     Long nonce = config.getContractInterface().getContractParameters()
-        .getNonce(ethereumRpc, config.getAdminContractAddress(), config.getAdminAccount());
+        .getNonce(ethereumReadRpc, config.getAdminContractAddress(), config.getAdminAccount());
     RawTransaction tx = RawTransaction
         .createTransaction(config, config.getAdminContractAddress(), null,
             config.getContractInterface().getContractParameters()
@@ -112,9 +120,10 @@ public class Utilities {
    * @deprecated This library will no longer support token contract management going forward.
    */
   @Deprecated
-  public static String destroyTokens(String sender, long amount, Configuration config) {
+  public static String destroyTokens(String sender, long amount, Configuration config)
+      throws Exception {
     Long nonce = config.getContractInterface().getContractParameters()
-        .getNonce(ethereumRpc, config.getAdminContractAddress(), config.getAdminAccount());
+        .getNonce(ethereumReadRpc, config.getAdminContractAddress(), config.getAdminAccount());
     RawTransaction tx = RawTransaction
         .createTransaction(config, config.getAdminContractAddress(), null,
             config.getContractInterface().getContractParameters()
@@ -129,9 +138,10 @@ public class Utilities {
    *
    * @param addressChanges Map of addresses and the change in balance to apply to them.
    */
-  public static String reconcile(Map<String, BigInteger> addressChanges, Configuration config) {
+  public static String reconcile(Map<String, BigInteger> addressChanges, Configuration config)
+      throws Exception {
     Long nonce = config.getContractInterface().getContractParameters()
-        .getNonce(ethereumRpc, config.getStorageContractAddress(), config.getAdminAccount());
+        .getNonce(ethereumReadRpc, config.getStorageContractAddress(), config.getAdminAccount());
     RawTransaction tx = RawTransaction
         .createTransaction(config, config.getStorageContractAddress(), null,
             config.getContractInterface().getContractParameters()
@@ -148,13 +158,14 @@ public class Utilities {
    * @deprecated This library will no longer support token contract management going forward.
    */
   @Deprecated
-  public static String allowance(String owner, String grantee, Configuration config) {
+  public static String allowance(String owner, String grantee, Configuration config)
+      throws Exception {
     CallData callData = EthereumTools.generateCall(
         config.getContractInterface().getContractParameters().allowance(owner, grantee),
         config.getTokenContractAddress());
     LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
 
-    return ethereumRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+    return ethereumReadRpc.eth_call(callData, DefaultBlock.LATEST.toString());
   }
 
   /**

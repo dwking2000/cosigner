@@ -18,16 +18,19 @@ public interface ContractParametersInterface {
   String SIGR = "sigR";
   String SIGS = "sigS";
 
-  Long getNonce(EthereumRpc ethereumRpc, String contractAddress, String senderAddress);
+  Long getNonce(EthereumRpc ethereumRpc, String contractAddress, String senderAddress)
+      throws Exception;
 
-  String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress);
+  String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress) throws Exception;
 
-  String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress, Long nonce);
+  String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress, Long nonce)
+      throws Exception;
 
   String calculateTxHash(EthereumRpc ethereumRpc, String contractAddress, String sender,
-      List<String> recipients, List<String> amounts);
+      List<String> recipients, List<String> amounts) throws Exception;
 
-  String calculateTxHash(String contractAddress, Long nonce, String sender, List<String> recipients, List<String> amounts);
+  String calculateTxHash(String contractAddress, Long nonce, String sender, List<String> recipients, List<String> amounts)
+      throws Exception;
 
   @Deprecated
   String createAdminContract(String adminAddress, List<String> ownerAddresses,

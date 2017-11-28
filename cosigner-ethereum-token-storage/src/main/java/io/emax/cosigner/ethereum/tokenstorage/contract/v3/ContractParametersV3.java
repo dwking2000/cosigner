@@ -25,7 +25,8 @@ public class ContractParametersV3 extends ContractParametersV2 {
   private static final Logger LOGGER = LoggerFactory.getLogger(ContractParametersV3.class);
 
   @Override
-  public Long getNonce(EthereumRpc ethereumRpc, String contractAddress, String senderAddress) {
+  public Long getNonce(EthereumRpc ethereumRpc, String contractAddress, String senderAddress)
+      throws Exception {
     ContractV3 contract = new ContractV3();
     String txCount = ethereumRpc
         .eth_call(EthereumTools.generateCall(contract.getNonce(), contractAddress),
@@ -36,7 +37,7 @@ public class ContractParametersV3 extends ContractParametersV2 {
     return nonce.longValue();
   }
 
-  public Long getSecurityValue(EthereumRpc ethereumRpc, String contractAddress) {
+  public Long getSecurityValue(EthereumRpc ethereumRpc, String contractAddress) throws Exception {
     ContractV3 contract = new ContractV3();
     String secValueStr = ethereumRpc
         .eth_call(EthereumTools.generateCall(contract.getSecurityValue(), contractAddress),
@@ -49,13 +50,15 @@ public class ContractParametersV3 extends ContractParametersV2 {
   }
 
   @Override
-  public String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress) {
+  public String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress)
+      throws Exception {
     return calculateAdminHash(ethereumRpc, contractAddress,
         getNonce(ethereumRpc, contractAddress, null));
   }
 
   @Override
-  public String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress, Long nonce) {
+  public String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress, Long nonce)
+      throws Exception {
     String formattedString = ByteUtilities.toHexString(BigInteger.valueOf(nonce).toByteArray());
     formattedString = String.format("%64s", formattedString).replace(' ', '0');
     String response = formattedString;
@@ -74,14 +77,14 @@ public class ContractParametersV3 extends ContractParametersV2 {
 
   @Override
   public String calculateTxHash(EthereumRpc ethereumRpc, String contractAddress, String sender,
-      List<String> recipients, List<String> amounts) {
+      List<String> recipients, List<String> amounts) throws Exception {
     return calculateTxHash(null, getNonce(ethereumRpc, contractAddress, null), null, recipients,
         amounts);
   }
 
   @Override
   public String calculateTxHash(String contractAddress, Long nonce, String sender,
-      List<String> recipients, List<String> amounts) {
+      List<String> recipients, List<String> amounts) throws Exception {
     String hashBytes = String.format("%64s", "0").replace(' ', '0');
     for (int i = 0; i < recipients.size(); i++) {
       hashBytes += String.format("%40s", recipients.get(i)).replace(' ', '0');

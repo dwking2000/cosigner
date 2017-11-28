@@ -68,8 +68,13 @@ public class EthereumMonitor implements io.emax.cosigner.api.currency.Monitor {
 
   private void updateTransactions() {
     HashSet<TransactionDetails> details = new HashSet<>();
-    monitoredAddresses.forEach(
-        address -> Arrays.asList(wallet.getTransactions(address, 100, 0)).forEach(details::add));
+    monitoredAddresses.forEach(address -> {
+      try {
+        Arrays.asList(wallet.getTransactions(address, 100, 0)).forEach(details::add);
+      } catch (Exception e) {
+        LOGGER.error("Problem updating monitored transactions", e);
+      }
+    });
 
     // Remove the intersection
     details.removeAll(accountTransactions);

@@ -173,6 +173,22 @@ public class Configuration implements CurrencyConfiguration, EthereumTransaction
             cosignerProperties
                 .getProperty("maxAmountPerTransaction", maxAmountPerTransaction.toPlainString())));
 
+        // contractInterface
+        String classParser = EnvironmentVariableParser.resolveEnvVars(
+            cosignerProperties.getProperty("contractInterface", Contract.class.getCanonicalName()));
+        try {
+          ClassLoader cl = ContractInterface.class.getClassLoader();
+          Class c = cl.loadClass(classParser);
+          if (ContractInterface.class.isAssignableFrom(c)) {
+            LOGGER.debug(
+                "[" + currencySymbol + "] Loaded contract interface version [" + classParser + "]");
+            LOGGER.debug("[" + currencySymbol + "] " + c.getCanonicalName());
+            contractInterface = (ContractInterface) c.newInstance();
+          }
+        } catch (Exception e) {
+          contractInterface = new Contract();
+        }
+
       } catch (IOException e) {
         if (propertiesFile != null) {
           try {

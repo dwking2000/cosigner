@@ -29,6 +29,7 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
   private BigDecimal maxAmountPerHour = BigDecimal.ZERO;
   private BigDecimal maxAmountPerDay = BigDecimal.ZERO;
   private BigDecimal maxAmountPerTransaction = BigDecimal.ZERO;
+  private int maxNodeConnections = 10;
 
   private String serverPrivateKey =
       "b0837faed56bc7c48dc29d564b1c030f03eee53b0317c53d784c8f40654821c6";
@@ -62,6 +63,10 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
         // daemonConnectionString
         daemonConnectionString = EnvironmentVariableParser.resolveEnvVars(
             cosignerProperties.getProperty("daemonConnectionString", daemonConnectionString));
+
+        // maxNodeConnections
+        maxNodeConnections =
+            getIntProp(cosignerProperties, "maxNodeConnections", maxNodeConnections);
 
         // minConfirmations
         minConfirmations = getIntProp(cosignerProperties, "minConfirmations", minConfirmations);
@@ -156,6 +161,10 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
 
   public String getDaemonConnectionString() {
     return daemonConnectionString;
+  }
+
+  public int getMaxNodeConnections() {
+    return maxNodeConnections;
   }
 
   public int getMinSignatures() {

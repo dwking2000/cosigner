@@ -78,6 +78,7 @@ public class Common {
     if (CosignerApplication.getCurrencies().containsKey(params.getCurrencySymbol())) {
       return CosignerApplication.getCurrencies().get(params.getCurrencySymbol());
     } else {
+      LOGGER.warn("Requested currency not loaded: " + params.getCurrencySymbol());
       return null;
     }
   }
@@ -245,8 +246,14 @@ public class Common {
       LinkedList<TransactionDetails> txDetails = new LinkedList<>();
       final int finalReturnNumber = returnNumber;
       final int finalSkipNumber = skipNumber;
-      currencyParams.getAccount().forEach(account -> txDetails.addAll(Arrays.asList(
-          currency.getWallet().getTransactions(account, finalReturnNumber, finalSkipNumber))));
+      currencyParams.getAccount().forEach(account -> {
+        try {
+          txDetails.addAll(Arrays.asList(
+              currency.getWallet().getTransactions(account, finalReturnNumber, finalSkipNumber)));
+        } catch (Exception e) {
+          LOGGER.error("Problem looking up transactions", e);
+        }
+      });
 
       String response = Json.stringifyObject(LinkedList.class, txDetails);
 
@@ -313,6 +320,7 @@ public class Common {
       cosignerResponse.setResult(response);
       return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     } catch (Exception e) {
+      LOGGER.debug(null, e);
       CosignerResponse cosignerResponse = new CosignerResponse();
       cosignerResponse.setError(e.toString());
       return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
@@ -847,8 +855,11 @@ public class Common {
       cosignerResponse.setResult(response);
       return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     } catch (Exception e) {
+      LOGGER.debug(null, e);
+      LOGGER.debug(e.toString());
       CosignerResponse cosignerResponse = new CosignerResponse();
       cosignerResponse.setError(e.toString());
+      LOGGER.debug(Json.stringifyObject(CosignerResponse.class, cosignerResponse));
       return Json.stringifyObject(CosignerResponse.class, cosignerResponse);
     }
   }

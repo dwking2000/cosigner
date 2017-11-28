@@ -18,14 +18,14 @@ public interface Wallet extends OfflineWallet {
    * @param name Name associated to the account, for deterministic addresses.
    * @return Public key/address of the account.
    */
-  String createAddress(String name);
+  String createAddress(String name) throws Exception;
 
   /**
    * Returns a new regular address.
    *
    * <p>This version skips the first N addresses.
    */
-  String createAddress(String name, int skipNumber);
+  String createAddress(String name, int skipNumber) throws Exception;
 
   /**
    * Register a non-cosigner address for the account.
@@ -46,7 +46,7 @@ public interface Wallet extends OfflineWallet {
    *
    * @param name User key the addresses belong to.
    */
-  Iterable<String> getAddresses(String name);
+  Iterable<String> getAddresses(String name) throws Exception;
 
   /**
    * Provides a multi-sig account for the given addresses. There may be additional addresses
@@ -56,17 +56,17 @@ public interface Wallet extends OfflineWallet {
    * @param addresses Addresses to include in the multi-sig script.
    * @param name      Associate the account with this user key
    */
-  String getMultiSigAddress(Iterable<String> addresses, String name);
+  String getMultiSigAddress(Iterable<String> addresses, String name) throws Exception;
 
   /**
    * Returns a balance for the given account.
    */
-  String getBalance(String address);
+  String getBalance(String address) throws Exception;
 
   /**
    * Returns the pending balance for the given address.
    */
-  String getPendingBalance(String address);
+  String getPendingBalance(String address) throws Exception;
 
   class Recipient {
     private String recipientAddress;
@@ -92,7 +92,8 @@ public interface Wallet extends OfflineWallet {
   /**
    * Create an unsigned transaction transferring funds between the provided accounts.
    */
-  String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses);
+  String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses)
+      throws Exception;
 
   /**
    * <p>Create an unsigned transaction transferring funds between the provided accounts.</p>
@@ -102,7 +103,7 @@ public interface Wallet extends OfflineWallet {
    * balance.</li></p>
    */
   String createTransaction(Iterable<String> fromAddresses, Iterable<Recipient> toAddresses,
-      String options);
+      String options) throws Exception;
 
   /**
    * Get the list of addresses that are signers for this transaction.
@@ -116,7 +117,7 @@ public interface Wallet extends OfflineWallet {
    *
    * @return Same transaction with new signature data
    */
-  String signTransaction(String transaction, String address);
+  String signTransaction(String transaction, String address) throws Exception;
 
   /**
    * Sign the provided transaction, the address' private key will be generated with the provided
@@ -124,7 +125,7 @@ public interface Wallet extends OfflineWallet {
    *
    * @return Same transaction with new signature data
    */
-  String signTransaction(String transaction, String address, String name);
+  String signTransaction(String transaction, String address, String name) throws Exception;
 
   /**
    * Sign the provided transaction, the address' private key will be generated with the provided
@@ -132,12 +133,13 @@ public interface Wallet extends OfflineWallet {
    *
    * @return Same transaction with new signature data
    */
-  String signTransaction(String transaction, String address, String name, String options);
+  String signTransaction(String transaction, String address, String name, String options)
+      throws Exception;
 
   /**
    * Get the data we need to sign from the TX.
    */
-  Iterable<Iterable<String>> getSigString(String transaction, String address);
+  Iterable<Iterable<String>> getSigString(String transaction, String address) throws Exception;
 
   /**
    * Update transaction with new signature.
@@ -150,7 +152,7 @@ public interface Wallet extends OfflineWallet {
    *
    * @return Transaction identifier to allow for tracking
    */
-  String sendTransaction(String transaction);
+  String sendTransaction(String transaction) throws Exception;
 
   class TransactionDetails {
     private String txHash = "";
@@ -320,9 +322,10 @@ public interface Wallet extends OfflineWallet {
    * @param skipNumber     Skip the first skipNumber results for pagination.
    * @return Transaction Details
    */
-  TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber);
+  TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber)
+      throws Exception;
 
-  TransactionDetails getTransaction(String transactionId);
+  TransactionDetails getTransaction(String transactionId) throws Exception;
 
   ServerStatus getWalletStatus();
 }

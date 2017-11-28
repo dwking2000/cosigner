@@ -24,7 +24,7 @@ public class Application {
    * @throws InterruptedException Monitor and transaction usage requires time to load data, sleep
    *                              throws this exception.
    */
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) throws Exception {
     if (args.length < 1) {
       System.out.println("Usage: <interfaceMethod> <argument> <argument> ...");
       System.out.println("Available methods:");

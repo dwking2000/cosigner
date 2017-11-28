@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumRpc;
+import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumReadRpc;
 
 public class Filters {
   private static final Logger LOGGER = LoggerFactory.getLogger(Filters.class);
@@ -30,10 +30,11 @@ public class Filters {
     }
   }
 
-  static Wallet.TransactionDetails[] getReconciliations(String address, Configuration config) {
+  static Wallet.TransactionDetails[] getReconciliations(String address, Configuration config)
+      throws Exception {
     // Get latest block
     BigInteger latestBlockNumber =
-        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
 
     LinkedList<Wallet.TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
@@ -49,12 +50,12 @@ public class Filters {
       filterParams.put("topics", topicArray);
       LOGGER.debug(
           "Requesting reconciliation filter for: " + Json.stringifyObject(Map.class, filterParams));
-      String txFilter = ethereumRpc.eth_newFilter(filterParams);
+      String txFilter = ethereumReadRpc.eth_newFilter(filterParams);
       LOGGER.debug("Setup filter: " + txFilter);
       Map<String, Object>[] filterResults;
       try {
         LOGGER.debug("Getting filter results...");
-        filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
+        filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
         filterResults = new Map[0];
@@ -64,7 +65,8 @@ public class Filters {
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
         txDetail.setTxHash((String) result.get("transactionHash"));
         try {
-          Block block = ethereumRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
+          Block block =
+              ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
           BigInteger dateConverter =
               new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
           dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
@@ -120,10 +122,11 @@ public class Filters {
     return txDetails.toArray(new Wallet.TransactionDetails[txDetails.size()]);
   }
 
-  static Wallet.TransactionDetails[] getTransfers(String address, Configuration config) {
+  static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
+      throws Exception {
     // Get latest block
     BigInteger latestBlockNumber =
-        new BigInteger(1, ByteUtilities.toByteArray(ethereumRpc.eth_blockNumber()));
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
 
     LinkedList<Wallet.TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
@@ -139,24 +142,25 @@ public class Filters {
       topicArray[0] = senderTopic;
       filterParams.put("topics", topicArray);
       LOGGER.debug("Requesting filter for: " + Json.stringifyObject(Map.class, filterParams));
-      String txFilter = ethereumRpc.eth_newFilter(filterParams);
+      String txFilter = ethereumReadRpc.eth_newFilter(filterParams);
       LOGGER.debug("Setup filter: " + txFilter);
       Map<String, Object>[] filterResults;
       try {
         LOGGER.debug("Getting filter results...");
-        filterResults = ethereumRpc.eth_getFilterLogs(txFilter);
+        filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
         filterResults = new Map[0];
       } finally {
-        ethereumRpc.eth_uninstallFilter(txFilter);
+        ethereumReadRpc.eth_uninstallFilter(txFilter);
       }
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
         txDetail.setTxHash((String) result.get("transactionHash"));
         try {
-          Block block = ethereumRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
+          Block block =
+              ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
           BigInteger dateConverter =
               new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
           dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));

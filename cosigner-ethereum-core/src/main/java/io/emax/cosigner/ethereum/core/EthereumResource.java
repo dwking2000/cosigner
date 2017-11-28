@@ -8,9 +8,13 @@ import io.emax.cosigner.ethereum.core.gethrpc.EthereumRpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Static connection to a geth RPC server.
@@ -20,8 +24,13 @@ import java.util.HashMap;
 public class EthereumResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthereumResource.class);
   private static final EthereumResource serverResource = new EthereumResource();
-  private JsonRpcHttpClient client;
+  private JsonRpcHttpClient writeClient;
+  private JsonRpcHttpClient readClient;
   private EthereumRpc ethereumRpc;
+
+  private static EthereumRpc innerRpc;
+  private static LinkedList<Lock> requestLocks = new LinkedList<>();
+  private int concurrentRpcRequests = 10;
 
   public static EthereumResource getResource() {
     return serverResource;
@@ -29,10 +38,15 @@ public class EthereumResource {
 
   private EthereumResource() {
     EthereumConfiguration config = new EthereumConfiguration();
+    concurrentRpcRequests = config.getMaxNodeConnections();
+
     try {
       HashMap<String, String> headers = new HashMap<>();
       headers.put("Content-Type", "application/json");
-      this.client = new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()), headers);
+      this.writeClient =
+          new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()), headers);
+      this.readClient =
+          new JsonRpcHttpClient(new URL(config.getDaemonReadConnectionString()), headers);
     } catch (MalformedURLException e) {
       LOGGER.error(null, e);
     }
@@ -47,14 +61,96 @@ public class EthereumResource {
   }
 
   /**
-   * Returns an RPC connector that should be pointing to the geth node.
+   * Returns an RPC connector that should be pointing to the node. This method is intended to fetch
+   * the node we're using for sending transactions.
    *
    * @return RPC connector
    */
-  public EthereumRpc getGethRpc() {
+  public EthereumRpc getEthWriteRPC() {
     if (ethereumRpc == null) {
-      this.ethereumRpc =
-          ProxyUtil.createClientProxy(getClass().getClassLoader(), EthereumRpc.class, client);
+      // We're creating multiple reentrant locks to allow a limited number of requests to run at the same time
+      requestLocks.clear();
+      for (int i = 0; i < concurrentRpcRequests; i++) {
+        requestLocks.add(new ReentrantLock());
+      }
+      innerRpc =
+          ProxyUtil.createClientProxy(getClass().getClassLoader(), EthereumRpc.class, writeClient);
+      // Proxy wrapped around the jsonrpc4j calls, will only make the actual call to the node
+      // when it can obtain a lock. Otherwise it will wait for a small amount of time before
+      // trying the next availble lock.
+      this.ethereumRpc = (EthereumRpc) Proxy
+          .newProxyInstance(getClass().getClassLoader(), new Class<?>[]{EthereumRpc.class},
+              (o, method, objects) -> {
+                int lockNumber = 0;
+                while (true) {
+                  if (requestLocks.get(lockNumber).tryLock()) {
+                    try {
+                      return method.invoke(innerRpc, objects);
+                    } catch (Exception e) {
+                      LOGGER.error("Problem invoking RPC call", e);
+                      // We don't want the invocation error, we want the node response.
+                      LOGGER.error("Throwing", e.getCause());
+                      throw e.getCause();
+                    } finally {
+                      requestLocks.get(lockNumber).unlock();
+                    }
+                  } else {
+                    lockNumber++;
+                    lockNumber %= requestLocks.size();
+                    LOGGER.debug(
+                        "Failed to obtain bitcoinRpc lock, trying the next one: " + lockNumber);
+                    Thread.sleep(1);
+                  }
+                }
+              });
+    }
+
+    return this.ethereumRpc;
+  }
+
+  /**
+   * Returns an RPC connector that should be pointing to the node. This method is intended to fetch
+   * the node we're using for reading transaction states.
+   *
+   * @return RPC connector
+   */
+  public EthereumRpc getEthReadRPC() {
+    if (ethereumRpc == null) {
+      // We're creating multiple reentrant locks to allow a limited number of requests to run at the same time
+      requestLocks.clear();
+      for (int i = 0; i < concurrentRpcRequests; i++) {
+        requestLocks.add(new ReentrantLock());
+      }
+      innerRpc =
+          ProxyUtil.createClientProxy(getClass().getClassLoader(), EthereumRpc.class, readClient);
+      // Proxy wrapped around the jsonrpc4j calls, will only make the actual call to the node
+      // when it can obtain a lock. Otherwise it will wait for a small amount of time before
+      // trying the next availble lock.
+      this.ethereumRpc = (EthereumRpc) Proxy
+          .newProxyInstance(getClass().getClassLoader(), new Class<?>[]{EthereumRpc.class},
+              (o, method, objects) -> {
+                int lockNumber = 0;
+                while (true) {
+                  if (requestLocks.get(lockNumber).tryLock()) {
+                    try {
+                      return method.invoke(innerRpc, objects);
+                    } catch (Exception e) {
+                      LOGGER.error("Problem invoking RPC call", e);
+                      // We don't want the invocation error, we want the node response.
+                      LOGGER.error("Throwing", e.getCause());
+                      throw e.getCause();
+                    } finally {
+                      requestLocks.get(lockNumber).unlock();
+                    }
+                  } else {
+                    lockNumber++;
+                    lockNumber %= requestLocks.size();
+                    LOGGER.debug(
+                        "Failed to obtain bitcoinRpc lock, trying the next one: " + lockNumber);
+                    Thread.sleep(1);
+                  }
+                }
+              });
     }
 
     return this.ethereumRpc;

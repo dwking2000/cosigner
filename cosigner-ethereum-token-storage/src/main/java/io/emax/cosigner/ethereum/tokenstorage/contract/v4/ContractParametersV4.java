@@ -25,7 +25,8 @@ public class ContractParametersV4 extends ContractParametersV3 {
   private static final Logger LOGGER = LoggerFactory.getLogger(ContractParametersV4.class);
 
   @Override
-  public Long getNonce(EthereumRpc ethereumRpc, String contractAddress, String senderAddress) {
+  public Long getNonce(EthereumRpc ethereumRpc, String contractAddress, String senderAddress)
+      throws Exception {
     ContractV4 contract = new ContractV4();
     String txCount = ethereumRpc
         .eth_call(EthereumTools.generateCall(contract.getNonce(), contractAddress),
@@ -42,12 +43,14 @@ public class ContractParametersV4 extends ContractParametersV3 {
   }
 
   @Override
-  public String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress) {
+  public String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress)
+      throws Exception {
     return calculateAdminHash(ethereumRpc, contractAddress, null);
   }
 
   @Override
-  public String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress, Long nonce) {
+  public String calculateAdminHash(EthereumRpc ethereumRpc, String contractAddress, Long nonce)
+      throws Exception {
     ContractV4 contract = new ContractV4();
     String response = ethereumRpc
         .eth_call(EthereumTools.generateCall(contract.getGetAdminHash(), contractAddress),
@@ -59,14 +62,14 @@ public class ContractParametersV4 extends ContractParametersV3 {
 
   @Override
   public String calculateTxHash(EthereumRpc ethereumRpc, String contractAddress, String sender,
-      List<String> recipients, List<String> amounts) {
+      List<String> recipients, List<String> amounts) throws Exception {
     return calculateTxHash(contractAddress, getNonce(ethereumRpc, contractAddress, sender), sender,
         recipients, amounts);
   }
 
   @Override
   public String calculateTxHash(String contractAddress, Long nonce, String sender,
-      List<String> recipients, List<String> amounts) {
+      List<String> recipients, List<String> amounts) throws Exception {
     ContractV4 contract = new ContractV4();
     String request = contract.getGetTxHash();
 
@@ -84,7 +87,7 @@ public class ContractParametersV4 extends ContractParametersV3 {
 
     LOGGER.debug("Requesting TX Hash: " + request);
 
-    String response = Base.ethereumRpc
+    String response = Base.ethereumReadRpc
         .eth_call(EthereumTools.generateCall(request, contractAddress),
             DefaultBlock.LATEST.toString());
     LOGGER.debug("Getting TX hash");
