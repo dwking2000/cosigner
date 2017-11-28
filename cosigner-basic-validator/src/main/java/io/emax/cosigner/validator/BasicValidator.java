@@ -19,7 +19,8 @@ public class BasicValidator implements Validator {
   private static final Logger LOGGER = LoggerFactory.getLogger(BasicValidator.class);
 
   @Override
-  public boolean validateTransaction(CurrencyPackageInterface currency, String transaction) {
+  public boolean validateTransaction(CurrencyPackageInterface currency, String transaction)
+      throws Exception {
     LOGGER.debug("currency: " + currency.toString());
     LOGGER.debug("currency Wallet: " + currency.getWallet());
     LOGGER.debug("currency Wallet Class: " + currency.getWallet().getClass());
