@@ -87,9 +87,9 @@ public class EthereumResource {
                     try {
                       return method.invoke(innerRpc, objects);
                     } catch (Exception e) {
-                      LOGGER.error("Problem invoking RPC call", e);
+                      LOGGER.debug("Problem invoking RPC call", e);
                       // We don't want the invocation error, we want the node response.
-                      LOGGER.error("Throwing", e.getCause());
+                      LOGGER.debug("Throwing", e.getCause());
                       throw e.getCause();
                     } finally {
                       requestLocks.get(lockNumber).unlock();
@@ -135,9 +135,9 @@ public class EthereumResource {
                     try {
                       return method.invoke(innerRpc, objects);
                     } catch (Exception e) {
-                      LOGGER.error("Problem invoking RPC call", e);
+                      LOGGER.debug("Problem invoking RPC call", e);
                       // We don't want the invocation error, we want the node response.
-                      LOGGER.error("Throwing", e.getCause());
+                      LOGGER.debug("Throwing", e.getCause());
                       throw e.getCause();
                     } finally {
                       requestLocks.get(lockNumber).unlock();
