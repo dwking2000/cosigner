@@ -152,6 +152,23 @@ public class Utilities {
   }
 
   /**
+   * Generates a transaction with the appropriate data to change the token contract the storage
+   * contract uses.
+   */
+  public static String updateTokenAddress(String newAddress, Configuration config)
+      throws Exception {
+    Long nonce = config.getContractInterface().getContractParameters()
+        .getNonce(ethereumReadRpc, config.getStorageContractAddress(), config.getAdminAccount());
+    RawTransaction tx = RawTransaction
+        .createTransaction(config, config.getStorageContractAddress(), null,
+            config.getContractInterface().getContractParameters()
+                .setTokenChild(nonce, newAddress, new LinkedList<>(), new LinkedList<>(),
+                    new LinkedList<>()));
+
+    return ByteUtilities.toHexString(tx.encode());
+  }
+
+  /**
    * Generates a transaction listing the allowance granted to the grantee based on the ERC-20
    * specification.
    *

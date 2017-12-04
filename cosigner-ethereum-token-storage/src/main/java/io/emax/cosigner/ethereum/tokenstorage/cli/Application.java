@@ -61,6 +61,7 @@ public class Application {
       System.out.println("\tdeposit(String recipient, Long tokens)");
       System.out.println("\treconcile(String affectedAddress, Long tokenChange)");
       System.out.println("\tsetTokenContract()");
+      System.out.println("\tupdateTokenContract(String address)");
       System.out.println("\tGenerateContracts(String currency, bool apply)");
       return;
     }
@@ -275,6 +276,12 @@ public class Application {
                 .setTokenChild(nonce, config.getTokenContractAddress(), new LinkedList<>(),
                     new LinkedList<>(), new LinkedList<>()));
         System.out.println(ByteUtilities.toHexString(tx.encode()));
+        break;
+      case "updateTokenContract":
+        if (args.length >= 2) {
+          accountName = args[1];
+        }
+        System.out.println(Utilities.updateTokenAddress(accountName, config));
         break;
       case "GenerateContracts":
         if (args.length >= 2) {
