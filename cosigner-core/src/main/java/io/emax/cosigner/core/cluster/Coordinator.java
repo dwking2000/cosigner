@@ -25,6 +25,7 @@ import org.zeromq.ZMQ.Socket;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.LinkedList;
 
 public class Coordinator {
   private static final Logger LOGGER = LoggerFactory.getLogger(Coordinator.class);
@@ -35,6 +36,8 @@ public class Coordinator {
   public static Coordinator getInstance() {
     return coordinator;
   }
+
+  private static LinkedList<Server> serversToRemove = new LinkedList<>();
 
   private Coordinator() {
     try {
@@ -130,6 +133,13 @@ public class Coordinator {
             Thread.sleep(30000);
 
             LOGGER.debug("Heartbeat tick");
+            LOGGER.debug("Removing old servers...");
+            for (Server server : serversToRemove) {
+              ClusterInfo.getInstance().getServers().remove(server);
+            }
+            serversToRemove.clear();
+
+            LOGGER.debug("Sending heartbeat...");
             ClusterInfo.getInstance().getServers().forEach(server -> {
               if (server.isOriginator()) {
                 // Skip ourselves.
@@ -184,7 +194,7 @@ public class Coordinator {
         LOGGER.debug("Server is too old, sending heartbeat");
       } else {
         LOGGER.debug("Server is too old, removing server");
-        ClusterInfo.getInstance().getServers().remove(server);
+        serversToRemove.add(server);
         return "";
       }
     }

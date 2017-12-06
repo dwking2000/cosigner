@@ -54,7 +54,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     //noinspection InfiniteLoopStatement
     while (true) {
       try {
-        LOGGER.info("Scanning BTC multi-sig addresses");
+        LOGGER.info("Scanning BTC multi-sig addresses for redeemScripts");
         scanForAddresses();
         Thread.sleep(60000);
       } catch (Exception e) {

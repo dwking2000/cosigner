@@ -795,8 +795,6 @@ public class Common {
           try {
             CurrencyCommand command = new CurrencyCommand();
             CurrencyParameters copyParams = convertParams(params);
-            // Don't want every server trying to sign with the user-key.
-            copyParams.setUserKey("");
             command.setCurrencyParams(copyParams);
             command.setCommandType(CurrencyCommandType.SIGN);
             CosignerResponse cosignerResponse = (CosignerResponse) Json
