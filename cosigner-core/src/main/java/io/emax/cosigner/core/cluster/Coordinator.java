@@ -208,27 +208,41 @@ public class Coordinator {
     }
 
     String commandString = command.toJson();
+    Context context = null;
+    Socket requester = null;
+    Poller poller = null;
+    String reply;
 
-    Context context = ZMQ.context(1);
-    Socket requester = context.socket(ZMQ.REQ);
-    requester.connect("tcp://" + server.getServerLocation() + ":" + server.getServerRpcPort());
+    try {
+      context = ZMQ.context(1);
+      requester = context.socket(ZMQ.REQ);
+      requester.connect("tcp://" + server.getServerLocation() + ":" + server.getServerRpcPort());
 
-    requester.send(commandString);
-    LOGGER.debug("Command is in flight");
+      requester.send(commandString);
+      LOGGER.debug("Command is in flight");
 
-    String reply = command.toJson();
-    Poller poller = new Poller(1);
-    poller.register(requester, Poller.POLLIN);
+      reply = command.toJson();
+      poller = new Poller(1);
+      poller.register(requester, Poller.POLLIN);
 
-    poller.poll(REQUEST_TIMEOUT);
+      poller.poll(REQUEST_TIMEOUT);
 
-    if (poller.pollin(0)) {
-      reply = requester.recvStr();
-      LOGGER.debug("Got response");
+      if (poller.pollin(0)) {
+        reply = requester.recvStr();
+        LOGGER.debug("Got response");
+      }
+
+    } finally {
+      if (poller != null) {
+        poller.unregister(requester);
+      }
+      if (requester != null) {
+        requester.close();
+      }
+      if (context != null) {
+        context.close();
+      }
     }
-
-    requester.close();
-
     return reply;
   }
 }

@@ -90,6 +90,11 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
         decodedContractAccount = EthereumTools.getPublicAddress(contractKey, true);
       }
 
+      if(decodedContractAccount == null || decodedContractAccount.isEmpty()) {
+        synching = false;
+        return;
+      }
+
       LOGGER.info(
           "Synchronizing contract accounts with network... (0x" + decodedContractAccount + ")");
       String txCount = ethereumReadRpc

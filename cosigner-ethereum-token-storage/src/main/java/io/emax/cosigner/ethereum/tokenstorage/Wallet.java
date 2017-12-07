@@ -383,11 +383,13 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
     return sendTransaction(transaction, config);
   }
 
+  private EthereumConfiguration etherConfig = new EthereumConfiguration();
+
   @Override
   public Map<String, String> getConfiguration() {
     HashMap<String, String> configSummary = new HashMap<>();
     configSummary.put("Currency Symbol", config.getCurrencySymbol());
-    configSummary.put("Geth Connection", new EthereumConfiguration().getDaemonConnectionString());
+    configSummary.put("Geth Connection", etherConfig.getDaemonConnectionString());
     configSummary.put("Minimum Signatures", ((Integer) config.getMinSignatures()).toString());
     configSummary.put("Minimum Confirmations", ((Integer) config.getMinConfirmations()).toString());
     configSummary
