@@ -175,7 +175,6 @@ public class EthereumTools {
   public static CallData generateCall(String data, String address) {
     CallData callData = new CallData();
     callData.setTo("0x" + address);
-    callData.setFrom("0x" + address);
     callData.setValue("0x0");
     callData.setData("0x" + data);
     callData.setGas("0x186A0");

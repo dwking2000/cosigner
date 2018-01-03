@@ -2,7 +2,6 @@ package io.emax.cosigner.ethereum.core.gethrpc;
 
 public class CallData {
   private String to;
-  private String from;
   private String value;
   private String gas;
   private String gasprice;
@@ -14,14 +13,6 @@ public class CallData {
 
   public void setTo(String to) {
     this.to = to;
-  }
-
-  public String getFrom() {
-    return from;
-  }
-
-  public void setFrom(String from) {
-    this.from = from;
   }
 
   public String getValue() {
