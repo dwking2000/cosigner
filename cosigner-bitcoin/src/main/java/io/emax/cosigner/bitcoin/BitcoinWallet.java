@@ -907,6 +907,8 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
     int pageSize = 1000;
     int pageNumber = 0;
     while (txDetails.size() < (numberToReturn + skipNumber)) {
+      LOGGER.info("Processing payments " + (pageSize * pageNumber) + " to " + (pageSize + (pageSize
+          * pageNumber)));
       Payment[] payments = bitcoindRpc.listtransactions("*", pageSize, pageNumber * pageSize, true);
       if (payments.length == 0) {
         break;
@@ -916,12 +918,12 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
         // Lookup the txid and vout/vin based on the sign of the amount (+/-)
         // Determine the address involved
         try {
-          String rawTx = bitcoindRpc.getrawtransaction(payment.getTxid());
-          RawTransaction tx = RawTransaction.parse(rawTx);
           if (payment.getCategory() == PaymentCategory.receive) {
             // Paid to the account
-
+            boolean sentByRecipient[] = {false};
             if (payment.getAddress().equalsIgnoreCase(address)) {
+              String rawTx = bitcoindRpc.getrawtransaction(payment.getTxid());
+              RawTransaction tx = RawTransaction.parse(rawTx);
               TransactionDetails detail = new TransactionDetails();
               detail.setAmount(payment.getAmount().abs());
               detail.setTxDate(new Date(payment.getBlocktime().toInstant().toEpochMilli() * 1000L));
@@ -947,6 +949,9 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
                       return;
                     }
                     addresses.forEach(senderAddress -> {
+                      if (((String) senderAddress).equalsIgnoreCase(address)) {
+                        sentByRecipient[0] = true;
+                      }
                       senders.add((String) senderAddress);
                     });
                   });
@@ -960,10 +965,14 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
               detail.setToAddress(new String[]{address});
               detail.setTxHash(payment.getTxid());
 
-              txDetails.add(detail);
+              if (!sentByRecipient[0]) {
+                txDetails.add(detail);
+              }
             }
           } else if (payment.getCategory() == PaymentCategory.send) {
             // Sent from the account
+            String rawTx = bitcoindRpc.getrawtransaction(payment.getTxid());
+            RawTransaction tx = RawTransaction.parse(rawTx);
             tx.getInputs().forEach(input -> {
               String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
               RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
@@ -986,7 +995,9 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
                 detail.setConfirmations((int) txData.get("confirmations"));
                 detail.setMinConfirmations(config.getMinConfirmations());
 
-                txDetails.add(detail);
+                if (!txDetails.contains(detail)) {
+                  txDetails.add(detail);
+                }
               }
             });
           }
@@ -994,32 +1005,6 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           LOGGER.debug(null, e);
         }
       }
-
-      LinkedList<TransactionDetails> removeThese = new LinkedList<>();
-      for (TransactionDetails detail : txDetails) {
-        boolean noMatch = true;
-        for (String from : Arrays.asList(detail.getFromAddress())) {
-          boolean subMatch = false;
-          for (String to : Arrays.asList(detail.getToAddress())) {
-            if (to.equalsIgnoreCase(from)) {
-              subMatch = true;
-              break;
-            }
-          }
-          if (subMatch) {
-            noMatch = false;
-            break;
-          }
-        }
-
-        // If the from & to's match then it's just a return amount, simpler if we don't list it.
-        if (!noMatch) {
-          LOGGER.debug(Json.stringifyObject(TransactionDetails.class, detail));
-          removeThese.add(detail);
-        }
-      }
-
-      txDetails.removeAll(removeThese);
 
       pageNumber++;
     }
