@@ -28,12 +28,14 @@ public class AdminApplication {
       System.out.println("\tGetConfigurations()");
       System.out.println("\tGetChainHeight(Currency)");
       System.out.println("\tGetLastBlockTime(Currency)");
+      System.out.println("\tSetFeeRate(Currency, Rate)");
       return;
     }
 
     AdminConnector adminConnection = new AdminConnector();
     Server server;
     String stringInput = "";
+    HashMap<String, String> mapInput = new HashMap<>();
     switch (args[0]) {
       case "ListNodes":
         System.out.println(adminConnection.listNodes());
@@ -63,7 +65,8 @@ public class AdminApplication {
         System.out.println("Set the server location");
         break;
       case "GetConfigurations":
-        System.out.println(Json.stringifyObject(HashMap.class, adminConnection.getConfigurations()));
+        System.out
+            .println(Json.stringifyObject(HashMap.class, adminConnection.getConfigurations()));
         break;
       case "LoadEthToken":
         if (args.length >= 2) {
@@ -83,6 +86,20 @@ public class AdminApplication {
           stringInput = args[1];
         }
         System.out.println(adminConnection.getLastBlockTime(stringInput));
+        break;
+      case "SetFeeRate":
+        if (args.length >= 2) {
+          stringInput = args[1];
+          mapInput.put("currency", stringInput);
+        }
+        if (args.length >= 3) {
+          stringInput = args[2];
+          mapInput.put("rate", stringInput);
+          adminConnection.setFeeRate(Json.stringifyObject(HashMap.class, mapInput));
+          System.out.println("Updated fee rate");
+        } else {
+          System.out.println("Too few arguments");
+        }
         break;
       default:
         System.out.println("Method not valid or not supported yet");

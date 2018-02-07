@@ -14,6 +14,7 @@ import io.emax.cosigner.ethereum.tokenstorage.currencyconfigurations.GenericCurr
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -221,6 +222,26 @@ public class AdminResource {
       LOGGER.error("Problem getting block time", e);
     }
 
+    return Response.noContent().build();
+  }
+
+  @POST
+  @Path("/SetFeeRate")
+  public Response setFeeRate(String content) {
+    Map<String, String> contentMap = (Map<String, String>) Json.objectifyString(Map.class, content);
+    String currency = contentMap.get("currency");
+    String rate = contentMap.get("rate");
+    try {
+      if (CosignerApplication.getCurrencies().containsKey(currency)) {
+        CurrencyPackageInterface currencyPackage =
+            CosignerApplication.getCurrencies().get(currency);
+        BigDecimal bdRate = new BigDecimal(rate);
+        currencyPackage.getWallet().setFeeRates(bdRate);
+        return Response.ok().build();
+      }
+    } catch (Exception e) {
+      LOGGER.error("Could not set fee rates using " + currency + ":" + rate);
+    }
     return Response.noContent().build();
   }
 }

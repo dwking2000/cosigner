@@ -175,6 +175,10 @@ public class BitcoinConfiguration implements CurrencyConfiguration, ValidatorCon
     return satoshiPerByteFee;
   }
 
+  public void setSatoshiPerByteFee(int sats) {
+    satoshiPerByteFee = sats;
+  }
+
   @Override
   public boolean hasMultipleSenders() {
     return true;

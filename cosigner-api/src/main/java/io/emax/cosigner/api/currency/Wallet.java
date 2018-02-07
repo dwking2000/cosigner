@@ -154,6 +154,13 @@ public interface Wallet extends OfflineWallet {
    */
   String sendTransaction(String transaction) throws Exception;
 
+  /**
+   * Sets the price to pay for fees.
+   *
+   * Should be a value that is relative, i.e. satoshis/byte, wei/gas, etc...
+   */
+  void setFeeRates(BigDecimal rate);
+
   class TransactionDetails {
     private String txHash = "";
     private Date txDate = null;

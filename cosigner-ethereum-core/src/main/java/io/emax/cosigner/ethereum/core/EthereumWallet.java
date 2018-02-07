@@ -90,7 +90,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
         decodedContractAccount = EthereumTools.getPublicAddress(contractKey, true);
       }
 
-      if(decodedContractAccount == null || decodedContractAccount.isEmpty()) {
+      if (decodedContractAccount == null || decodedContractAccount.isEmpty()) {
         synching = false;
         return;
       }
@@ -961,6 +961,11 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     } else {
       return "Transactions Temporarily Disabled";
     }
+  }
+
+  @Override
+  public void setFeeRates(BigDecimal rate) {
+    config.setGasPrice(rate.longValue());
   }
 
   @Override

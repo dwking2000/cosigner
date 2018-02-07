@@ -1090,6 +1090,11 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   @Override
+  public void setFeeRates(BigDecimal rate) {
+    config.setSatoshiPerByteFee(rate.intValue());
+  }
+
+  @Override
   public ServerStatus getWalletStatus() {
     try {
       // This will throw an exception on no response/connection.

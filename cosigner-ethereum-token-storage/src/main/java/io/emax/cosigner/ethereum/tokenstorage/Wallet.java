@@ -387,6 +387,11 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
     return sendTransaction(transaction, config);
   }
 
+  @Override
+  public void setFeeRates(BigDecimal rate) {
+    config.setGasPrice(rate.longValue());
+  }
+
   private EthereumConfiguration etherConfig = new EthereumConfiguration();
 
   @Override
