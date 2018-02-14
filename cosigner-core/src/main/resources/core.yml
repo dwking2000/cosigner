@@ -29,6 +29,8 @@ server:
       validatePeers: false
       needClientAuth: true
       allowRenegotiation: false
+  requestLog:
+    appenders: []
 
 logging:
   level: INFO

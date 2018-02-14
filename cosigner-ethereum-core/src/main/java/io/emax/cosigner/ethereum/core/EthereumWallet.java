@@ -90,6 +90,11 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
         decodedContractAccount = EthereumTools.getPublicAddress(contractKey, true);
       }
 
+      if (decodedContractAccount == null || decodedContractAccount.isEmpty()) {
+        synching = false;
+        return;
+      }
+
       LOGGER.info(
           "Synchronizing contract accounts with network... (0x" + decodedContractAccount + ")");
       String txCount = ethereumReadRpc
@@ -128,7 +133,6 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
               LOGGER.debug("Found existing contract version: " + contractType.getCanonicalName());
               CallData callData = new CallData();
               callData.setTo("0x" + contract);
-              callData.setFrom("0x" + contract);
               callData.setValue("0");
               callData.setData("0x" + contractParams.getGetOwnersFunctionAddress());
               callData.setGas("100000"); // Doesn't matter, just can't be nil
@@ -493,7 +497,6 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
         CallData callData = new CallData();
         callData.setTo("0x" + contractAddress);
-        callData.setFrom("0x" + contractAddress);
         callData.setValue("0");
         callData.setData("0x" + contract.getGetOwnersFunctionAddress());
         callData.setGas("100000"); // Doesn't matter, just can't be nil
@@ -958,6 +961,11 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     } else {
       return "Transactions Temporarily Disabled";
     }
+  }
+
+  @Override
+  public void setFeeRates(BigDecimal rate) {
+    config.setGasPrice(rate.longValue());
   }
 
   @Override

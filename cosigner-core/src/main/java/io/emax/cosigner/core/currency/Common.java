@@ -630,11 +630,13 @@ public class Common {
       String initalTx = currencyParams.getTransactionData();
       LOGGER.debug("Wallet.CreateTransaction Result: " + initalTx);
 
-      if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
-        currencyParams.setTransactionData(currency.getWallet()
-            .signTransaction(initalTx, currencyParams.getAccount().get(0),
-                currencyParams.getUserKey(), currencyParams.getOptions()));
-        LOGGER.debug("Sign with userKey: " + currencyParams.getTransactionData());
+      for (String address : currencyParams.getAccount()) {
+        if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
+          currencyParams.setTransactionData(currency.getWallet()
+              .signTransaction(initalTx, address, currencyParams.getUserKey(),
+                  currencyParams.getOptions()));
+          LOGGER.debug("Sign with userKey: " + currencyParams.getTransactionData());
+        }
       }
 
       // If the userKey/address combo don't work then we stop here.
@@ -779,24 +781,25 @@ public class Common {
           }
 
           // Apply user-key signature first if it exists.
-          if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
+          for (String address : currencyParams.getAccount()) {
+            if (currencyParams.getUserKey() != null && !currencyParams.getUserKey().isEmpty()) {
+              String sigAttempt = currency.getWallet()
+                  .signTransaction(currencyParams.getTransactionData(), address,
+                      currencyParams.getUserKey(), currencyParams.getOptions());
+              currencyParams.setTransactionData(sigAttempt);
+            }
+          }
+
+          for (String address : currencyParams.getAccount()) {
             String sigAttempt = currency.getWallet()
-                .signTransaction(currencyParams.getTransactionData(),
-                    currencyParams.getAccount().get(0), currencyParams.getUserKey(),
+                .signTransaction(currencyParams.getTransactionData(), address, null,
                     currencyParams.getOptions());
             currencyParams.setTransactionData(sigAttempt);
           }
-
-          String sigAttempt = currency.getWallet()
-              .signTransaction(currencyParams.getTransactionData(),
-                  currencyParams.getAccount().get(0), null, currencyParams.getOptions());
-          currencyParams.setTransactionData(sigAttempt);
         } else if (sendToRemotes) {
           try {
             CurrencyCommand command = new CurrencyCommand();
             CurrencyParameters copyParams = convertParams(params);
-            // Don't want every server trying to sign with the user-key.
-            copyParams.setUserKey("");
             command.setCurrencyParams(copyParams);
             command.setCommandType(CurrencyCommandType.SIGN);
             CosignerResponse cosignerResponse = (CosignerResponse) Json

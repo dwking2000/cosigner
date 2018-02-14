@@ -105,6 +105,10 @@ public class AdminConnector {
     restPostRequest("/admin/EnableTransactions", currency);
   }
 
+  public void setFeeRate(String content){
+    restPostRequest("/admin/SetFeeRate", content);
+  }
+
   public Map<String, Map<String, String>> getConfigurations() {
     return (HashMap) Json
         .objectifyString(HashMap.class, restGetRequest("/admin/GetConfigurations"));

@@ -132,18 +132,22 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
             config.getStorageContractAddress());
     LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
     String response = ethereumReadRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+    LOGGER.debug("Balance response: " + response);
 
     BigInteger intBalance = new BigInteger(1, ByteUtilities.toByteArray(response));
+    LOGGER.debug("Converted from bytes: " + intBalance.toString());
     BigDecimal balance = new BigDecimal(intBalance);
 
     balance = balance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
     balance = balance.divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
         BigDecimal.ROUND_UNNECESSARY);
+    LOGGER.debug("Converted with decimal places: " + balance.toPlainString());
 
     // Subtract any pending txs from the available balance
     TransactionDetails[] txDetails = getTransactions(address, 100, 0);
     for (TransactionDetails txDetail : txDetails) {
       if (!txDetail.isConfirmed() && txDetail.getToAddress()[0].equalsIgnoreCase(address)) {
+        LOGGER.debug("Reducing by " + txDetail.getAmount().toPlainString());
         balance = balance.subtract(txDetail.getAmount());
       }
     }
@@ -384,10 +388,17 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   }
 
   @Override
+  public void setFeeRates(BigDecimal rate) {
+    config.setGasPrice(rate.longValue());
+  }
+
+  private EthereumConfiguration etherConfig = new EthereumConfiguration();
+
+  @Override
   public Map<String, String> getConfiguration() {
     HashMap<String, String> configSummary = new HashMap<>();
     configSummary.put("Currency Symbol", config.getCurrencySymbol());
-    configSummary.put("Geth Connection", new EthereumConfiguration().getDaemonConnectionString());
+    configSummary.put("Geth Connection", etherConfig.getDaemonConnectionString());
     configSummary.put("Minimum Signatures", ((Integer) config.getMinSignatures()).toString());
     configSummary.put("Minimum Confirmations", ((Integer) config.getMinConfirmations()).toString());
     configSummary
