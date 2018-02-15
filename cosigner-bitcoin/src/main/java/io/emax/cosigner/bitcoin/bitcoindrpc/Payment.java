@@ -399,19 +399,13 @@ public class Payment {
     result = 31 * result + (amount != null ? amount.hashCode() : 0);
     result = 31 * result + vout;
     result = 31 * result + (fee != null ? fee.hashCode() : 0);
-    result = 31 * result + (int) (confirmations ^ (confirmations >>> 32));
     result = 31 * result + (generated ? 1 : 0);
     result = 31 * result + (blockhash != null ? blockhash.hashCode() : 0);
     result = 31 * result + (blockindex != null ? blockindex.hashCode() : 0);
-    result = 31 * result + (blocktime != null ? blocktime.hashCode() : 0);
     result = 31 * result + (txid != null ? txid.hashCode() : 0);
     result = 31 * result + (walletconflicts != null ? walletconflicts.hashCode() : 0);
-    result = 31 * result + (time != null ? time.hashCode() : 0);
-    result = 31 * result + (timereceived != null ? timereceived.hashCode() : 0);
     result = 31 * result + (comment != null ? comment.hashCode() : 0);
     result = 31 * result + (to != null ? to.hashCode() : 0);
-    result = 31 * result + (otheraccount != null ? otheraccount.hashCode() : 0);
-    result = 31 * result + (involvesWatchonly ? 1 : 0);
     return result;
   }
 
