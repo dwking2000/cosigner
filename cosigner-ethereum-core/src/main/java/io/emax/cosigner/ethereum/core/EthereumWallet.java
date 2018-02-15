@@ -1022,6 +1022,11 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     }
   }
 
+
+  private static HashMap<String, String> txFilterIds = new HashMap<>();
+  private static HashMap<String, LinkedList<Map<String, Object>>> cachedTxFilterResults =
+      new HashMap<>();
+
   @Override
   public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber)
       throws Exception {
@@ -1037,9 +1042,22 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     filterParams.put("toBlock", "latest");
     filterParams.put("address", address);
     LOGGER.debug("Filter: " + Json.stringifyObject(Map.class, filterParams));
-    String txFilter = ethereumReadRpc.eth_newFilter(filterParams);
-    Map<String, Object>[] filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
-    ethereumReadRpc.eth_uninstallFilter(txFilter);
+    String txFilter = "";
+    if (txFilterIds.containsKey(Json.stringifyObject(Map.class, filterParams))) {
+      txFilter = txFilterIds.get(Json.stringifyObject(Map.class, filterParams));
+    } else {
+      txFilter = ethereumReadRpc.eth_newFilter(filterParams);
+      txFilterIds.put(Json.stringifyObject(Map.class, filterParams), txFilter);
+    }
+    Map<String, Object>[] filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+    if (cachedTxFilterResults.containsKey(txFilter)) {
+      LinkedList<Map<String, Object>> cachedResults = cachedTxFilterResults.get(txFilter);
+      cachedResults.addAll(Arrays.asList(filterResults));
+      cachedTxFilterResults.put(txFilter, cachedResults);
+    } else {
+      cachedTxFilterResults.put(txFilter, new LinkedList<>(Arrays.asList(filterResults)));
+    }
+    filterResults = (Map<String, Object>[]) cachedTxFilterResults.get(txFilter).toArray();
     for (Map<String, Object> result : filterResults) {
       LOGGER.error(result.toString());
       TransactionDetails txDetail = new TransactionDetails();
