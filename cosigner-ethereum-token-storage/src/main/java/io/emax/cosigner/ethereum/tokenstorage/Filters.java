@@ -67,6 +67,9 @@ public class Filters {
       try {
         LOGGER.debug("Getting filter results...");
         filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+        if (filterResults == null) {
+          filterResults = new Map[0];
+        }
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
         filterResults = new Map[0];
@@ -80,8 +83,7 @@ public class Filters {
         cachedReconciliationFilterResults
             .put(txFilter, new LinkedList<>(Arrays.asList(filterResults)));
       }
-      filterResults =
-          (Map<String, Object>[]) cachedReconciliationFilterResults.get(txFilter).toArray();
+      filterResults = cachedReconciliationFilterResults.get(txFilter).toArray(filterResults);
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
@@ -180,6 +182,9 @@ public class Filters {
       try {
         LOGGER.debug("Getting filter results...");
         filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+        if (filterResults == null) {
+          filterResults = new Map[0];
+        }
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
         filterResults = new Map[0];
@@ -191,7 +196,7 @@ public class Filters {
       } else {
         cachedTransferFilterResults.put(txFilter, new LinkedList<>(Arrays.asList(filterResults)));
       }
-      filterResults = (Map<String, Object>[]) cachedTransferFilterResults.get(txFilter).toArray();
+      filterResults = cachedTransferFilterResults.get(txFilter).toArray(filterResults);
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();

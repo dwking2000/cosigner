@@ -1023,9 +1023,8 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
 
-  private static HashMap<String, String> txFilterIds = new HashMap<>();
-  private static HashMap<String, LinkedList<Map<String, Object>>> cachedTxFilterResults =
-      new HashMap<>();
+  private HashMap<String, String> txFilterIds = new HashMap<>();
+  private HashMap<String, LinkedList<Map<String, Object>>> cachedTxFilterResults = new HashMap<>();
 
   @Override
   public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber)
@@ -1049,7 +1048,15 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
       txFilter = ethereumReadRpc.eth_newFilter(filterParams);
       txFilterIds.put(Json.stringifyObject(Map.class, filterParams), txFilter);
     }
-    Map<String, Object>[] filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+    Map<String, Object>[] filterResults;
+    try {
+      filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+      if (filterResults == null) {
+        filterResults = new Map[0];
+      }
+    } catch (Exception e) {
+      filterResults = new Map[0];
+    }
     if (cachedTxFilterResults.containsKey(txFilter)) {
       LinkedList<Map<String, Object>> cachedResults = cachedTxFilterResults.get(txFilter);
       cachedResults.addAll(Arrays.asList(filterResults));
@@ -1057,7 +1064,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     } else {
       cachedTxFilterResults.put(txFilter, new LinkedList<>(Arrays.asList(filterResults)));
     }
-    filterResults = (Map<String, Object>[]) cachedTxFilterResults.get(txFilter).toArray();
+    filterResults = cachedTxFilterResults.get(txFilter).toArray(filterResults);
     for (Map<String, Object> result : filterResults) {
       LOGGER.error(result.toString());
       TransactionDetails txDetail = new TransactionDetails();
