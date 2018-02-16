@@ -20,6 +20,7 @@ import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContract;
 import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContractInterface;
 import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContractParametersInterface;
 
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1025,10 +1026,23 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
   private HashMap<String, String> txFilterIds = new HashMap<>();
   private HashMap<String, LinkedList<Map<String, Object>>> cachedTxFilterResults = new HashMap<>();
+  private DateTime cachedFiltersAge = DateTime.now();
 
   @Override
-  public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber)
-      throws Exception {
+  public synchronized TransactionDetails[] getTransactions(String address, int numberToReturn,
+      int skipNumber) throws Exception {
+    if (DateTime.now().minusMinutes(10).isAfter(cachedFiltersAge)) {
+      cachedTxFilterResults.clear();
+      txFilterIds.values().forEach(filterId -> {
+        try {
+          ethereumWriteRpc.eth_uninstallFilter(filterId);
+        } catch (Exception e) {
+          LOGGER.debug("Failed to uninstall filter, probably already gone.");
+        }
+      });
+      txFilterIds.clear();
+      cachedFiltersAge = DateTime.now();
+    }
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));

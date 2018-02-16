@@ -5,6 +5,7 @@ import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.ethereum.core.gethrpc.Block;
 
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumReadRpc;
+import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumWriteRpc;
 
 public class Filters {
   private static final Logger LOGGER = LoggerFactory.getLogger(Filters.class);
@@ -34,9 +36,22 @@ public class Filters {
   private static HashMap<String, String> reconciliationFilterIds = new HashMap<>();
   private static HashMap<String, LinkedList<Map<String, Object>>>
       cachedReconciliationFilterResults = new HashMap<>();
+  private static DateTime cachedReconciliationFiltersAge = DateTime.now();
 
-  static Wallet.TransactionDetails[] getReconciliations(String address, Configuration config)
-      throws Exception {
+  synchronized static Wallet.TransactionDetails[] getReconciliations(String address,
+      Configuration config) throws Exception {
+    if (DateTime.now().minusMinutes(10).isAfter(cachedReconciliationFiltersAge)) {
+      cachedReconciliationFilterResults.clear();
+      reconciliationFilterIds.values().forEach(filterId -> {
+        try {
+          ethereumWriteRpc.eth_uninstallFilter(filterId);
+        } catch (Exception e) {
+          LOGGER.debug("Failed to uninstall filter, probably already gone.");
+        }
+      });
+      reconciliationFilterIds.clear();
+      cachedReconciliationFiltersAge = DateTime.now();
+    }
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
@@ -149,9 +164,22 @@ public class Filters {
   private static HashMap<String, String> transferFilterIds = new HashMap<>();
   private static HashMap<String, LinkedList<Map<String, Object>>> cachedTransferFilterResults =
       new HashMap<>();
+  private static DateTime transferFiltersAge = DateTime.now();
 
-  static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
+  synchronized static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
       throws Exception {
+    if (DateTime.now().minusMinutes(10).isAfter(transferFiltersAge)) {
+      cachedTransferFilterResults.clear();
+      transferFilterIds.values().forEach(filterId -> {
+        try {
+          ethereumWriteRpc.eth_uninstallFilter(filterId);
+        } catch (Exception e) {
+          LOGGER.debug("Failed to uninstall filter, probably already gone.");
+        }
+      });
+      transferFilterIds.clear();
+      transferFiltersAge = DateTime.now();
+    }
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));

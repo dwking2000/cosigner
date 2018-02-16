@@ -21,6 +21,7 @@ import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -902,9 +903,15 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   private HashSet<Payment> cachedPayments = new HashSet<>();
+  private DateTime cachePaymentsAge = DateTime.now();
 
   @Override
-  public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber) {
+  public synchronized TransactionDetails[] getTransactions(String address, int numberToReturn,
+      int skipNumber) {
+    if (DateTime.now().minusMinutes(10).isAfter(cachePaymentsAge)) {
+      cachedPayments.clear();
+      cachePaymentsAge = DateTime.now();
+    }
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     int pageSize = 1000;
     int pageNumber = (int) Math.floor(cachedPayments.size() / pageSize);
