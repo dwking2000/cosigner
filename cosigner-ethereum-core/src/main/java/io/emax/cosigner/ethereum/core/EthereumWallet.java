@@ -20,7 +20,6 @@ import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContract;
 import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContractInterface;
 import io.emax.cosigner.ethereum.core.gethrpc.multisig.MultiSigContractParametersInterface;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1024,67 +1023,49 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
 
-  private HashMap<String, String> txFilterIds = new HashMap<>();
-  private HashMap<String, LinkedList<Map<String, Object>>> cachedTxFilterResults = new HashMap<>();
-  private DateTime cachedFiltersAge = DateTime.now();
+  private LinkedList<Map<String, Object>> cachedTxFilterResults = new LinkedList<>();
+  private long maxBlocks = 50000;
+  private long lastBlock = 0;
 
   @Override
   public synchronized TransactionDetails[] getTransactions(String address, int numberToReturn,
       int skipNumber) throws Exception {
-    if (DateTime.now().minusMinutes(60).isAfter(cachedFiltersAge)) {
-      cachedTxFilterResults.clear();
-      txFilterIds.values().forEach(filterId -> {
-        try {
-          ethereumWriteRpc.eth_uninstallFilter(filterId);
-        } catch (Exception e) {
-          LOGGER.debug("Failed to uninstall filter, probably already gone.");
-        }
-      });
-      txFilterIds.clear();
-      cachedFiltersAge = DateTime.now();
-    }
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
 
     address = "0x" + ByteUtilities.toHexString(ByteUtilities.toByteArray(address));
-
+    String startBlock = "0x" + Long.toHexString(lastBlock);
+    String endBlock =
+        "0x" + Long.toHexString(Math.min(latestBlockNumber.longValue(), lastBlock + maxBlocks));
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
-    filterParams.put("fromBlock", "0x0");
-    filterParams.put("toBlock", "latest");
+    filterParams.put("fromBlock", startBlock);
+    filterParams.put("toBlock", endBlock);
     filterParams.put("address", address);
     LOGGER.debug("Filter: " + Json.stringifyObject(Map.class, filterParams));
     String txFilter = "";
-    boolean newFilter = true;
-    if (txFilterIds.containsKey(Json.stringifyObject(Map.class, filterParams))) {
-      txFilter = txFilterIds.get(Json.stringifyObject(Map.class, filterParams));
-      newFilter = false;
-    } else {
-      txFilter = ethereumReadRpc.eth_newFilter(filterParams);
-      txFilterIds.put(Json.stringifyObject(Map.class, filterParams), txFilter);
-    }
-    Map<String, Object>[] filterResults;
+    Map<String, Object>[] filterResults = new Map[0];
+    boolean filterSucceeded = true;
     try {
-      if (newFilter) {
-        filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
-      } else {
-        filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
-      }
+      txFilter = ethereumReadRpc.eth_newFilter(filterParams);
+      filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
       if (filterResults == null) {
         filterResults = new Map[0];
       }
     } catch (Exception e) {
       filterResults = new Map[0];
+      filterSucceeded = false;
+    } finally {
+      if (filterSucceeded) {
+        lastBlock += maxBlocks;
+        lastBlock = Math.min(lastBlock, latestBlockNumber.longValue());
+        cachedTxFilterResults.addAll(Arrays.asList(filterResults));
+      }
+      ethereumWriteRpc.eth_uninstallFilter(txFilter);
     }
-    if (cachedTxFilterResults.containsKey(txFilter)) {
-      LinkedList<Map<String, Object>> cachedResults = cachedTxFilterResults.get(txFilter);
-      cachedResults.addAll(Arrays.asList(filterResults));
-      cachedTxFilterResults.put(txFilter, cachedResults);
-    } else {
-      cachedTxFilterResults.put(txFilter, new LinkedList<>(Arrays.asList(filterResults)));
-    }
-    filterResults = cachedTxFilterResults.get(txFilter).toArray(filterResults);
+
+    filterResults = cachedTxFilterResults.toArray(filterResults);
     for (Map<String, Object> result : filterResults) {
       LOGGER.error(result.toString());
       TransactionDetails txDetail = new TransactionDetails();

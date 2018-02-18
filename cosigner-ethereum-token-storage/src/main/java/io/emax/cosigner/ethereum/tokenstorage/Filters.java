@@ -5,7 +5,6 @@ import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.ethereum.core.gethrpc.Block;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,33 +32,25 @@ public class Filters {
     }
   }
 
-  private static HashMap<String, String> reconciliationFilterIds = new HashMap<>();
-  private static HashMap<String, LinkedList<Map<String, Object>>>
-      cachedReconciliationFilterResults = new HashMap<>();
-  private static DateTime cachedReconciliationFiltersAge = DateTime.now();
+  private static LinkedList<Map<String, Object>> cachedReconciliationFilterResults =
+      new LinkedList<>();
+  private static long maxReconcilationBlocks = 50000;
+  private static long lastReconciliationBlock = 0;
 
   synchronized static Wallet.TransactionDetails[] getReconciliations(String address,
       Configuration config) throws Exception {
-    if (DateTime.now().minusMinutes(60).isAfter(cachedReconciliationFiltersAge)) {
-      cachedReconciliationFilterResults.clear();
-      reconciliationFilterIds.values().forEach(filterId -> {
-        try {
-          ethereumWriteRpc.eth_uninstallFilter(filterId);
-        } catch (Exception e) {
-          LOGGER.debug("Failed to uninstall filter, probably already gone.");
-        }
-      });
-      reconciliationFilterIds.clear();
-      cachedReconciliationFiltersAge = DateTime.now();
-    }
+
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
 
     LinkedList<Wallet.TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
-    filterParams.put("fromBlock", "0x0");
-    filterParams.put("toBlock", "latest");
+    String startBlock = "0x" + Long.toHexString(lastReconciliationBlock);
+    String endBlock = "0x" + Long.toHexString(
+        Math.min(latestBlockNumber.longValue(), lastReconciliationBlock + maxReconcilationBlocks));
+    filterParams.put("fromBlock", startBlock);
+    filterParams.put("toBlock", endBlock);
     filterParams.put("address", "0x" + config.getStorageContractAddress());
     LinkedList<String> functionTopics = new LinkedList<>();
     functionTopics.add("0x73bb00f3ad09ef6bc524e5cf56563dff2bc6663caa0b4054aa5946811083ed2e");
@@ -71,40 +62,32 @@ public class Filters {
       LOGGER.debug(
           "Requesting reconciliation filter for: " + Json.stringifyObject(Map.class, filterParams));
       String txFilter = "";
-      boolean newFilter = true;
-      if (reconciliationFilterIds.containsKey(Json.stringifyObject(Map.class, filterParams))) {
-        txFilter = reconciliationFilterIds.get(Json.stringifyObject(Map.class, filterParams));
-        newFilter = false;
-      } else {
-        txFilter = ethereumReadRpc.eth_newFilter(filterParams);
-        reconciliationFilterIds.put(Json.stringifyObject(Map.class, filterParams), txFilter);
-      }
       LOGGER.debug("Setup filter: " + txFilter);
-      Map<String, Object>[] filterResults;
+      Map<String, Object>[] filterResults = new Map[0];
+      boolean filterSucceeded = true;
       try {
         LOGGER.debug("Getting filter results...");
-        if (newFilter) {
-          filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
-        } else {
-          filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
-        }
+        txFilter = ethereumReadRpc.eth_newFilter(filterParams);
+        filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
+
         if (filterResults == null) {
           filterResults = new Map[0];
         }
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
         filterResults = new Map[0];
+        filterSucceeded = false;
+      } finally {
+        if (filterSucceeded) {
+          lastReconciliationBlock += maxReconcilationBlocks;
+          lastReconciliationBlock =
+              Math.min(lastReconciliationBlock, latestBlockNumber.longValue());
+          cachedReconciliationFilterResults.addAll(Arrays.asList(filterResults));
+        }
+        ethereumWriteRpc.eth_uninstallFilter(txFilter);
       }
-      if (cachedReconciliationFilterResults.containsKey(txFilter)) {
-        LinkedList<Map<String, Object>> cachedResults =
-            cachedReconciliationFilterResults.get(txFilter);
-        cachedResults.addAll(Arrays.asList(filterResults));
-        cachedReconciliationFilterResults.put(txFilter, cachedResults);
-      } else {
-        cachedReconciliationFilterResults
-            .put(txFilter, new LinkedList<>(Arrays.asList(filterResults)));
-      }
-      filterResults = cachedReconciliationFilterResults.get(txFilter).toArray(filterResults);
+
+      filterResults = cachedReconciliationFilterResults.toArray(filterResults);
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
@@ -167,33 +150,24 @@ public class Filters {
     return txDetails.toArray(new Wallet.TransactionDetails[txDetails.size()]);
   }
 
-  private static HashMap<String, String> transferFilterIds = new HashMap<>();
-  private static HashMap<String, LinkedList<Map<String, Object>>> cachedTransferFilterResults =
-      new HashMap<>();
-  private static DateTime transferFiltersAge = DateTime.now();
+  private static LinkedList<Map<String, Object>> cachedTransferFilterResults = new LinkedList<>();
+  private static long maxTransferBlocks = 50000;
+  private static long lastTransferBlock = 0;
 
   synchronized static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
       throws Exception {
-    if (DateTime.now().minusMinutes(60).isAfter(transferFiltersAge)) {
-      cachedTransferFilterResults.clear();
-      transferFilterIds.values().forEach(filterId -> {
-        try {
-          ethereumWriteRpc.eth_uninstallFilter(filterId);
-        } catch (Exception e) {
-          LOGGER.debug("Failed to uninstall filter, probably already gone.");
-        }
-      });
-      transferFilterIds.clear();
-      transferFiltersAge = DateTime.now();
-    }
+
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
 
     LinkedList<Wallet.TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
-    filterParams.put("fromBlock", "0x0");
-    filterParams.put("toBlock", "latest");
+    String startBlock = "0x" + Long.toHexString(lastTransferBlock);
+    String endBlock = "0x" + Long.toHexString(
+        Math.min(latestBlockNumber.longValue(), lastTransferBlock + maxTransferBlocks));
+    filterParams.put("fromBlock", startBlock);
+    filterParams.put("toBlock", endBlock);
     filterParams.put("address", "0x" + config.getStorageContractAddress());
     LinkedList<String> functionTopics = new LinkedList<>();
     functionTopics.add("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
@@ -205,23 +179,14 @@ public class Filters {
       filterParams.put("topics", topicArray);
       LOGGER.debug("Requesting filter for: " + Json.stringifyObject(Map.class, filterParams));
       String txFilter = "";
-      boolean newFilter = true;
-      if (transferFilterIds.containsKey(Json.stringifyObject(Map.class, filterParams))) {
-        txFilter = transferFilterIds.get(Json.stringifyObject(Map.class, filterParams));
-        newFilter = false;
-      } else {
-        txFilter = ethereumReadRpc.eth_newFilter(filterParams);
-        transferFilterIds.put(Json.stringifyObject(Map.class, filterParams), txFilter);
-      }
+
       LOGGER.debug("Setup filter: " + txFilter);
-      Map<String, Object>[] filterResults;
+      Map<String, Object>[] filterResults = new Map[0];
+      boolean filterSucceeded = true;
       try {
         LOGGER.debug("Getting filter results...");
-        if (newFilter) {
-          filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
-        } else {
-          filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
-        }
+        txFilter = ethereumReadRpc.eth_newFilter(filterParams);
+        filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
 
         if (filterResults == null) {
           filterResults = new Map[0];
@@ -229,15 +194,17 @@ public class Filters {
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
         filterResults = new Map[0];
+        filterSucceeded = false;
+      } finally {
+        if (filterSucceeded) {
+          lastTransferBlock += maxTransferBlocks;
+          lastTransferBlock = Math.min(maxTransferBlocks, latestBlockNumber.longValue());
+          cachedTransferFilterResults.addAll(Arrays.asList(filterResults));
+        }
+        ethereumWriteRpc.eth_uninstallFilter(txFilter);
       }
-      if (cachedTransferFilterResults.containsKey(txFilter)) {
-        LinkedList<Map<String, Object>> cachedResults = cachedTransferFilterResults.get(txFilter);
-        cachedResults.addAll(Arrays.asList(filterResults));
-        cachedTransferFilterResults.put(txFilter, cachedResults);
-      } else {
-        cachedTransferFilterResults.put(txFilter, new LinkedList<>(Arrays.asList(filterResults)));
-      }
-      filterResults = cachedTransferFilterResults.get(txFilter).toArray(filterResults);
+
+      filterResults = cachedTransferFilterResults.toArray(filterResults);
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
