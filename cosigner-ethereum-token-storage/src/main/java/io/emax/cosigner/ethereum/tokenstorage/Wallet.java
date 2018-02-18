@@ -414,6 +414,11 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
     } else {
       configSummary.put("Contract Manager", config.getContractAccount());
     }
+    LinkedList<HashMap<String, Long>> scannerInfo = new LinkedList<>();
+    scannerInfo.add(Filters.lastReconciliationBlock);
+    scannerInfo.add(Filters.lastTransferBlock);
+    configSummary
+        .put("TX Block Scanner", Json.stringifyObject(scannerInfo.getClass(), scannerInfo));
     return configSummary;
   }
 

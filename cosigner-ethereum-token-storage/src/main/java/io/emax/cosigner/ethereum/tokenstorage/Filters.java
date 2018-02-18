@@ -35,7 +35,7 @@ public class Filters {
   private static HashMap<String, LinkedList<Map<String, Object>>>
       cachedReconciliationFilterResults = new HashMap<>();
   private static long maxReconcilationBlocks = 5000;
-  private static HashMap<String, Long> lastReconciliationBlock = new HashMap<>();
+  static HashMap<String, Long> lastReconciliationBlock = new HashMap<>();
 
   synchronized static Wallet.TransactionDetails[] getReconciliations(String address,
       Configuration config) throws Exception {
@@ -177,7 +177,7 @@ public class Filters {
   private static HashMap<String, LinkedList<Map<String, Object>>> cachedTransferFilterResults =
       new HashMap<>();
   private static long maxTransferBlocks = 5000;
-  private static HashMap<String, Long> lastTransferBlock = new HashMap<>();
+  static HashMap<String, Long> lastTransferBlock = new HashMap<>();
 
   synchronized static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
       throws Exception {
