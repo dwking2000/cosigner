@@ -32,9 +32,9 @@ public class Filters {
     }
   }
 
-  private static LinkedList<Map<String, Object>> cachedReconciliationFilterResults =
-      new LinkedList<>();
-  private static long maxReconcilationBlocks = 50000;
+  private static HashMap<String, LinkedList<Map<String, Object>>>
+      cachedReconciliationFilterResults = new HashMap<>();
+  private static long maxReconcilationBlocks = 5000;
   private static long lastReconciliationBlock = 0;
 
   synchronized static Wallet.TransactionDetails[] getReconciliations(String address,
@@ -82,12 +82,20 @@ public class Filters {
           lastReconciliationBlock += maxReconcilationBlocks;
           lastReconciliationBlock =
               Math.min(lastReconciliationBlock, latestBlockNumber.longValue());
-          cachedReconciliationFilterResults.addAll(Arrays.asList(filterResults));
+          if (cachedReconciliationFilterResults.containsKey(address)) {
+            LinkedList<Map<String, Object>> addressResults =
+                cachedReconciliationFilterResults.get(address);
+            addressResults.addAll(Arrays.asList(filterResults));
+            cachedReconciliationFilterResults.put(address, addressResults);
+          } else {
+            cachedReconciliationFilterResults
+                .put(address, new LinkedList<>(Arrays.asList(filterResults)));
+          }
         }
         ethereumWriteRpc.eth_uninstallFilter(txFilter);
       }
 
-      filterResults = cachedReconciliationFilterResults.toArray(filterResults);
+      filterResults = cachedReconciliationFilterResults.get(address).toArray(filterResults);
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
@@ -150,8 +158,9 @@ public class Filters {
     return txDetails.toArray(new Wallet.TransactionDetails[txDetails.size()]);
   }
 
-  private static LinkedList<Map<String, Object>> cachedTransferFilterResults = new LinkedList<>();
-  private static long maxTransferBlocks = 50000;
+  private static HashMap<String, LinkedList<Map<String, Object>>> cachedTransferFilterResults =
+      new HashMap<>();
+  private static long maxTransferBlocks = 5000;
   private static long lastTransferBlock = 0;
 
   synchronized static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
@@ -199,12 +208,20 @@ public class Filters {
         if (filterSucceeded) {
           lastTransferBlock += maxTransferBlocks;
           lastTransferBlock = Math.min(maxTransferBlocks, latestBlockNumber.longValue());
-          cachedTransferFilterResults.addAll(Arrays.asList(filterResults));
+          if (cachedTransferFilterResults.containsKey(address)) {
+            LinkedList<Map<String, Object>> addressResults =
+                cachedTransferFilterResults.get(address);
+            addressResults.addAll(Arrays.asList(filterResults));
+            cachedTransferFilterResults.put(address, addressResults);
+          } else {
+            cachedTransferFilterResults
+                .put(address, new LinkedList<>(Arrays.asList(filterResults)));
+          }
         }
         ethereumWriteRpc.eth_uninstallFilter(txFilter);
       }
 
-      filterResults = cachedTransferFilterResults.toArray(filterResults);
+      filterResults = cachedTransferFilterResults.get(address).toArray(filterResults);
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
         Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();

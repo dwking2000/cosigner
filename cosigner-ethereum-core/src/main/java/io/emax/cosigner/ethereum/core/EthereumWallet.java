@@ -1023,8 +1023,8 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
 
-  private LinkedList<Map<String, Object>> cachedTxFilterResults = new LinkedList<>();
-  private long maxBlocks = 50000;
+  private HashMap<String, LinkedList<Map<String, Object>>> cachedTxFilterResults = new HashMap<>();
+  private long maxBlocks = 5000;
   private long lastBlock = 0;
 
   @Override
@@ -1060,12 +1060,18 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
       if (filterSucceeded) {
         lastBlock += maxBlocks;
         lastBlock = Math.min(lastBlock, latestBlockNumber.longValue());
-        cachedTxFilterResults.addAll(Arrays.asList(filterResults));
+        if (cachedTxFilterResults.containsKey(address)) {
+          LinkedList<Map<String, Object>> addressResults = cachedTxFilterResults.get(address);
+          addressResults.addAll(Arrays.asList(filterResults));
+          cachedTxFilterResults.put(address, addressResults);
+        } else {
+          cachedTxFilterResults.put(address, new LinkedList<>(Arrays.asList(filterResults)));
+        }
       }
       ethereumWriteRpc.eth_uninstallFilter(txFilter);
     }
 
-    filterResults = cachedTxFilterResults.toArray(filterResults);
+    filterResults = cachedTxFilterResults.get(address).toArray(filterResults);
     for (Map<String, Object> result : filterResults) {
       LOGGER.error(result.toString());
       TransactionDetails txDetail = new TransactionDetails();
