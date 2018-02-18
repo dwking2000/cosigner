@@ -1031,7 +1031,7 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
   @Override
   public synchronized TransactionDetails[] getTransactions(String address, int numberToReturn,
       int skipNumber) throws Exception {
-    if (DateTime.now().minusMinutes(10).isAfter(cachedFiltersAge)) {
+    if (DateTime.now().minusMinutes(60).isAfter(cachedFiltersAge)) {
       cachedTxFilterResults.clear();
       txFilterIds.values().forEach(filterId -> {
         try {
@@ -1056,15 +1056,21 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     filterParams.put("address", address);
     LOGGER.debug("Filter: " + Json.stringifyObject(Map.class, filterParams));
     String txFilter = "";
+    boolean newFilter = true;
     if (txFilterIds.containsKey(Json.stringifyObject(Map.class, filterParams))) {
       txFilter = txFilterIds.get(Json.stringifyObject(Map.class, filterParams));
+      newFilter = false;
     } else {
       txFilter = ethereumReadRpc.eth_newFilter(filterParams);
       txFilterIds.put(Json.stringifyObject(Map.class, filterParams), txFilter);
     }
     Map<String, Object>[] filterResults;
     try {
-      filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+      if (newFilter) {
+        filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
+      } else {
+        filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+      }
       if (filterResults == null) {
         filterResults = new Map[0];
       }

@@ -47,6 +47,10 @@ public class EthereumResource {
           new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()), headers);
       this.readClient =
           new JsonRpcHttpClient(new URL(config.getDaemonReadConnectionString()), headers);
+      readClient.setConnectionTimeoutMillis(600000);
+      readClient.setReadTimeoutMillis(600000);
+      writeClient.setConnectionTimeoutMillis(600000);
+      writeClient.setReadTimeoutMillis(600000);
     } catch (MalformedURLException e) {
       LOGGER.error(null, e);
     }

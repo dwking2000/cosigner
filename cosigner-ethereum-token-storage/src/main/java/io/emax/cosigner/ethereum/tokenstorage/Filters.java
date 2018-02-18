@@ -40,7 +40,7 @@ public class Filters {
 
   synchronized static Wallet.TransactionDetails[] getReconciliations(String address,
       Configuration config) throws Exception {
-    if (DateTime.now().minusMinutes(10).isAfter(cachedReconciliationFiltersAge)) {
+    if (DateTime.now().minusMinutes(60).isAfter(cachedReconciliationFiltersAge)) {
       cachedReconciliationFilterResults.clear();
       reconciliationFilterIds.values().forEach(filterId -> {
         try {
@@ -71,8 +71,10 @@ public class Filters {
       LOGGER.debug(
           "Requesting reconciliation filter for: " + Json.stringifyObject(Map.class, filterParams));
       String txFilter = "";
+      boolean newFilter = true;
       if (reconciliationFilterIds.containsKey(Json.stringifyObject(Map.class, filterParams))) {
         txFilter = reconciliationFilterIds.get(Json.stringifyObject(Map.class, filterParams));
+        newFilter = false;
       } else {
         txFilter = ethereumReadRpc.eth_newFilter(filterParams);
         reconciliationFilterIds.put(Json.stringifyObject(Map.class, filterParams), txFilter);
@@ -81,7 +83,11 @@ public class Filters {
       Map<String, Object>[] filterResults;
       try {
         LOGGER.debug("Getting filter results...");
-        filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+        if (newFilter) {
+          filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
+        } else {
+          filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+        }
         if (filterResults == null) {
           filterResults = new Map[0];
         }
@@ -168,7 +174,7 @@ public class Filters {
 
   synchronized static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
       throws Exception {
-    if (DateTime.now().minusMinutes(10).isAfter(transferFiltersAge)) {
+    if (DateTime.now().minusMinutes(60).isAfter(transferFiltersAge)) {
       cachedTransferFilterResults.clear();
       transferFilterIds.values().forEach(filterId -> {
         try {
@@ -199,8 +205,10 @@ public class Filters {
       filterParams.put("topics", topicArray);
       LOGGER.debug("Requesting filter for: " + Json.stringifyObject(Map.class, filterParams));
       String txFilter = "";
+      boolean newFilter = true;
       if (transferFilterIds.containsKey(Json.stringifyObject(Map.class, filterParams))) {
         txFilter = transferFilterIds.get(Json.stringifyObject(Map.class, filterParams));
+        newFilter = false;
       } else {
         txFilter = ethereumReadRpc.eth_newFilter(filterParams);
         transferFilterIds.put(Json.stringifyObject(Map.class, filterParams), txFilter);
@@ -209,7 +217,12 @@ public class Filters {
       Map<String, Object>[] filterResults;
       try {
         LOGGER.debug("Getting filter results...");
-        filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+        if (newFilter) {
+          filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
+        } else {
+          filterResults = ethereumReadRpc.eth_getFilterChanges(txFilter);
+        }
+
         if (filterResults == null) {
           filterResults = new Map[0];
         }
