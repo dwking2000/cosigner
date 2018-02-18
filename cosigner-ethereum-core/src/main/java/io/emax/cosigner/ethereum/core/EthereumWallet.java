@@ -1025,19 +1025,23 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
 
   private HashMap<String, LinkedList<Map<String, Object>>> cachedTxFilterResults = new HashMap<>();
   private long maxBlocks = 5000;
-  private long lastBlock = 0;
+  private HashMap<String, Long> lastBlock = new HashMap<>();
 
   @Override
   public synchronized TransactionDetails[] getTransactions(String address, int numberToReturn,
       int skipNumber) throws Exception {
+
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
 
     address = "0x" + ByteUtilities.toHexString(ByteUtilities.toByteArray(address));
-    String startBlock = "0x" + Long.toHexString(lastBlock);
-    String endBlock =
-        "0x" + Long.toHexString(Math.min(latestBlockNumber.longValue(), lastBlock + maxBlocks));
+    if (!lastBlock.containsKey(address)) {
+      lastBlock.put(address, 0L);
+    }
+    String startBlock = "0x" + Long.toHexString(lastBlock.get(address));
+    String endBlock = "0x" + Long
+        .toHexString(Math.min(latestBlockNumber.longValue(), lastBlock.get(address) + maxBlocks));
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
     filterParams.put("fromBlock", startBlock);
@@ -1058,8 +1062,9 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
       filterSucceeded = false;
     } finally {
       if (filterSucceeded) {
-        lastBlock += maxBlocks;
-        lastBlock = Math.min(lastBlock, latestBlockNumber.longValue());
+        long newLastBlock = lastBlock.get(address) + maxBlocks;
+        lastBlock.put(address, Math.min(newLastBlock, latestBlockNumber.longValue()));
+
         if (cachedTxFilterResults.containsKey(address)) {
           LinkedList<Map<String, Object>> addressResults = cachedTxFilterResults.get(address);
           addressResults.addAll(Arrays.asList(filterResults));
