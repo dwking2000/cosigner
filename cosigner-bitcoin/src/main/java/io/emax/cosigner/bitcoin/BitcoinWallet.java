@@ -21,7 +21,6 @@ import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.common.crypto.Secp256k1;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -304,10 +303,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   private boolean getOption(String options, String option) {
-    if (getOptionValue(options, option) != null) {
-      return true;
-    }
-    return false;
+    return getOptionValue(options, option) != null;
   }
 
   private String getOptionValue(String options, String option) {
@@ -340,8 +336,7 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   private Long getOptionValueLong(String options, String option) {
     String optionValue = getOptionValue(options, option);
     try {
-      Long parseValue = Long.parseLong(optionValue);
-      return parseValue;
+      return Long.parseLong(optionValue);
     } catch (Exception e) {
       LOGGER.debug("Problem Reading long value for " + option);
       LOGGER.trace(null, e);
@@ -903,22 +898,19 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
   }
 
   private HashSet<Payment> cachedPayments = new HashSet<>();
-  private DateTime cachePaymentsAge = DateTime.now();
 
   @Override
   public synchronized TransactionDetails[] getTransactions(String address, int numberToReturn,
       int skipNumber) {
-    if (DateTime.now().minusMinutes(10).isAfter(cachePaymentsAge)) {
-      cachedPayments.clear();
-      cachePaymentsAge = DateTime.now();
-    }
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     int pageSize = 1000;
-    int pageNumber = (int) Math.floor(cachedPayments.size() / pageSize);
+    int pageNumber = 0;
+    int listSkip = cachedPayments.size();
     while (txDetails.size() < (numberToReturn + skipNumber)) {
       LOGGER.info("Processing payments " + (pageSize * pageNumber) + " to " + (pageSize + (pageSize
           * pageNumber)));
-      Payment[] payments = bitcoindRpc.listtransactions("*", pageSize, pageNumber * pageSize, true);
+      Payment[] payments =
+          bitcoindRpc.listtransactions("*", pageSize, listSkip + (pageNumber * pageSize), true);
       if (payments.length == 0) {
         break;
       }
@@ -952,12 +944,14 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
                 String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
                 Map<String, Object> decodedSenderTx = bitcoindRpc.decoderawtransaction(rawSenderTx);
                 ArrayList workingSenderArray = (ArrayList) decodedSenderTx.get("vout");
+                //noinspection unchecked
                 workingSenderArray.forEach(vout -> {
                   Map scriptPubKey = (Map) ((Map) vout).get("scriptPubKey");
                   ArrayList addresses = (ArrayList) scriptPubKey.get("addresses");
                   if (addresses == null) {
                     return;
                   }
+                  //noinspection unchecked
                   addresses.forEach(senderAddress -> {
                     if (((String) senderAddress).equalsIgnoreCase(address)) {
                       sentByRecipient[0] = true;
@@ -985,11 +979,26 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           RawTransaction tx = RawTransaction.parse(rawTx);
           tx.getInputs().forEach(input -> {
             String rawSenderTx = bitcoindRpc.getrawtransaction(input.getTxHash());
-            RawTransaction senderTx = RawTransaction.parse(rawSenderTx);
-            String script = senderTx.getOutputs().get(input.getTxIndex()).getScript();
-            String scriptAddress = RawTransaction.decodePubKeyScript(script);
+            Map<String, Object> decodedSenderTx = bitcoindRpc.decoderawtransaction(rawSenderTx);
+            ArrayList workingSenderArray = (ArrayList) decodedSenderTx.get("vout");
 
-            if (scriptAddress != null && scriptAddress.equalsIgnoreCase(address)) {
+            boolean sentByRequestor[] = {false};
+            //noinspection unchecked
+            workingSenderArray.forEach(vout -> {
+              Map scriptPubKey = (Map) ((Map) vout).get("scriptPubKey");
+              ArrayList addresses = (ArrayList) scriptPubKey.get("addresses");
+              if (addresses == null) {
+                return;
+              }
+              //noinspection unchecked
+              addresses.forEach(senderAddress -> {
+                if (((String) senderAddress).equalsIgnoreCase(address)) {
+                  sentByRequestor[0] = true;
+                }
+              });
+            });
+
+            if (sentByRequestor[0]) {
               TransactionDetails detail = new TransactionDetails();
 
               detail.setTxDate(new Date(payment.getBlocktime().toInstant().toEpochMilli() * 1000L));
