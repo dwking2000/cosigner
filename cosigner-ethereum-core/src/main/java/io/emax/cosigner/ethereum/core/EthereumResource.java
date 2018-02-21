@@ -102,7 +102,7 @@ public class EthereumResource {
                     lockNumber++;
                     lockNumber %= requestLocks.size();
                     LOGGER.debug(
-                        "Failed to obtain bitcoinRpc lock, trying the next one: " + lockNumber);
+                        "Failed to obtain EthereumRpc lock, trying the next one: " + lockNumber);
                     Thread.sleep(1);
                   }
                 }

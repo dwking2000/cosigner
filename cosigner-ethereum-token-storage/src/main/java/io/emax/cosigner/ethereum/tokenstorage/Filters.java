@@ -1,5 +1,7 @@
 package io.emax.cosigner.ethereum.tokenstorage;
 
+import com.google.common.primitives.UnsignedLong;
+
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.common.ByteUtilities;
 import io.emax.cosigner.common.Json;
@@ -10,6 +12,11 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -37,6 +44,7 @@ public class Filters {
   private static final Object scannerLock = new Object();
   private static ExecutorService scanner = null;
   private static long maxBlocksToScan = 5000;
+  private static Connection txDb = null;
 
   private static void filterScanner() {
     //noinspection InfiniteLoopStatement
@@ -64,15 +72,31 @@ public class Filters {
     synchronized (scannerLock) {
       scanners.put(config.getCurrencySymbol(), config);
 
-      if (scanner == null) {
-        scanner = Executors.newFixedThreadPool(1);
-        scanner.execute(Filters::filterScanner);
+      try {
+        if (txDb == null) {
+          Class.forName("org.h2.Driver");
+          txDb = DriverManager.
+              getConnection("jdbc:h2:mem:txs;mode=MySQL");
+
+          Statement stmt = txDb.createStatement();
+          String query =
+              "CREATE TABLE IF NOT EXISTS TXS(address char(64) not null, topic char(128) not null, txhash char(128) not null, blocknumber bigint not null, txdata other not null);";
+          stmt.execute(query);
+          query = "ALTER TABLE TXS ADD PRIMARY KEY (address, topic, txhash);";
+          stmt.execute(query);
+          stmt.close();
+        }
+
+        if (scanner == null) {
+          scanner = Executors.newFixedThreadPool(1);
+          scanner.execute(Filters::filterScanner);
+        }
+      } catch (Exception e) {
+        LOGGER.error("Error initializing TX Database or Scanner", e);
       }
     }
   }
 
-  private static HashMap<String, LinkedList<Map<String, Object>>>
-      cachedReconciliationFilterResults = new HashMap<>();
   static HashMap<String, Long> lastReconciliationBlock = new HashMap<>();
 
   private static void scanReconciliations(Configuration config) throws Exception {
@@ -89,10 +113,24 @@ public class Filters {
       synchronized (scannerLock) {
         if (!lastReconciliationBlock
             .containsKey(config.getStorageContractAddress() + functionTopic)) {
-          lastReconciliationBlock.put(config.getStorageContractAddress() + functionTopic, 0L);
+          String query = "SELECT MAX(blocknumber) FROM TXS WHERE address = ? AND topic = ?;";
+          PreparedStatement stmt = txDb.prepareStatement(query);
+          stmt.setString(1, config.getStorageContractAddress());
+          stmt.setString(2, functionTopic);
+          ResultSet rs = stmt.executeQuery();
+
+          if (rs.next()) {
+            lastReconciliationBlock.put(config.getStorageContractAddress() + functionTopic,
+                Math.max(0L, rs.getLong(1) - (config.getMinConfirmations() * 2)));
+          } else {
+            lastReconciliationBlock.put(config.getStorageContractAddress() + functionTopic, 0L);
+          }
+          rs.close();
+          stmt.close();
         }
-        String startBlock = "0x" + Long.toHexString(
-            lastReconciliationBlock.get(config.getStorageContractAddress() + functionTopic));
+        String startBlock = "0x" + Long.toHexString(Math.max(0L,
+            lastReconciliationBlock.get(config.getStorageContractAddress() + functionTopic) - (2
+                * config.getMinConfirmations())));
         String endBlock = "0x" + Long.toHexString(Math.min(latestBlockNumber.longValue(),
             lastReconciliationBlock.get(config.getStorageContractAddress() + functionTopic)
                 + maxBlocksToScan));
@@ -134,16 +172,29 @@ public class Filters {
                     + maxBlocksToScan;
             lastReconciliationBlock.put(config.getStorageContractAddress() + functionTopic,
                 Math.min(newLastBlock, latestBlockNumber.longValue()));
-            if (cachedReconciliationFilterResults.containsKey(config.getStorageContractAddress())) {
-              LinkedList<Map<String, Object>> addressResults =
-                  cachedReconciliationFilterResults.get(config.getStorageContractAddress());
-              addressResults.addAll(Arrays.asList(filterResults));
-              cachedReconciliationFilterResults
-                  .put(config.getStorageContractAddress(), addressResults);
-            } else {
-              cachedReconciliationFilterResults.put(config.getStorageContractAddress(),
-                  new LinkedList<>(Arrays.asList(filterResults)));
-            }
+
+            Arrays.asList(filterResults).forEach(result -> {
+              try {
+                String query =
+                    "INSERT INTO TXS VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE blocknumber = ?, txdata = ?;";
+                PreparedStatement stmt = txDb.prepareStatement(query);
+                stmt.setString(1, config.getStorageContractAddress());
+                stmt.setString(2, functionTopic);
+                stmt.setString(3, (String) result.get("transactionHash"));
+                stmt.setLong(4,
+                    UnsignedLong.valueOf(((String) result.get("blockNumber")).substring(2), 16)
+                        .longValue());
+                stmt.setObject(5, result);
+                stmt.setLong(6,
+                    UnsignedLong.valueOf(((String) result.get("blockNumber")).substring(2), 16)
+                        .longValue());
+                stmt.setObject(7, result);
+                stmt.executeUpdate();
+                stmt.close();
+              } catch (Exception e) {
+                LOGGER.error("Problem caching transaction!", e);
+              }
+            });
           }
         }
         ethereumWriteRpc.eth_uninstallFilter(txFilter);
@@ -158,85 +209,88 @@ public class Filters {
     LinkedList<Wallet.TransactionDetails> txDetails = new LinkedList<>();
 
     @SuppressWarnings("unchecked") Map<String, Object>[] filterResults = new Map[0];
-    synchronized (scannerLock) {
-      filterResults = cachedReconciliationFilterResults.get(config.getStorageContractAddress())
-          .toArray(filterResults);
-    }
+
 
     LinkedList<String> functionTopics = new LinkedList<>();
     functionTopics.add("0x73bb00f3ad09ef6bc524e5cf56563dff2bc6663caa0b4054aa5946811083ed2e");
+    for (String functionTopic : functionTopics) {
+      synchronized (scannerLock) {
+        LinkedList<Map<String, Object>> queriedTxs = new LinkedList<>();
+        String query = "SELECT txdata from TXS where address = ? and topic = ?;";
+        PreparedStatement stmt = txDb.prepareStatement(query);
+        stmt.setString(1, config.getStorageContractAddress());
+        stmt.setString(2, functionTopic);
+        ResultSet rs = stmt.executeQuery();
 
-    for (Map<String, Object> result : filterResults) {
-      LOGGER.debug(result.toString());
-      Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
-      txDetail.setTxHash((String) result.get("transactionHash"));
-      try {
-        Block block =
-            ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
-        BigInteger dateConverter =
-            new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
-        dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
-        txDetail.setTxDate(new Date(dateConverter.longValue()));
+        while (rs.next()) {
+          //noinspection unchecked
+          queriedTxs.add((Map<String, Object>) rs.getObject(1));
+        }
 
-        BigInteger txBlockNumber =
-            new BigInteger(1, ByteUtilities.toByteArray((String) result.get("blockNumber")));
-        txDetail.setConfirmed(
-            config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
-        txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
-        txDetail.setMinConfirmations(config.getMinConfirmations());
+        rs.close();
+        stmt.close();
 
-        @SuppressWarnings("unchecked") ArrayList<String> topics =
-            (ArrayList<String>) result.get("topics");
+        filterResults = queriedTxs.toArray(filterResults);
+      }
+      for (Map<String, Object> result : filterResults) {
+        LOGGER.debug(result.toString());
+        Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
+        txDetail.setTxHash((String) result.get("transactionHash"));
+        try {
+          Block block =
+              ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
+          BigInteger dateConverter =
+              new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
+          dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
+          txDetail.setTxDate(new Date(dateConverter.longValue()));
 
-        boolean skipResult = true;
-        for (String functionTopic : functionTopics) {
-          if (topics.get(0).equalsIgnoreCase(functionTopic)) {
-            skipResult = false;
+          BigInteger txBlockNumber =
+              new BigInteger(1, ByteUtilities.toByteArray((String) result.get("blockNumber")));
+          txDetail.setConfirmed(
+              config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setMinConfirmations(config.getMinConfirmations());
+
+          @SuppressWarnings("unchecked") ArrayList<String> topics =
+              (ArrayList<String>) result.get("topics");
+
+          String amount = ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(
+              ByteUtilities
+                  .readBytes(ByteUtilities.toByteArray((String) result.get("data")), 0, 32)));
+          txDetail.setAmount(new BigDecimal(new BigInteger(ByteUtilities.toByteArray(amount)))
+              .setScale(20, BigDecimal.ROUND_UNNECESSARY)
+              .divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
+                  BigDecimal.ROUND_UNNECESSARY));
+
+          if (BigInteger.ZERO.compareTo(new BigInteger(ByteUtilities.toByteArray(amount))) > 0) {
+            String from = ByteUtilities.toHexString(
+                ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
+            txDetail.setFromAddress(new String[]{from});
+          } else {
+            String to = ByteUtilities.toHexString(
+                ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
+            txDetail.setToAddress(new String[]{to});
           }
+
+          if (address == null || ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))))
+              .equalsIgnoreCase(address)) {
+            txDetails.add(txDetail);
+          }
+
+        } catch (Exception e) {
+          // Pending TX
+          LOGGER.debug("Pending Tx Found or wrong event returned by geth.");
+          LOGGER.trace(null, e);
         }
-
-        if (skipResult) {
-          continue;
-        }
-
-        String amount = ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(ByteUtilities
-            .readBytes(ByteUtilities.toByteArray((String) result.get("data")), 0, 32)));
-        txDetail.setAmount(new BigDecimal(new BigInteger(ByteUtilities.toByteArray(amount)))
-            .setScale(20, BigDecimal.ROUND_UNNECESSARY)
-            .divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
-                BigDecimal.ROUND_UNNECESSARY));
-
-        if (BigInteger.ZERO.compareTo(new BigInteger(ByteUtilities.toByteArray(amount))) > 0) {
-          String from = ByteUtilities.toHexString(
-              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
-          txDetail.setFromAddress(new String[]{from});
-        } else {
-          String to = ByteUtilities.toHexString(
-              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
-          txDetail.setToAddress(new String[]{to});
-        }
-
-        if (address == null || ByteUtilities.toHexString(
-            ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))))
-            .equalsIgnoreCase(address)) {
-          txDetails.add(txDetail);
-        }
-
-      } catch (Exception e) {
-        // Pending TX
-        LOGGER.debug("Pending Tx Found or wrong event returned by geth.");
-        LOGGER.trace(null, e);
       }
     }
-
 
     LOGGER.debug(Json.stringifyObject(LinkedList.class, txDetails));
     txDetails.sort(new TxDateComparator());
     return txDetails.toArray(new Wallet.TransactionDetails[txDetails.size()]);
   }
 
-  private static HashMap<String, LinkedList<Map<String, Object>>> cachedTransferFilterResults =
-      new HashMap<>();
   static HashMap<String, Long> lastTransferBlock = new HashMap<>();
 
   private static void scanTransfers(Configuration config) throws Exception {
@@ -253,11 +307,23 @@ public class Filters {
 
     for (String functionTopic : functionTopics) {
       synchronized (scannerLock) {
-        if (!lastTransferBlock.containsKey(config.getStorageContractAddress() + functionTopic)) {
+        String query = "SELECT MAX(blocknumber) FROM TXS WHERE address = ? AND topic = ?;";
+        PreparedStatement stmt = txDb.prepareStatement(query);
+        stmt.setString(1, config.getStorageContractAddress());
+        stmt.setString(2, functionTopic);
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+          lastTransferBlock.put(config.getStorageContractAddress() + functionTopic,
+              Math.max(0L, rs.getLong(1) - (config.getMinConfirmations() * 2)));
+        } else {
           lastTransferBlock.put(config.getStorageContractAddress() + functionTopic, 0L);
         }
-        String startBlock = "0x" + Long
-            .toHexString(lastTransferBlock.get(config.getStorageContractAddress() + functionTopic));
+        rs.close();
+        stmt.close();
+        String startBlock = "0x" + Long.toHexString(Math.max(0L,
+            lastTransferBlock.get(config.getStorageContractAddress() + functionTopic) - (2 * config
+                .getMinConfirmations())));
         String endBlock = "0x" + Long.toHexString(Math.min(latestBlockNumber.longValue(),
             lastTransferBlock.get(config.getStorageContractAddress() + functionTopic)
                 + maxBlocksToScan));
@@ -299,15 +365,29 @@ public class Filters {
                     + maxBlocksToScan;
             lastTransferBlock.put(config.getStorageContractAddress() + functionTopic,
                 Math.min(newLastBlock, latestBlockNumber.longValue()));
-            if (cachedTransferFilterResults.containsKey(config.getStorageContractAddress())) {
-              LinkedList<Map<String, Object>> addressResults =
-                  cachedTransferFilterResults.get(config.getStorageContractAddress());
-              addressResults.addAll(Arrays.asList(filterResults));
-              cachedTransferFilterResults.put(config.getStorageContractAddress(), addressResults);
-            } else {
-              cachedTransferFilterResults.put(config.getStorageContractAddress(),
-                  new LinkedList<>(Arrays.asList(filterResults)));
-            }
+
+            Arrays.asList(filterResults).forEach(result -> {
+              try {
+                String query =
+                    "INSERT INTO TXS VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE blocknumber = ?, txdata = ?;";
+                PreparedStatement stmt = txDb.prepareStatement(query);
+                stmt.setString(1, config.getStorageContractAddress());
+                stmt.setString(2, functionTopic);
+                stmt.setString(3, (String) result.get("transactionHash"));
+                stmt.setLong(4,
+                    UnsignedLong.valueOf(((String) result.get("blockNumber")).substring(2), 16)
+                        .longValue());
+                stmt.setObject(5, result);
+                stmt.setLong(6,
+                    UnsignedLong.valueOf(((String) result.get("blockNumber")).substring(2), 16)
+                        .longValue());
+                stmt.setObject(7, result);
+                stmt.executeUpdate();
+                stmt.close();
+              } catch (Exception e) {
+                LOGGER.error("Problem caching transaction!", e);
+              }
+            });
           }
         }
         ethereumWriteRpc.eth_uninstallFilter(txFilter);
@@ -326,69 +406,75 @@ public class Filters {
     functionTopics.add("0x5548c837ab068cf56a2c2479df0882a4922fd203edb7517321831d95078c5f62");
 
     @SuppressWarnings("unchecked") Map<String, Object>[] filterResults = new Map[0];
-    synchronized (scannerLock) {
-      filterResults = cachedTransferFilterResults.get(config.getStorageContractAddress())
-          .toArray(filterResults);
-    }
-    for (Map<String, Object> result : filterResults) {
-      LOGGER.debug(result.toString());
-      Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
-      txDetail.setTxHash((String) result.get("transactionHash"));
-      try {
-        Block block =
-            ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
-        BigInteger dateConverter =
-            new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
-        dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
-        txDetail.setTxDate(new Date(dateConverter.longValue()));
+    for (String functionTopic : functionTopics) {
+      synchronized (scannerLock) {
+        LinkedList<Map<String, Object>> queriedTxs = new LinkedList<>();
+        String query = "SELECT txdata from TXS where address = ? and topic = ?;";
+        PreparedStatement stmt = txDb.prepareStatement(query);
+        stmt.setString(1, config.getStorageContractAddress());
+        stmt.setString(2, functionTopic);
+        ResultSet rs = stmt.executeQuery();
 
-        BigInteger txBlockNumber =
-            new BigInteger(1, ByteUtilities.toByteArray((String) result.get("blockNumber")));
-        txDetail.setConfirmed(
-            config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
-        txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
-        txDetail.setMinConfirmations(config.getMinConfirmations());
+        while (rs.next()) {
+          //noinspection unchecked
+          queriedTxs.add((Map<String, Object>) rs.getObject(1));
+        }
 
-        @SuppressWarnings("unchecked") ArrayList<String> topics =
-            (ArrayList<String>) result.get("topics");
+        rs.close();
+        stmt.close();
 
-        boolean skipResult = true;
-        for (String functionTopic : functionTopics) {
-          if (topics.get(0).equalsIgnoreCase(functionTopic)) {
-            skipResult = false;
+        filterResults = queriedTxs.toArray(filterResults);
+      }
+      for (Map<String, Object> result : filterResults) {
+        LOGGER.debug(result.toString());
+        Wallet.TransactionDetails txDetail = new Wallet.TransactionDetails();
+        txDetail.setTxHash((String) result.get("transactionHash"));
+        try {
+          Block block =
+              ethereumReadRpc.eth_getBlockByNumber((String) result.get("blockNumber"), true);
+          BigInteger dateConverter =
+              new BigInteger(1, ByteUtilities.toByteArray(block.getTimestamp()));
+          dateConverter = dateConverter.multiply(BigInteger.valueOf(1000));
+          txDetail.setTxDate(new Date(dateConverter.longValue()));
+
+          BigInteger txBlockNumber =
+              new BigInteger(1, ByteUtilities.toByteArray((String) result.get("blockNumber")));
+          txDetail.setConfirmed(
+              config.getMinConfirmations() <= latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
+          txDetail.setMinConfirmations(config.getMinConfirmations());
+
+          @SuppressWarnings("unchecked") ArrayList<String> topics =
+              (ArrayList<String>) result.get("topics");
+
+          String from = ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
+          txDetail.setFromAddress(new String[]{from});
+
+          String to = ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(2))));
+          txDetail.setToAddress(new String[]{to});
+
+          String amount = ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(
+              ByteUtilities
+                  .readBytes(ByteUtilities.toByteArray((String) result.get("data")), 0, 32)));
+          txDetail.setAmount(new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(amount)))
+              .setScale(20, BigDecimal.ROUND_UNNECESSARY)
+              .divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
+                  BigDecimal.ROUND_UNNECESSARY));
+
+          if (address == null || ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))))
+              .equalsIgnoreCase(address) || ByteUtilities.toHexString(
+              ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(2))))
+              .equalsIgnoreCase(address)) {
+            txDetails.add(txDetail);
           }
+        } catch (Exception e) {
+          // Pending TX
+          LOGGER.debug("Pending Tx Found or wrong event returned by geth.");
+          LOGGER.trace(null, e);
         }
-
-        if (skipResult) {
-          continue;
-        }
-
-        String from = ByteUtilities.toHexString(
-            ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
-        txDetail.setFromAddress(new String[]{from});
-
-        String to = ByteUtilities.toHexString(
-            ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(2))));
-        txDetail.setToAddress(new String[]{to});
-
-        String amount = ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(ByteUtilities
-            .readBytes(ByteUtilities.toByteArray((String) result.get("data")), 0, 32)));
-        txDetail.setAmount(new BigDecimal(new BigInteger(1, ByteUtilities.toByteArray(amount)))
-            .setScale(20, BigDecimal.ROUND_UNNECESSARY)
-            .divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
-                BigDecimal.ROUND_UNNECESSARY));
-
-        if (address == null || ByteUtilities.toHexString(
-            ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))))
-            .equalsIgnoreCase(address) || ByteUtilities.toHexString(
-            ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(2))))
-            .equalsIgnoreCase(address)) {
-          txDetails.add(txDetail);
-        }
-      } catch (Exception e) {
-        // Pending TX
-        LOGGER.debug("Pending Tx Found or wrong event returned by geth.");
-        LOGGER.trace(null, e);
       }
     }
 
