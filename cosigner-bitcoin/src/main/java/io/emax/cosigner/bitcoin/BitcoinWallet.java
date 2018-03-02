@@ -398,7 +398,9 @@ public class BitcoinWallet implements Wallet, Validatable, CurrencyAdmin {
           LOGGER.debug("Estimated tx size: " + byteSize);
           BigDecimal feeRate = BigDecimal.valueOf(feeIntRate).setScale(8, BigDecimal.ROUND_HALF_UP);
           feeRate = feeRate.divide(BigDecimal.valueOf(100000000), BigDecimal.ROUND_HALF_UP);
-          BigDecimal fees = BigDecimal.valueOf((double) byteSize).multiply(feeRate);
+          // Minimum relay fee is currently 1000 sat, bump the fees up to this so that the tx will broadcast.
+          BigDecimal fees = BigDecimal.valueOf((double) byteSize).multiply(feeRate)
+              .max(BigDecimal.valueOf(0.00001));
           LOGGER.debug("Expecting fees of: " + fees.toPlainString());
           // Only set a change address if there's change.
           if (!includeFees && subTotal.compareTo(fees) > 0) {
