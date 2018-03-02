@@ -53,3 +53,4 @@ clusterPort: 5555
 clusterRpcPort: 5556
 enabledCurrencies: []
 enableBeacon: true
+persistenceLocation: mem:txs

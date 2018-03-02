@@ -4,6 +4,7 @@ import com.google.common.primitives.UnsignedLong;
 
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.GlobalConfig;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.ethereum.core.gethrpc.Block;
 
@@ -76,11 +77,13 @@ public class Filters {
         if (txDb == null) {
           Class.forName("org.h2.Driver");
           txDb = DriverManager.
-              getConnection("jdbc:h2:mem:txs;mode=MySQL");
+              getConnection("jdbc:h2:" + GlobalConfig.getPersistenceLocation() + ";mode=MySQL");
 
           Statement stmt = txDb.createStatement();
           String query =
               "CREATE TABLE IF NOT EXISTS TXS(address char(64) not null, topic char(128) not null, txhash char(128) not null, blocknumber bigint not null, txdata other not null);";
+          stmt.execute(query);
+          query = "ALTER TABLE TXS DROP PRIMARY KEY;";
           stmt.execute(query);
           query = "ALTER TABLE TXS ADD PRIMARY KEY (address, topic, txhash);";
           stmt.execute(query);
