@@ -5,6 +5,7 @@ import io.dropwizard.jersey.setup.JerseyContainerHolder;
 import io.dropwizard.setup.Environment;
 import io.emax.cosigner.api.core.CurrencyPackageInterface;
 import io.emax.cosigner.api.validation.Validator;
+import io.emax.cosigner.common.GlobalConfig;
 import io.emax.cosigner.core.cluster.ClusterInfo;
 import io.emax.cosigner.core.cluster.Coordinator;
 import io.emax.cosigner.core.resources.AdminResource;
@@ -62,6 +63,7 @@ public class CosignerApplication extends io.dropwizard.Application<CosignerConfi
   @Override
   public void run(CosignerConfiguration config, Environment environment) throws Exception {
     CosignerApplication.setConfig(config);
+    GlobalConfig.setPersistenceLocation(getConfig().getPersistenceLocation());
 
     // Initialize ClusterInfo
     ClusterInfo.getInstance();

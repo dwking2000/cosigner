@@ -63,6 +63,9 @@ public class Transaction {
   @JsonProperty("v")
   private String v;
 
+  @JsonProperty("chainId")
+  private String chainId;
+
   public String getHash() {
     return hash;
   }
@@ -343,5 +346,13 @@ public class Transaction {
 
   public void setStandardV(String standardV) {
     this.standardV = standardV;
+  }
+
+  public String getChainId() {
+    return chainId;
+  }
+
+  public void setChainId(String chainId) {
+    this.chainId = chainId;
   }
 }

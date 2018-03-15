@@ -1,7 +1,10 @@
 package io.emax.cosigner.ethereum.tokenstorage;
 
+import com.google.common.primitives.UnsignedLong;
+
 import io.emax.cosigner.api.currency.Wallet;
 import io.emax.cosigner.common.ByteUtilities;
+import io.emax.cosigner.common.GlobalConfig;
 import io.emax.cosigner.common.Json;
 import io.emax.cosigner.ethereum.core.gethrpc.Block;
 
@@ -10,15 +13,23 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumReadRpc;
+import static io.emax.cosigner.ethereum.tokenstorage.Base.ethereumWriteRpc;
 
 public class Filters {
   private static final Logger LOGGER = LoggerFactory.getLogger(Filters.class);
@@ -30,35 +41,199 @@ public class Filters {
     }
   }
 
-  static Wallet.TransactionDetails[] getReconciliations(String address, Configuration config)
-      throws Exception {
+  private static HashMap<String, Configuration> scanners = new HashMap<>();
+  private static final Object scannerLock = new Object();
+  private static ExecutorService scanner = null;
+  private static long maxBlocksToScan = 5000;
+  private static Connection txDb = null;
+
+  private static void filterScanner() {
+    //noinspection InfiniteLoopStatement
+    while (true) {
+      try {
+        // Copy of the map for thread safety.
+        HashMap<String, Configuration> scannerMap = new HashMap<>();
+        synchronized (scannerLock) {
+          scanners.forEach(scannerMap::put);
+        }
+
+        for (Configuration scannerConfig : scannerMap.values()) {
+          scanReconciliations(scannerConfig);
+          Thread.sleep(500); // Yield between scans so that we don't pin the CPU all the time.
+          scanTransfers(scannerConfig);
+          Thread.sleep(500);
+        }
+      } catch (Exception e) {
+        LOGGER.debug("Problem in token storage tx scanner", e);
+      }
+    }
+  }
+
+  public static void addScanner(Configuration config) {
+    synchronized (scannerLock) {
+      scanners.put(config.getCurrencySymbol(), config);
+
+      try {
+        if (txDb == null) {
+          Class.forName("org.h2.Driver");
+          txDb = DriverManager.
+              getConnection("jdbc:h2:" + GlobalConfig.getPersistenceLocation() + ";mode=MySQL");
+
+          Statement stmt = txDb.createStatement();
+          String query =
+              "CREATE TABLE IF NOT EXISTS TXS(address char(64) not null, topic char(128) not null, txhash char(128) not null, blocknumber bigint not null, txdata other not null);";
+          stmt.execute(query);
+          query = "ALTER TABLE TXS DROP PRIMARY KEY;";
+          stmt.execute(query);
+          query = "ALTER TABLE TXS ADD PRIMARY KEY (address, topic, txhash);";
+          stmt.execute(query);
+          stmt.close();
+        }
+
+        if (scanner == null) {
+          scanner = Executors.newFixedThreadPool(1);
+          scanner.execute(Filters::filterScanner);
+        }
+      } catch (Exception e) {
+        LOGGER.error("Error initializing TX Database or Scanner", e);
+      }
+    }
+  }
+
+  static HashMap<String, Long> lastReconciliationBlock = new HashMap<>();
+
+  private static void scanReconciliations(Configuration config) throws Exception {
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
 
-    LinkedList<Wallet.TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
-    filterParams.put("fromBlock", "0x0");
-    filterParams.put("toBlock", "latest");
     filterParams.put("address", "0x" + config.getStorageContractAddress());
     LinkedList<String> functionTopics = new LinkedList<>();
     functionTopics.add("0x73bb00f3ad09ef6bc524e5cf56563dff2bc6663caa0b4054aa5946811083ed2e");
+    @SuppressWarnings("unchecked") Map<String, Object>[] filterResults = new Map[0];
     for (String functionTopic : functionTopics) {
+      synchronized (scannerLock) {
+        if (!lastReconciliationBlock
+            .containsKey(config.getStorageContractAddress() + functionTopic)) {
+          String query = "SELECT MAX(blocknumber) FROM TXS WHERE address = ? AND topic = ?;";
+          PreparedStatement stmt = txDb.prepareStatement(query);
+          stmt.setString(1, config.getStorageContractAddress());
+          stmt.setString(2, functionTopic);
+          ResultSet rs = stmt.executeQuery();
+
+          if (rs.next()) {
+            lastReconciliationBlock.put(config.getStorageContractAddress() + functionTopic,
+                Math.max(0L, rs.getLong(1) - (config.getMinConfirmations() * 2)));
+          } else {
+            lastReconciliationBlock.put(config.getStorageContractAddress() + functionTopic, 0L);
+          }
+          rs.close();
+          stmt.close();
+        }
+        String startBlock = "0x" + Long.toHexString(Math.max(0L,
+            lastReconciliationBlock.get(config.getStorageContractAddress() + functionTopic) - (2
+                * config.getMinConfirmations())));
+        String endBlock = "0x" + Long.toHexString(Math.min(latestBlockNumber.longValue(),
+            lastReconciliationBlock.get(config.getStorageContractAddress() + functionTopic)
+                + maxBlocksToScan));
+        filterParams.put("fromBlock", startBlock);
+        filterParams.put("toBlock", endBlock);
+
+        if (startBlock.equalsIgnoreCase(endBlock)) {
+          continue;
+        }
+      }
       Object[] topicArray = new Object[1];
       String[] senderTopic = {functionTopic};
       topicArray[0] = senderTopic;
       filterParams.put("topics", topicArray);
       LOGGER.debug(
           "Requesting reconciliation filter for: " + Json.stringifyObject(Map.class, filterParams));
-      String txFilter = ethereumReadRpc.eth_newFilter(filterParams);
+      String txFilter = "";
       LOGGER.debug("Setup filter: " + txFilter);
-      Map<String, Object>[] filterResults;
+      boolean filterSucceeded = true;
       try {
         LOGGER.debug("Getting filter results...");
+        txFilter = ethereumReadRpc.eth_newFilter(filterParams);
         filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
+
+        if (filterResults == null) {
+          //noinspection unchecked
+          filterResults = new Map[0];
+        }
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
+        //noinspection unchecked
         filterResults = new Map[0];
+        filterSucceeded = false;
+      } finally {
+        if (filterSucceeded) {
+          synchronized (scannerLock) {
+            long newLastBlock =
+                lastReconciliationBlock.get(config.getStorageContractAddress() + functionTopic)
+                    + maxBlocksToScan;
+            lastReconciliationBlock.put(config.getStorageContractAddress() + functionTopic,
+                Math.min(newLastBlock, latestBlockNumber.longValue()));
+
+            Arrays.asList(filterResults).forEach(result -> {
+              try {
+                String query =
+                    "INSERT INTO TXS VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE blocknumber = ?, txdata = ?;";
+                PreparedStatement stmt = txDb.prepareStatement(query);
+                stmt.setString(1, config.getStorageContractAddress());
+                stmt.setString(2, functionTopic);
+                stmt.setString(3, (String) result.get("transactionHash"));
+                stmt.setLong(4,
+                    UnsignedLong.valueOf(((String) result.get("blockNumber")).substring(2), 16)
+                        .longValue());
+                stmt.setObject(5, result);
+                stmt.setLong(6,
+                    UnsignedLong.valueOf(((String) result.get("blockNumber")).substring(2), 16)
+                        .longValue());
+                stmt.setObject(7, result);
+                stmt.executeUpdate();
+                stmt.close();
+              } catch (Exception e) {
+                LOGGER.error("Problem caching transaction!", e);
+              }
+            });
+          }
+        }
+        ethereumWriteRpc.eth_uninstallFilter(txFilter);
+      }
+    }
+  }
+
+  static Wallet.TransactionDetails[] getReconciliations(String address, Configuration config)
+      throws Exception {
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
+    LinkedList<Wallet.TransactionDetails> txDetails = new LinkedList<>();
+
+    @SuppressWarnings("unchecked") Map<String, Object>[] filterResults = new Map[0];
+
+
+    LinkedList<String> functionTopics = new LinkedList<>();
+    functionTopics.add("0x73bb00f3ad09ef6bc524e5cf56563dff2bc6663caa0b4054aa5946811083ed2e");
+    for (String functionTopic : functionTopics) {
+      synchronized (scannerLock) {
+        LinkedList<Map<String, Object>> queriedTxs = new LinkedList<>();
+        String query = "SELECT txdata from TXS where address = ? and topic = ?;";
+        PreparedStatement stmt = txDb.prepareStatement(query);
+        stmt.setString(1, config.getStorageContractAddress());
+        stmt.setString(2, functionTopic);
+        ResultSet rs = stmt.executeQuery();
+
+        while (rs.next()) {
+          //noinspection unchecked
+          queriedTxs.add((Map<String, Object>) rs.getObject(1));
+        }
+
+        rs.close();
+        stmt.close();
+
+        filterResults = queriedTxs.toArray(filterResults);
       }
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
@@ -79,11 +254,8 @@ public class Filters {
           txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
           txDetail.setMinConfirmations(config.getMinConfirmations());
 
-          ArrayList<String> topics = (ArrayList<String>) result.get("topics");
-
-          if (!topics.get(0).equalsIgnoreCase(functionTopic)) {
-            continue;
-          }
+          @SuppressWarnings("unchecked") ArrayList<String> topics =
+              (ArrayList<String>) result.get("topics");
 
           String amount = ByteUtilities.toHexString(ByteUtilities.stripLeadingNullBytes(
               ByteUtilities
@@ -118,41 +290,143 @@ public class Filters {
     }
 
     LOGGER.debug(Json.stringifyObject(LinkedList.class, txDetails));
-    Collections.sort(txDetails, new Filters.TxDateComparator());
+    txDetails.sort(new TxDateComparator());
     return txDetails.toArray(new Wallet.TransactionDetails[txDetails.size()]);
   }
 
-  static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
-      throws Exception {
+  static HashMap<String, Long> lastTransferBlock = new HashMap<>();
+
+  private static void scanTransfers(Configuration config) throws Exception {
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
 
-    LinkedList<Wallet.TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
-    filterParams.put("fromBlock", "0x0");
-    filterParams.put("toBlock", "latest");
     filterParams.put("address", "0x" + config.getStorageContractAddress());
     LinkedList<String> functionTopics = new LinkedList<>();
     functionTopics.add("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
     functionTopics.add("0x5548c837ab068cf56a2c2479df0882a4922fd203edb7517321831d95078c5f62");
+    @SuppressWarnings("unchecked") Map<String, Object>[] filterResults = new Map[0];
+
     for (String functionTopic : functionTopics) {
+      synchronized (scannerLock) {
+        String query = "SELECT MAX(blocknumber) FROM TXS WHERE address = ? AND topic = ?;";
+        PreparedStatement stmt = txDb.prepareStatement(query);
+        stmt.setString(1, config.getStorageContractAddress());
+        stmt.setString(2, functionTopic);
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+          lastTransferBlock.put(config.getStorageContractAddress() + functionTopic,
+              Math.max(0L, rs.getLong(1) - (config.getMinConfirmations() * 2)));
+        } else {
+          lastTransferBlock.put(config.getStorageContractAddress() + functionTopic, 0L);
+        }
+        rs.close();
+        stmt.close();
+        String startBlock = "0x" + Long.toHexString(Math.max(0L,
+            lastTransferBlock.get(config.getStorageContractAddress() + functionTopic) - (2 * config
+                .getMinConfirmations())));
+        String endBlock = "0x" + Long.toHexString(Math.min(latestBlockNumber.longValue(),
+            lastTransferBlock.get(config.getStorageContractAddress() + functionTopic)
+                + maxBlocksToScan));
+        filterParams.put("fromBlock", startBlock);
+        filterParams.put("toBlock", endBlock);
+
+        if (startBlock.equalsIgnoreCase(endBlock)) {
+          continue;
+        }
+      }
       Object[] topicArray = new Object[1];
       String[] senderTopic = {functionTopic};
       topicArray[0] = senderTopic;
       filterParams.put("topics", topicArray);
       LOGGER.debug("Requesting filter for: " + Json.stringifyObject(Map.class, filterParams));
-      String txFilter = ethereumReadRpc.eth_newFilter(filterParams);
+      String txFilter = "";
+
       LOGGER.debug("Setup filter: " + txFilter);
-      Map<String, Object>[] filterResults;
+      boolean filterSucceeded = true;
       try {
         LOGGER.debug("Getting filter results...");
+        txFilter = ethereumReadRpc.eth_newFilter(filterParams);
         filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
+
+        if (filterResults == null) {
+          //noinspection unchecked
+          filterResults = new Map[0];
+        }
       } catch (Exception e) {
         LOGGER.debug("Something went wrong", e);
+        //noinspection unchecked
         filterResults = new Map[0];
+        filterSucceeded = false;
       } finally {
-        ethereumReadRpc.eth_uninstallFilter(txFilter);
+        if (filterSucceeded) {
+          synchronized (scannerLock) {
+            long newLastBlock =
+                lastTransferBlock.get(config.getStorageContractAddress() + functionTopic)
+                    + maxBlocksToScan;
+            lastTransferBlock.put(config.getStorageContractAddress() + functionTopic,
+                Math.min(newLastBlock, latestBlockNumber.longValue()));
+
+            Arrays.asList(filterResults).forEach(result -> {
+              try {
+                String query =
+                    "INSERT INTO TXS VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE blocknumber = ?, txdata = ?;";
+                PreparedStatement stmt = txDb.prepareStatement(query);
+                stmt.setString(1, config.getStorageContractAddress());
+                stmt.setString(2, functionTopic);
+                stmt.setString(3, (String) result.get("transactionHash"));
+                stmt.setLong(4,
+                    UnsignedLong.valueOf(((String) result.get("blockNumber")).substring(2), 16)
+                        .longValue());
+                stmt.setObject(5, result);
+                stmt.setLong(6,
+                    UnsignedLong.valueOf(((String) result.get("blockNumber")).substring(2), 16)
+                        .longValue());
+                stmt.setObject(7, result);
+                stmt.executeUpdate();
+                stmt.close();
+              } catch (Exception e) {
+                LOGGER.error("Problem caching transaction!", e);
+              }
+            });
+          }
+        }
+        ethereumWriteRpc.eth_uninstallFilter(txFilter);
+      }
+    }
+  }
+
+  static Wallet.TransactionDetails[] getTransfers(String address, Configuration config)
+      throws Exception {
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
+    LinkedList<Wallet.TransactionDetails> txDetails = new LinkedList<>();
+
+    LinkedList<String> functionTopics = new LinkedList<>();
+    functionTopics.add("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+    functionTopics.add("0x5548c837ab068cf56a2c2479df0882a4922fd203edb7517321831d95078c5f62");
+
+    @SuppressWarnings("unchecked") Map<String, Object>[] filterResults = new Map[0];
+    for (String functionTopic : functionTopics) {
+      synchronized (scannerLock) {
+        LinkedList<Map<String, Object>> queriedTxs = new LinkedList<>();
+        String query = "SELECT txdata from TXS where address = ? and topic = ?;";
+        PreparedStatement stmt = txDb.prepareStatement(query);
+        stmt.setString(1, config.getStorageContractAddress());
+        stmt.setString(2, functionTopic);
+        ResultSet rs = stmt.executeQuery();
+
+        while (rs.next()) {
+          //noinspection unchecked
+          queriedTxs.add((Map<String, Object>) rs.getObject(1));
+        }
+
+        rs.close();
+        stmt.close();
+
+        filterResults = queriedTxs.toArray(filterResults);
       }
       for (Map<String, Object> result : filterResults) {
         LOGGER.debug(result.toString());
@@ -173,11 +447,8 @@ public class Filters {
           txDetail.setConfirmations(latestBlockNumber.subtract(txBlockNumber).intValue());
           txDetail.setMinConfirmations(config.getMinConfirmations());
 
-          ArrayList<String> topics = (ArrayList<String>) result.get("topics");
-
-          if (!topics.get(0).equalsIgnoreCase(functionTopic)) {
-            continue;
-          }
+          @SuppressWarnings("unchecked") ArrayList<String> topics =
+              (ArrayList<String>) result.get("topics");
 
           String from = ByteUtilities.toHexString(
               ByteUtilities.stripLeadingNullBytes(ByteUtilities.toByteArray(topics.get(1))));
@@ -211,7 +482,7 @@ public class Filters {
     }
 
     LOGGER.debug(Json.stringifyObject(LinkedList.class, txDetails));
-    Collections.sort(txDetails, new Filters.TxDateComparator());
+    txDetails.sort(new TxDateComparator());
     return txDetails.toArray(new Wallet.TransactionDetails[txDetails.size()]);
   }
 }

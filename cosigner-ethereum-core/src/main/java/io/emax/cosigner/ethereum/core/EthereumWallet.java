@@ -1022,24 +1022,61 @@ public class EthereumWallet implements Wallet, Validatable, CurrencyAdmin {
     }
   }
 
+
+  private HashMap<String, LinkedList<Map<String, Object>>> cachedTxFilterResults = new HashMap<>();
+  private long maxBlocks = 5000;
+  private HashMap<String, Long> lastBlock = new HashMap<>();
+
   @Override
-  public TransactionDetails[] getTransactions(String address, int numberToReturn, int skipNumber)
-      throws Exception {
+  public synchronized TransactionDetails[] getTransactions(String address, int numberToReturn,
+      int skipNumber) throws Exception {
+
     // Get latest block
     BigInteger latestBlockNumber =
         new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
 
     address = "0x" + ByteUtilities.toHexString(ByteUtilities.toByteArray(address));
-
+    if (!lastBlock.containsKey(address)) {
+      lastBlock.put(address, 0L);
+    }
+    String startBlock = "0x" + Long.toHexString(lastBlock.get(address));
+    String endBlock = "0x" + Long
+        .toHexString(Math.min(latestBlockNumber.longValue(), lastBlock.get(address) + maxBlocks));
     LinkedList<TransactionDetails> txDetails = new LinkedList<>();
     Map<String, Object> filterParams = new HashMap<>();
-    filterParams.put("fromBlock", "0x0");
-    filterParams.put("toBlock", "latest");
+    filterParams.put("fromBlock", startBlock);
+    filterParams.put("toBlock", endBlock);
     filterParams.put("address", address);
     LOGGER.debug("Filter: " + Json.stringifyObject(Map.class, filterParams));
-    String txFilter = ethereumReadRpc.eth_newFilter(filterParams);
-    Map<String, Object>[] filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
-    ethereumReadRpc.eth_uninstallFilter(txFilter);
+    String txFilter = "";
+    Map<String, Object>[] filterResults = new Map[0];
+    boolean filterSucceeded = true;
+    try {
+      txFilter = ethereumReadRpc.eth_newFilter(filterParams);
+      filterResults = ethereumReadRpc.eth_getFilterLogs(txFilter);
+      if (filterResults == null) {
+        filterResults = new Map[0];
+      }
+    } catch (Exception e) {
+      filterResults = new Map[0];
+      filterSucceeded = false;
+    } finally {
+      if (filterSucceeded) {
+        long newLastBlock = lastBlock.get(address) + maxBlocks;
+        lastBlock.put(address, Math.min(newLastBlock, latestBlockNumber.longValue()));
+
+        if (cachedTxFilterResults.containsKey(address)) {
+          LinkedList<Map<String, Object>> addressResults = cachedTxFilterResults.get(address);
+          addressResults.addAll(Arrays.asList(filterResults));
+          cachedTxFilterResults.put(address, addressResults);
+        } else {
+          cachedTxFilterResults.put(address, new LinkedList<>(Arrays.asList(filterResults)));
+        }
+      }
+      ethereumWriteRpc.eth_uninstallFilter(txFilter);
+    }
+
+    filterResults = cachedTxFilterResults.get(address).toArray(filterResults);
     for (Map<String, Object> result : filterResults) {
       LOGGER.error(result.toString());
       TransactionDetails txDetail = new TransactionDetails();

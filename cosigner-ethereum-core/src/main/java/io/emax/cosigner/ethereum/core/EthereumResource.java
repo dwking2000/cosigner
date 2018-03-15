@@ -47,6 +47,10 @@ public class EthereumResource {
           new JsonRpcHttpClient(new URL(config.getDaemonConnectionString()), headers);
       this.readClient =
           new JsonRpcHttpClient(new URL(config.getDaemonReadConnectionString()), headers);
+      readClient.setConnectionTimeoutMillis(600000);
+      readClient.setReadTimeoutMillis(600000);
+      writeClient.setConnectionTimeoutMillis(600000);
+      writeClient.setReadTimeoutMillis(600000);
     } catch (MalformedURLException e) {
       LOGGER.error(null, e);
     }
@@ -98,7 +102,7 @@ public class EthereumResource {
                     lockNumber++;
                     lockNumber %= requestLocks.size();
                     LOGGER.debug(
-                        "Failed to obtain bitcoinRpc lock, trying the next one: " + lockNumber);
+                        "Failed to obtain EthereumRpc lock, trying the next one: " + lockNumber);
                     Thread.sleep(1);
                   }
                 }

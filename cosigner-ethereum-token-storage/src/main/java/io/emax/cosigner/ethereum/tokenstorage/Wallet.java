@@ -49,6 +49,7 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
   public Wallet(Configuration conf) {
     config = conf;
     Setup.setupTokenContract(config);
+    Filters.addScanner(config);
   }
 
   @Override
@@ -130,8 +131,14 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
     CallData callData = EthereumTools
         .generateCall(config.getContractInterface().getContractParameters().getBalance(address),
             config.getStorageContractAddress());
+    BigInteger latestBlockNumber =
+        new BigInteger(1, ByteUtilities.toByteArray(ethereumReadRpc.eth_blockNumber()));
+
+    latestBlockNumber =
+        latestBlockNumber.subtract(BigInteger.valueOf(config.getMinConfirmations()));
     LOGGER.debug("Balance request: " + Json.stringifyObject(CallData.class, callData));
-    String response = ethereumReadRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+    String response =
+        ethereumReadRpc.eth_call(callData, "0x" + Long.toHexString(latestBlockNumber.longValue()));
     LOGGER.debug("Balance response: " + response);
 
     BigInteger intBalance = new BigInteger(1, ByteUtilities.toByteArray(response));
@@ -143,31 +150,27 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
         BigDecimal.ROUND_UNNECESSARY);
     LOGGER.debug("Converted with decimal places: " + balance.toPlainString());
 
-    // Subtract any pending txs from the available balance
-    TransactionDetails[] txDetails = getTransactions(address, 100, 0);
-    for (TransactionDetails txDetail : txDetails) {
-      if (!txDetail.isConfirmed() && txDetail.getToAddress()[0].equalsIgnoreCase(address)) {
-        LOGGER.debug("Reducing by " + txDetail.getAmount().toPlainString());
-        balance = balance.subtract(txDetail.getAmount());
-      }
-    }
     return balance.toPlainString();
   }
 
   @Override
   public String getPendingBalance(String address) throws Exception {
-    BigDecimal balance = BigDecimal.ZERO;
-    TransactionDetails[] txDetails = getTransactions(address, 100, 0);
-    for (TransactionDetails txDetail : txDetails) {
-      if (!txDetail.isConfirmed() && txDetail.getToAddress()[0].equalsIgnoreCase(address)) {
-        balance = balance.add(txDetail.getAmount());
-      } else if (!txDetail.isConfirmed() && txDetail.getFromAddress()[0]
-          .equalsIgnoreCase(address)) {
-        balance = balance.subtract(txDetail.getAmount());
-      }
-    }
-    balance = balance.max(BigDecimal.ZERO);
-    return balance.toPlainString();
+    BigDecimal balance = new BigDecimal(getBalance(address));
+
+    CallData callData = EthereumTools
+        .generateCall(config.getContractInterface().getContractParameters().getBalance(address),
+            config.getStorageContractAddress());
+    String response = ethereumReadRpc.eth_call(callData, DefaultBlock.LATEST.toString());
+    BigInteger intBalance = new BigInteger(1, ByteUtilities.toByteArray(response));
+    BigDecimal pendingBalance = new BigDecimal(intBalance);
+    pendingBalance = pendingBalance.setScale(20, BigDecimal.ROUND_UNNECESSARY);
+    pendingBalance = pendingBalance
+        .divide(BigDecimal.valueOf(10).pow((int) config.getDecimalPlaces()),
+            BigDecimal.ROUND_UNNECESSARY);
+    pendingBalance = pendingBalance.subtract(balance);
+
+    pendingBalance = pendingBalance.max(BigDecimal.ZERO);
+    return pendingBalance.toPlainString();
   }
 
   public String getTotalBalances() throws Exception {
@@ -414,6 +417,11 @@ public class Wallet implements io.emax.cosigner.api.currency.Wallet, OfflineWall
     } else {
       configSummary.put("Contract Manager", config.getContractAccount());
     }
+    LinkedList<HashMap<String, Long>> scannerInfo = new LinkedList<>();
+    scannerInfo.add(Filters.lastReconciliationBlock);
+    scannerInfo.add(Filters.lastTransferBlock);
+    configSummary
+        .put("TX Block Scanner", Json.stringifyObject(scannerInfo.getClass(), scannerInfo));
     return configSummary;
   }
 
